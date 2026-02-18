@@ -137,3 +137,9 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+.openspec/
+.opencode/
+
+# SQLite database (optional - uncomment if you want to ignore it)
+silicon-seeds.sqlite

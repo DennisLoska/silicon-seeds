@@ -1,0 +1,25 @@
+{
+  "name": "silicon-seeds",
+  "version": "1.0.0",
+  "description": "Whoever has ears, let them hear.",
+  "homepage": "https://github.com/DennisLoska/silicon-seeds#readme",
+  "bugs": {
+    "url": "https://github.com/DennisLoska/silicon-seeds/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DennisLoska/silicon-seeds.git"
+  },
+  "license": "UNLICENSED",
+  "author": "Dennis Loska",
+  "type": "commonjs",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "bun src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
