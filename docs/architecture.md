@@ -301,6 +301,49 @@ POST http://localhost:8188/prompt
 - Takes target duration from job's estimated length
 - Generates background instrumental matching video mood/style
 
+**Workflow JSON Files**
+
+ComfyUI workflows are stored and managed as JSON files. These can be exported from the UI or created programmatically.
+
+**Exported Workflow Structure:**
+```json
+{
+  "prompt": {
+    "1": {"class_type": "KSampler", "inputs": {...}},
+    "2": {"class_type": "LoadImage", "inputs": {...}}
+  }
+}
+```
+
+**API Usage:**
+- Export workflows via UI → save as JSON files for version control
+- Store workflow templates in project directory (e.g., `./workflows/`)
+- Load and override specific fields (prompts, image paths, hyperparameters) programmatically
+- Submit modified workflows to `POST /prompt` endpoint
+
+**Supported Workflow Types:**
+- **Image Generation** - Text-to-image with checkpoint/LoRA configurations
+- **Video Generation** - Image-to-video synthesis from generated frames
+- **Audio Generation** - Background instrumental/music creation
+- **Video Transitions** - Frame blending between videos (last frame of first + first frame of second as inputs)
+
+**Bun Example (Loading and modifying workflow):**
+```typescript
+import fs from 'fs';
+
+const workflow = JSON.parse(fs.readFileSync('./workflows/video-gen.json', 'utf8'));
+
+// Override workflow inputs
+workflow['3'].inputs['prompt'] = videoPrompt;
+workflow['4'].inputs['image'] = imagePath;
+
+const response = await fetch("http://localhost:8188/prompt", {
+  method: "POST",
+  headers: {"Content-Type": "application/json"},
+  body: JSON.stringify({ prompt: workflow })
+});
+```
+
 ## Configuration
 
 ```json
