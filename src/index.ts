@@ -1,26 +1,29 @@
-import { LmStudioClient, ImageInput } from "./lib/lm-studio-client";
+import { LmStudioClient } from "./lib/lm-studio";
+import { ZImageTurboClient } from "./lib/comfyui";
 
-const client = new LmStudioClient({
+const lmStudioClient = new LmStudioClient({
   baseUrl: "http://127.0.0.1:1234",
   model: "qwen3-vl-30b",
 });
 
-async function main() {
-  const textOnlyResponse = await client.chatWithTextResponse(
-    "You are a prompt engineer. Generate an image prompt of Lana the test image.",
-  );
-  console.log("Text response:", textOnlyResponse);
+const zImageTurboClient = new ZImageTurboClient({
+  baseUrl: "http://127.0.0.1:8188",
+});
 
-  // Example with base64 image (uncomment and provide valid base64)
-  // const image: ImageInput = {
-  //   base64: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-  //   format: "png",
-  // };
-  // const visionResponse = await client.chatWithTextResponse(
-  //   "Describe what's in this image.",
-  //   { image }
-  // );
-  // console.log("Vision response:", visionResponse);
+async function main() {
+  // Generate an image prompt using LM Studio
+  const prompt = await lmStudioClient.chatWithTextResponse(
+    "Generate a detailed image generation prompt for a landscape with mountains.",
+  );
+  console.log("Generated prompt:", prompt);
+
+  // Feed the generated prompt to ZImageTurbo client
+  try {
+    const result = await zImageTurboClient.generate({ prompt });
+    console.log("ComfyUI result:", result);
+  } catch (error) {
+    console.error("ComfyUI error:", error);
+  }
 }
 
 main();
