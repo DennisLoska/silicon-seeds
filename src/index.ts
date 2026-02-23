@@ -1,41 +1,116 @@
+import { ComfyUIClient } from "./lib/comfyui";
 import { LmStudioClient } from "./lib/lm-studio";
-import { VideoClient, ZImageTurboClient } from "./lib/comfyui";
+
+const COMFYUI_OUTPUT_DIR = "/run/media/dennis/ai/comfy-ui/output";
+
+type ImageMetadata = {
+  filename: string;
+  subfolder: string;
+  type: "input" | "output" | "temp";
+};
 
 const lmStudioClient = new LmStudioClient({
   baseUrl: "http://127.0.0.1:1234",
-  model: "qwen3-vl-30b",
+  model: "qwen/qwen3-vl-8b",
 });
 
-const zImageTurboClient = new ZImageTurboClient({
+const comfyClient = new ComfyUIClient({
   baseUrl: "http://127.0.0.1:8188",
 });
 
-const i2vClient = new VideoClient({
-  baseUrl: "http://127.0.0.1:8188",
-});
+async function queueImage() {
+  console.log("genearing the image prompt...");
+  const prompt = await lmStudioClient.chatWithTextResponse(
+    "Generate a detailed image generation prompt for a random anime style image",
+  );
+  console.log(prompt);
+
+  comfyClient.generate({ kind: "text-to-image", prompt });
+}
+
+async function queueVideo(image: ImageMetadata) {
+  const img = await comfyClient.getImage(
+    image.filename,
+    image.subfolder,
+    image.type,
+  );
+
+  const buffer = await img.arrayBuffer();
+  const base64 = Buffer.from(buffer).toString("base64");
+
+  console.log("genearing the video prompt...");
+  const prompt = await lmStudioClient.chatWithTextResponse(
+    "Generate a detailed video generation prompt for a 5 second long video based on the image",
+    { image: { format: "png", base64 } },
+  );
+  console.log(prompt);
+
+  console.log("Generating the video");
+  const res = await comfyClient.generate({
+    kind: "image-to-video",
+    prompt,
+    imagePath: `${COMFYUI_OUTPUT_DIR}/${image.filename}`,
+  });
+  console.log(res);
+}
 
 async function main() {
-  try {
-    // Generate an image prompt using LM Studio
-    const prompt = await lmStudioClient.chatWithTextResponse(
-      "Generate a detailed image generation prompt for a landscape with mountains.",
-    );
-    console.log("Generated prompt:", prompt);
+  const clientId = Bun.randomUUIDv7();
+  console.log(clientId);
+  const ws = new WebSocket(`ws://127.0.0.1:8188/ws?clientId=${clientId}`);
 
-    // Feed the generated prompt to ZImageTurbo client
-    const result = await zImageTurboClient.generate({ prompt });
-    console.log("ComfyUI image result:", result);
+  let promptId;
+  ws.addEventListener("message", async (event) => {
+    const msg = JSON.parse(event.data);
+    if (msg.type === "progress_state") {
+      console.assert(
+        msg.data.prompt_id,
+        "progress_state without prompt_id encountered",
+      );
+      promptId = msg.data.prompt_id;
+    }
 
-    // TODO get generated image url using the promptId from result (history endpoint does not exist yet)
-    const res = await i2vClient.generate({
-      imagePath: "",
-      prompt: "identity",
-    });
+    if (msg.type === "progress") {
+      console.log(`step: ${msg.data.value}/${msg.data.value}`);
+    }
 
-    console.log("ComfyUI video result:", res);
-  } catch (error) {
-    console.error("ComfyUI error:", error);
-  }
+    if (msg.type === "status") {
+      console.log(msg.data);
+      if (promptId && msg.data?.status?.exec_info?.queue_remaining === 0) {
+        const history = await comfyClient.getHistory(promptId);
+        const historyNode = history[promptId];
+
+        for (const output of Object.values(historyNode?.outputs)) {
+          const out = output as any;
+          if (!out.images) continue;
+          for (const image of out.images) {
+            console.log(image);
+            await queueVideo(image);
+          }
+        }
+
+        queueImage();
+      }
+    }
+  });
+
+  ws.addEventListener("error", (error) => {
+    console.log(error);
+  });
+
+  ws.addEventListener("open", () => {
+    console.log("client connected");
+  });
+
+  ws.addEventListener("close", () => {
+    console.log("client disconnected");
+  });
+
+  process.on("SIGINT", () => {
+    ws.close();
+  });
+
+  queueImage();
 }
 
 main();
