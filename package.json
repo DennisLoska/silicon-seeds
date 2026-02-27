@@ -21,5 +21,8 @@
   "private": true,
   "devDependencies": {
     "@types/bun": "latest"
+  },
+  "dependencies": {
+    "@lmstudio/sdk": "^1.5.0"
   }
 }
