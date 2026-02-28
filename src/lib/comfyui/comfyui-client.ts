@@ -84,3 +84,7 @@ export class ComfyUIClient {
     return workflow;
   }
 }
+
+export const comfyClient = new ComfyUIClient({
+  baseUrl: "http://127.0.0.1:8188",
+});
