@@ -1,11 +1,15 @@
 import { Event } from "./events/events";
 import { ImageGenerator } from "./images/image-generator";
+import { comfyClient } from "./lib/comfyui";
 import { PromptGenerator } from "./prompts/prompt-generator";
+import assert from "node:assert";
 
 ImageGenerator.init();
+PromptGenerator.init();
+
 PromptGenerator.txt_to_img_prompt(
   "Jesus gets lead into the desert by the holy spirit.",
-  50,
+  10,
 );
 
 setTimeout(() => {
@@ -23,7 +27,7 @@ async function main() {
   ws.addEventListener("message", async (event) => {
     const msg = JSON.parse(event.data);
     if (msg.type === "progress_state") {
-      console.assert(
+      assert(
         msg.data.prompt_id,
         "progress_state without prompt_id encountered",
       );
@@ -40,22 +44,26 @@ async function main() {
       console.log(`remaining: ${queue}`);
 
       if (msg.data?.status?.exec_info?.queue_remaining === 0) {
-        Event.emit(Event.NewImage);
+        Event.emit(Event.NewImage, { type: Event.NewImage });
       }
 
-      // if (promptId && msg.data?.status?.exec_info?.queue_remaining === 0) {
-      //   const history = await comfyClient.getHistory(promptId);
-      //   const historyNode = history[promptId];
-      //   console.log(historyNode);
-      //   for (const output of Object.values(historyNode?.outputs)) {
-      //     const out = output as any;
-      //     if (!out.images) continue;
-      //     for (const image of out.images) {
-      //       console.log(image);
-      //     }
-      //   }
-      // }
-      //
+      if (promptId && msg.data?.status?.exec_info?.queue_remaining === 0) {
+        const history = await comfyClient.getHistory(promptId);
+        const historyNode = history[promptId];
+
+        for (const output of Object.values(historyNode?.outputs)) {
+          const out = output as any;
+          if (!out.images) continue;
+
+          for (const image of out.images) {
+            Event.emit(Event.NewImagePrompt, {
+              ...image,
+              kind: image.type,
+              type: Event.NewImagePrompt,
+            });
+          }
+        }
+      }
     }
   });
 

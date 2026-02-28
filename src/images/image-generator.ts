@@ -1,5 +1,6 @@
 import { Event, Events } from "../events/events";
 import { comfyClient } from "../lib/comfyui";
+import assert from "node:assert";
 
 export namespace ImageGenerator {
   const queue: Events = [];
@@ -10,8 +11,9 @@ export namespace ImageGenerator {
   }
 
   function process_events() {
-    Event.on(Event.NewImagePrompt, (event) => {
-      if (event?.prompt) queue.push(event);
+    Event.on(Event.NewTextPrompt, (event) => {
+      assert(event.type === Event.NewTextPrompt, "Incorrect event type!");
+      queue.push(event);
     });
   }
 
@@ -19,10 +21,13 @@ export namespace ImageGenerator {
     Event.on(Event.NewImage, async () => {
       if (queue.length <= 0) return;
 
-      const event = queue.shift();
-      if (!event) return;
+      const item = queue.shift();
+      assert(
+        item && item.type === Event.NewTextPrompt,
+        "Incorrect event type!",
+      );
 
-      const { prompt } = event;
+      const { prompt } = item;
       await comfyClient.generate({ kind: "text-to-image", prompt });
     });
   }
