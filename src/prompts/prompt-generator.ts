@@ -27,8 +27,3 @@ export namespace PromptGenerator {
     );
   }
 }
-
-PromptGenerator.txt_to_img_prompt(
-  "Jesus gets lead into the desert by the holy spirit.",
-  50,
-);
