@@ -1,24 +1,36 @@
+import { Server } from "./api/Api";
 import { Event } from "./events/events";
 import { ImageGenerator } from "./images/image-generator";
 import { comfyClient } from "./lib/comfyui";
 import { PromptGenerator } from "./prompts/prompt-generator";
 import assert from "node:assert";
 
-ImageGenerator.init();
-PromptGenerator.init();
-
-PromptGenerator.txt_to_img_prompt(
-  "Jesus gets lead into the desert by the holy spirit.",
-  10,
-);
-
-setTimeout(() => {
-  console.log("warm up...");
-  main();
-}, 10_000);
+// AudioGenerator
+// - can generate TTS voiceover
+// - can generate background instrumental based on metadata length
+// TextGenerator
+// - generate a video script
+// VideoGenerator
+// - ...
+// MetadataGenerator
+// - receive video script as input
+// - calls AudioGenerator to create TTS audio file
+// - uses length of audio file to determine video length in seconds
+// - defines seconds per image, transition
+// - defines video transcript / captions to be pot. used
+// REST api
+// - call TextGenerator
+// - can call PromptGenerator.txt_to_img_prompt
+// JobOrchestrator
+// - subscribed to all relevant events related to a job
+// - keeps track of a job's progress / state via SQLite database by job id
 
 let queue = 0;
 async function main() {
+  ImageGenerator.init();
+  PromptGenerator.init();
+  Server.start();
+
   const clientId = Bun.randomUUIDv7();
   console.log(clientId);
   const ws = new WebSocket(`ws://127.0.0.1:8188/ws?clientId=${clientId}`);
@@ -44,7 +56,7 @@ async function main() {
       console.log(`remaining: ${queue}`);
 
       if (msg.data?.status?.exec_info?.queue_remaining === 0) {
-        Event.emit(Event.NewImage, { type: Event.NewImage });
+        Event.emit(Event.NewImage);
       }
 
       if (promptId && msg.data?.status?.exec_info?.queue_remaining === 0) {
@@ -81,6 +93,9 @@ async function main() {
 
   process.on("SIGINT", () => {
     ws.close();
+    Server.stop();
     process.exit(1);
   });
 }
+
+main();

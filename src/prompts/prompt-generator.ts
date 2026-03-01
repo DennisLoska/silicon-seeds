@@ -1,7 +1,6 @@
 import { Event } from "../events/events";
 import { comfyClient } from "../lib/comfyui";
 import { LLM } from "../llm/llm";
-import assert from "node:assert";
 
 export namespace PromptGenerator {
   export function init() {
@@ -14,6 +13,7 @@ export namespace PromptGenerator {
         .then((res) => {
           if (!res.content || res.content.trim() === "") return;
           const prompt = res.content.trim();
+
           Event.emit(Event.NewTextPrompt, {
             id: Bun.randomUUIDv7(),
             type: Event.NewTextPrompt,
@@ -28,8 +28,6 @@ export namespace PromptGenerator {
 
   export function img_to_vid_prompt() {
     Event.on(Event.NewImagePrompt, async (event) => {
-      assert(event.type === Event.NewImagePrompt, "Incorrect event type!");
-
       const { filename, subfolder, kind } = event;
       const img = await comfyClient.getImage(filename, subfolder, kind);
 

@@ -21,29 +21,54 @@ export enum Event {
   NewImage = "new_image",
 }
 
-export type Events = (TextPromptEvent | ImageEvent | ImagePromptEvent)[];
+type EventMap = {
+  [Event.NewTextPrompt]: TextPromptEvent;
+  [Event.NewImagePrompt]: ImagePromptEvent;
+  [Event.NewImage]: ImageEvent;
+};
+
+export type Events = EventMap[keyof EventMap][];
 
 export namespace Event {
   const events = new EventEmitter();
 
-  export function on(event: Event, callback: (...args: Events) => void) {
+  export function on<K extends keyof EventMap>(
+    event: K,
+    callback: (...args: [EventMap[K]]) => void,
+  ) {
     events.on(event, callback);
   }
 
-  export function emit(event: Event, ...payload: Events) {
+  export function emit<K extends keyof EventMap>(
+    event: K,
+    ...payload: [EventMap[K]]
+  ): void;
+  export function emit<K extends keyof EventMap>(event: K): void;
+  export function emit<K extends keyof EventMap>(
+    event: K,
+    ...payload: unknown[]
+  ): void {
     if (payload) events.emit(event, ...payload);
     else events.emit(event);
   }
 
   on(Event.NewTextPrompt, (event) => {
-    // console.log(event);
+    console.log("");
+    console.log("========================");
+    console.log("event:", Event.NewTextPrompt);
+    console.log(event);
   });
 
   on(Event.NewImagePrompt, (event) => {
-    // console.log(event);
+    console.log("");
+    console.log("========================");
+    console.log("event:", Event.NewImagePrompt);
+    console.log(event);
   });
 
-  on(Event.NewImage, (event) => {
-    // console.log(event);
+  on(Event.NewImage, () => {
+    console.log("");
+    console.log("========================");
+    console.log("event:", Event.NewImage);
   });
 }

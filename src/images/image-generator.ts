@@ -12,12 +12,11 @@ export namespace ImageGenerator {
 
   function process_events() {
     Event.on(Event.NewTextPrompt, (event) => {
-      assert(event.type === Event.NewTextPrompt, "Incorrect event type!");
       queue.push(event);
     });
   }
 
-  export function generate_image() {
+  function generate_image() {
     Event.on(Event.NewImage, async () => {
       if (queue.length <= 0) return;
 
