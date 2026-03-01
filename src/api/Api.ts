@@ -8,6 +8,7 @@ export namespace ApiServer {
   export function start() {
     server = Bun.serve({
       port: 3000,
+      idleTimeout: 60,
       routes: {
         "/api/health": Api.handlers.health,
         "/api/job": Api.handlers.job,

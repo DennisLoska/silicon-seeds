@@ -2,11 +2,12 @@ import EventEmitter from "node:events";
 
 type TextPromptEvent = {
   id: string;
+  jobId: string;
   prompt: string;
   type: Event.NewTextPrompt;
 };
 
-type ImageEvent = { type: Event.NewImage };
+type ImageEvent = { id: string; jobId: string; type: Event.NewImage };
 
 type ImagePromptEvent = {
   filename: string;
