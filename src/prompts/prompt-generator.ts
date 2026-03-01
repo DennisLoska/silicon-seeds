@@ -8,14 +8,19 @@ export namespace PromptGenerator {
     img_to_vid_prompt();
   }
 
-  async function jump_start() {
+  async function jump_start(jobId: string) {
     const queue = await comfyClient.getQueue();
     if (queue.queue_running.length === 0 && queue.queue_pending.length === 0) {
-      Event.emit(Event.NewImage);
+      Event.emit(Event.NewImage, {
+        id: Bun.randomUUIDv7(),
+        jobId,
+        type: Event.NewImage,
+      });
     }
   }
 
   export async function txt_to_img_prompt(
+    jobId: string,
     message: string,
     batchSize = 1,
     preset?: Presets,
@@ -34,11 +39,12 @@ export namespace PromptGenerator {
 
           Event.emit(Event.NewTextPrompt, {
             id: Bun.randomUUIDv7(),
+            jobId,
             type: Event.NewTextPrompt,
             prompt,
           });
 
-          await jump_start();
+          await jump_start(jobId);
         })
         .catch((error) => {
           console.log(error);
@@ -70,5 +76,44 @@ export namespace PromptGenerator {
         console.log(error);
       }
     });
+  }
+
+  export function script_prompt(description: string) {
+    return `Create a text script / essay based on the following description: ${description}
+
+If the description does not provide details about the length of the essay make sure it is between
+800 and 1300 words long depending on the subject.
+
+Your response should only include the actual essay including it's title - nothing more!
+`;
+  }
+
+  export async function image_scene_prompts(
+    jobId: string,
+    text: string,
+    amount: number,
+    preset?: Presets,
+  ) {
+    const instructions = `Here is a text: \n${text}
+
+Your task is to create ${amount} image prompts in chronological order.
+Your goal is to visualize the text for purpose of creating a visual novel.
+
+These prompts will be used to generate these images.
+
+Your response should only include the list of image prompts - nothing more!
+
+Make sure to return a json array with each prompt being an item of the array.
+`;
+
+    const res = await LLM.message(instructions);
+    const scenes = JSON.parse(res?.content ?? "DEBUG");
+    if (!Array.isArray(scenes)) return null;
+
+    for (const scene of scenes) {
+      preset
+        ? txt_to_img_prompt(jobId, scene, 1, preset)
+        : txt_to_img_prompt(jobId, scene, 1);
+    }
   }
 }
