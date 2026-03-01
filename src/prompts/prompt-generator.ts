@@ -1,17 +1,24 @@
 import { Event } from "../events/events";
-import { comfyClient } from "../lib/comfyui";
 import { LLM } from "../llm/llm";
+import { comfyClient } from "../comfyui";
 
 export namespace PromptGenerator {
   export function init() {
     img_to_vid_prompt();
   }
 
+  async function jump_start() {
+    const queue = await comfyClient.getQueue();
+    if (queue.queue_running.length === 0 && queue.queue_pending.length === 0) {
+      Event.emit(Event.NewImage);
+    }
+  }
+
   export async function txt_to_img_prompt(content: string, count = 1) {
     for (let i = 0; i < count; i++) {
       LLM.message(`Create an excellent image prompt for: ${content}`)
-        .then((res) => {
-          if (!res.content || res.content.trim() === "") return;
+        .then(async (res) => {
+          if (res === null || !res.content || res.content.trim() === "") return;
           const prompt = res.content.trim();
 
           Event.emit(Event.NewTextPrompt, {
@@ -19,6 +26,8 @@ export namespace PromptGenerator {
             type: Event.NewTextPrompt,
             prompt,
           });
+
+          await jump_start();
         })
         .catch((error) => {
           console.log(error);
@@ -44,9 +53,8 @@ export namespace PromptGenerator {
           { images: [image] },
         );
 
-        // TODO cleanup
-        console.log("Schlafen!!!");
-        console.log(prompt.content, filename);
+        // TODO emit event for VideoGenerator to subscribe to (add to queue)
+        console.log(prompt?.content);
       } catch (error) {
         console.log(error);
       }

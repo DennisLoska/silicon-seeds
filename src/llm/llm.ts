@@ -7,6 +7,12 @@ export namespace LLM {
   export const client = llmClient;
 
   export async function message(msg: string, opt = {}) {
-    return await llm.respond(msg, opt);
+    try {
+      return await llm.respond(msg, opt);
+    } catch (error) {
+      console.log(error);
+      console.log(llmClient.diagnostics);
+      return null;
+    }
   }
 }

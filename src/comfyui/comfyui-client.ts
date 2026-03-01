@@ -47,6 +47,17 @@ export class ComfyUIClient {
     return response.json();
   }
 
+  async getQueue(): Promise<{
+    queue_running: unknown[];
+    queue_pending: unknown[];
+  }> {
+    const response = await fetch(`${this.baseUrl}/queue`);
+    if (!response.ok) {
+      throw new Error(`Failed to get queue status: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
   async getImage(
     filename: string,
     subfolder: string,

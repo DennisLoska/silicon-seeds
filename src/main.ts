@@ -1,7 +1,7 @@
 import { Server } from "./api/Api";
 import { Event } from "./events/events";
 import { ImageGenerator } from "./images/image-generator";
-import { comfyClient } from "./lib/comfyui";
+import { comfyClient } from "./comfyui";
 import { PromptGenerator } from "./prompts/prompt-generator";
 import assert from "node:assert";
 

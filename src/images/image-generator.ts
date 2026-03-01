@@ -1,5 +1,5 @@
 import { Event, Events } from "../events/events";
-import { comfyClient } from "../lib/comfyui";
+import { comfyClient } from "../comfyui";
 import assert from "node:assert";
 
 export namespace ImageGenerator {
