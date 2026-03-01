@@ -21,9 +21,9 @@ export namespace SocketServer {
     ws.close();
   }
 
+  let promptId;
   async function message(event: MessageEvent) {
     let queue = 0;
-    let promptId;
 
     const msg = JSON.parse(event.data);
     if (msg.type === "progress_state") {
@@ -35,11 +35,12 @@ export namespace SocketServer {
     }
 
     if (msg.type === "progress") {
-      console.log(`step: ${msg.data.value}/${msg.data.value}`);
+      console.log(`step: ${msg.data.value}/${msg.data.max}`);
     }
 
-    // for the video prompt
+    // for the video prompt - how to get the actual job id here from job endpoint?
     if (msg.type === "status") {
+      console.log(msg.data.exec_info);
       queue = msg.data?.status?.exec_info?.queue_remaining;
       console.log(`jobs remaining: ${queue}`);
 
@@ -47,21 +48,27 @@ export namespace SocketServer {
         Event.emit(Event.NewImage);
       }
 
-      if (promptId && msg.data?.status?.exec_info?.queue_remaining === 0) {
-        const history = await comfyClient.getHistory(promptId);
-        const historyNode = history[promptId];
+      if (!promptId) return;
 
-        for (const output of Object.values(historyNode?.outputs)) {
-          const out = output as any;
-          if (!out.images) continue;
+      const history = await comfyClient.getHistory(promptId);
+      const historyNode = history[promptId];
 
-          for (const image of out.images) {
-            Event.emit(Event.NewImagePrompt, {
-              ...image,
-              kind: image.type,
-              type: Event.NewImagePrompt,
-            });
-          }
+      if (!historyNode?.outputs) {
+        console.warn("Undefined history node (fix this)");
+        return;
+      }
+
+      for (const output of Object.values(historyNode.outputs)) {
+        const out = output as any;
+        if (!out.images) continue;
+
+        // TODO apparently this is also video so filter out videos, sigh what bad api design...
+        for (const image of out.images) {
+          Event.emit(Event.NewImagePrompt, {
+            ...image,
+            kind: image.type,
+            type: Event.NewImagePrompt,
+          });
         }
       }
     }

@@ -8,14 +8,10 @@ export namespace PromptGenerator {
     img_to_vid_prompt();
   }
 
-  async function jump_start(jobId: string) {
+  async function jump_start(emitter: () => void) {
     const queue = await comfyClient.getQueue();
     if (queue.queue_running.length === 0 && queue.queue_pending.length === 0) {
-      Event.emit(Event.NewImage, {
-        id: Bun.randomUUIDv7(),
-        jobId,
-        type: Event.NewImage,
-      });
+      emitter();
     }
   }
 
@@ -44,7 +40,13 @@ export namespace PromptGenerator {
             prompt,
           });
 
-          await jump_start(jobId);
+          await jump_start(() => {
+            Event.emit(Event.NewImage, {
+              id: Bun.randomUUIDv7(),
+              jobId,
+              type: Event.NewImage,
+            });
+          });
         })
         .catch((error) => {
           console.log(error);
@@ -54,6 +56,8 @@ export namespace PromptGenerator {
 
   export function img_to_vid_prompt() {
     Event.on(Event.NewImagePrompt, async (event) => {
+      // TODO add condition somewhere whether user actually wants video or not
+
       const { filename, subfolder, kind } = event;
       const img = await comfyClient.getImage(filename, subfolder, kind);
 
@@ -65,13 +69,27 @@ export namespace PromptGenerator {
           filename,
           base64,
         );
-        const prompt = await LLM.message(
-          "Generate a detailed video generation prompt for a 5 second long video based on the image",
-          { images: [image] },
+
+        const res = await LLM.message(
+          "Generate a detailed video generation prompt for a 5 second long video based on the content of the image",
+          [image],
         );
 
-        // TODO emit event for VideoGenerator to subscribe to (add to queue)
-        console.log(prompt?.content);
+        Event.emit(Event.NewVideoPrompt, {
+          id: Bun.randomUUIDv7(),
+          type: Event.NewVideoPrompt,
+          jobId: "TODO",
+          prompt: res.content,
+          filename,
+        });
+
+        await jump_start(() => {
+          Event.emit(Event.NewVideo, {
+            id: Bun.randomUUIDv7(),
+            type: Event.NewVideo,
+            jobId: "TODO",
+          });
+        });
       } catch (error) {
         console.log(error);
       }
