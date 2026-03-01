@@ -5,24 +5,11 @@ import assert from "node:assert";
 export namespace SocketServer {
   let ws: WebSocket;
 
-  export function start() {
+  export function start(clientId = Bun.randomUUIDv7()) {
     // should be passed from job endpoint
-    const clientId = Bun.randomUUIDv7();
     console.log(clientId);
 
     ws = new WebSocket(`ws://127.0.0.1:8188/ws?clientId=${clientId}`);
-
-    ws.addEventListener("error", (error) => {
-      console.log(error);
-    });
-
-    ws.addEventListener("open", () => {
-      console.log("client connected");
-    });
-
-    ws.addEventListener("close", () => {
-      console.log("client disconnected");
-    });
 
     ws.addEventListener("message", async (event) => {
       let queue = 0;
@@ -44,7 +31,7 @@ export namespace SocketServer {
       // for the video prompt
       if (msg.type === "status") {
         queue = msg.data?.status?.exec_info?.queue_remaining;
-        console.log(`remaining: ${queue}`);
+        console.log(`jobs remaining: ${queue}`);
 
         if (msg.data?.status?.exec_info?.queue_remaining === 0) {
           Event.emit(Event.NewImage);
@@ -69,6 +56,22 @@ export namespace SocketServer {
         }
       }
     });
+
+    ws.addEventListener("error", error);
+    ws.addEventListener("open", open);
+    ws.addEventListener("close", close);
+
+    function error(error: globalThis.Event) {
+      console.log(error);
+    }
+
+    function open() {
+      console.log("client connected");
+    }
+
+    function close() {
+      console.log("client disconnected");
+    }
   }
 
   export function stop() {
