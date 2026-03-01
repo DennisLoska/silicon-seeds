@@ -6,10 +6,8 @@ import { SocketServer } from "./socket/socket-server";
 // AudioGenerator
 // - can generate TTS voiceover
 // - can generate background instrumental based on metadata length
-// ArtStyle
-// - responsible for providing the art style of the generated slop
-// - can be provided as api query parameter to the job
-// - will be used by the PromptGenerator
+// Api
+// - parameterize the art style, client id, batch size
 // TextGenerator
 // - generate a video script
 // VideoGenerator
