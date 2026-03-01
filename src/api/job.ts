@@ -5,7 +5,7 @@ import { TextGenerator } from "../text/text-generator";
 export async function job() {
   // TODO get the these from query parameters
   const prompt = "A random scene from the bible";
-  const batchSize = 3;
+  const batchSize = 1;
 
   // TODO low level api -> move to different api endpoint
   // PromptGenerator.txt_to_img_prompt(prompt, batchSize, Presets.WATERCOLOR);
@@ -17,7 +17,6 @@ export async function job() {
     const text = PromptGenerator.script_prompt(prompt);
     const res = await TextGenerator.create_script(jobId, text);
     const content = res?.content ?? "";
-
     await PromptGenerator.image_scene_prompts(
       jobId,
       content,
@@ -27,5 +26,6 @@ export async function job() {
   });
 
   Promise.all(jobs);
+
   return new Response(JSON.stringify({ message: "job queued" }));
 }
