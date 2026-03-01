@@ -44,8 +44,12 @@ export namespace SocketServer {
       queue = msg.data?.status?.exec_info?.queue_remaining;
       console.log(`jobs remaining: ${queue}`);
 
+      // trigger next image or video
       if (msg.data?.status?.exec_info?.queue_remaining === 0) {
         Event.emit(Event.NewImage);
+
+        // TODO verify this works ...
+        Event.emit(Event.NewVideo);
       }
 
       if (!promptId) return;
@@ -58,12 +62,18 @@ export namespace SocketServer {
         return;
       }
 
+      // trigger next video
       for (const output of Object.values(historyNode.outputs)) {
         const out = output as any;
         if (!out.images) continue;
 
-        // TODO apparently this is also video so filter out videos, sigh what bad api design...
         for (const image of out.images) {
+          // TODO apparently this is also video so filter out videos, sigh what bad api design...
+          if (image.subfolder === "video") {
+            console.warn("Image of type video...");
+            continue;
+          }
+
           Event.emit(Event.NewImagePrompt, {
             ...image,
             kind: image.type,

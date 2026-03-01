@@ -5,7 +5,7 @@ import assert from "node:assert";
 
 export async function job() {
   // TODO get the these from query parameters
-  const prompt = "A random scene from the bible";
+  const prompt = "A sermon about the parable of the Sower.";
   const batchSize = 1;
 
   // TODO low level api -> move to different api endpoint
@@ -15,14 +15,15 @@ export async function job() {
   const jobId = Bun.randomUUIDv7();
 
   const jobs = Array.from({ length: batchSize }, async () => {
-    // const text = PromptGenerator.script_prompt(prompt);
-    // const content = await TextGenerator.create_script(jobId, text);
-    // assert(content, "Content is missing!");
+    const text = PromptGenerator.script_prompt(prompt);
+    const content = await TextGenerator.create_script(jobId, text);
+    assert(content, "Content is missing!");
 
     await PromptGenerator.image_scene_prompts(
       jobId,
-      "The story ended so it does not matter.",
-      1,
+      content,
+      // TODO calculate length using AudioGenerator -> TTS
+      10,
       Presets.WATERCOLOR,
     );
   });
