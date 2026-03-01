@@ -5,7 +5,7 @@ import { TextGenerator } from "../text/text-generator";
 export async function job() {
   // TODO get the these from query parameters
   const prompt = "A random scene from the bible";
-  const batchSize = 1;
+  const batchSize = 3;
 
   // TODO low level api -> move to different api endpoint
   // PromptGenerator.txt_to_img_prompt(prompt, batchSize, Presets.WATERCOLOR);
