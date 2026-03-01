@@ -1,6 +1,7 @@
 import { Event } from "../events/events";
 import { LLM } from "../llm/llm";
 import { comfyClient } from "../comfyui";
+import { Presets, StylePresets } from "../styles/presets";
 
 export namespace PromptGenerator {
   export function init() {
@@ -14,12 +15,22 @@ export namespace PromptGenerator {
     }
   }
 
-  export async function txt_to_img_prompt(content: string, count = 1) {
-    for (let i = 0; i < count; i++) {
-      LLM.message(`Create an excellent image prompt for: ${content}`)
+  export async function txt_to_img_prompt(
+    message: string,
+    batchSize = 1,
+    preset?: Presets,
+  ) {
+    const instructions = preset
+      ? StylePresets.presets[preset]({ title: message })
+      : message;
+
+    for (let i = 0; i < batchSize; i++) {
+      LLM.message(
+        `Create an excellent image prompt based on these instructions: ${instructions}`,
+      )
         .then(async (res) => {
           if (res === null || !res.content || res.content.trim() === "") return;
-          const prompt = res.content.trim();
+          let prompt = res.content.trim();
 
           Event.emit(Event.NewTextPrompt, {
             id: Bun.randomUUIDv7(),
