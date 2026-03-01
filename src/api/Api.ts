@@ -2,7 +2,7 @@ import { health } from "./health";
 import { job } from "./job";
 import { not_found } from "./void";
 
-export namespace Server {
+export namespace ApiServer {
   let server: Bun.Server<undefined>;
 
   export function start() {

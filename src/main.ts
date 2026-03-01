@@ -1,13 +1,17 @@
-import { Server } from "./api/Api";
-import { Event } from "./events/events";
+import { ApiServer } from "./api/Api";
 import { ImageGenerator } from "./images/image-generator";
-import { comfyClient } from "./comfyui";
 import { PromptGenerator } from "./prompts/prompt-generator";
-import assert from "node:assert";
+import { SocketServer } from "./socket/socket-server";
 
 // AudioGenerator
 // - can generate TTS voiceover
 // - can generate background instrumental based on metadata length
+// ArtStyle
+// - responsible for providing the art style of the generated slop
+// - can be provided as api query parameter to the job
+// - will be used by the PromptGenerator
+// SocketServer
+// - Defines instance and event listeners for the socket server
 // TextGenerator
 // - generate a video script
 // VideoGenerator
@@ -18,82 +22,19 @@ import assert from "node:assert";
 // - uses length of audio file to determine video length in seconds
 // - defines seconds per image, transition
 // - defines video transcript / captions to be pot. used
-// REST api
-// - call TextGenerator
-// - can call PromptGenerator.txt_to_img_prompt
 // JobOrchestrator
 // - subscribed to all relevant events related to a job
 // - keeps track of a job's progress / state via SQLite database by job id
 
-let queue = 0;
 async function main() {
   ImageGenerator.init();
   PromptGenerator.init();
-  Server.start();
-
-  const clientId = Bun.randomUUIDv7();
-  console.log(clientId);
-  const ws = new WebSocket(`ws://127.0.0.1:8188/ws?clientId=${clientId}`);
-
-  let promptId;
-  ws.addEventListener("message", async (event) => {
-    const msg = JSON.parse(event.data);
-    if (msg.type === "progress_state") {
-      assert(
-        msg.data.prompt_id,
-        "progress_state without prompt_id encountered",
-      );
-      promptId = msg.data.prompt_id;
-    }
-
-    if (msg.type === "progress") {
-      console.log(`step: ${msg.data.value}/${msg.data.value}`);
-    }
-
-    // for the video prompt
-    if (msg.type === "status") {
-      queue = msg.data?.status?.exec_info?.queue_remaining;
-      console.log(`remaining: ${queue}`);
-
-      if (msg.data?.status?.exec_info?.queue_remaining === 0) {
-        Event.emit(Event.NewImage);
-      }
-
-      if (promptId && msg.data?.status?.exec_info?.queue_remaining === 0) {
-        const history = await comfyClient.getHistory(promptId);
-        const historyNode = history[promptId];
-
-        for (const output of Object.values(historyNode?.outputs)) {
-          const out = output as any;
-          if (!out.images) continue;
-
-          for (const image of out.images) {
-            Event.emit(Event.NewImagePrompt, {
-              ...image,
-              kind: image.type,
-              type: Event.NewImagePrompt,
-            });
-          }
-        }
-      }
-    }
-  });
-
-  ws.addEventListener("error", (error) => {
-    console.log(error);
-  });
-
-  ws.addEventListener("open", () => {
-    console.log("client connected");
-  });
-
-  ws.addEventListener("close", () => {
-    console.log("client disconnected");
-  });
+  ApiServer.start();
+  SocketServer.start();
 
   process.on("SIGINT", () => {
-    ws.close();
-    Server.stop();
+    SocketServer.stop();
+    ApiServer.stop();
     process.exit(1);
   });
 }
