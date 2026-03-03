@@ -1,33 +1,28 @@
-import { Event, Events } from "../events/events";
-import { comfyClient } from "../comfyui";
+import { Event, TextPromptEvent } from "../events/events";
+import { comfyClient } from "../comfyui/comfyui-client";
 import assert from "node:assert";
+import { QueueManager } from "../queue/queue-manager";
 
 export namespace ImageGenerator {
-  const queue: Events = [];
+  const queue: TextPromptEvent[] = [];
 
   export function init() {
-    process_events();
-    generate_image();
-  }
-
-  function process_events() {
     Event.on(Event.NewTextPrompt, (event) => {
       queue.push(event);
+      generate_image();
     });
   }
 
-  function generate_image() {
-    Event.on(Event.NewImage, async () => {
-      if (queue.length <= 0) return;
+  export function generate_image() {
+    if (queue.length <= 0 || QueueManager.comfyQueueCounter > 0) {
+      console.log("Queue conditions not met - skipping image generation");
+      return;
+    }
 
-      const item = queue.shift();
-      assert(
-        item && item.type === Event.NewTextPrompt,
-        "Incorrect event type!",
-      );
+    const item = queue.shift();
+    assert(item && item.type === Event.NewTextPrompt, "Incorrect event type!");
 
-      const { prompt } = item;
-      await comfyClient.generate({ kind: "text-to-image", prompt });
-    });
+    const { prompt, id } = item;
+    void comfyClient.generate({ id, kind: "text-to-image", prompt });
   }
 }

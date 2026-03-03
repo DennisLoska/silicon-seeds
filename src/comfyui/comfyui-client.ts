@@ -1,13 +1,17 @@
+import { Metadata } from "../meta/meta";
 import zImageTurboApi from "./api/image_z_image_turbo_12_steps_720p.json";
 import wan2_2_img2vidApi from "./api/video_wan2_2_14B_i2v_720p_5s.json";
 import wan2_2_img2vidWorkflow from "./workflows/video_wan2_2_14B_i2v_720p_5s.json";
+import assert from "node:assert";
 
 type Text2ImgInput = {
+  id: string;
   kind: "text-to-image";
   prompt: string;
 };
 
 type Img2VidInput = {
+  id: string;
   kind: "image-to-video";
   imagePath: string;
   prompt: string;
@@ -15,6 +19,11 @@ type Img2VidInput = {
 
 const OUTPUT_DIR = Bun.env.OUTPUT_DIR;
 const INPUT_DIR = Bun.env.INPUT_DIR;
+const COMFYUI_BASE_URL = Bun.env.COMFYUI_BASE_URL;
+assert(
+  OUTPUT_DIR && INPUT_DIR && COMFYUI_BASE_URL,
+  "ComfyUI env. variables not configured!",
+);
 
 export type WorkflowInput = Text2ImgInput | Img2VidInput;
 
@@ -66,6 +75,50 @@ export class ComfyUIClient {
     return response.json();
   }
 
+  async getImageOutput(promptId: string): Promise<{
+    filename: string;
+    subfolder: string;
+    kind: "input" | "output" | "temp";
+  } | null> {
+    const history = await comfyClient.getHistory(promptId);
+    const historyNode = history[promptId];
+    if (!historyNode?.outputs) {
+      console.warn("Undefined history node (fix this)\n");
+      return null;
+    }
+
+    const images: {
+      filename: string;
+      subfolder: string;
+      kind: "input" | "output" | "temp";
+    }[] = [];
+    for (const output of Object.values(historyNode.outputs)) {
+      const out = output as any;
+      const items = out.images;
+      if (!items) continue;
+      assert(items.length === 1, "ComfyUI job should have exactly one item.");
+      const [image] = items;
+
+      if (image.subfolder === "video") {
+        console.warn("Image of type video...");
+        continue;
+      }
+
+      images.push({
+        filename: image.filename,
+        subfolder: image.subfolder,
+        kind: image.type,
+      });
+
+      assert(
+        images.length === 1,
+        "There should be only one image per ComfyUI job",
+      );
+    }
+
+    return images[0];
+  }
+
   async getImage(
     filename: string,
     subfolder: string,
@@ -87,10 +140,18 @@ export class ComfyUIClient {
   }
 
   private buildBody(input: WorkflowInput, api: Record<string, unknown>) {
+    // This is super important and nowhere documented in ComfyUI :(
+    // Without this you won't see all the websocket events...
+    const clientId = Metadata.clientId;
+
+    const base = {
+      prompt: api,
+      prompt_id: input.id,
+      client_id: clientId,
+    };
+
     if (input.kind === "text-to-image") {
-      return JSON.stringify({
-        prompt: api,
-      });
+      return JSON.stringify(base);
     }
 
     if (input.kind === "image-to-video") {
@@ -99,7 +160,7 @@ export class ComfyUIClient {
       // workflow["97"].inputs.image = input.imagePath;
 
       return JSON.stringify({
-        prompt: api,
+        ...base,
         extra_data: {
           extra_pnginfo: workflow,
         },
@@ -138,5 +199,5 @@ export class ComfyUIClient {
 }
 
 export const comfyClient = new ComfyUIClient({
-  baseUrl: "http://127.0.0.1:8188",
+  baseUrl: COMFYUI_BASE_URL,
 });

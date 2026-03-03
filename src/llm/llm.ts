@@ -2,11 +2,13 @@ import { FileHandle, LMStudioClient } from "@lmstudio/sdk";
 
 const llmClient = new LMStudioClient();
 let llm = await llmClient.llm.model("qwen/qwen3-vl-30b");
+// TODO finetune the new model:
+// let llm = await llmClient.llm.model("qwen/qwen3.5-35b-a3b");
 
 export namespace LLM {
   export const client = llmClient;
 
-  // TODO use the system prompt
+  // TODO move it to image generator because we want to create scripts as well
   const system = `You are a prompt engineer expert. Your only task is to create either high quality image prompts
 or high quality video prompts based on the user's request - nothing more!
 If the user provides you an actual image he wants you to create a prompt for a video so you should take the scene

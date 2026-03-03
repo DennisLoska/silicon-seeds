@@ -1,20 +1,9 @@
 import { Event } from "../events/events";
 import { LLM } from "../llm/llm";
-import { comfyClient } from "../comfyui";
+import { comfyClient } from "../comfyui/comfyui-client";
 import { Presets, StylePresets } from "../styles/presets";
 
 export namespace PromptGenerator {
-  export function init() {
-    img_to_vid_prompt();
-  }
-
-  async function jump_start(emitter: () => void) {
-    const queue = await comfyClient.getQueue();
-    if (queue.queue_running.length === 0 && queue.queue_pending.length === 0) {
-      emitter();
-    }
-  }
-
   export async function txt_to_img_prompt(
     jobId: string,
     message: string,
@@ -39,14 +28,6 @@ export namespace PromptGenerator {
             type: Event.NewTextPrompt,
             prompt,
           });
-
-          await jump_start(() => {
-            Event.emit(Event.NewImage, {
-              id: Bun.randomUUIDv7(),
-              jobId,
-              type: Event.NewImage,
-            });
-          });
         })
         .catch((error) => {
           console.log(error);
@@ -54,46 +35,37 @@ export namespace PromptGenerator {
     }
   }
 
-  export function img_to_vid_prompt() {
-    Event.on(Event.NewImagePrompt, async (event) => {
-      // TODO add condition somewhere whether user actually wants video or not
+  export async function img_to_vid_prompt(promptId: string) {
+    const res = await comfyClient.getImageOutput(promptId);
+    if (res === null) {
+      console.log("Failed to fetch image location for video prompt");
+      return;
+    }
 
-      const { filename, subfolder, kind } = event;
-      const img = await comfyClient.getImage(filename, subfolder, kind);
+    const { filename, subfolder, kind } = res;
+    const img = await comfyClient.getImage(filename, subfolder, kind);
+    const buffer = await img.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
 
-      const buffer = await img.arrayBuffer();
-      const base64 = Buffer.from(buffer).toString("base64");
+    try {
+      const image = await LLM.client.files.prepareImageBase64(filename, base64);
 
-      try {
-        const image = await LLM.client.files.prepareImageBase64(
-          filename,
-          base64,
-        );
+      const res = await LLM.message(
+        "Generate a detailed video generation prompt for a 5 second long video based on the content of the image",
+        [image],
+      );
 
-        const res = await LLM.message(
-          "Generate a detailed video generation prompt for a 5 second long video based on the content of the image",
-          [image],
-        );
-
-        Event.emit(Event.NewVideoPrompt, {
-          id: Bun.randomUUIDv7(),
-          type: Event.NewVideoPrompt,
-          jobId: "TODO",
-          prompt: res.content,
-          filename,
-        });
-
-        await jump_start(() => {
-          Event.emit(Event.NewVideo, {
-            id: Bun.randomUUIDv7(),
-            type: Event.NewVideo,
-            jobId: "TODO",
-          });
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    });
+      Event.emit(Event.NewVideoPrompt, {
+        id: Bun.randomUUIDv7(),
+        type: Event.NewVideoPrompt,
+        // Can get this from QueueManager via 1:n relationship between promptId and jobId
+        jobId: "TODO",
+        prompt: res.content,
+        filename,
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   export function script_prompt(description: string) {
@@ -125,7 +97,7 @@ Make sure to return a json array with each prompt being an item of the array.
 `;
 
     const res = await LLM.message(instructions);
-    const scenes = JSON.parse(res?.content ?? "DEBUG");
+    const scenes = JSON.parse(res?.content ?? "TODO FIX THIS");
     if (!Array.isArray(scenes)) return null;
 
     for (const scene of scenes) {

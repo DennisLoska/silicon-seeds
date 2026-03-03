@@ -1,15 +1,13 @@
-import { comfyClient } from "../comfyui";
-import { Event } from "../events/events";
-import assert from "node:assert";
+import { ImageGenerator } from "../image/image-generator";
+import { Metadata } from "../meta/meta";
+import { PromptGenerator } from "../prompts/prompt-generator";
+import { QueueManager } from "../queue/queue-manager";
 
 export namespace SocketServer {
   let ws: WebSocket;
 
-  export function start(clientId = Bun.randomUUIDv7()) {
-    // should be passed from job endpoint
-    console.log(clientId);
-
-    ws = new WebSocket(`ws://127.0.0.1:8188/ws?clientId=${clientId}`);
+  export function start() {
+    ws = new WebSocket(`ws://127.0.0.1:8188/ws?clientId=${Metadata.clientId}`);
 
     ws.addEventListener("message", message);
     ws.addEventListener("error", error);
@@ -21,65 +19,34 @@ export namespace SocketServer {
     ws.close();
   }
 
-  let promptId;
   async function message(event: MessageEvent) {
-    let queue = 0;
-
     const msg = JSON.parse(event.data);
-    if (msg.type === "progress_state") {
-      assert(
-        msg.data.prompt_id,
-        "progress_state without prompt_id encountered",
-      );
-      promptId = msg.data.prompt_id;
-    }
 
     if (msg.type === "progress") {
-      console.log(`step: ${msg.data.value}/${msg.data.max}`);
+      console.log(`Progress: ${msg.data.value}/${msg.data.max}`);
     }
 
-    // for the video prompt - how to get the actual job id here from job endpoint?
     if (msg.type === "status") {
-      console.log(msg.data.exec_info);
-      queue = msg.data?.status?.exec_info?.queue_remaining;
-      console.log(`jobs remaining: ${queue}`);
+      QueueManager.comfyQueueCounter =
+        msg.data?.status?.exec_info?.queue_remaining;
+      console.log(`Jobs in ComfyUI queue: ${QueueManager.comfyQueueCounter}\n`);
+    }
 
-      // trigger next image or video
-      if (msg.data?.status?.exec_info?.queue_remaining === 0) {
-        Event.emit(Event.NewImage);
+    if (msg.type === "execution_success") {
+      const { prompt_id: promptId } = msg.data;
 
-        // TODO verify this works ...
-        Event.emit(Event.NewVideo);
+      // TODO refactor this and get the values from the emitted events:
+      // api/job/x -> emit event in PromptGenerator -> check event here using
+      // promptId to verify which job it is: image, video, script, n, ...
+      const wantImage = true;
+      const wantVideo = false;
+      if (wantImage) {
+        ImageGenerator.generate_image();
       }
 
-      if (!promptId) return;
-
-      const history = await comfyClient.getHistory(promptId);
-      const historyNode = history[promptId];
-
-      if (!historyNode?.outputs) {
-        console.warn("Undefined history node (fix this)");
-        return;
-      }
-
-      // trigger next video
-      for (const output of Object.values(historyNode.outputs)) {
-        const out = output as any;
-        if (!out.images) continue;
-
-        for (const image of out.images) {
-          // TODO apparently this is also video so filter out videos, sigh what bad api design...
-          if (image.subfolder === "video") {
-            console.warn("Image of type video...");
-            continue;
-          }
-
-          Event.emit(Event.NewImagePrompt, {
-            ...image,
-            kind: image.type,
-            type: Event.NewImagePrompt,
-          });
-        }
+      if (wantVideo) {
+        // TODO free VRAM from image models first to improve performance
+        PromptGenerator.img_to_vid_prompt(promptId);
       }
     }
   }
@@ -89,10 +56,12 @@ export namespace SocketServer {
   }
 
   function open() {
-    console.log("client connected");
+    console.log(
+      `Socket with client id ${Metadata.clientId} connected to ComfyUI\n`,
+    );
   }
 
   function close() {
-    console.log("client disconnected");
+    console.log("Connection closed\n");
   }
 }

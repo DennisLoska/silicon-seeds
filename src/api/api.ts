@@ -1,5 +1,6 @@
 import { health } from "./health";
-import { job } from "./job";
+import { text_to_image } from "./jobs/text-to-image";
+import { text_to_text } from "./jobs/text-to-text";
 import { not_found } from "./void";
 
 export namespace ApiServer {
@@ -11,7 +12,8 @@ export namespace ApiServer {
       idleTimeout: 60,
       routes: {
         "/api/health": Api.handlers.health,
-        "/api/job": Api.handlers.job,
+        "/api/jobs/images": Api.handlers.text_to_image,
+        "/api/jobs/scripts": Api.handlers.text_to_text,
       },
       fetch: Api.handlers.not_found,
     });
@@ -26,6 +28,7 @@ namespace Api {
   export const handlers = {
     health,
     not_found,
-    job,
+    text_to_text,
+    text_to_image,
   };
 }
