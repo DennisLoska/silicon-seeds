@@ -29,12 +29,14 @@ export namespace SocketServer {
     if (msg.type === "status") {
       QueueManager.comfyQueueCounter =
         msg.data?.status?.exec_info?.queue_remaining;
-      console.log(`Jobs in ComfyUI queue: ${QueueManager.comfyQueueCounter}\n`);
+      console.log(`Jobs in ComfyUI queue: ${QueueManager.comfyQueueCounter}`);
+      console.log("Image queue: ", ImageGenerator.queue.length);
     }
 
     if (msg.type === "execution_success") {
       const { prompt_id: promptId } = msg.data;
 
+      QueueManager.comfyQueueCounter--;
       // TODO refactor this and get the values from the emitted events:
       // api/job/x -> emit event in PromptGenerator -> check event here using
       // promptId to verify which job it is: image, video, script, n, ...

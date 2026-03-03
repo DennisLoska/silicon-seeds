@@ -4,7 +4,7 @@ import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
 
 export namespace ImageGenerator {
-  const queue: TextPromptEvent[] = [];
+  export const queue: TextPromptEvent[] = [];
 
   export function init() {
     Event.on(Event.NewTextPrompt, (event) => {
@@ -15,7 +15,6 @@ export namespace ImageGenerator {
 
   export function generate_image() {
     if (queue.length <= 0 || QueueManager.comfyQueueCounter > 0) {
-      console.log("Queue conditions not met - skipping image generation");
       return;
     }
 
