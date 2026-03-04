@@ -1,8 +1,15 @@
 import EventEmitter from "node:events";
 
+export enum JobMode {
+  Text = "text",
+  Image = "image",
+  Video = "video",
+}
+
 interface BaseEvent {
   id: string;
   jobId: string;
+  mode: JobMode;
 }
 
 export interface TextPromptEvent extends BaseEvent {

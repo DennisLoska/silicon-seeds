@@ -1,4 +1,4 @@
-import { Event } from "../events/events";
+import { Event, JobMode } from "../events/events";
 import { LLM } from "../llm/llm";
 import { comfyClient } from "../comfyui/comfyui-client";
 import { Presets, StylePresets } from "../styles/presets";
@@ -25,6 +25,7 @@ export namespace PromptGenerator {
           Event.emit(Event.NewTextPrompt, {
             id: Bun.randomUUIDv7(),
             jobId,
+            mode: JobMode.Image,
             type: Event.NewTextPrompt,
             prompt,
           });
@@ -60,6 +61,7 @@ export namespace PromptGenerator {
         type: Event.NewVideoPrompt,
         // Can get this from QueueManager via 1:n relationship between promptId and jobId
         jobId: "TODO",
+        mode: JobMode.Video,
         prompt: res.content,
         filename,
       });
