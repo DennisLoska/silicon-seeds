@@ -1,7 +1,9 @@
+import { JobMode } from "../events/events";
 import { ImageGenerator } from "../image/image-generator";
 import { Metadata } from "../meta/meta";
 import { PromptGenerator } from "../prompts/prompt-generator";
 import { QueueManager } from "../queue/queue-manager";
+import assert from "node:assert";
 
 export namespace SocketServer {
   let ws: WebSocket;
@@ -30,7 +32,7 @@ export namespace SocketServer {
       QueueManager.comfyQueueCounter =
         msg.data?.status?.exec_info?.queue_remaining;
       console.log(`Jobs in ComfyUI queue: ${QueueManager.comfyQueueCounter}`);
-      console.log("Image queue: ", ImageGenerator.queue.length);
+      console.log("Image queue: ", QueueManager.imageQueue.length);
     }
 
     if (msg.type === "execution_success") {
@@ -40,13 +42,14 @@ export namespace SocketServer {
       // TODO refactor this and get the values from the emitted events:
       // api/job/x -> emit event in PromptGenerator -> check event here using
       // promptId to verify which job it is: image, video, script, n, ...
-      const wantImage = true;
-      const wantVideo = false;
-      if (wantImage) {
+      const event = QueueManager.findEventById(promptId);
+      assert(event, "Event is missing");
+
+      if (event.mode === JobMode.Image) {
         ImageGenerator.generate_image();
       }
 
-      if (wantVideo) {
+      if (event.mode === JobMode.Video) {
         // TODO free VRAM from image models first to improve performance
         PromptGenerator.img_to_vid_prompt(promptId);
       }
