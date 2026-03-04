@@ -45,6 +45,9 @@ export namespace SocketServer {
         ImageGenerator.generate_image();
       }
 
+      // TODO Need two modes actually:
+      // - text to video
+      // - image to video
       if (event.mode === JobMode.Video) {
         // TODO free VRAM from image models first to improve performance
         PromptGenerator.img_to_vid_prompt(promptId);

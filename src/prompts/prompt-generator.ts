@@ -59,7 +59,6 @@ export namespace PromptGenerator {
       Event.emit(Event.NewVideoPrompt, {
         id: Bun.randomUUIDv7(),
         type: Event.NewVideoPrompt,
-        // Can get this from QueueManager via 1:n relationship between promptId and jobId
         jobId: "TODO",
         mode: JobMode.Video,
         prompt: res.content,

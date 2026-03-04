@@ -17,6 +17,8 @@ export namespace ApiServer {
         "/api/jobs/images": Api.handlers.text_to_image,
         "/api/jobs/scripts": Api.handlers.text_to_script,
         "/api/jobs/scenes": Api.handlers.script_to_scenes,
+        // TODO text to video
+        // TODO image to video
         "/api/message": Api.handlers.text_to_text,
       },
       fetch: Api.handlers.not_found,
