@@ -12,19 +12,12 @@ interface BaseEvent {
   mode: JobMode;
 }
 
-export interface TextPromptEvent extends BaseEvent {
+export interface ImagePromptEvent extends BaseEvent {
   prompt: string;
-  type: Event.NewTextPrompt;
-}
-
-interface ImagePromptEvent extends BaseEvent {
-  filename: string;
-  subfolder: string;
-  kind: "input" | "output" | "temp";
   type: Event.NewImagePrompt;
 }
 
-interface VideoPromptEvent extends BaseEvent {
+export interface VideoPromptEvent extends BaseEvent {
   id: string;
   jobId: string;
   prompt: string;
@@ -33,13 +26,11 @@ interface VideoPromptEvent extends BaseEvent {
 }
 
 export enum Event {
-  NewTextPrompt = "new_text_prompt",
   NewImagePrompt = "new_image_prompt",
   NewVideoPrompt = "new_video_prompt",
 }
 
 type EventMap = {
-  [Event.NewTextPrompt]: TextPromptEvent;
   [Event.NewImagePrompt]: ImagePromptEvent;
   [Event.NewVideoPrompt]: VideoPromptEvent;
 };
@@ -68,13 +59,6 @@ export namespace Event {
     if (payload) events.emit(event, ...payload);
     else events.emit(event);
   }
-
-  on(Event.NewTextPrompt, (event) => {
-    console.log("");
-    console.log("========================");
-    console.log("Event:", Event.NewTextPrompt);
-    console.log(event);
-  });
 
   on(Event.NewImagePrompt, (event) => {
     console.log("");

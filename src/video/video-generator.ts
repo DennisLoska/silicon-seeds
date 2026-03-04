@@ -1,22 +1,21 @@
 import { comfyClient } from "../comfyui/comfyui-client";
-import { Event, Events } from "../events/events";
+import { Event } from "../events/events";
 import assert from "node:assert";
+import { QueueManager } from "../queue/queue-manager";
 
 export namespace VideoGenerator {
-  const queue: Events = [];
-
   export function init() {
     Event.on(Event.NewVideoPrompt, (event) => {
-      queue.push(event);
+      QueueManager.videoQueue.push(event);
       generate_video();
     });
   }
 
   async function generate_video() {
-    if (queue.length <= 0) return;
+    if (QueueManager.isVideoQueueBlocked()) return;
 
-    const item = queue.shift();
-    assert(item && item.type === Event.NewVideoPrompt, "Incorrect event type!");
+    const item = QueueManager.pop("video");
+    assert(item.type === Event.NewVideoPrompt, "Incorrect event type!");
 
     const { id, prompt } = item;
 

@@ -22,11 +22,11 @@ export namespace PromptGenerator {
           if (res === null || !res.content || res.content.trim() === "") return;
           let prompt = res.content.trim();
 
-          Event.emit(Event.NewTextPrompt, {
+          Event.emit(Event.NewImagePrompt, {
             id: Bun.randomUUIDv7(),
             jobId,
             mode: JobMode.Image,
-            type: Event.NewTextPrompt,
+            type: Event.NewImagePrompt,
             prompt,
           });
         })
