@@ -47,7 +47,7 @@ async function main() {
   VideoGenerator.init();
 
   ApiServer.start();
-  SocketServer.start();
+  await SocketServer.start();
 
   process.on("SIGINT", () => {
     SocketServer.stop();

@@ -1,12 +1,11 @@
-import { PromptGenerator } from "../../prompts/prompt-generator";
 import { TextGenerator } from "../../text/text-generator";
 
 export async function text_to_script() {
   // TODO get these from query parameters
-  const prompt = "A sermon about the parable of the Sower.";
+  const prompt =
+    "The symbolism of baptism, creation, the void, the flood, a new creation and how they all are connected.";
 
-  const text = PromptGenerator.script_prompt(prompt);
-  const res = await TextGenerator.create_script(text);
+  const res = await TextGenerator.create_script(prompt);
 
   if (res === null) {
     return new Response(JSON.stringify({ message: "Computer says no" }), {
@@ -14,5 +13,9 @@ export async function text_to_script() {
     });
   }
 
+  await Bun.write(
+    `/home/dennis/work/silicon-seeds/content/scripts/${Bun.randomUUIDv7()}.md`,
+    res,
+  );
   return new Response(JSON.stringify({ message: res }));
 }

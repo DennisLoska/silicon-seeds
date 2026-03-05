@@ -11,7 +11,7 @@ export namespace VideoGenerator {
     });
   }
 
-  async function generate_video() {
+  export function generate_video() {
     if (QueueManager.isVideoQueueBlocked()) return;
 
     const item = QueueManager.pop("video");

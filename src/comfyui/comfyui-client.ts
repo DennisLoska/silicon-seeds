@@ -136,6 +136,31 @@ export class ComfyUIClient {
     return response.blob();
   }
 
+  async free_memory(
+    unloadModels: boolean,
+    freeMemory: boolean,
+  ): Promise<boolean> {
+    const payload = { unload_models: unloadModels, free_memory: freeMemory };
+
+    try {
+      const res = await fetch(`${this.baseUrl}/free`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        console.log("freeMemory", "Free memory failed", res);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.log("freeMemory", "Free memory failed", error);
+      return false;
+    }
+  }
+
   private buildBody(input: WorkflowInput, api: Record<string, unknown>) {
     // This is super important and nowhere documented in ComfyUI :(
     // Without this you won't see all the websocket events...
@@ -171,11 +196,13 @@ export class ComfyUIClient {
     if (input.kind === "image-to-video") {
       api = wan2_2_img2vidApi;
       api["93"].inputs.text = input.prompt;
+      api["108"].inputs.filename_prefix = input.id;
       api["97"].inputs.image = input.imagePath;
     }
 
     if (input.kind === "text-to-image") {
       api = zImageTurboApi;
+      api["9"].inputs.filename_prefix = input.id;
       api["57:27"].inputs.text = input.prompt;
     }
 

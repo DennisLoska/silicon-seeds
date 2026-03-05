@@ -4,7 +4,8 @@ import { Presets } from "../../styles/presets";
 
 export async function text_to_image() {
   // TODO get the these from query parameters
-  const prompt = "A sermon about the parable of the Sower.";
+  const prompt =
+    "epic surreal landscape, lightrays, fractals, nature, meaningful, wide, ancient, desert, ocean, mountains, ether, void, spirit, wind, stars, universe, gothic, wonderland, solitude, calm, peace, beautiful, no people";
   const batchSize = 3;
 
   const jobId = Bun.randomUUIDv7();

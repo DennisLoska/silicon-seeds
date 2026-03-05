@@ -1,20 +1,25 @@
-import { JobMode } from "../events/events";
 import { ImageGenerator } from "../image/image-generator";
 import { Metadata } from "../meta/meta";
 import { PromptGenerator } from "../prompts/prompt-generator";
 import { QueueManager } from "../queue/queue-manager";
 import assert from "node:assert";
+import { VideoGenerator } from "../video/video-generator";
+import { comfyClient } from "../comfyui/comfyui-client";
+import { ImagePromptEvent, JobMode, VideoPromptEvent } from "../events/events";
 
 export namespace SocketServer {
   let ws: WebSocket;
+  let currentEvent: ImagePromptEvent | VideoPromptEvent;
 
-  export function start() {
+  export async function start() {
     ws = new WebSocket(`ws://127.0.0.1:8188/ws?clientId=${Metadata.clientId}`);
 
     ws.addEventListener("message", message);
     ws.addEventListener("error", error);
     ws.addEventListener("open", open);
     ws.addEventListener("close", close);
+
+    await comfyClient.free_memory(true, true);
   }
 
   export function stop() {
@@ -32,6 +37,13 @@ export namespace SocketServer {
       QueueManager.comfyQueue = msg.data?.status?.exec_info?.queue_remaining;
       console.log(`Jobs in ComfyUI queue: ${QueueManager.comfyQueue}`);
       console.log("Image queue: ", QueueManager.imageQueue.length);
+      console.log("Video queue: ", QueueManager.videoQueue.length);
+    }
+
+    if (msg.type === "execution_start") {
+      const { prompt_id: promptId } = msg.data;
+      const current = QueueManager.findEventById(promptId);
+      if (current) currentEvent = current;
     }
 
     if (msg.type === "execution_success") {
@@ -41,15 +53,21 @@ export namespace SocketServer {
       const event = QueueManager.findEventById(promptId);
       assert(event, "Event is missing");
 
-      if (event.mode === JobMode.Image) {
-        ImageGenerator.generate_image();
+      // better memory management
+      if (
+        (QueueManager.imageQueue.length === 0 &&
+          currentEvent.mode === JobMode.Image) ||
+        (QueueManager.videoQueue.length === 0 &&
+          currentEvent.mode === JobMode.Video)
+      ) {
+        await comfyClient.free_memory(true, true);
       }
 
-      // TODO Need two modes actually:
-      // - text to video
-      // - image to video
+      // always attempt to generate images or videos
+      ImageGenerator.generate_image();
+      VideoGenerator.generate_video();
+
       if (event.mode === JobMode.Video) {
-        // TODO free VRAM from image models first to improve performance
         PromptGenerator.img_to_vid_prompt(promptId);
       }
     }
