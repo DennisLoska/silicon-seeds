@@ -1,6 +1,7 @@
 import { health } from "./health";
 import { script_to_scenes } from "./jobs/script-to-scenes";
 import { text_to_image } from "./jobs/text-to-image";
+import { text_to_image_to_video } from "./jobs/text-to-image-to-video";
 import { text_to_script } from "./jobs/text-to-script";
 import { text_to_text } from "./jobs/text-to-text";
 import { not_found } from "./void";
@@ -14,12 +15,12 @@ export namespace ApiServer {
       idleTimeout: 60,
       routes: {
         "/api/health": Api.handlers.health,
+        "/api/message": Api.handlers.text_to_text,
         "/api/jobs/images": Api.handlers.text_to_image,
         "/api/jobs/scripts": Api.handlers.text_to_script,
         "/api/jobs/scenes": Api.handlers.script_to_scenes,
+        "/api/jobs/videos": Api.handlers.text_to_image_to_video,
         // TODO text to video
-        // TODO image to video
-        "/api/message": Api.handlers.text_to_text,
       },
       fetch: Api.handlers.not_found,
     });
@@ -38,5 +39,6 @@ namespace Api {
     text_to_script,
     text_to_image,
     script_to_scenes,
+    text_to_image_to_video,
   };
 }

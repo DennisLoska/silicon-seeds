@@ -2,10 +2,13 @@ import { Event, JobMode } from "../events/events";
 import { LLM } from "../llm/llm";
 import { comfyClient } from "../comfyui/comfyui-client";
 import { Presets, StylePresets } from "../styles/presets";
+import { QueueManager } from "../queue/queue-manager";
+import assert from "node:assert";
 
 export namespace PromptGenerator {
   export async function txt_to_img_prompt(
     jobId: string,
+    mode: JobMode = JobMode.Image,
     message: string,
     batchSize = 1,
     preset?: Presets,
@@ -25,7 +28,7 @@ export namespace PromptGenerator {
           Event.emit(Event.NewImagePrompt, {
             id: Bun.randomUUIDv7(),
             jobId,
-            mode: JobMode.Image,
+            mode,
             type: Event.NewImagePrompt,
             prompt,
           });
@@ -37,6 +40,14 @@ export namespace PromptGenerator {
   }
 
   export async function img_to_vid_prompt(promptId: string) {
+    const event = QueueManager.findEventById(promptId);
+    assert(
+      event,
+      "Unable to find associated event with image for image-to-video prompt.",
+    );
+
+    if (event.type === Event.NewVideoPrompt) return;
+
     const res = await comfyClient.getImageOutput(promptId);
     if (res === null) {
       console.log("Failed to fetch image location for video prompt");
@@ -52,14 +63,16 @@ export namespace PromptGenerator {
       const image = await LLM.client.files.prepareImageBase64(filename, base64);
 
       const res = await LLM.message(
-        "Generate a detailed video generation prompt for a 5 second long video based on the content of the image",
+        `Generate a detailed video generation prompt for a 5 second long video based on the content of the image.
+The video itself should be slow paced without any rapid movement as if time moves a bit slower.
+Also consider the original prompt which was used to generate the image for richer context: ${event.prompt}`,
         [image],
       );
 
       Event.emit(Event.NewVideoPrompt, {
         id: Bun.randomUUIDv7(),
         type: Event.NewVideoPrompt,
-        jobId: "TODO",
+        jobId: event.jobId,
         mode: JobMode.Video,
         prompt: res.content,
         filename,
@@ -81,6 +94,7 @@ Your response should only include the actual essay including it's title - nothin
 
   export async function image_scene_prompts(
     jobId: string,
+    mode: JobMode,
     text: string,
     amount: number,
     preset?: Presets,
@@ -103,8 +117,8 @@ Make sure to return a json array with each prompt being an item of the array.
 
     for (const scene of scenes) {
       preset
-        ? txt_to_img_prompt(jobId, scene, 1, preset)
-        : txt_to_img_prompt(jobId, scene, 1);
+        ? txt_to_img_prompt(jobId, mode, scene, 1, preset)
+        : txt_to_img_prompt(jobId, mode, scene, 1);
     }
   }
 }

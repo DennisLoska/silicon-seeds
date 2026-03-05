@@ -82,39 +82,36 @@ export class ComfyUIClient {
   } | null> {
     const history = await comfyClient.getHistory(promptId);
     const historyNode = history[promptId];
-    if (!historyNode?.outputs) {
-      console.warn("Undefined history node (fix this)\n");
-      return null;
-    }
 
     const images: {
       filename: string;
       subfolder: string;
       kind: "input" | "output" | "temp";
     }[] = [];
-    for (const output of Object.values(historyNode.outputs)) {
-      const out = output as any;
-      const items = out.images;
-      if (!items) continue;
-      assert(items.length === 1, "ComfyUI job should have exactly one item.");
-      const [image] = items;
 
-      if (image.subfolder === "video") {
-        console.warn("Image of type video...");
-        continue;
-      }
+    const outputs = Object.values(historyNode.outputs);
+    assert(
+      outputs.length === 1,
+      `ComfyUI job should have exactly one item in history, found: ${JSON.stringify(outputs)}`,
+    );
 
-      images.push({
-        filename: image.filename,
-        subfolder: image.subfolder,
-        kind: image.type,
-      });
+    const [output] = outputs as any;
+    const [image] = output.images;
+    assert(
+      image.subfolder === "",
+      `Expected 'subfolder' to be "" (empty), but found '${image.subfolder}'`,
+    );
 
-      assert(
-        images.length === 1,
-        "There should be only one image per ComfyUI job",
-      );
-    }
+    images.push({
+      filename: image.filename,
+      subfolder: image.subfolder,
+      kind: image.type,
+    });
+
+    assert(
+      images.length === 1,
+      "There should be only one image per ComfyUI job",
+    );
 
     return images[0];
   }
