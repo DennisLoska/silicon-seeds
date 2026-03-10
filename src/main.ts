@@ -5,6 +5,16 @@ import { VideoGenerator } from "./video/video-generator";
 
 // TODO list:
 //
+// Pipelines:
+// - script -> scenes -> images -> videos -> transitions -> ffmpeg
+//          -> tts -> video length -> amount of images with x transitions
+//          ->        video length -> PromptGenerator.instrumental_prompt -> instrumental
+//   combined_video, tts, instrumental -> final cut
+//
+// - script -> scenes -> find content in content library -> metadata
+// - captions? content library?
+// - Make sure images and videos are in correct order using the index
+//
 // AudioGenerator
 // - can generate TTS voiceover
 // - can generate background instrumental based on metadata length
@@ -12,20 +22,25 @@ import { VideoGenerator } from "./video/video-generator";
 // Api
 // - parameterize the art style, client id, batch size
 //
-// VideoGenerator
-// - if all images for a job are complete -> generate all the videos for them
-// - jobId association with correct base image (i2v)
+// Content Library
+// - Vector database for RAG
+// - Can pick matching content to find images or videos
+//
+// Workflows
+// - TTS workflow
+// - LTX workflow
+// - Image Transistion Workflow
+// - Video Transition Workflow
+// - Optimize WAN2.2 workflow
+// - 2K image workflow
+// - Add LoRA support
 //
 // Metadata
-// - receive video script as input
 // - calls AudioGenerator to create TTS audio file
 // - uses length of audio file to determine video length in seconds
 // - defines seconds per image, transition
 // - defines video transcript / captions to be pot. used
-//
-// QueueManager
-// - Move image and video queue here and make image priority
-// - decouple the different jobs so they don't trigger each other
+// - add metadata to generated videos and images (used prompt, prompt id, job id, index)
 //
 // JobOrchestrator (db integration)
 // - subscribed to all relevant events related to a job

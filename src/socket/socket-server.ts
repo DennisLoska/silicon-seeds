@@ -5,11 +5,11 @@ import { QueueManager } from "../queue/queue-manager";
 import assert from "node:assert";
 import { VideoGenerator } from "../video/video-generator";
 import { comfyClient } from "../comfyui/comfyui-client";
-import { ImagePromptEvent, JobMode, VideoPromptEvent } from "../events/events";
+import { JobEvent, JobMode } from "../events/events";
 
 export namespace SocketServer {
   let ws: WebSocket;
-  let currentEvent: ImagePromptEvent | VideoPromptEvent;
+  let currentEvent: JobEvent;
 
   export async function start() {
     ws = new WebSocket(`ws://127.0.0.1:8188/ws?clientId=${Metadata.clientId}`);
@@ -38,12 +38,18 @@ export namespace SocketServer {
       console.log(`Jobs in ComfyUI queue: ${QueueManager.comfyQueue}`);
       console.log("Image queue: ", QueueManager.imageQueue.length);
       console.log("Video queue: ", QueueManager.videoQueue.length);
+      console.log("Audio queue: ", QueueManager.audioQueue.length);
     }
 
     if (msg.type === "execution_start") {
       const { prompt_id: promptId } = msg.data;
       const current = QueueManager.findEventById(promptId);
       if (current) currentEvent = current;
+    }
+
+    if (msg.type === "executed") {
+      console.log("\n===executed===\n");
+      console.debug(JSON.stringify(msg.data));
     }
 
     if (msg.type === "execution_success") {

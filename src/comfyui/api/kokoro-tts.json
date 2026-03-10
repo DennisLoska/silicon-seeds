@@ -1,0 +1,36 @@
+{
+  "1": {
+    "inputs": {
+      "speaker_name": "bm_lewis"
+    },
+    "class_type": "KokoroSpeaker",
+    "_meta": {
+      "title": "Kokoro Speaker"
+    }
+  },
+  "2": {
+    "inputs": {
+      "text": "Repentance: A Journey of Transformation and Redemption",
+      "speed": 1,
+      "lang": "English",
+      "speaker": ["1", 0]
+    },
+    "class_type": "KokoroGenerator",
+    "_meta": {
+      "title": "Kokoro Generator"
+    }
+  },
+  "4": {
+    "inputs": {
+      "filename_prefix": "audio/ComfyUI",
+      "quality": "V0",
+      "audioUI": "/api/view?filename=ComfyUI_00031_.mp3&type=output&subfolder=audio&rand=0.8126096353309625",
+      "audio": ["2", 0]
+    },
+    "class_type": "SaveAudioMP3",
+    "_meta": {
+      "title": "Save Audio (MP3)"
+    }
+  }
+}
+

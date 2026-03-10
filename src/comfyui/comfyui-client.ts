@@ -2,6 +2,7 @@ import { Metadata } from "../meta/meta";
 import zImageTurboApi from "./api/image_z_image_turbo_12_steps_720p.json";
 import wan2_2_img2vidApi from "./api/video_wan2_2_14B_i2v_720p_5s.json";
 import wan2_2_img2vidWorkflow from "./workflows/video_wan2_2_14B_i2v_720p_5s.json";
+import kokoro_tts_api from "./api/kokoro-tts.json";
 import assert from "node:assert";
 
 type Text2ImgInput = {
@@ -17,6 +18,12 @@ type Img2VidInput = {
   prompt: string;
 };
 
+type Text2SpeechInput = {
+  id: string;
+  kind: "text-to-speech";
+  prompt: string;
+};
+
 const OUTPUT_DIR = Bun.env.OUTPUT_DIR;
 const INPUT_DIR = Bun.env.INPUT_DIR;
 const COMFYUI_BASE_URL = Bun.env.COMFYUI_BASE_URL;
@@ -25,7 +32,7 @@ assert(
   "ComfyUI env. variables not configured!",
 );
 
-export type WorkflowInput = Text2ImgInput | Img2VidInput;
+export type ModelVariant = Text2ImgInput | Img2VidInput | Text2SpeechInput;
 
 export class ComfyUIClient {
   private baseUrl: string;
@@ -34,7 +41,7 @@ export class ComfyUIClient {
     this.baseUrl = config.baseUrl;
   }
 
-  async generate(input: Text2ImgInput | Img2VidInput) {
+  async generate(input: ModelVariant) {
     const api = this.buildApi(input);
     const body = this.buildBody(input, api);
 
@@ -161,7 +168,7 @@ export class ComfyUIClient {
     }
   }
 
-  private buildBody(input: WorkflowInput, api: Record<string, unknown>) {
+  private buildBody(input: ModelVariant, api: Record<string, unknown>) {
     // This is super important and nowhere documented in ComfyUI :(
     // Without this you won't see all the websocket events...
     const clientId = Metadata.clientId;
@@ -172,7 +179,7 @@ export class ComfyUIClient {
       client_id: clientId,
     };
 
-    if (input.kind === "text-to-image") {
+    if (input.kind === "text-to-image" || input.kind === "text-to-speech") {
       return JSON.stringify(base);
     }
 
@@ -190,8 +197,15 @@ export class ComfyUIClient {
     }
   }
 
-  private buildApi(input: WorkflowInput): Record<string, unknown> {
+  private buildApi(input: ModelVariant): Record<string, unknown> {
+    // Better to raw dog the exported json workflows
     let api;
+
+    if (input.kind === "text-to-image") {
+      api = zImageTurboApi;
+      api["9"].inputs.filename_prefix = input.id;
+      api["57:27"].inputs.text = input.prompt;
+    }
 
     if (input.kind === "image-to-video") {
       api = wan2_2_img2vidApi;
@@ -200,16 +214,16 @@ export class ComfyUIClient {
       api["97"].inputs.image = input.imagePath;
     }
 
-    if (input.kind === "text-to-image") {
-      api = zImageTurboApi;
-      api["9"].inputs.filename_prefix = input.id;
-      api["57:27"].inputs.text = input.prompt;
+    if (input.kind === "text-to-speech") {
+      api = kokoro_tts_api;
+      api["2"].inputs.text = input.prompt;
+      // TODO add parameters for: speed, speaker_name
     }
 
     return api;
   }
 
-  private async prepareInput(input: WorkflowInput) {
+  private async prepareInput(input: ModelVariant) {
     if (input.kind === "text-to-image") return;
 
     if (input.kind === "image-to-video") {

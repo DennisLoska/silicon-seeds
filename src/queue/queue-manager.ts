@@ -1,4 +1,9 @@
-import { Events, ImagePromptEvent, VideoPromptEvent } from "../events/events";
+import {
+  AudioPromptEvent,
+  Events,
+  ImagePromptEvent,
+  VideoPromptEvent,
+} from "../events/events";
 import assert from "node:assert";
 
 export namespace QueueManager {
@@ -7,12 +12,21 @@ export namespace QueueManager {
   export const completed: Events = [];
   export const imageQueue: ImagePromptEvent[] = [];
   export const videoQueue: VideoPromptEvent[] = [];
+  export const audioQueue: AudioPromptEvent[] = [];
 
-  export function pop(type: "image" | "video") {
-    let item: ImagePromptEvent | VideoPromptEvent | undefined;
+  export function pop(type: "image" | "video" | "audio") {
+    let item:
+      | ImagePromptEvent
+      | VideoPromptEvent
+      | AudioPromptEvent
+      | undefined;
 
     if (type === "image") {
       item = imageQueue.shift();
+    }
+
+    if (type === "audio") {
+      item = audioQueue.shift();
     }
 
     if (type === "video") {
@@ -30,6 +44,10 @@ export namespace QueueManager {
 
   export function isImageQueueBlocked() {
     return imageQueue.length <= 0 || comfyQueue > 0;
+  }
+
+  export function isAudioQueueBlocked() {
+    return audioQueue.length <= 0 || comfyQueue > 1;
   }
 
   export function isVideoQueueBlocked() {
