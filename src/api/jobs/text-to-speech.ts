@@ -18,9 +18,12 @@ export async function text_to_speech() {
   ];
 
   const prompt = messages[Math.floor(Math.random() * messages.length)];
-
   const id = Metadata.randomId();
-  AudioGenerator.schedule_audio(id, prompt);
+
+  AudioGenerator.schedule_audio({
+    id,
+    prompt,
+  });
 
   try {
     const res = (await AudioGenerator.get_audio(id)) as any;

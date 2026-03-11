@@ -1,8 +1,9 @@
 import { Metadata } from "../meta/meta";
 import zImageTurboApi from "./api/image_z_image_turbo_12_steps_720p.json";
 import wan2_2_img2vidApi from "./api/video_wan2_2_14B_i2v_720p_5s.json";
-import wan2_2_img2vidWorkflow from "./workflows/video_wan2_2_14B_i2v_720p_5s.json";
+import ace_step_1_0_api from "./api/audio_ace_step_1_0_instrumental.json";
 import kokoro_tts_api from "./api/kokoro-tts.json";
+import wan2_2_img2vidWorkflow from "./workflows/video_wan2_2_14B_i2v_720p_5s.json";
 import assert from "node:assert";
 
 type Text2ImgInput = {
@@ -24,6 +25,19 @@ type Text2SpeechInput = {
   prompt: string;
 };
 
+type Text2Instrumental = {
+  id: string;
+  kind: "text-to-instrumental";
+  prompt?: string;
+  duration: number;
+};
+
+export type ModelVariant =
+  | Text2ImgInput
+  | Img2VidInput
+  | Text2SpeechInput
+  | Text2Instrumental;
+
 const OUTPUT_DIR = Bun.env.OUTPUT_DIR;
 const INPUT_DIR = Bun.env.INPUT_DIR;
 const COMFYUI_BASE_URL = Bun.env.COMFYUI_BASE_URL;
@@ -31,8 +45,6 @@ assert(
   OUTPUT_DIR && INPUT_DIR && COMFYUI_BASE_URL,
   "ComfyUI env. variables not configured!",
 );
-
-export type ModelVariant = Text2ImgInput | Img2VidInput | Text2SpeechInput;
 
 export class ComfyUIClient {
   private baseUrl: string;
@@ -172,16 +184,11 @@ export class ComfyUIClient {
     // This is super important and nowhere documented in ComfyUI :(
     // Without this you won't see all the websocket events...
     const clientId = Metadata.clientId;
-
     const base = {
       prompt: api,
       prompt_id: input.id,
       client_id: clientId,
     };
-
-    if (input.kind === "text-to-image" || input.kind === "text-to-speech") {
-      return JSON.stringify(base);
-    }
 
     if (input.kind === "image-to-video") {
       const workflow = wan2_2_img2vidWorkflow;
@@ -194,6 +201,8 @@ export class ComfyUIClient {
           extra_pnginfo: workflow,
         },
       });
+    } else {
+      return JSON.stringify(base);
     }
   }
 
@@ -218,6 +227,15 @@ export class ComfyUIClient {
       api = kokoro_tts_api;
       api["2"].inputs.text = input.prompt;
       // TODO add parameters for: speed, speaker_name
+    }
+
+    if (input.kind === "text-to-instrumental") {
+      api = ace_step_1_0_api;
+
+      if (input.prompt) {
+        api["14"].inputs.tags = input.prompt;
+      }
+      api["17"].inputs.seconds = input.duration;
     }
 
     return api;

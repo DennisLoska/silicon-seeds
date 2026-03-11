@@ -79,7 +79,7 @@ export namespace SocketServer {
       // always attempt to queue next items
       ImageGenerator.generate_image();
       VideoGenerator.generate_video();
-      AudioGenerator.generate_tts();
+      AudioGenerator.generate_audio();
 
       if (event.mode === JobMode.Video) {
         PromptGenerator.img_to_vid_prompt(promptId);

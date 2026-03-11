@@ -16,10 +16,6 @@ import { VideoGenerator } from "./video/video-generator";
 // - captions? content library?
 // - Make sure images and videos are in correct order using the index
 //
-// AudioGenerator
-// - can generate TTS voiceover
-// - can generate background instrumental based on metadata length
-//
 // Api
 // - parameterize the art style, client id, batch size
 //
@@ -37,8 +33,6 @@ import { VideoGenerator } from "./video/video-generator";
 // - Add LoRA support
 //
 // Metadata
-// - calls AudioGenerator to create TTS audio file
-// - uses length of audio file to determine video length in seconds
 // - defines seconds per image, transition
 // - defines video transcript / captions to be pot. used
 // - add metadata to generated videos and images (used prompt, prompt id, job id, index)

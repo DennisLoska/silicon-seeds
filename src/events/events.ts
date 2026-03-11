@@ -4,7 +4,8 @@ export enum JobMode {
   Text = "text",
   Image = "image",
   Video = "video",
-  Audio = "audio",
+  Speech = "speech",
+  Instrumental = "instrumental",
 }
 
 interface BaseEvent {
@@ -29,7 +30,8 @@ export interface ImagePromptEvent extends JobBaseEvent {
 }
 
 export interface AudioPromptEvent extends JobBaseEvent {
-  prompt: string;
+  prompt?: string;
+  duration?: number;
   type: Event.NewAudioPrompt;
 }
 

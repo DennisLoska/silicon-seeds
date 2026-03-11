@@ -7,35 +7,57 @@ export namespace AudioGenerator {
   export function init() {
     Event.on(Event.NewAudioPrompt, (event) => {
       QueueManager.audioQueue.push(event);
-      generate_tts();
+      generate_audio();
     });
   }
 
-  export function schedule_audio(id: string, prompt: string) {
+  export function schedule_audio({
+    id,
+    prompt,
+    duration,
+  }: {
+    id: string;
+    prompt?: string;
+    duration?: number;
+  }) {
     const event: AudioPromptEvent = {
       type: Event.NewAudioPrompt,
       id,
       jobId: id,
-      mode: JobMode.Audio,
+      mode: prompt ? JobMode.Speech : JobMode.Instrumental,
       prompt,
+      duration,
     };
 
     Event.emit(Event.NewAudioPrompt, event);
   }
 
-  export function generate_tts() {
+  export function generate_audio() {
     if (QueueManager.isAudioQueueBlocked()) return;
 
     const item = QueueManager.pop("audio");
     assert(item.type === Event.NewAudioPrompt, "Incorrect event type!");
 
-    const { prompt, id } = item;
+    const { prompt, id, mode, duration } = item;
 
-    void comfyClient.generate({
-      id,
-      kind: "text-to-speech",
-      prompt,
-    });
+    if (mode === JobMode.Speech) {
+      assert(typeof prompt === "string", "'prompt' is not a string");
+      void comfyClient.generate({
+        id,
+        kind: "text-to-speech",
+        prompt,
+      });
+    }
+
+    if (mode === JobMode.Instrumental) {
+      assert(duration && duration > 0, "'duration' is not a number");
+      void comfyClient.generate({
+        id,
+        kind: "text-to-instrumental",
+        prompt,
+        duration,
+      });
+    }
   }
 
   export async function get_audio(id: string) {
@@ -45,7 +67,7 @@ export namespace AudioGenerator {
       });
       setTimeout(() => {
         rej();
-      }, 15_000);
+      }, 30_000);
     });
   }
 }

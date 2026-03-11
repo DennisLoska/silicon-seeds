@@ -143,3 +143,6 @@ vite.config.ts.timestamp-*
 
 # SQLite database (optional - uncomment if you want to ignore it)
 silicon-seeds.sqlite
+
+# Opencode
+AGENTS.md
