@@ -71,7 +71,9 @@ export namespace SocketServer {
         (QueueManager.imageQueue.length === 0 &&
           currentEvent.mode === JobMode.Image) ||
         (QueueManager.videoQueue.length === 0 &&
-          currentEvent.mode === JobMode.Video)
+          currentEvent.mode === JobMode.Video) ||
+        (QueueManager.audioQueue.length === 0 &&
+          currentEvent.mode === JobMode.Instrumental)
       ) {
         await comfyClient.free_memory(true, true);
       }

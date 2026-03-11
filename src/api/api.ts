@@ -1,4 +1,6 @@
+import { Metadata } from "../meta/meta";
 import { health } from "./health";
+import { compose_video } from "./jobs/compose-video";
 import { script_to_scenes } from "./jobs/script-to-scenes";
 import { text_to_image } from "./jobs/text-to-image";
 import { text_to_image_to_video } from "./jobs/text-to-image-to-video";
@@ -14,7 +16,7 @@ export namespace ApiServer {
   export function start() {
     server = Bun.serve({
       port: 3000,
-      idleTimeout: 60,
+      idleTimeout: Metadata.TIMEOUT,
       routes: {
         "/api/health": Api.handlers.health,
         "/api/message": Api.handlers.text_to_text,
@@ -22,6 +24,7 @@ export namespace ApiServer {
         // "/api/jobs/scripts": Api.handlers.text_to_script,
         "/api/jobs/scenes": Api.handlers.script_to_scenes,
         "/api/jobs/videos": Api.handlers.text_to_image_to_video,
+        "/api/jobs/videos/compose": Api.handlers.compose_video,
         "/api/jobs/tts": Api.handlers.text_to_speech,
         "/api/jobs/instrumental": Api.handlers.text_to_instrumental,
         // TODO text to video
@@ -46,5 +49,6 @@ namespace Api {
     text_to_image_to_video,
     text_to_speech,
     text_to_instrumental,
+    compose_video,
   };
 }

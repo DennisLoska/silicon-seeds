@@ -1,9 +1,9 @@
 import { TextGenerator } from "../../text/text-generator";
 
-export async function text_to_script() {
+export async function text_to_script(prompt: string) {
   // TODO get these from query parameters
-  const prompt =
-    "The symbolism of baptism, creation, the void, the flood, a new creation and how they all are connected.";
+  // const prompt =
+  // "The symbolism of baptism, creation, the void, the flood, a new creation and how they all are connected.";
 
   const res = await TextGenerator.create_script(prompt);
 
@@ -17,5 +17,6 @@ export async function text_to_script() {
     `/home/dennis/work/silicon-seeds/content/scripts/${Bun.randomUUIDv7()}.md`,
     res,
   );
+
   return new Response(JSON.stringify({ message: res }));
 }

@@ -1,0 +1,75 @@
+import { AudioGenerator } from "../../audio/audio-generator";
+import { comfyClient } from "../../comfyui/comfyui-client";
+import { JobMode } from "../../events/events";
+import { Metadata } from "../../meta/meta";
+import { PromptGenerator } from "../../prompts/prompt-generator";
+import { Presets } from "../../styles/presets";
+import { TextGenerator } from "../../text/text-generator";
+
+export async function compose_video() {
+  const jobId = Metadata.randomId();
+  const ttsId = Metadata.randomId();
+  const prompt = "The seven deadly sins";
+
+  const script = await TextGenerator.create_script(prompt);
+
+  if (!script) {
+    return new Response(JSON.stringify({ message: "Oh no" }), { status: 500 });
+  }
+
+  AudioGenerator.schedule_audio({
+    id: ttsId,
+    jobId,
+    prompt: script,
+  });
+
+  const ttsRes = await AudioGenerator.get_audio(ttsId);
+  const ttsMeta = ttsRes?.data?.audio?.[0];
+  const tts = await comfyClient.getAsset(
+    ttsMeta.filename,
+    ttsMeta.subfolder,
+    ttsMeta.type,
+  );
+
+  const duration = await Metadata.getAudioDuration(tts);
+  const instId = Metadata.randomId();
+
+  AudioGenerator.schedule_audio({
+    id: instId,
+    jobId,
+    duration,
+  });
+
+  const videoStructure = derive_video_structure(duration);
+
+  void PromptGenerator.image_scene_prompts(
+    jobId,
+    JobMode.Video,
+    script,
+    videoStructure.clipCount,
+    Presets.WATERCOLOR,
+  );
+
+  return new Response(
+    JSON.stringify({ message: "job queued", meta: videoStructure }),
+  );
+}
+
+function derive_video_structure(duration: number) {
+  const { CLIP_DURATION, TRANSITION_DURATION } = Metadata;
+
+  // Base equation: duration = (Metadata.CLIP_DURATION * x) + (Metadata.TRANSITION_DURATION * (x - 1))
+  const clipCount = Math.ceil(
+    (duration + TRANSITION_DURATION) / (CLIP_DURATION + TRANSITION_DURATION),
+  );
+
+  const transitionCount = clipCount - 1;
+
+  return {
+    audioDuration: duration,
+    totalDuration:
+      clipCount * CLIP_DURATION + transitionCount * TRANSITION_DURATION,
+    clipCount,
+    transitionCount,
+  };
+}

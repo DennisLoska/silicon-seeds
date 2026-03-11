@@ -1,6 +1,9 @@
 import { spawn } from "bun";
 
 export namespace Metadata {
+  export const TIMEOUT = 120;
+  export const CLIP_DURATION = 5;
+  export const TRANSITION_DURATION = 2;
   export const clientId = Bun.randomUUIDv7();
 
   export function randomId() {
@@ -31,7 +34,7 @@ export namespace Metadata {
       const status = await ffprobeProcess.exited;
 
       if (status !== 0) {
-        throw new Error("ffprobe failed to execute");
+        throw new Error("Failed to execute 'ffprobe'");
       }
 
       try {

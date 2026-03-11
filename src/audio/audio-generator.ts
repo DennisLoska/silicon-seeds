@@ -1,7 +1,13 @@
 import { comfyClient } from "../comfyui/comfyui-client";
-import { AudioPromptEvent, Event, JobMode } from "../events/events";
+import {
+  AudioPromptEvent,
+  ComfyExecutedEvent,
+  Event,
+  JobMode,
+} from "../events/events";
 import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
+import { Metadata } from "../meta/meta";
 
 export namespace AudioGenerator {
   export function init() {
@@ -13,17 +19,19 @@ export namespace AudioGenerator {
 
   export function schedule_audio({
     id,
+    jobId,
     prompt,
     duration,
   }: {
     id: string;
+    jobId: string;
     prompt?: string;
     duration?: number;
   }) {
     const event: AudioPromptEvent = {
       type: Event.NewAudioPrompt,
       id,
-      jobId: id,
+      jobId: jobId,
       mode: prompt ? JobMode.Speech : JobMode.Instrumental,
       prompt,
       duration,
@@ -60,14 +68,14 @@ export namespace AudioGenerator {
     }
   }
 
-  export async function get_audio(id: string) {
+  export async function get_audio(id: string): Promise<ComfyExecutedEvent> {
     return await new Promise((res, rej) => {
       Event.on(Event.ComfyExecuted, (event) => {
         if (event.id === id) res(event);
       });
       setTimeout(() => {
-        rej();
-      }, 30_000);
+        rej("Event timeout exceeded");
+      }, Metadata.TIMEOUT);
     });
   }
 }
