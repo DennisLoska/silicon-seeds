@@ -41,6 +41,9 @@ export namespace StylePrompt {
   Use these example scenes PURELY as reference ONLY, but never use these exact examples.
   Instead come up with a completely new variety of different scenes for the list of prompts.
 
+  Important rules:
+  - There should be no words or text in the image
+
   Tips:
   - Front-load the most important elements (subject + medium first)
   - ~250-500 words tends to be the sweet spot

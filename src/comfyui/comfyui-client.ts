@@ -225,6 +225,7 @@ export class ComfyUIClient {
 
     if (input.kind === "text-to-speech") {
       api = kokoro_tts_api;
+      api["4"].inputs.filename_prefix = input.id;
       api["2"].inputs.text = input.prompt;
       // TODO add parameters for: speed, speaker_name
     }
@@ -235,6 +236,7 @@ export class ComfyUIClient {
       if (input.prompt) {
         api["14"].inputs.tags = input.prompt;
       }
+      api["59"].inputs.filename_prefix = input.id;
       api["17"].inputs.seconds = input.duration;
     }
 

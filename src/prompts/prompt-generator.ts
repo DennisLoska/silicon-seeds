@@ -15,7 +15,7 @@ export namespace PromptGenerator {
   ) {
     const instructions = preset
       ? StylePresets.presets[preset]({ title: message })
-      : message;
+      : StylePresets.presets[Presets.SYSTEM]({ title: message });
 
     for (let i = 0; i < batchSize; i++) {
       LLM.message(
@@ -112,8 +112,13 @@ Make sure to return a json array with each prompt being an item of the array.
 `;
 
     const res = await LLM.message(instructions);
-    const scenes = JSON.parse(res?.content ?? "TODO FIX THIS");
+    const scenes = JSON.parse(res?.content);
+
     if (!Array.isArray(scenes)) return null;
+    assert(
+      scenes.length === amount,
+      "LLM did not generate the desired amount of scene prompts.",
+    );
 
     for (const scene of scenes) {
       preset
