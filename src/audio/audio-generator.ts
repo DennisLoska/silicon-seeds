@@ -75,7 +75,7 @@ export namespace AudioGenerator {
       });
       setTimeout(() => {
         rej("Event timeout exceeded");
-      }, Metadata.TIMEOUT);
+      }, Metadata.TIMEOUT * 1000);
     });
   }
 }

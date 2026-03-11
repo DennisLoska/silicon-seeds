@@ -6,6 +6,9 @@ import { VideoGenerator } from "./video/video-generator";
 
 // TODO list:
 //
+// Bugs
+// - More videos added to queue than actual amount of processed images?
+//
 // Pipelines:
 // - script -> scenes -> images -> videos -> transitions -> ffmpeg
 //          -> tts -> video length -> amount of images with x transitions

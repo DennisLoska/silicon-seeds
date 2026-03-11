@@ -65,7 +65,17 @@ export namespace PromptGenerator {
       const res = await LLM.message(
         `Generate a detailed video generation prompt for a 5 second long video based on the content of the image.
 The video itself should be slow paced without any rapid movement as if time moves a bit slower.
-Also consider the original prompt which was used to generate the image for richer context: ${event.prompt}`,
+
+The camera movement should be slow and steady and should not change meaning if the camera does a fade in it should
+not do a fade out anymore, but just to continue with the fade in motion until the very end of the video.
+The fade in motion is just an example. Depending on the image it makes sense to have no camera movement at all or
+to use a different motion like:
+
+fade in, fade out, pan left, pan right, tilt top, tilt bottom
+
+Also consider the original prompt which was used to generate the image for richer context:
+
+${event.prompt}`,
         [image],
       );
 
