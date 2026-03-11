@@ -7,6 +7,7 @@ import { VideoGenerator } from "../video/video-generator";
 import { comfyClient } from "../comfyui/comfyui-client";
 import { Event, JobEvent, JobMode } from "../events/events";
 import { AudioGenerator } from "../audio/audio-generator";
+import { JobOrchestrator } from "../jobs/jobs";
 
 export namespace SocketServer {
   let ws: WebSocket;
@@ -63,8 +64,12 @@ export namespace SocketServer {
       const { prompt_id: promptId } = msg.data;
 
       QueueManager.comfyQueue--;
+      // TODO find in actual db
       const event = QueueManager.findEventById(promptId);
       assert(event, "Event is missing");
+
+      // update status to complete
+      JobOrchestrator.update_job(event);
 
       // better memory management
       if (

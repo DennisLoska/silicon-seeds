@@ -10,7 +10,10 @@ import { JobOrchestrator } from "../jobs/jobs";
 export namespace QueueManager {
   export let comfyQueue = 0;
 
+  // TODO replace with actual db
   export const completed: JobEvents = [];
+
+  // For now in memory queue only
   export const imageQueue: ImagePromptEvent[] = [];
   export const videoQueue: VideoPromptEvent[] = [];
   export const audioQueue: AudioPromptEvent[] = [];
@@ -36,7 +39,9 @@ export namespace QueueManager {
 
     assert(item, "Attempted to take item from empty or invalid queue");
     completed.push(item);
+    // status is pending
     JobOrchestrator.update_job(item);
+
     return item;
   }
 
