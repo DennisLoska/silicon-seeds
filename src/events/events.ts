@@ -9,6 +9,9 @@ export enum JobMode {
 
 interface BaseEvent {
   id: string;
+}
+
+interface JobBaseEvent extends BaseEvent {
   jobId: string;
   mode: JobMode;
 }
@@ -17,19 +20,20 @@ export enum Event {
   NewImagePrompt = "new_image_prompt",
   NewVideoPrompt = "new_video_prompt",
   NewAudioPrompt = "new_audio_prompt",
+  ComfyExecuted = "comfy_executed",
 }
 
-export interface ImagePromptEvent extends BaseEvent {
+export interface ImagePromptEvent extends JobBaseEvent {
   prompt: string;
   type: Event.NewImagePrompt;
 }
 
-export interface AudioPromptEvent extends BaseEvent {
+export interface AudioPromptEvent extends JobBaseEvent {
   prompt: string;
   type: Event.NewAudioPrompt;
 }
 
-export interface VideoPromptEvent extends BaseEvent {
+export interface VideoPromptEvent extends JobBaseEvent {
   id: string;
   jobId: string;
   prompt: string;
@@ -37,14 +41,22 @@ export interface VideoPromptEvent extends BaseEvent {
   filename: string;
 }
 
+export interface ComfyExecutedEvent extends BaseEvent {
+  data: Record<string, unknown>;
+}
+
 type EventMap = {
   [Event.NewImagePrompt]: ImagePromptEvent;
   [Event.NewVideoPrompt]: VideoPromptEvent;
   [Event.NewAudioPrompt]: AudioPromptEvent;
+  [Event.ComfyExecuted]: ComfyExecutedEvent;
 };
 
 export type Events = EventMap[keyof EventMap][];
-export type JobEvent = Events[number];
+
+type JobMap = Omit<EventMap, Event.ComfyExecuted>;
+export type JobEvents = JobMap[keyof JobMap][];
+export type JobEvent = JobEvents[number];
 
 export namespace Event {
   const events = new EventEmitter();
@@ -70,16 +82,22 @@ export namespace Event {
   }
 
   on(Event.NewImagePrompt, (event) => {
-    console.log("");
-    console.log("========================");
-    console.log("Event:", Event.NewImagePrompt);
-    console.log(event);
+    logEvent(event);
   });
 
   on(Event.NewVideoPrompt, (event) => {
-    console.log("");
-    console.log("========================");
-    console.log("Event:", Event.NewVideoPrompt);
-    console.log(event);
+    logEvent(event);
   });
+
+  on(Event.NewAudioPrompt, (event) => {
+    logEvent(event);
+  });
+
+  function logEvent(event: JobEvent) {
+    console.log("");
+    console.log(`===========${event.mode}=============`);
+    console.log("");
+    console.log(event);
+    console.log("");
+  }
 }

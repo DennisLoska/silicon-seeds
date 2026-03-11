@@ -123,7 +123,7 @@ export class ComfyUIClient {
     return images[0];
   }
 
-  async getImage(
+  async getAsset(
     filename: string,
     subfolder: string,
     folder_type: "input" | "output" | "temp",

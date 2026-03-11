@@ -5,7 +5,8 @@ import { QueueManager } from "../queue/queue-manager";
 import assert from "node:assert";
 import { VideoGenerator } from "../video/video-generator";
 import { comfyClient } from "../comfyui/comfyui-client";
-import { JobEvent, JobMode } from "../events/events";
+import { Event, JobEvent, JobMode } from "../events/events";
+import { AudioGenerator } from "../audio/audio-generator";
 
 export namespace SocketServer {
   let ws: WebSocket;
@@ -48,8 +49,14 @@ export namespace SocketServer {
     }
 
     if (msg.type === "executed") {
-      console.log("\n===executed===\n");
-      console.debug(JSON.stringify(msg.data));
+      // console.log("\n===executed===\n");
+      // console.log(JSON.stringify(msg.data));
+
+      // Can be used to enrich REST api responses
+      Event.emit(Event.ComfyExecuted, {
+        id: msg.data.prompt_id,
+        data: msg.data.output,
+      });
     }
 
     if (msg.type === "execution_success") {
@@ -69,9 +76,10 @@ export namespace SocketServer {
         await comfyClient.free_memory(true, true);
       }
 
-      // always attempt to generate images or videos
+      // always attempt to queue next items
       ImageGenerator.generate_image();
       VideoGenerator.generate_video();
+      AudioGenerator.generate_tts();
 
       if (event.mode === JobMode.Video) {
         PromptGenerator.img_to_vid_prompt(promptId);

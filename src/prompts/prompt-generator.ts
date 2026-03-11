@@ -55,7 +55,7 @@ export namespace PromptGenerator {
     }
 
     const { filename, subfolder, kind } = res;
-    const img = await comfyClient.getImage(filename, subfolder, kind);
+    const img = await comfyClient.getAsset(filename, subfolder, kind);
     const buffer = await img.arrayBuffer();
     const base64 = Buffer.from(buffer).toString("base64");
 

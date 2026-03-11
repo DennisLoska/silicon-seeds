@@ -1,4 +1,5 @@
 import { ApiServer } from "./api/api";
+import { AudioGenerator } from "./audio/audio-generator";
 import { ImageGenerator } from "./image/image-generator";
 import { SocketServer } from "./socket/socket-server";
 import { VideoGenerator } from "./video/video-generator";
@@ -60,6 +61,7 @@ import { VideoGenerator } from "./video/video-generator";
 async function main() {
   ImageGenerator.init();
   VideoGenerator.init();
+  AudioGenerator.init();
 
   ApiServer.start();
   await SocketServer.start();

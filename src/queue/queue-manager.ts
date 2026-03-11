@@ -1,7 +1,7 @@
 import {
   AudioPromptEvent,
-  Events,
   ImagePromptEvent,
+  JobEvents,
   VideoPromptEvent,
 } from "../events/events";
 import assert from "node:assert";
@@ -9,7 +9,7 @@ import assert from "node:assert";
 export namespace QueueManager {
   export let comfyQueue = 0;
 
-  export const completed: Events = [];
+  export const completed: JobEvents = [];
   export const imageQueue: ImagePromptEvent[] = [];
   export const videoQueue: VideoPromptEvent[] = [];
   export const audioQueue: AudioPromptEvent[] = [];
@@ -47,7 +47,7 @@ export namespace QueueManager {
   }
 
   export function isAudioQueueBlocked() {
-    return audioQueue.length <= 0 || comfyQueue > 1;
+    return audioQueue.length <= 0 || comfyQueue > 3;
   }
 
   export function isVideoQueueBlocked() {
