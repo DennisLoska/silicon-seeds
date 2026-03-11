@@ -5,6 +5,7 @@ import {
   VideoPromptEvent,
 } from "../events/events";
 import assert from "node:assert";
+import { JobOrchestrator } from "../jobs/jobs";
 
 export namespace QueueManager {
   export let comfyQueue = 0;
@@ -35,6 +36,7 @@ export namespace QueueManager {
 
     assert(item, "Attempted to take item from empty or invalid queue");
     completed.push(item);
+    JobOrchestrator.update_job(item);
     return item;
   }
 

@@ -36,8 +36,6 @@ export interface AudioPromptEvent extends JobBaseEvent {
 }
 
 export interface VideoPromptEvent extends JobBaseEvent {
-  id: string;
-  jobId: string;
   prompt: string;
   type: Event.NewVideoPrompt;
   filename: string;

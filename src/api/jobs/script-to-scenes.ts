@@ -1,4 +1,5 @@
 import { JobMode } from "../../events/events";
+import { JobOrchestrator } from "../../jobs/jobs";
 import { PromptGenerator } from "../../prompts/prompt-generator";
 import { Presets } from "../../styles/presets";
 import { text_to_script } from "./text-to-script";
@@ -7,7 +8,7 @@ export async function script_to_scenes() {
   // TODO get these from query parameters
   // const script = "A sermon about the parable of the Sower.";
 
-  const jobId = Bun.randomUUIDv7();
+  const { id: jobId } = await JobOrchestrator.create_job();
 
   const list = [
     "The Power of Faith: Trusting God in Uncertain Times",

@@ -1,5 +1,6 @@
 import { AudioGenerator } from "../../audio/audio-generator";
 import { comfyClient } from "../../comfyui/comfyui-client";
+import { JobOrchestrator } from "../../jobs/jobs";
 import { Metadata } from "../../meta/meta";
 
 export async function text_to_speech() {
@@ -18,10 +19,12 @@ export async function text_to_speech() {
   ];
 
   const prompt = messages[Math.floor(Math.random() * messages.length)];
+  const { id: jobId } = await JobOrchestrator.create_job();
   const id = Metadata.randomId();
 
   AudioGenerator.schedule_audio({
     id,
+    jobId,
     prompt,
   });
 

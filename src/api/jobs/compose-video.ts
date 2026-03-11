@@ -1,13 +1,15 @@
 import { AudioGenerator } from "../../audio/audio-generator";
 import { comfyClient } from "../../comfyui/comfyui-client";
 import { JobMode } from "../../events/events";
+import { JobOrchestrator } from "../../jobs/jobs";
 import { Metadata } from "../../meta/meta";
 import { PromptGenerator } from "../../prompts/prompt-generator";
 import { Presets } from "../../styles/presets";
 import { TextGenerator } from "../../text/text-generator";
 
 export async function compose_video() {
-  const jobId = Metadata.randomId();
+  const { id: jobId } = await JobOrchestrator.create_job();
+
   const ttsId = Metadata.randomId();
   const prompt = "The seven deadly sins";
 
@@ -20,7 +22,8 @@ export async function compose_video() {
   AudioGenerator.schedule_audio({
     id: ttsId,
     jobId,
-    prompt: script,
+    // TODO remove substring dev hack
+    prompt: script.substring(0, 100),
   });
 
   const ttsRes = await AudioGenerator.get_audio(ttsId);
