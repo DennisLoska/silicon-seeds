@@ -1,10 +1,5 @@
 import { comfyClient } from "../comfyui/comfyui-client";
-import {
-  AudioPromptEvent,
-  ComfyExecutedEvent,
-  Event,
-  JobMode,
-} from "../events/events";
+import { ComfyExecutedEvent, Event, JobMode } from "../events/events";
 import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
 import { Metadata } from "../meta/meta";
@@ -28,16 +23,14 @@ export namespace AudioGenerator {
     prompt?: string;
     duration?: number;
   }) {
-    const event: AudioPromptEvent = {
+    Event.emit(Event.NewAudioPrompt, {
       type: Event.NewAudioPrompt,
       id,
       jobId: jobId,
       mode: prompt ? JobMode.Speech : JobMode.Instrumental,
       prompt,
       duration,
-    };
-
-    Event.emit(Event.NewAudioPrompt, event);
+    });
   }
 
   export function generate_audio() {

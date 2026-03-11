@@ -36,7 +36,6 @@ import { VideoGenerator } from "./video/video-generator";
 // - Add LoRA support
 //
 // Metadata
-// - defines seconds per image, transition
 // - defines video transcript / captions to be pot. used
 // - add metadata to generated videos and images (used prompt, prompt id, job id, index)
 //

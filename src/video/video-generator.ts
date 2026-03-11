@@ -1,5 +1,5 @@
 import { comfyClient } from "../comfyui/comfyui-client";
-import { Event } from "../events/events";
+import { Event, JobMode } from "../events/events";
 import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
 
@@ -8,6 +8,25 @@ export namespace VideoGenerator {
     Event.on(Event.NewVideoPrompt, (event) => {
       QueueManager.videoQueue.push(event);
       generate_video();
+    });
+  }
+
+  export function schedule_video({
+    jobId,
+    prompt,
+    filename,
+  }: {
+    jobId: string;
+    prompt: string;
+    filename: string;
+  }) {
+    Event.emit(Event.NewVideoPrompt, {
+      id: Bun.randomUUIDv7(),
+      jobId,
+      mode: JobMode.Video,
+      type: Event.NewVideoPrompt,
+      prompt,
+      filename,
     });
   }
 

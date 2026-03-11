@@ -4,6 +4,8 @@ import { comfyClient } from "../comfyui/comfyui-client";
 import { Presets, StylePresets } from "../styles/presets";
 import { QueueManager } from "../queue/queue-manager";
 import assert from "node:assert";
+import { ImageGenerator } from "../image/image-generator";
+import { VideoGenerator } from "../video/video-generator";
 
 export namespace PromptGenerator {
   export async function txt_to_img_prompt(
@@ -25,13 +27,7 @@ export namespace PromptGenerator {
           if (res === null || !res.content || res.content.trim() === "") return;
           let prompt = res.content.trim();
 
-          Event.emit(Event.NewImagePrompt, {
-            id: Bun.randomUUIDv7(),
-            jobId,
-            mode,
-            type: Event.NewImagePrompt,
-            prompt,
-          });
+          ImageGenerator.schedule_image({ jobId, mode, prompt });
         })
         .catch((error) => {
           console.log(error);
@@ -73,17 +69,16 @@ to use a different motion like:
 
 fade in, fade out, pan left, pan right, tilt top, tilt bottom
 
+It is very important that you describe the ending position of the video to prevent the video from looping.
+
 Also consider the original prompt which was used to generate the image for richer context:
 
 ${event.prompt}`,
         [image],
       );
 
-      Event.emit(Event.NewVideoPrompt, {
-        id: Bun.randomUUIDv7(),
-        type: Event.NewVideoPrompt,
+      VideoGenerator.schedule_video({
         jobId: event.jobId,
-        mode: JobMode.Video,
         prompt: res.content,
         filename,
       });
@@ -97,6 +92,8 @@ ${event.prompt}`,
 
 If the description does not provide details about the length of the essay make sure it is between
 800 and 1300 words long depending on the subject.
+
+Make sure to remove any markdown syntax so that the content is just plain text.
 
 Your response should only include the actual essay including it's title - nothing more!
 `;

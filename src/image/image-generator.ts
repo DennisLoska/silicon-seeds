@@ -1,4 +1,4 @@
-import { Event } from "../events/events";
+import { Event, JobMode } from "../events/events";
 import { comfyClient } from "../comfyui/comfyui-client";
 import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
@@ -8,6 +8,24 @@ export namespace ImageGenerator {
     Event.on(Event.NewImagePrompt, (event) => {
       QueueManager.imageQueue.push(event);
       generate_image();
+    });
+  }
+
+  export function schedule_image({
+    jobId,
+    mode,
+    prompt,
+  }: {
+    jobId: string;
+    mode: JobMode;
+    prompt: string;
+  }) {
+    Event.emit(Event.NewImagePrompt, {
+      id: Bun.randomUUIDv7(),
+      jobId,
+      mode,
+      type: Event.NewImagePrompt,
+      prompt,
     });
   }
 
