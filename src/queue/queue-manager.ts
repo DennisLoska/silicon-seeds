@@ -2,6 +2,7 @@ import {
   AudioPromptEvent,
   ImagePromptEvent,
   JobEvents,
+  TransitionPromptEvent,
   VideoPromptEvent,
 } from "../events/events";
 import assert from "node:assert";
@@ -15,13 +16,14 @@ export namespace QueueManager {
 
   // For now in memory queue only
   export const imageQueue: ImagePromptEvent[] = [];
-  export const videoQueue: VideoPromptEvent[] = [];
+  export const videoQueue: (VideoPromptEvent | TransitionPromptEvent)[] = [];
   export const audioQueue: AudioPromptEvent[] = [];
 
   export function pop(type: "image" | "video" | "audio") {
     let item:
       | ImagePromptEvent
       | VideoPromptEvent
+      | TransitionPromptEvent
       | AudioPromptEvent
       | undefined;
 
@@ -40,7 +42,10 @@ export namespace QueueManager {
     assert(item, "Attempted to take item from empty or invalid queue");
     completed.push(item);
     // status is pending
-    JobOrchestrator.update_job(item);
+    JobOrchestrator.update_job({
+      ...item,
+      status: "pending",
+    });
 
     return item;
   }

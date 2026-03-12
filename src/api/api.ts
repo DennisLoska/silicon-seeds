@@ -8,6 +8,7 @@ import { text_to_instrumental } from "./jobs/text-to-instrumental";
 import { text_to_script } from "./jobs/text-to-script";
 import { text_to_speech } from "./jobs/text-to-speech";
 import { text_to_text } from "./jobs/text-to-text";
+import { video_transition } from "./jobs/video-transition";
 import { not_found } from "./void";
 
 export namespace ApiServer {
@@ -25,6 +26,7 @@ export namespace ApiServer {
         "/api/jobs/scenes": Api.handlers.script_to_scenes,
         "/api/jobs/videos": Api.handlers.text_to_image_to_video,
         "/api/jobs/videos/compose": Api.handlers.compose_video,
+        "/api/jobs/videos/transition": Api.handlers.video_transition,
         "/api/jobs/tts": Api.handlers.text_to_speech,
         "/api/jobs/instrumental": Api.handlers.text_to_instrumental,
         // TODO text to video
@@ -50,5 +52,6 @@ namespace Api {
     text_to_speech,
     text_to_instrumental,
     compose_video,
+    video_transition,
   };
 }

@@ -1,9 +1,11 @@
 import { Metadata } from "../meta/meta";
 import zImageTurboApi from "./api/image_z_image_turbo_12_steps_720p.json";
 import wan2_2_img2vidApi from "./api/video_wan2_2_14B_i2v_720p_5s.json";
+import wan2_2_img2transitionApi from "./api/video_wan2_2_14B_transitions.json";
 import ace_step_1_0_api from "./api/audio_ace_step_1_0_instrumental.json";
 import kokoro_tts_api from "./api/kokoro-tts.json";
 import wan2_2_img2vidWorkflow from "./workflows/video_wan2_2_14B_i2v_720p_5s.json";
+import wan2_2_img2transWorkflow from "./workflows/video_wan2_2_14B_transitions.json";
 import assert from "node:assert";
 
 type Text2ImgInput = {
@@ -32,11 +34,20 @@ type Text2Instrumental = {
   duration: number;
 };
 
+type Img2Transition = {
+  id: string;
+  kind: "image-to-transition";
+  startImage: string;
+  endImage: string;
+  prompt: string;
+};
+
 export type ModelVariant =
   | Text2ImgInput
   | Img2VidInput
   | Text2SpeechInput
-  | Text2Instrumental;
+  | Text2Instrumental
+  | Img2Transition;
 
 const OUTPUT_DIR = Bun.env.OUTPUT_DIR;
 const INPUT_DIR = Bun.env.INPUT_DIR;
@@ -201,6 +212,14 @@ export class ComfyUIClient {
           extra_pnginfo: workflow,
         },
       });
+    } else if (input.kind === "image-to-transition") {
+      const workflow = wan2_2_img2transWorkflow;
+      return JSON.stringify({
+        ...base,
+        extra_data: {
+          extra_pnginfo: workflow,
+        },
+      });
     } else {
       return JSON.stringify(base);
     }
@@ -214,11 +233,14 @@ export class ComfyUIClient {
       api = zImageTurboApi;
       api["9"].inputs.filename_prefix = input.id;
       api["57:27"].inputs.text = input.prompt;
+      // baby seed: 189246353926834
+      api["57:3"].inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
     }
 
     if (input.kind === "image-to-video") {
       api = wan2_2_img2vidApi;
       api["93"].inputs.text = input.prompt;
+      api["98"].inputs.length = Metadata.CLIP_DURATION * Metadata.FPS;
       api["108"].inputs.filename_prefix = input.id;
       api["97"].inputs.image = input.imagePath;
     }
@@ -240,6 +262,14 @@ export class ComfyUIClient {
       api["17"].inputs.seconds = input.duration;
     }
 
+    if (input.kind === "image-to-transition") {
+      api = wan2_2_img2transitionApi;
+      api["6"].inputs.text = input.prompt;
+      api["68"].inputs.image = input.startImage;
+      api["67"].inputs.length = Metadata.TRANSITION_DURATION * Metadata.FPS + 1;
+      api["62"].inputs.image = input.endImage;
+    }
+
     return api;
   }
 
@@ -252,6 +282,23 @@ export class ComfyUIClient {
 
       const image = await Bun.file(src).arrayBuffer();
       await Bun.write(dst, image);
+    }
+
+    if (input.kind === "image-to-transition") {
+      const startSrc = `${OUTPUT_DIR}/${input.startImage}`
+        .replace('"', "")
+        .trim();
+      const startDst = `${INPUT_DIR}/${input.startImage}`
+        .replace('"', "")
+        .trim();
+      const endSrc = `${OUTPUT_DIR}/${input.endImage}`.replace('"', "").trim();
+      const endDst = `${INPUT_DIR}/${input.endImage}`.replace('"', "").trim();
+
+      const start = await Bun.file(startSrc).arrayBuffer();
+      await Bun.write(startDst, start);
+
+      const end = await Bun.file(endSrc).arrayBuffer();
+      await Bun.write(endDst, end);
     }
   }
 }

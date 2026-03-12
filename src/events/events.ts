@@ -10,16 +10,19 @@ export enum JobMode {
 
 interface BaseEvent {
   id: string;
+  created_at: string;
 }
 
 interface JobBaseEvent extends BaseEvent {
   jobId: string;
   mode: JobMode;
+  status: "pending" | "complete";
 }
 
 export enum Event {
   NewImagePrompt = "new_image_prompt",
   NewVideoPrompt = "new_video_prompt",
+  NewTransitionPrompt = "new_transition_prompt",
   NewAudioPrompt = "new_audio_prompt",
   ComfyExecuted = "comfy_executed",
 }
@@ -41,6 +44,13 @@ export interface VideoPromptEvent extends JobBaseEvent {
   filename: string;
 }
 
+export interface TransitionPromptEvent extends JobBaseEvent {
+  prompt: string;
+  type: Event.NewTransitionPrompt;
+  startImg: string;
+  endImg: string;
+}
+
 export interface ComfyExecutedEvent extends BaseEvent {
   data: Record<string, unknown>;
 }
@@ -48,6 +58,7 @@ export interface ComfyExecutedEvent extends BaseEvent {
 type EventMap = {
   [Event.NewImagePrompt]: ImagePromptEvent;
   [Event.NewVideoPrompt]: VideoPromptEvent;
+  [Event.NewTransitionPrompt]: TransitionPromptEvent;
   [Event.NewAudioPrompt]: AudioPromptEvent;
   [Event.ComfyExecuted]: ComfyExecutedEvent;
 };

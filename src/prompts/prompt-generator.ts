@@ -20,18 +20,17 @@ export namespace PromptGenerator {
       : StylePresets.presets[Presets.SYSTEM]({ title: message });
 
     for (let i = 0; i < batchSize; i++) {
-      LLM.message(
-        `Create an excellent image prompt based on these instructions: ${instructions}`,
-      )
-        .then(async (res) => {
-          if (res === null || !res.content || res.content.trim() === "") return;
-          let prompt = res.content.trim();
+      try {
+        const res = await LLM.message(
+          `Create an excellent image prompt based on these instructions: ${instructions}`,
+        );
+        if (res === null || !res.content || res.content.trim() === "") return;
+        let prompt = res.content.trim();
 
-          ImageGenerator.schedule_image({ jobId, mode, prompt });
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+        ImageGenerator.schedule_image({ jobId, mode, prompt });
+      } catch (error) {
+        console.log(error);
+      }
     }
   }
 
@@ -42,7 +41,7 @@ export namespace PromptGenerator {
       "Unable to find associated event with image for image-to-video prompt.",
     );
 
-    if (event.type === Event.NewVideoPrompt) return;
+    if (event.type !== Event.NewImagePrompt) return;
 
     const res = await comfyClient.getImageOutput(promptId);
     if (res === null) {

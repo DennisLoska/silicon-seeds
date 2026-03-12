@@ -25,6 +25,7 @@ export namespace AudioGenerator {
   }) {
     Event.emit(Event.NewAudioPrompt, {
       type: Event.NewAudioPrompt,
+      created_at: new Date().toISOString(),
       id,
       jobId: jobId,
       mode: prompt ? JobMode.Speech : JobMode.Instrumental,
@@ -66,6 +67,7 @@ export namespace AudioGenerator {
       Event.on(Event.ComfyExecuted, (event) => {
         if (event.id === id) res(event);
       });
+
       setTimeout(() => {
         rej("Event timeout exceeded");
       }, Metadata.TIMEOUT * 1000);

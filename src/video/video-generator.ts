@@ -9,6 +9,10 @@ export namespace VideoGenerator {
       QueueManager.videoQueue.push(event);
       generate_video();
     });
+    Event.on(Event.NewTransitionPrompt, (event) => {
+      QueueManager.videoQueue.push(event);
+      generate_video();
+    });
   }
 
   export function schedule_video({
@@ -22,6 +26,7 @@ export namespace VideoGenerator {
   }) {
     Event.emit(Event.NewVideoPrompt, {
       id: Bun.randomUUIDv7(),
+      created_at: new Date().toISOString(),
       jobId,
       mode: JobMode.Video,
       type: Event.NewVideoPrompt,
@@ -30,19 +35,58 @@ export namespace VideoGenerator {
     });
   }
 
+  export function schedule_transition({
+    jobId,
+    prompt,
+    startImg,
+    endImg,
+  }: {
+    jobId: string;
+    prompt: string;
+    startImg: string;
+    endImg: string;
+  }) {
+    Event.emit(Event.NewTransitionPrompt, {
+      id: Bun.randomUUIDv7(),
+      created_at: new Date().toISOString(),
+      jobId,
+      mode: JobMode.Video,
+      type: Event.NewTransitionPrompt,
+      prompt,
+      startImg,
+      endImg,
+    });
+  }
+
   export function generate_video() {
     if (QueueManager.isVideoQueueBlocked()) return;
 
     const item = QueueManager.pop("video");
-    assert(item.type === Event.NewVideoPrompt, "Incorrect event type!");
+    assert(
+      item.type === Event.NewVideoPrompt ||
+        item.type === Event.NewTransitionPrompt,
+      "Incorrect event type!",
+    );
 
     const { id, prompt } = item;
 
-    void comfyClient.generate({
-      id,
-      kind: "image-to-video",
-      prompt,
-      imagePath: item.filename,
-    });
+    if (item.type === Event.NewTransitionPrompt) {
+      void comfyClient.generate({
+        id,
+        kind: "image-to-transition",
+        prompt,
+        startImage: item.startImg,
+        endImage: item.endImg,
+      });
+    }
+
+    if (item.type === Event.NewVideoPrompt) {
+      void comfyClient.generate({
+        id,
+        kind: "image-to-video",
+        prompt,
+        imagePath: item.filename,
+      });
+    }
   }
 }

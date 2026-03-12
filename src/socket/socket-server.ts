@@ -56,6 +56,7 @@ export namespace SocketServer {
       // Can be used to enrich REST api responses
       Event.emit(Event.ComfyExecuted, {
         id: msg.data.prompt_id,
+        created_at: new Date().toISOString(),
         data: msg.data.output,
       });
     }
@@ -69,7 +70,9 @@ export namespace SocketServer {
       assert(event, "Event is missing");
 
       // update status to complete
-      JobOrchestrator.update_job(event);
+      JobOrchestrator.update_job({ ...event, status: "complete" });
+      const currentJob = JobOrchestrator.jobs[event.jobId];
+      console.log(currentJob);
 
       // better memory management
       if (
