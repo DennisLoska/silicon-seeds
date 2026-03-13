@@ -107,7 +107,7 @@ export namespace Event {
 
   function logEvent(event: JobEvent) {
     console.log("");
-    console.log(`===========generation mode: ${event.mode}=============`);
+    console.log(`===========mode:${event.mode}=============`);
     console.log("");
     console.log(event);
     console.log("");

@@ -150,11 +150,22 @@ export namespace VideoGenerator {
 
     const processes = [
       {
-        args: ["ffmpeg", "-i", filePath, "-frames:v 1", paths[0]],
+        args: [
+          "ffmpeg",
+          "-y",
+          "-i",
+          filePath,
+          "-frames:v",
+          "1",
+          "-update",
+          "1",
+          paths[0],
+        ],
       },
       {
         args: [
           "ffmpeg",
+          "-y",
           "-sseof",
           "-2",
           "-i",
