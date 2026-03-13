@@ -18,13 +18,65 @@ export namespace VideoGenerator {
     });
   }
 
+  export function schedule_video(event: {
+    jobId: string;
+    prompt: string;
+    filename: string;
+  }) {
+    JobOrchestrator.schedule_task({
+      ...event,
+      type: Event.NewVideoPrompt,
+      mode: JobMode.Video,
+    });
+  }
+
+  export function schedule_transition(event: {
+    jobId: string;
+    prompt: string;
+    startImg: string;
+    endImg: string;
+  }) {
+    JobOrchestrator.schedule_task({
+      ...event,
+      type: Event.NewTransitionPrompt,
+      mode: JobMode.Video,
+    });
+  }
+
+  export function generate_video() {
+    if (QueueManager.isVideoQueueBlocked()) return;
+
+    const item = QueueManager.pop("video");
+    assert(
+      item.type === Event.NewVideoPrompt ||
+        item.type === Event.NewTransitionPrompt,
+      "Incorrect event type!",
+    );
+
+    const { id, prompt } = item;
+
+    if (item.type === Event.NewTransitionPrompt) {
+      void comfyClient.generate({
+        id,
+        kind: "image-to-transition",
+        prompt,
+        startImage: item.startImg,
+        endImage: item.endImg,
+      });
+    }
+
+    if (item.type === Event.NewVideoPrompt) {
+      void comfyClient.generate({
+        id,
+        kind: "image-to-video",
+        prompt,
+        imagePath: item.filename,
+      });
+    }
+  }
+
   export async function prepare_transitions(event: JobEvent) {
-    // TODO: define and schedule video transitions
-    // - schedule all transitions
-    // - mark job as complete (optional)
-
     const completed = QueueManager.findEventById(event.id);
-
     if (!completed?.jobId) return null;
 
     const job = JobOrchestrator.jobs[completed?.jobId];
@@ -49,11 +101,13 @@ export namespace VideoGenerator {
 
     for (const clip of completedClips) {
       const meta = job.meta[clip.id] as any;
+      const metadata = meta.images[0];
       console.log("META", JSON.stringify(meta));
+
       const videoBlob = await comfyClient.getAsset(
-        meta.filename,
-        meta.subfolder,
-        meta.type,
+        metadata.filename,
+        metadata.subfolder,
+        metadata.type,
       );
 
       const tmpFile = `/tmp/${event.jobId}_${clip.id}.mp4`;
@@ -129,62 +183,5 @@ export namespace VideoGenerator {
     }
 
     return paths;
-  }
-
-  export function schedule_video(event: {
-    jobId: string;
-    prompt: string;
-    filename: string;
-  }) {
-    JobOrchestrator.schedule_task({
-      ...event,
-      type: Event.NewVideoPrompt,
-      mode: JobMode.Video,
-    });
-  }
-
-  export function schedule_transition(event: {
-    jobId: string;
-    prompt: string;
-    startImg: string;
-    endImg: string;
-  }) {
-    JobOrchestrator.schedule_task({
-      ...event,
-      type: Event.NewTransitionPrompt,
-      mode: JobMode.Video,
-    });
-  }
-
-  export function generate_video() {
-    if (QueueManager.isVideoQueueBlocked()) return;
-
-    const item = QueueManager.pop("video");
-    assert(
-      item.type === Event.NewVideoPrompt ||
-        item.type === Event.NewTransitionPrompt,
-      "Incorrect event type!",
-    );
-
-    const { id, prompt } = item;
-
-    if (item.type === Event.NewTransitionPrompt) {
-      void comfyClient.generate({
-        id,
-        kind: "image-to-transition",
-        prompt,
-        startImage: item.startImg,
-        endImage: item.endImg,
-      });
-    }
-
-    if (item.type === Event.NewVideoPrompt) {
-      void comfyClient.generate({
-        id,
-        kind: "image-to-video",
-        prompt,
-        imagePath: item.filename,
-      });
-    }
   }
 }

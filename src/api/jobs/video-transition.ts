@@ -13,7 +13,6 @@ export async function video_transition() {
     mode: JobMode.Video,
     prompt: "an image of hell on earth",
   });
-  const foo = await ImageGenerator.get_image(id1);
 
   const id2 = Metadata.randomId();
   ImageGenerator.schedule_image({
@@ -22,12 +21,6 @@ export async function video_transition() {
     mode: JobMode.Video,
     prompt: "an image of heaven on earth",
   });
-  const bar = await ImageGenerator.get_image(id2);
-
-  const metaFoo = foo?.data?.images?.[0];
-  const metaBar = bar?.data?.images?.[0];
-  const fileFoo = metaFoo.filename;
-  const fileBar = metaBar.filename;
 
   return new Response(JSON.stringify({ message: "todo" }));
 }
