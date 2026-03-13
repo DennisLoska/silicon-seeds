@@ -114,6 +114,16 @@ export namespace JobOrchestrator {
           endImg,
         };
 
+      case Event.NewAudioPrompt:
+        const { duration } = event;
+
+        return {
+          ...base,
+          type: Event.NewAudioPrompt,
+          prompt,
+          duration,
+        };
+
       default:
         break;
     }

@@ -23,7 +23,8 @@ export async function compose_video() {
     id: ttsId,
     jobId,
     // TODO remove substring dev hack
-    prompt: script.substring(0, 100),
+    // prompt: script.substring(0, 100),
+    prompt: script,
   });
 
   const ttsRes = await AudioGenerator.get_audio(ttsId);
@@ -66,13 +67,10 @@ function derive_video_structure(duration: number) {
     (duration + TRANSITION_DURATION) / (CLIP_DURATION + TRANSITION_DURATION),
   );
 
-  const transitionCount = clipCount - 1;
-
   return {
     audioDuration: duration,
     totalDuration:
-      clipCount * CLIP_DURATION + transitionCount * TRANSITION_DURATION,
+      clipCount * CLIP_DURATION + (clipCount - 1) * TRANSITION_DURATION,
     clipCount,
-    transitionCount,
   };
 }

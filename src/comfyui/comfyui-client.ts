@@ -285,13 +285,11 @@ export class ComfyUIClient {
     }
 
     if (input.kind === "image-to-transition") {
-      const startSrc = `${OUTPUT_DIR}/${input.startImage}`
-        .replace('"', "")
-        .trim();
+      const startSrc = `/tmp/${input.startImage}`.replace('"', "").trim();
       const startDst = `${INPUT_DIR}/${input.startImage}`
         .replace('"', "")
         .trim();
-      const endSrc = `${OUTPUT_DIR}/${input.endImage}`.replace('"', "").trim();
+      const endSrc = `/tmp/${input.endImage}`.replace('"', "").trim();
       const endDst = `${INPUT_DIR}/${input.endImage}`.replace('"', "").trim();
 
       const start = await Bun.file(startSrc).arrayBuffer();

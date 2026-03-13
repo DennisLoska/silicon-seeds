@@ -4,7 +4,8 @@ import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
 import { JobOrchestrator } from "../jobs/jobs";
 import { spawn } from "bun";
-import { PromptGenerator } from "../prompts/prompt-generator";
+import { Metadata } from "../meta/meta";
+import { LLM } from "../llm/llm";
 
 export namespace VideoGenerator {
   export function init() {
@@ -44,6 +45,7 @@ export namespace VideoGenerator {
   }
 
   export function generate_video() {
+    // TODO fix potential race condition
     if (QueueManager.isVideoQueueBlocked()) return;
 
     const item = QueueManager.pop("video");
@@ -80,29 +82,23 @@ export namespace VideoGenerator {
     if (!completed?.jobId) return null;
 
     const job = JobOrchestrator.jobs[completed?.jobId];
-    console.log("job", job);
 
     const pendingClips = JobOrchestrator.job_events(job.id).filter(
       (e) => e.type === Event.NewVideoPrompt && e.status === "pending",
     );
-    // TODO fix diese scheisse
     if (pendingClips.length !== 0) return null;
-    console.log("pending", pendingClips.length);
 
     const completedClips = JobOrchestrator.job_events(job.id).filter(
       (e) => e.type === Event.NewVideoPrompt && e.status === "complete",
     ) as VideoPromptEvent[];
-    console.log("complete", completedClips);
 
-    // TODO sort by chronological order
-    console.log("CLIPS", completedClips.length);
+    // TODO might want to actively sort by chronological order
     const frames: { first: string; last: string }[] = [];
     const prompts: string[] = [];
 
     for (const clip of completedClips) {
       const meta = job.meta[clip.id] as any;
       const metadata = meta.images[0];
-      console.log("META", JSON.stringify(meta));
 
       const videoBlob = await comfyClient.getAsset(
         metadata.filename,
@@ -112,47 +108,48 @@ export namespace VideoGenerator {
 
       const tmpFile = `/tmp/${event.jobId}_${clip.id}.mp4`;
       await Bun.write(tmpFile, await videoBlob.arrayBuffer());
-      const [firstFramePath, lastFramePath] = await video_frames(
-        clip.id,
-        tmpFile,
-      );
+      const [first, last] = await video_frames(clip.id, tmpFile);
 
       frames.push({
-        first: firstFramePath,
-        last: lastFramePath,
+        first,
+        last,
       });
 
       prompts.push(clip.prompt);
     }
 
     const transitions: { first: string; last: string; prompt: string }[] = [];
-    frames.forEach((pair, i) => {
-      if (i === transitions.length - 1) return;
+    for (let i = 0; i < frames.length; i++) {
+      const current = frames[i];
+      const next = frames[i + 1];
+
+      if (i === frames.length - 1) continue;
+      const prompt = await transition_prompt(
+        completedClips[i].prompt,
+        completedClips[i + 1].prompt,
+      );
+
       transitions.push({
-        first: pair.last,
-        last: transitions[i + 1].first,
-        prompt: PromptGenerator.transition_prompt(
-          completedClips[i].prompt,
-          completedClips[i + 1].prompt,
-        ),
+        first: current.last,
+        last: next.first,
+        prompt,
       });
-    });
+    }
 
     return transitions;
   }
 
   async function video_frames(id: string, filePath: string) {
     const { INPUT_DIR } = Bun.env;
-    const paths = [
-      `${INPUT_DIR}/${id}_first_frame.png`,
-      `${INPUT_DIR}/${id}_last_frame.png`,
-    ];
+    const names = [`${id}_first_frame.png`, `${id}_last_frame.png`];
+    const paths = [`${INPUT_DIR}/${names[0]}`, `${INPUT_DIR}/${names[1]}`];
 
     const processes = [
       {
         args: [
           "ffmpeg",
           "-y",
+          "-nostdin",
           "-i",
           filePath,
           "-frames:v",
@@ -166,6 +163,7 @@ export namespace VideoGenerator {
         args: [
           "ffmpeg",
           "-y",
+          "-nostdin",
           "-sseof",
           "-2",
           "-i",
@@ -178,21 +176,57 @@ export namespace VideoGenerator {
     ];
 
     for (const process of processes) {
-      let ffmpegProcess = spawn(process.args);
-      const decoder = new TextDecoder();
+      let ffmpegProcess = spawn({
+        cmd: process.args,
+        stdio: ["ignore", "ignore", "ignore"],
+      });
 
-      let output = "";
-      for await (const chunk of ffmpegProcess.stdout) {
-        output += decoder.decode(chunk, { stream: true });
-      }
+      await ffmpegProcess.exited;
 
-      const status = await ffmpegProcess.exited;
-
-      if (status !== 0) {
+      if (ffmpegProcess.exitCode !== 0) {
         throw new Error("Failed to execute 'ffmpgeg'");
       }
     }
 
-    return paths;
+    return names;
+  }
+
+  async function transition_prompt(first: string, second: string) {
+    const instructions = `Here are two different prompts for generating videos based on images.
+
+First prompt:
+
+${first}
+
+Second prompt:
+
+${second}
+
+These two have been used already to generate two separate videos.
+Your task is to merge both of these prompts into a single prompt in order to create
+a ${Metadata.TRANSITION_DURATION} second long video transition.
+
+The last frame from the first video and the first frame from the second video will
+be used in order to generate a transition based on this new merged prompt meaning.
+
+The transition should not be just a simple cut, but consider the visual context because
+the transition will be generated using artificial intelligence so it can be a smart
+video transition.
+
+For example when there is an object in the first video and also the same object in the
+second video then the transition could be described so that the object is being transported
+to the new place in a creative way which considers the context of the first and second video.
+
+Generate a creative and meaningful prompt for a video transition!
+
+Your response should only include the newly generated prompt!
+`;
+
+    try {
+      const res = await LLM.message(instructions);
+      return res.content;
+    } catch (error) {
+      return "everybody shut the fuck up";
+    }
   }
 }
