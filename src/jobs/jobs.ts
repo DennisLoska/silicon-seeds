@@ -56,7 +56,7 @@ export namespace JobOrchestrator {
   export function schedule_task(event: Partial<JobEvent>) {
     const task = create_task(event);
     update_schedule(task);
-    event.type && Event.emit(event.type, create_task(event));
+    event.type && Event.emit(event.type, task);
   }
 
   // TypeScript sucks

@@ -97,7 +97,17 @@ export namespace SocketServer {
       }
 
       if (event.type === Event.NewVideoPrompt && event.mode === JobMode.Video) {
-        await VideoGenerator.prepare_transitions(event);
+        const transitions = await VideoGenerator.prepare_transitions(event);
+        if (!transitions) return;
+
+        for (const transition of transitions) {
+          VideoGenerator.schedule_transition({
+            jobId: event.jobId,
+            prompt: transition.prompt,
+            startImg: transition.first,
+            endImg: transition.last,
+          });
+        }
       }
     }
   }

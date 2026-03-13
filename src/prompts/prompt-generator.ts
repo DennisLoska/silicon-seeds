@@ -6,6 +6,7 @@ import { QueueManager } from "../queue/queue-manager";
 import assert from "node:assert";
 import { ImageGenerator } from "../image/image-generator";
 import { VideoGenerator } from "../video/video-generator";
+import { Metadata } from "../meta/meta";
 
 export namespace PromptGenerator {
   export async function txt_to_img_prompt(
@@ -131,5 +132,35 @@ Make sure to return a json array with each prompt being an item of the array.
         ? txt_to_img_prompt(jobId, mode, scene, 1, preset)
         : txt_to_img_prompt(jobId, mode, scene, 1);
     }
+  }
+
+  export function transition_prompt(first: string, second: string) {
+    return `Here are two different prompts for generating videos based on images.
+
+First prompt:
+
+${first}
+
+Second prompt:
+
+${second}
+
+These two have been used already to generate two separate videos.
+Your task is to merge both of these prompts into a single prompt in order to create
+a ${Metadata.TRANSITION_DURATION} second long video transition.
+
+The last frame from the first video and the first frame from the second video will
+be used in order to generate a transition based on this new merged prompt meaning.
+
+The transition should not be just a simple cut, but consider the visual context because
+the transition will be generated using artificial intelligence so it can be a smart
+video transition.
+
+For example when there is an object in the first video and also the same object in the
+second video then the transition could be described so that the object is being transported
+to the new place in a creative way which considers the context of the first and second video.
+
+Generate a creative and meaningful prompt for a video transition!
+`;
   }
 }

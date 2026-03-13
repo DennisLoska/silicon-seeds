@@ -4,6 +4,7 @@ import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
 import { JobOrchestrator } from "../jobs/jobs";
 import { spawn } from "bun";
+import { PromptGenerator } from "../prompts/prompt-generator";
 
 export namespace VideoGenerator {
   export function init() {
@@ -24,7 +25,7 @@ export namespace VideoGenerator {
 
     const completed = QueueManager.findEventById(event.id);
 
-    if (!completed?.jobId) return;
+    if (!completed?.jobId) return null;
 
     const job = JobOrchestrator.jobs[completed?.jobId];
     console.log("job", job);
@@ -33,7 +34,7 @@ export namespace VideoGenerator {
       (e) => e.type === Event.NewVideoPrompt && e.status === "pending",
     );
     // TODO fix diese scheisse
-    if (pendingClips.length !== 0) return;
+    if (pendingClips.length !== 0) return null;
     console.log("pending", pendingClips.length);
 
     const completedClips = JobOrchestrator.job_events(job.id).filter(
@@ -70,14 +71,20 @@ export namespace VideoGenerator {
       prompts.push(clip.prompt);
     }
 
-    const transitions: { first: string; last: string }[] = [];
+    const transitions: { first: string; last: string; prompt: string }[] = [];
     frames.forEach((pair, i) => {
-      if (i === transitions.length - 1) return null;
-      transitions.push({ first: pair.last, last: transitions[i + 1].first });
+      if (i === transitions.length - 1) return;
+      transitions.push({
+        first: pair.last,
+        last: transitions[i + 1].first,
+        prompt: PromptGenerator.transition_prompt(
+          completedClips[i].prompt,
+          completedClips[i + 1].prompt,
+        ),
+      });
     });
 
-    // TODO
-    // derive prompt
+    return transitions;
   }
 
   async function video_frames(id: string, filePath: string) {
