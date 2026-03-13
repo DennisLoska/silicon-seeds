@@ -17,6 +17,7 @@ export interface JobBaseEvent extends BaseEvent {
   jobId: string;
   mode: JobMode;
   status: "pending" | "complete";
+  meta?: Record<string, unknown>;
 }
 
 export enum Event {

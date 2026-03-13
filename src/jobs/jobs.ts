@@ -1,22 +1,28 @@
 import assert from "node:assert";
 import { Event, JobBaseEvent, JobEvent } from "../events/events";
 import { Metadata } from "../meta/meta";
+import { QueueManager } from "../queue/queue-manager";
 
 type Job = {
   id: string;
   created_at: string;
   events: Record<string, JobEvent>;
-  schedule: JobEvent[];
-  scheduledImages: number;
-  completedImages: number;
-  scheduledClips: number;
-  completedClips: number;
-  scheduledTransitions: number;
-  completedTransitions: number;
+  meta: Record<string, unknown>;
 };
 
 export namespace JobOrchestrator {
   export const jobs: Record<string, Job> = {};
+
+  export function init() {
+    Event.on(Event.ComfyExecuted, (event) => {
+      // TODO replace with db call
+      const e = QueueManager.findEventById(event.id);
+      assert(e, "Associated event not found!");
+
+      if (!jobs[e.jobId].events[e.id]) return;
+      jobs[e.jobId].meta[e.id] = event.data;
+    });
+  }
 
   export async function create_job() {
     const id = Metadata.randomId();
@@ -30,35 +36,26 @@ export namespace JobOrchestrator {
     return job;
   }
 
-  export function update_job(event: JobEvent) {
+  export function job_events(id: string) {
+    return Object.values(jobs[id].events);
+  }
+
+  export function update_schedule(event: JobEvent) {
     const { jobId, id } = event;
-    jobs[jobId].events[id] = event;
+
+    if (!jobs[jobId].events[id]) {
+      jobs[jobId].events[id] = event;
+    }
 
     if (event.status !== "complete") return;
-
-    if (event.type === Event.NewImagePrompt) {
-      jobs[jobId].completedImages++;
-    } else if (event.type === Event.NewVideoPrompt) {
-      jobs[jobId].completedClips++;
-    } else if (event.type === Event.NewTransitionPrompt) {
-      jobs[jobId].completedTransitions++;
-    }
+    jobs[jobId].events[id].status = event.status;
 
     // TODO Save to actual database
   }
 
-  export function define_schedule(
-    id: string,
-    schedules: { images?: number; transitions?: number; clips?: number },
-  ) {
-    const { clips, images, transitions } = schedules;
-
-    jobs[id].scheduledClips = clips ?? 0;
-    jobs[id].scheduledTransitions = transitions ?? 0;
-    jobs[id].scheduledImages = images ?? 0;
-  }
-
   export function schedule_task(event: Partial<JobEvent>) {
+    const task = create_task(event);
+    update_schedule(task);
     event.type && Event.emit(event.type, create_task(event));
   }
 
@@ -129,13 +126,7 @@ export namespace JobOrchestrator {
       id,
       created_at: new Date().toISOString(),
       events: {},
-      schedule: [],
-      scheduledImages: 0,
-      completedImages: 0,
-      scheduledClips: 0,
-      completedClips: 0,
-      scheduledTransitions: 0,
-      completedTransitions: 0,
+      meta: {},
     };
   }
 }

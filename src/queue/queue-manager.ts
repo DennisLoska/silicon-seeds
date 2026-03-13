@@ -6,12 +6,11 @@ import {
   VideoPromptEvent,
 } from "../events/events";
 import assert from "node:assert";
-import { JobOrchestrator } from "../jobs/jobs";
 
 export namespace QueueManager {
   export let comfyQueue = 0;
 
-  // TODO replace with actual db
+  // TODO replace with actual db and events from JobOrchestrator
   export const completed: JobEvents = [];
 
   // For now in memory queue only
@@ -41,11 +40,6 @@ export namespace QueueManager {
 
     assert(item, "Attempted to take item from empty or invalid queue");
     completed.push(item);
-    // status is pending
-    JobOrchestrator.update_job({
-      ...item,
-      status: "pending",
-    });
 
     return item;
   }

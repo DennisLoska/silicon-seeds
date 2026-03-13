@@ -1,8 +1,9 @@
 import { comfyClient } from "../comfyui/comfyui-client";
-import { Event, JobMode } from "../events/events";
+import { Event, JobEvent, JobMode, VideoPromptEvent } from "../events/events";
 import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
 import { JobOrchestrator } from "../jobs/jobs";
+import { spawn } from "bun";
 
 export namespace VideoGenerator {
   export function init() {
@@ -14,16 +15,113 @@ export namespace VideoGenerator {
       QueueManager.videoQueue.push(event);
       generate_video();
     });
-    Event.on(Event.ComfyExecuted, (event) => {
-      // TODO: define and schedule video transitions
-      // - check if all videos are there
-      // - if yes then get all videos from the job orchestrator
-      // - extract first/last frame
-      // - schedule all transitions
-      // - mark job as complete (optional)
-      console.log("TODO schedule transitions here", event);
-      JobOrchestrator.schedule_task({});
+  }
+
+  export async function prepare_transitions(event: JobEvent) {
+    // TODO: define and schedule video transitions
+    // - schedule all transitions
+    // - mark job as complete (optional)
+
+    const completed = QueueManager.findEventById(event.id);
+
+    if (!completed?.jobId) return;
+
+    const job = JobOrchestrator.jobs[completed?.jobId];
+    console.log("job", job);
+
+    const pendingClips = JobOrchestrator.job_events(job.id).filter(
+      (e) => e.type === Event.NewVideoPrompt && e.status === "pending",
+    );
+    // TODO fix diese scheisse
+    if (pendingClips.length !== 0) return;
+    console.log("pending", pendingClips.length);
+
+    const completedClips = JobOrchestrator.job_events(job.id).filter(
+      (e) => e.type === Event.NewVideoPrompt && e.status === "complete",
+    ) as VideoPromptEvent[];
+    console.log("complete", completedClips);
+
+    // TODO sort by chronological order
+    console.log("CLIPS", completedClips.length);
+    const frames: { first: string; last: string }[] = [];
+    const prompts: string[] = [];
+
+    for (const clip of completedClips) {
+      const meta = job.meta[clip.id] as any;
+      console.log("META", JSON.stringify(meta));
+      const videoBlob = await comfyClient.getAsset(
+        meta.filename,
+        meta.subfolder,
+        meta.type,
+      );
+
+      const tmpFile = `/tmp/${event.jobId}_${clip.id}.mp4`;
+      await Bun.write(tmpFile, await videoBlob.arrayBuffer());
+      const [firstFramePath, lastFramePath] = await video_frames(
+        clip.id,
+        tmpFile,
+      );
+
+      frames.push({
+        first: firstFramePath,
+        last: lastFramePath,
+      });
+
+      prompts.push(clip.prompt);
+    }
+
+    const transitions: { first: string; last: string }[] = [];
+    frames.forEach((pair, i) => {
+      if (i === transitions.length - 1) return null;
+      transitions.push({ first: pair.last, last: transitions[i + 1].first });
     });
+
+    // TODO
+    // derive prompt
+  }
+
+  async function video_frames(id: string, filePath: string) {
+    const { INPUT_DIR } = Bun.env;
+    const paths = [
+      `${INPUT_DIR}/${id}_first_frame.png`,
+      `${INPUT_DIR}/${id}_last_frame.png`,
+    ];
+
+    const processes = [
+      {
+        args: ["ffmpeg", "-i", filePath, "-frames:v 1", paths[0]],
+      },
+      {
+        args: [
+          "ffmpeg",
+          "-sseof",
+          "-2",
+          "-i",
+          filePath,
+          "-update",
+          "1",
+          paths[1],
+        ],
+      },
+    ];
+
+    for (const process of processes) {
+      let ffmpegProcess = spawn(process.args);
+      const decoder = new TextDecoder();
+
+      let output = "";
+      for await (const chunk of ffmpegProcess.stdout) {
+        output += decoder.decode(chunk, { stream: true });
+      }
+
+      const status = await ffmpegProcess.exited;
+
+      if (status !== 0) {
+        throw new Error("Failed to execute 'ffmpgeg'");
+      }
+    }
+
+    return paths;
   }
 
   export function schedule_video(event: {

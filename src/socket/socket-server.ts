@@ -54,6 +54,7 @@ export namespace SocketServer {
       // console.log(JSON.stringify(msg.data));
 
       // Can be used to enrich REST api responses
+      // Can be used to enrich job events
       Event.emit(Event.ComfyExecuted, {
         id: msg.data.prompt_id,
         created_at: new Date().toISOString(),
@@ -70,9 +71,9 @@ export namespace SocketServer {
       assert(event, "Event is missing");
 
       // update status to complete
-      JobOrchestrator.update_job({ ...event, status: "complete" });
+      JobOrchestrator.update_schedule({ ...event, status: "complete" });
       const currentJob = JobOrchestrator.jobs[event.jobId];
-      console.log("current job", currentJob);
+      // console.log("current job", currentJob);
 
       // better memory management
       if (
@@ -91,8 +92,12 @@ export namespace SocketServer {
       VideoGenerator.generate_video();
       AudioGenerator.generate_audio();
 
-      if (event.mode === JobMode.Video) {
+      if (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) {
         PromptGenerator.img_to_vid_prompt(promptId);
+      }
+
+      if (event.type === Event.NewVideoPrompt && event.mode === JobMode.Video) {
+        await VideoGenerator.prepare_transitions(event);
       }
     }
   }

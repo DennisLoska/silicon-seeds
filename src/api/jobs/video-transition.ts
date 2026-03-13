@@ -2,7 +2,6 @@ import { JobMode } from "../../events/events";
 import { ImageGenerator } from "../../image/image-generator";
 import { JobOrchestrator } from "../../jobs/jobs";
 import { Metadata } from "../../meta/meta";
-import { VideoGenerator } from "../../video/video-generator";
 
 export async function video_transition() {
   const { id: jobId } = await JobOrchestrator.create_job();
@@ -29,13 +28,6 @@ export async function video_transition() {
   const metaBar = bar?.data?.images?.[0];
   const fileFoo = metaFoo.filename;
   const fileBar = metaBar.filename;
-
-  VideoGenerator.schedule_transition({
-    jobId,
-    prompt: "todo",
-    startImg: fileFoo,
-    endImg: fileBar,
-  });
 
   return new Response(JSON.stringify({ message: "todo" }));
 }

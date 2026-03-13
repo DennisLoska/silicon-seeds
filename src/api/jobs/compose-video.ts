@@ -45,15 +45,6 @@ export async function compose_video() {
 
   const vidStruct = derive_video_structure(duration);
 
-  // TODO replace with actual db calls
-  // TODO Fix abstraction or use it in all the other api handlers as well...
-  // Alternatively attach this as side effect to each single job evnet there is?
-  JobOrchestrator.define_schedule(jobId, {
-    images: 2,
-    clips: vidStruct.clipCount,
-    transitions: vidStruct.transitionCount,
-  });
-
   void PromptGenerator.image_scene_prompts(
     jobId,
     JobMode.Video,

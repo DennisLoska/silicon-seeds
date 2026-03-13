@@ -12,6 +12,26 @@ export namespace Metadata {
     return Bun.randomUUIDv7();
   }
 
+  // TODO Can probably delete this
+  export function derive_video_structure(duration: number) {
+    const { CLIP_DURATION, TRANSITION_DURATION } = Metadata;
+
+    // Base equation: duration = (Metadata.CLIP_DURATION * x) + (Metadata.TRANSITION_DURATION * (x - 1))
+    const clipCount = Math.ceil(
+      (duration + TRANSITION_DURATION) / (CLIP_DURATION + TRANSITION_DURATION),
+    );
+
+    const transitionCount = clipCount - 1;
+
+    return {
+      audioDuration: duration,
+      totalDuration:
+        clipCount * CLIP_DURATION + transitionCount * TRANSITION_DURATION,
+      clipCount,
+      transitionCount,
+    };
+  }
+
   export async function getAudioDuration(blob: Blob) {
     const tempFile = `/tmp/audio-${Date.now()}.mp3`;
     await Bun.write(tempFile, await blob.arrayBuffer());
