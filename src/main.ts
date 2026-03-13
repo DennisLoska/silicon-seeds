@@ -27,10 +27,7 @@ import { VideoGenerator } from "./video/video-generator";
 // - Can pick matching content to find images or videos
 //
 // Workflows
-// - TTS workflow
 // - LTX workflow
-// - Image Transistion Workflow
-// - Video Transition Workflow
 // - Optimize WAN2.2 workflow
 // - 2K image workflow
 // - Add LoRA support
@@ -38,10 +35,6 @@ import { VideoGenerator } from "./video/video-generator";
 // Metadata
 // - defines video transcript / captions to be pot. used
 // - add metadata to generated videos and images (used prompt, prompt id, job id, index)
-//
-// JobOrchestrator (db integration)
-// - subscribed to all relevant events related to a job
-// - keeps track of a job's progress / state via SQLite database by job id
 //
 // Database
 // - store jobs in db
@@ -53,6 +46,11 @@ import { VideoGenerator } from "./video/video-generator";
 // - Use jwt tokens in headers for verification
 // - encode user id in jwt token
 // - use user id in /api/jobs endpoint
+//
+// Frontend
+// - Use i.e. Daisy UI to create a webapp
+// - Distinct mode: image generation, audio generation, video generation
+// - Composite mode: compose entire video from a video script (main pipeline)
 
 async function main() {
   ImageGenerator.init();

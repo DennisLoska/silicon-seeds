@@ -3,6 +3,7 @@ import { ComfyExecutedEvent, Event, JobMode } from "../events/events";
 import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
 import { Metadata } from "../meta/meta";
+import { JobOrchestrator } from "../jobs/jobs";
 
 export namespace AudioGenerator {
   export function init() {
@@ -12,25 +13,16 @@ export namespace AudioGenerator {
     });
   }
 
-  export function schedule_audio({
-    id,
-    jobId,
-    prompt,
-    duration,
-  }: {
+  export function schedule_audio(event: {
     id: string;
     jobId: string;
     prompt?: string;
     duration?: number;
   }) {
-    Event.emit(Event.NewAudioPrompt, {
+    JobOrchestrator.schedule_task({
+      ...event,
       type: Event.NewAudioPrompt,
-      created_at: new Date().toISOString(),
-      id,
-      jobId: jobId,
-      mode: prompt ? JobMode.Speech : JobMode.Instrumental,
-      prompt,
-      duration,
+      mode: event.prompt ? JobMode.Speech : JobMode.Instrumental,
     });
   }
 

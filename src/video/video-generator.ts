@@ -2,6 +2,7 @@ import { comfyClient } from "../comfyui/comfyui-client";
 import { Event, JobMode } from "../events/events";
 import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
+import { JobOrchestrator } from "../jobs/jobs";
 
 export namespace VideoGenerator {
   export function init() {
@@ -13,48 +14,40 @@ export namespace VideoGenerator {
       QueueManager.videoQueue.push(event);
       generate_video();
     });
+    Event.on(Event.ComfyExecuted, (event) => {
+      // TODO: define and schedule video transitions
+      // - check if all videos are there
+      // - if yes then get all videos from the job orchestrator
+      // - extract first/last frame
+      // - schedule all transitions
+      // - mark job as complete (optional)
+      console.log("TODO schedule transitions here", event);
+      JobOrchestrator.schedule_task({});
+    });
   }
 
-  export function schedule_video({
-    jobId,
-    prompt,
-    filename,
-  }: {
+  export function schedule_video(event: {
     jobId: string;
     prompt: string;
     filename: string;
   }) {
-    Event.emit(Event.NewVideoPrompt, {
-      id: Bun.randomUUIDv7(),
-      created_at: new Date().toISOString(),
-      jobId,
-      mode: JobMode.Video,
+    JobOrchestrator.schedule_task({
+      ...event,
       type: Event.NewVideoPrompt,
-      prompt,
-      filename,
+      mode: JobMode.Video,
     });
   }
 
-  export function schedule_transition({
-    jobId,
-    prompt,
-    startImg,
-    endImg,
-  }: {
+  export function schedule_transition(event: {
     jobId: string;
     prompt: string;
     startImg: string;
     endImg: string;
   }) {
-    Event.emit(Event.NewTransitionPrompt, {
-      id: Bun.randomUUIDv7(),
-      created_at: new Date().toISOString(),
-      jobId,
-      mode: JobMode.Video,
+    JobOrchestrator.schedule_task({
+      ...event,
       type: Event.NewTransitionPrompt,
-      prompt,
-      startImg,
-      endImg,
+      mode: JobMode.Video,
     });
   }
 

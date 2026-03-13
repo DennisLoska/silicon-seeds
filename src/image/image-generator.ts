@@ -3,6 +3,7 @@ import { comfyClient } from "../comfyui/comfyui-client";
 import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
 import { Metadata } from "../meta/meta";
+import { JobOrchestrator } from "../jobs/jobs";
 
 export namespace ImageGenerator {
   export function init() {
@@ -12,24 +13,15 @@ export namespace ImageGenerator {
     });
   }
 
-  export function schedule_image({
-    id,
-    jobId,
-    mode,
-    prompt,
-  }: {
+  export function schedule_image(event: {
     id?: string;
     jobId: string;
     mode: JobMode;
     prompt: string;
   }) {
-    Event.emit(Event.NewImagePrompt, {
-      id: id ?? Bun.randomUUIDv7(),
-      created_at: new Date().toISOString(),
-      jobId,
-      mode,
+    JobOrchestrator.schedule_task({
+      ...event,
       type: Event.NewImagePrompt,
-      prompt,
     });
   }
 

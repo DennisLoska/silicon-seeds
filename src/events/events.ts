@@ -13,7 +13,7 @@ interface BaseEvent {
   created_at: string;
 }
 
-interface JobBaseEvent extends BaseEvent {
+export interface JobBaseEvent extends BaseEvent {
   jobId: string;
   mode: JobMode;
   status: "pending" | "complete";

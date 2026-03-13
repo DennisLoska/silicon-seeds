@@ -72,7 +72,7 @@ export namespace SocketServer {
       // update status to complete
       JobOrchestrator.update_job({ ...event, status: "complete" });
       const currentJob = JobOrchestrator.jobs[event.jobId];
-      console.log(currentJob);
+      console.log("current job", currentJob);
 
       // better memory management
       if (
