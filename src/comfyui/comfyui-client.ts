@@ -275,30 +275,13 @@ export class ComfyUIClient {
   }
 
   private async prepareInput(input: ModelVariant) {
-    if (input.kind === "text-to-image") return;
+    if (input.kind !== "image-to-video") return;
 
-    if (input.kind === "image-to-video") {
-      const src = `${OUTPUT_DIR}/${input.imagePath}`.replace('"', "").trim();
-      const dst = `${INPUT_DIR}/${input.imagePath}`.replace('"', "").trim();
+    const src = `${OUTPUT_DIR}/${input.imagePath}`.replace('"', "").trim();
+    const dst = `${INPUT_DIR}/${input.imagePath}`.replace('"', "").trim();
 
-      const image = await Bun.file(src).arrayBuffer();
-      await Bun.write(dst, image);
-    }
-
-    if (input.kind === "image-to-transition") {
-      const startSrc = `/tmp/${input.startImage}`.replace('"', "").trim();
-      const startDst = `${INPUT_DIR}/${input.startImage}`
-        .replace('"', "")
-        .trim();
-      const endSrc = `/tmp/${input.endImage}`.replace('"', "").trim();
-      const endDst = `${INPUT_DIR}/${input.endImage}`.replace('"', "").trim();
-
-      const start = await Bun.file(startSrc).arrayBuffer();
-      await Bun.write(startDst, start);
-
-      const end = await Bun.file(endSrc).arrayBuffer();
-      await Bun.write(endDst, end);
-    }
+    const image = await Bun.file(src).arrayBuffer();
+    await Bun.write(dst, image);
   }
 }
 
