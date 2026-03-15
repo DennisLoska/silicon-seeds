@@ -5,7 +5,7 @@ import {
   TransitionPromptEvent,
   VideoPromptEvent,
 } from "../events/events";
-import assert from "node:assert";
+import { Utils } from "../utils/utils";
 
 export namespace QueueManager {
   export let comfyQueue = 0;
@@ -38,7 +38,7 @@ export namespace QueueManager {
       item = videoQueue.shift();
     }
 
-    assert(item, "Attempted to take item from empty or invalid queue");
+    Utils.assert(item, "Attempted to take item from empty or invalid queue");
     completed.push(item);
 
     return item;

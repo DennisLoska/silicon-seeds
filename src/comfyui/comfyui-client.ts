@@ -6,8 +6,8 @@ import ace_step_1_0_api from "./api/audio_ace_step_1_0_instrumental.json";
 import kokoro_tts_api from "./api/kokoro-tts.json";
 import wan2_2_img2vidWorkflow from "./workflows/video_wan2_2_14B_i2v_720p_5s.json";
 import wan2_2_img2transWorkflow from "./workflows/video_wan2_2_14B_transitions.json";
-import assert from "node:assert";
 import { Logger } from "../logger/logger";
+import { Utils } from "../utils/utils";
 
 type Text2ImgInput = {
   id: string;
@@ -53,7 +53,8 @@ export type ModelVariant =
 const OUTPUT_DIR = Bun.env.OUTPUT_DIR;
 const INPUT_DIR = Bun.env.INPUT_DIR;
 const COMFYUI_BASE_URL = Bun.env.COMFYUI_BASE_URL;
-assert(
+
+Utils.assert(
   OUTPUT_DIR && INPUT_DIR && COMFYUI_BASE_URL,
   "ComfyUI env. variables not configured!",
 );
@@ -121,14 +122,14 @@ export class ComfyUIClient {
     }[] = [];
 
     const outputs = Object.values(historyNode.outputs);
-    assert(
+    Utils.assert(
       outputs.length === 1,
       `ComfyUI job should have exactly one item in history, found: ${JSON.stringify(outputs)}`,
     );
 
     const [output] = outputs as any;
     const [image] = output.images;
-    assert(
+    Utils.assert(
       image.subfolder === "",
       `Expected 'subfolder' to be "" (empty), but found '${image.subfolder}'`,
     );
@@ -139,7 +140,7 @@ export class ComfyUIClient {
       kind: image.type,
     });
 
-    assert(
+    Utils.assert(
       images.length === 1,
       "There should be only one image per ComfyUI job",
     );

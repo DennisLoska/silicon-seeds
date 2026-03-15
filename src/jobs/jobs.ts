@@ -1,7 +1,7 @@
-import assert from "node:assert";
 import { Event, JobBaseEvent, JobEvent } from "../events/events";
 import { Metadata } from "../meta/meta";
 import { QueueManager } from "../queue/queue-manager";
+import { Utils } from "../utils/utils";
 
 type Job = {
   id: string;
@@ -17,7 +17,7 @@ export namespace JobOrchestrator {
     Event.on(Event.ComfyExecuted, (event) => {
       // TODO replace with db call
       const e = QueueManager.findEventById(event.id);
-      assert(e, "Associated event not found!");
+      Utils.assert(e, "Associated event not found!");
 
       if (!jobs[e.jobId].events[e.id]) return;
       jobs[e.jobId].meta[e.id] = event.data;
@@ -62,8 +62,8 @@ export namespace JobOrchestrator {
   // TypeScript sucks
   function create_task(event: Partial<JobEvent>): JobEvent {
     const { jobId, id, mode, type, prompt } = event;
-    assert(jobId && type, "Must provide task type to define a task!");
-    assert(mode, "Must provide 'mode' to define a  task!");
+    Utils.assert(jobId && type, "Must provide task type to define a task!");
+    Utils.assert(mode, "Must provide 'mode' to define a  task!");
 
     const base: JobBaseEvent = {
       id: id ?? Bun.randomUUIDv7(),
@@ -75,7 +75,7 @@ export namespace JobOrchestrator {
 
     switch (event.type) {
       case Event.NewImagePrompt:
-        assert(prompt, "Must provide 'prompt' to define an image task!");
+        Utils.assert(prompt, "Must provide 'prompt' to define an image task!");
         return {
           ...base,
           type: Event.NewImagePrompt,
@@ -84,8 +84,11 @@ export namespace JobOrchestrator {
 
       case Event.NewVideoPrompt:
         const { filename } = event;
-        assert(prompt, "Must provide 'prompt' to define an video task!");
-        assert(filename, "Must provide 'filename' to define a videotask!");
+        Utils.assert(prompt, "Must provide 'prompt' to define an video task!");
+        Utils.assert(
+          filename,
+          "Must provide 'filename' to define a videotask!",
+        );
 
         return {
           ...base,
@@ -96,15 +99,18 @@ export namespace JobOrchestrator {
 
       case Event.NewTransitionPrompt:
         const { startImg, endImg } = event;
-        assert(
+        Utils.assert(
           prompt,
           "Must provide 'prompt' to define a video transition task!",
         );
-        assert(
+        Utils.assert(
           startImg,
           `Must provide '${startImg}' to define a transition task!`,
         );
-        assert(endImg, `Must provide '${endImg}' to define a transition task!`);
+        Utils.assert(
+          endImg,
+          `Must provide '${endImg}' to define a transition task!`,
+        );
 
         return {
           ...base,

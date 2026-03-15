@@ -1,9 +1,9 @@
 import { ComfyExecutedEvent, Event, JobMode } from "../events/events";
 import { comfyClient } from "../comfyui/comfyui-client";
-import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
 import { Metadata } from "../meta/meta";
 import { JobOrchestrator } from "../jobs/jobs";
+import { Utils } from "../utils/utils";
 
 export namespace ImageGenerator {
   export function init() {
@@ -29,7 +29,7 @@ export namespace ImageGenerator {
     if (QueueManager.isImageQueueBlocked()) return;
 
     const item = QueueManager.pop("image");
-    assert(item.type === Event.NewImagePrompt, "Incorrect event type!");
+    Utils.assert(item.type === Event.NewImagePrompt, "Incorrect event type!");
 
     const { prompt, id } = item;
     void comfyClient.generate({ id, kind: "text-to-image", prompt });

@@ -3,10 +3,10 @@ import { LLM } from "../llm/llm";
 import { comfyClient } from "../comfyui/comfyui-client";
 import { Presets, StylePresets } from "../styles/presets";
 import { QueueManager } from "../queue/queue-manager";
-import assert from "node:assert";
 import { ImageGenerator } from "../image/image-generator";
 import { VideoGenerator } from "../video/video-generator";
 import { Logger } from "../logger/logger";
+import { Utils } from "../utils/utils";
 
 export namespace PromptGenerator {
   export async function txt_to_img_prompt(
@@ -24,7 +24,11 @@ export namespace PromptGenerator {
       const res = await LLM.message(
         `Create an excellent image prompt based on these instructions: ${instructions}`,
       );
-      if (res === null || !res.content || res.content.trim() === "") return;
+      if (res === null || !res.content || res.content.trim() === "") {
+        // TODO could add retry
+        Logger.warn("Failed to generate image prompt - skipping");
+        return null;
+      }
       let prompt = res.content.trim();
 
       ImageGenerator.schedule_image({ jobId, mode, prompt });
@@ -33,7 +37,7 @@ export namespace PromptGenerator {
 
   export async function img_to_vid_prompt(promptId: string) {
     const event = QueueManager.findEventById(promptId);
-    assert(
+    Utils.assert(
       event,
       "Unable to find associated event with image for image-to-video prompt.",
     );
@@ -43,7 +47,7 @@ export namespace PromptGenerator {
     const res = await comfyClient.getImageOutput(promptId);
     if (res === null) {
       Logger.info("Failed to fetch image location for video prompt");
-      return;
+      return null;
     }
 
     const { filename, subfolder, kind } = res;
@@ -71,6 +75,12 @@ Also consider the original prompt which was used to generate the image for riche
 ${event.prompt}`,
       [image],
     );
+
+    if (!response?.content) {
+      // TODO could add retry
+      Logger.warn("Failed to generate video prompt - skipping");
+      return null;
+    }
 
     VideoGenerator.schedule_video({
       jobId: event.jobId,
@@ -140,7 +150,7 @@ Make sure to only include the JSON array in your response and nothing more!
     Logger.info("actual: ", scenes.length);
 
     if (!Array.isArray(scenes)) return null;
-    assert(
+    Utils.assert(
       scenes.length >= amount,
       "LLM did not generate the desired amount of scene prompts.",
     );

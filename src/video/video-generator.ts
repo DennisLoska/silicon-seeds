@@ -1,12 +1,12 @@
 import { comfyClient } from "../comfyui/comfyui-client";
 import { Event, JobEvent, JobMode, VideoPromptEvent } from "../events/events";
-import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
 import { JobOrchestrator } from "../jobs/jobs";
 import { spawn } from "bun";
 import { Metadata } from "../meta/meta";
 import { LLM } from "../llm/llm";
 import { Logger } from "../logger/logger";
+import { Utils } from "../utils/utils";
 
 export namespace VideoGenerator {
   export function init() {
@@ -50,7 +50,7 @@ export namespace VideoGenerator {
     if (QueueManager.isVideoQueueBlocked()) return;
 
     const item = QueueManager.pop("video");
-    assert(
+    Utils.assert(
       item.type === Event.NewVideoPrompt ||
         item.type === Event.NewTransitionPrompt,
       "Incorrect event type!",

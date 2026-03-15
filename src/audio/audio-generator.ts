@@ -1,9 +1,9 @@
 import { comfyClient } from "../comfyui/comfyui-client";
 import { ComfyExecutedEvent, Event, JobMode } from "../events/events";
-import assert from "node:assert";
 import { QueueManager } from "../queue/queue-manager";
 import { Metadata } from "../meta/meta";
 import { JobOrchestrator } from "../jobs/jobs";
+import { Utils } from "../utils/utils";
 
 export namespace AudioGenerator {
   export function init() {
@@ -30,12 +30,12 @@ export namespace AudioGenerator {
     if (QueueManager.isAudioQueueBlocked()) return;
 
     const item = QueueManager.pop("audio");
-    assert(item.type === Event.NewAudioPrompt, "Incorrect event type!");
+    Utils.assert(item.type === Event.NewAudioPrompt, "Incorrect event type!");
 
     const { prompt, id, mode, duration } = item;
 
     if (mode === JobMode.Speech) {
-      assert(typeof prompt === "string", "'prompt' is not a string");
+      Utils.assert(typeof prompt === "string", "'prompt' is not a string");
       void comfyClient.generate({
         id,
         kind: "text-to-speech",
@@ -44,7 +44,7 @@ export namespace AudioGenerator {
     }
 
     if (mode === JobMode.Instrumental) {
-      assert(duration && duration > 0, "'duration' is not a number");
+      Utils.assert(duration && duration > 0, "'duration' is not a number");
       void comfyClient.generate({
         id,
         kind: "text-to-instrumental",

@@ -2,13 +2,13 @@ import { ImageGenerator } from "../image/image-generator";
 import { Metadata } from "../meta/meta";
 import { PromptGenerator } from "../prompts/prompt-generator";
 import { QueueManager } from "../queue/queue-manager";
-import assert from "node:assert";
 import { VideoGenerator } from "../video/video-generator";
 import { comfyClient } from "../comfyui/comfyui-client";
 import { Event, JobEvent, JobMode } from "../events/events";
 import { AudioGenerator } from "../audio/audio-generator";
 import { JobOrchestrator } from "../jobs/jobs";
 import { Logger } from "../logger/logger";
+import { Utils } from "../utils/utils";
 
 export namespace SocketServer {
   let ws: WebSocket;
@@ -68,7 +68,7 @@ export namespace SocketServer {
       QueueManager.comfyQueue--;
       // TODO find in actual db
       const event = QueueManager.findEventById(promptId);
-      assert(event, "Event is missing");
+      Utils.assert(event, "Event is missing");
 
       // update status to complete
       JobOrchestrator.update_schedule({ ...event, status: "complete" });
