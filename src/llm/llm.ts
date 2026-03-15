@@ -1,4 +1,5 @@
 import { FileHandle, LMStudioClient } from "@lmstudio/sdk";
+import { Logger } from "../logger/logger";
 
 const llmClient = new LMStudioClient();
 let llm = await llmClient.llm.model("qwen/qwen3-vl-30b");
@@ -10,10 +11,15 @@ export namespace LLM {
   export const client = llmClient;
 
   export async function message(msg: string, images?: FileHandle[]) {
-    if (images) {
-      return await llm.respond({ role: "user", content: msg, images });
-    }
+    try {
+      if (images) {
+        return await llm.respond({ role: "user", content: msg, images });
+      }
 
-    return await llm.respond({ role: "user", content: msg });
+      return await llm.respond({ role: "user", content: msg });
+    } catch (error) {
+      Logger.error("Failed to receive message from LLM", error);
+      return null;
+    }
   }
 }

@@ -51,7 +51,7 @@ export namespace SocketServer {
     }
 
     if (msg.type === "executed") {
-      // Logger.info("===executed===", msg.data);
+      Logger.info("===executed===", msg.data);
 
       // Can be used to enrich REST api responses
       // Can be used to enrich job events
@@ -73,7 +73,7 @@ export namespace SocketServer {
       // update status to complete
       JobOrchestrator.update_schedule({ ...event, status: "complete" });
       const currentJob = JobOrchestrator.jobs[event.jobId];
-      // Logger.info("current job: ", currentJob);
+      Logger.info("current job: ", currentJob);
 
       // better memory management
       if (

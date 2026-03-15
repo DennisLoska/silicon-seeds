@@ -21,17 +21,13 @@ export namespace PromptGenerator {
       : StylePresets.presets[Presets.SYSTEM]({ title: message });
 
     for (let i = 0; i < batchSize; i++) {
-      try {
-        const res = await LLM.message(
-          `Create an excellent image prompt based on these instructions: ${instructions}`,
-        );
-        if (res === null || !res.content || res.content.trim() === "") return;
-        let prompt = res.content.trim();
+      const res = await LLM.message(
+        `Create an excellent image prompt based on these instructions: ${instructions}`,
+      );
+      if (res === null || !res.content || res.content.trim() === "") return;
+      let prompt = res.content.trim();
 
-        ImageGenerator.schedule_image({ jobId, mode, prompt });
-      } catch (error) {
-        Logger.error("Error generating image prompt", error);
-      }
+      ImageGenerator.schedule_image({ jobId, mode, prompt });
     }
   }
 
@@ -55,11 +51,10 @@ export namespace PromptGenerator {
     const buffer = await img.arrayBuffer();
     const base64 = Buffer.from(buffer).toString("base64");
 
-    try {
-      const image = await LLM.client.files.prepareImageBase64(filename, base64);
+    const image = await LLM.client.files.prepareImageBase64(filename, base64);
 
-      const res = await LLM.message(
-        `Generate a detailed video generation prompt for a 5 second long video based on the content of the image.
+    const response = await LLM.message(
+      `Generate a detailed video generation prompt for a 5 second long video based on the content of the image.
 The video itself should be slow paced without any rapid movement as if time moves a bit slower.
 
 The camera movement should be slow and steady and should not change meaning if the camera does a fade in it should
@@ -74,17 +69,14 @@ It is very important that you describe the ending position of the video to preve
 Also consider the original prompt which was used to generate the image for richer context:
 
 ${event.prompt}`,
-        [image],
-      );
+      [image],
+    );
 
-      VideoGenerator.schedule_video({
-        jobId: event.jobId,
-        prompt: res.content,
-        filename,
-      });
-    } catch (error) {
-      Logger.info("Failed to generate image-to-video prompt", error);
-    }
+    VideoGenerator.schedule_video({
+      jobId: event.jobId,
+      prompt: response.content,
+      filename,
+    });
   }
 
   export function script_prompt(description: string) {
@@ -125,11 +117,7 @@ order which should describe this video script visually in it's totality from
 tart to finish:
 
 ${text}
-
-
-
 `;
-
     const res = await LLM.message(list_prompt);
     if (!res?.content) return null;
 

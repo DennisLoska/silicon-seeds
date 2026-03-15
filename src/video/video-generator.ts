@@ -6,6 +6,7 @@ import { JobOrchestrator } from "../jobs/jobs";
 import { spawn } from "bun";
 import { Metadata } from "../meta/meta";
 import { LLM } from "../llm/llm";
+import { Logger } from "../logger/logger";
 
 export namespace VideoGenerator {
   export function init() {
@@ -129,6 +130,12 @@ export namespace VideoGenerator {
         completedClips[i + 1].prompt,
       );
 
+      // TODO add retry if prompt is null
+      if (prompt === null) {
+        Logger.warn("Failed to get transition prompt - skipping");
+        continue;
+      }
+
       transitions.push({
         first: current.last,
         last: next.first,
@@ -222,11 +229,7 @@ Generate a creative and meaningful prompt for a video transition!
 Your response should only include the newly generated prompt!
 `;
 
-    try {
-      const res = await LLM.message(instructions);
-      return res.content;
-    } catch (error) {
-      return "everybody shut the fuck up";
-    }
+    const res = await LLM.message(instructions);
+    return res?.content ?? null;
   }
 }

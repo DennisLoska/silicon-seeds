@@ -27,6 +27,7 @@ export namespace Logger {
       logger.info`${message}`;
     }
   }
+
   export function info(message: string, value?: unknown) {
     log_handler(message, value);
   }

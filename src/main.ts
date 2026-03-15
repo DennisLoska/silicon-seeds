@@ -9,12 +9,13 @@ import { VideoGenerator } from "./video/video-generator";
 // TODO list:
 //
 // Bugs
-// - More videos added to queue than actual amount of processed images?
+// - race condition qhen queueing multiple jobs at same time (queue block check)
+//
+// Error Handling
+// - trycatch in comfy client
+// - add meaningful retries in prompt generator
 //
 // Pipelines:
-// - script -> scenes -> images -> videos -> transitions -> ffmpeg
-//          -> tts -> video length -> amount of images with x transitions
-//          ->        video length -> PromptGenerator.instrumental_prompt -> instrumental
 //   combined_video, tts, instrumental -> final cut
 //
 // - script -> scenes -> find content in content library -> metadata
