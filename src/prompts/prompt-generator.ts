@@ -106,46 +106,69 @@ Your response should only include the actual essay including it's title - nothin
     amount: number,
     preset?: Presets,
   ) {
-    const instructions = `Here is a text: \n${text}
+    const list_prompt = `Image Prompt Instructions:
 
-Your task is to create ${amount} image prompts in chronological order.
-Your goal is to visualize the text for purpose of creating a visual novel.
-
-These prompts will be used to generate these images.
-
-The resulting images should contain no text or words in them at all so do not
+- Generate a list of ${amount} image prompts
+- Ensure each prompt is not longer than ~25-50 words
+- The different prompts should be unique and have a great amount of variety
+between them to ensure the final composition will consist of a wide range of
+different scenes describing the video script.
+- Your response should only include the list of image prompts - nothing more!
+- There should be no duplicate prompts in the list make sure each prompt is unique!
+- The resulting images should contain no text or words in them at all so do not
 put any descriptions or instructions for visualizing words, slogans or texts
 into the actual prompts. There should be no words, signs.
+- Your response should only include the list of generated image prompts
 
-Your response should only include the list of image prompts - nothing more!
-There should be no duplicate prompts in the list make sure each prompt is unique!
+Create a list of ${amount} image prompts in chronological
+order which should describe this video script visually in it's totality from
+tart to finish:
 
-The different prompts should not be too similar and have a great amount of variety
-between them to ensure the final composition will consist of a wide range of
-different scenes.
+${text}
 
-Ensure each prompt is not longer than 50-200 words and rather use less words if the 
-amount of image prompts to be generated is higher than single digit count.
 
-Make sure to return a a valid json array containing exactly ${amount} items of length
-${amount} with each prompt being an item of the array.
 
-I believe in you! You can do this! Make no mistakes!
 `;
 
-    Logger.info("instructions:", instructions);
-    // TODO FIX THIS!!!
-    const res = await LLM.message(instructions);
-    const scenes = JSON.parse(res?.content);
+    const res = await LLM.message(list_prompt);
+    if (!res?.content) return null;
+
+    const array_prompt = `Convert this list into a valid JSON array of strings.
+The list should only include the items from the provided list.
+
+Here is the list:
+
+${res?.content}
+
+Make sure to only include the JSON array in your response and nothing more!
+    `;
+
+    const response = await LLM.message(array_prompt);
+    if (!response?.content) return null;
+
+    let scenes = JSON.parse(response?.content);
     Logger.info("scenes: ", scenes);
     Logger.info("amount: ", amount);
     Logger.info("actual: ", scenes.length);
 
     if (!Array.isArray(scenes)) return null;
     assert(
-      scenes.length === amount,
+      scenes.length >= amount,
       "LLM did not generate the desired amount of scene prompts.",
     );
+
+    if (scenes.length > amount) {
+      Logger.warn(
+        "The model generated more prompts than requested, slicing the array!",
+        {
+          expected: amount,
+          actual: scenes.length,
+          scenes,
+        },
+      );
+
+      scenes = scenes.slice(0, amount);
+    }
 
     for (const scene of scenes) {
       preset
