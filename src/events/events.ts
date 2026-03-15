@@ -1,4 +1,5 @@
 import EventEmitter from "node:events";
+import { Logger } from "../logger/logger";
 
 export enum JobMode {
   Text = "text",
@@ -106,10 +107,6 @@ export namespace Event {
   });
 
   function logEvent(event: JobEvent) {
-    console.log("");
-    console.log(`===========mode:${event.mode}=============`);
-    console.log("");
-    console.log(event);
-    console.log("");
+    Logger.info(`===========mode:${event.mode}=============`, event);
   }
 }

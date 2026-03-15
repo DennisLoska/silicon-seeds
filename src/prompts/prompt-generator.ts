@@ -6,6 +6,7 @@ import { QueueManager } from "../queue/queue-manager";
 import assert from "node:assert";
 import { ImageGenerator } from "../image/image-generator";
 import { VideoGenerator } from "../video/video-generator";
+import { Logger } from "../logger/logger";
 
 export namespace PromptGenerator {
   export async function txt_to_img_prompt(
@@ -29,7 +30,7 @@ export namespace PromptGenerator {
 
         ImageGenerator.schedule_image({ jobId, mode, prompt });
       } catch (error) {
-        console.log(error);
+        Logger.error("Error generating image prompt", error);
       }
     }
   }
@@ -45,7 +46,7 @@ export namespace PromptGenerator {
 
     const res = await comfyClient.getImageOutput(promptId);
     if (res === null) {
-      console.log("Failed to fetch image location for video prompt");
+      Logger.info("Failed to fetch image location for video prompt");
       return;
     }
 
@@ -82,7 +83,7 @@ ${event.prompt}`,
         filename,
       });
     } catch (error) {
-      console.log(error);
+      Logger.info("Failed to generate image-to-video prompt", error);
     }
   }
 
@@ -112,13 +113,33 @@ Your goal is to visualize the text for purpose of creating a visual novel.
 
 These prompts will be used to generate these images.
 
-Your response should only include the list of image prompts - nothing more!
+The resulting images should contain no text or words in them at all so do not
+put any descriptions or instructions for visualizing words, slogans or texts
+into the actual prompts. There should be no words, signs.
 
-Make sure to return a json array with each prompt being an item of the array.
+Your response should only include the list of image prompts - nothing more!
+There should be no duplicate prompts in the list make sure each prompt is unique!
+
+The different prompts should not be too similar and have a great amount of variety
+between them to ensure the final composition will consist of a wide range of
+different scenes.
+
+Ensure each prompt is not longer than 50-200 words and rather use less words if the 
+amount of image prompts to be generated is higher than single digit count.
+
+Make sure to return a a valid json array containing exactly ${amount} items of length
+${amount} with each prompt being an item of the array.
+
+I believe in you! You can do this! Make no mistakes!
 `;
 
+    Logger.info("instructions:", instructions);
+    // TODO FIX THIS!!!
     const res = await LLM.message(instructions);
     const scenes = JSON.parse(res?.content);
+    Logger.info("scenes: ", scenes);
+    Logger.info("amount: ", amount);
+    Logger.info("actual: ", scenes.length);
 
     if (!Array.isArray(scenes)) return null;
     assert(

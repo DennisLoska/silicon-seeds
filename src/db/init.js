@@ -1,8 +1,9 @@
 import { Database } from "bun:sqlite";
+import { Logger } from "../logger/logger";
 
 // TODO add tables: jobs, events
 const db = new Database("silicon-seeds.sqlite", { create: true });
 
-console.log("Database initialized successfully");
+Logger.info("Database initialized successfully");
 
 export default db;

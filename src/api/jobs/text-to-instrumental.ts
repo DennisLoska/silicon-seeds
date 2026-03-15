@@ -1,5 +1,6 @@
 import { AudioGenerator } from "../../audio/audio-generator";
 import { JobOrchestrator } from "../../jobs/jobs";
+import { Logger } from "../../logger/logger";
 import { Metadata } from "../../meta/meta";
 
 export async function text_to_instrumental() {
@@ -17,7 +18,7 @@ export async function text_to_instrumental() {
 
     return new Response(JSON.stringify({ message: { ...metadata } }));
   } catch (error) {
-    console.log(error);
+    Logger.error("error", error);
     return new Response(JSON.stringify({ message: "Computer says no" }), {
       status: 500,
     });

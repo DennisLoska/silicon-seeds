@@ -23,6 +23,8 @@
     "@types/bun": "latest"
   },
   "dependencies": {
-    "@lmstudio/sdk": "^1.5.0"
+    "@lmstudio/sdk": "^1.5.0",
+    "@logtape/logtape": "^2.0.4",
+    "@logtape/pretty": "^2.0.4"
   }
 }

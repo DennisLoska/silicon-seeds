@@ -1,6 +1,7 @@
 import { AudioGenerator } from "../../audio/audio-generator";
 import { comfyClient } from "../../comfyui/comfyui-client";
 import { JobOrchestrator } from "../../jobs/jobs";
+import { Logger } from "../../logger/logger";
 import { Metadata } from "../../meta/meta";
 
 export async function text_to_speech() {
@@ -43,7 +44,7 @@ export async function text_to_speech() {
 
     return new Response(JSON.stringify({ message: { ...metadata, duration } }));
   } catch (error) {
-    console.log(error);
+    Logger.error("error", error);
     return new Response(JSON.stringify({ message: "Computer says no" }), {
       status: 500,
     });

@@ -7,6 +7,7 @@ import kokoro_tts_api from "./api/kokoro-tts.json";
 import wan2_2_img2vidWorkflow from "./workflows/video_wan2_2_14B_i2v_720p_5s.json";
 import wan2_2_img2transWorkflow from "./workflows/video_wan2_2_14B_transitions.json";
 import assert from "node:assert";
+import { Logger } from "../logger/logger";
 
 type Text2ImgInput = {
   id: string;
@@ -180,13 +181,13 @@ export class ComfyUIClient {
       });
 
       if (!res.ok) {
-        console.log("freeMemory", "Free memory failed", res);
+        Logger.warn(`Freeing memory failed`);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.log("freeMemory", "Free memory failed", error);
+      Logger.error(`Freeing memory failed`);
       return false;
     }
   }

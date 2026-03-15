@@ -8,6 +8,7 @@ import { comfyClient } from "../comfyui/comfyui-client";
 import { Event, JobEvent, JobMode } from "../events/events";
 import { AudioGenerator } from "../audio/audio-generator";
 import { JobOrchestrator } from "../jobs/jobs";
+import { Logger } from "../logger/logger";
 
 export namespace SocketServer {
   let ws: WebSocket;
@@ -32,15 +33,15 @@ export namespace SocketServer {
     const msg = JSON.parse(event.data);
 
     if (msg.type === "progress") {
-      console.log(`Progress: ${msg.data.value}/${msg.data.max}`);
+      Logger.info(`Progress: ${msg.data.value}/${msg.data.max}`);
     }
 
     if (msg.type === "status") {
       QueueManager.comfyQueue = msg.data?.status?.exec_info?.queue_remaining;
-      console.log(`Jobs in ComfyUI queue: ${QueueManager.comfyQueue}`);
-      console.log("Image queue: ", QueueManager.imageQueue.length);
-      console.log("Video queue: ", QueueManager.videoQueue.length);
-      console.log("Audio queue: ", QueueManager.audioQueue.length);
+      Logger.info(`Jobs in ComfyUI queue: ${QueueManager.comfyQueue}`);
+      Logger.info(`Image queue: ${QueueManager.imageQueue.length}`);
+      Logger.info(`Video queue: ${QueueManager.videoQueue.length}`);
+      Logger.info(`Audio queue: ${QueueManager.audioQueue.length}`);
     }
 
     if (msg.type === "execution_start") {
@@ -50,8 +51,7 @@ export namespace SocketServer {
     }
 
     if (msg.type === "executed") {
-      // console.log("\n===executed===\n");
-      // console.log(JSON.stringify(msg.data));
+      // Logger.info("===executed===", msg.data);
 
       // Can be used to enrich REST api responses
       // Can be used to enrich job events
@@ -73,7 +73,7 @@ export namespace SocketServer {
       // update status to complete
       JobOrchestrator.update_schedule({ ...event, status: "complete" });
       const currentJob = JobOrchestrator.jobs[event.jobId];
-      // console.log("current job", currentJob);
+      // Logger.info("current job: ", currentJob);
 
       // better memory management
       if (
@@ -113,16 +113,16 @@ export namespace SocketServer {
   }
 
   function error(error: globalThis.Event) {
-    console.log(error);
+    Logger.info("Socket error: ", error);
   }
 
   function open() {
-    console.log(
-      `Socket with client id ${Metadata.clientId} connected to ComfyUI\n`,
+    Logger.info(
+      `Socket with client id ${Metadata.clientId} connected to ComfyUI`,
     );
   }
 
   function close() {
-    console.log("Connection closed\n");
+    Logger.info("Connection closed\n");
   }
 }

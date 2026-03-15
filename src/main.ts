@@ -2,6 +2,7 @@ import { ApiServer } from "./api/api";
 import { AudioGenerator } from "./audio/audio-generator";
 import { ImageGenerator } from "./image/image-generator";
 import { JobOrchestrator } from "./jobs/jobs";
+import { Logger } from "./logger/logger";
 import { SocketServer } from "./socket/socket-server";
 import { VideoGenerator } from "./video/video-generator";
 
@@ -54,6 +55,8 @@ import { VideoGenerator } from "./video/video-generator";
 // - Composite mode: compose entire video from a video script (main pipeline)
 
 async function main() {
+  await Logger.init();
+
   JobOrchestrator.init();
   ImageGenerator.init();
   VideoGenerator.init();
