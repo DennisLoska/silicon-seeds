@@ -4,371 +4,240 @@ Whoever has ears, let them hear.
 
 A modular, event-driven generative media orchestration platform that creates videos by coordinating LLM-based content generation with ComfyUI workflows via a Bun.js server.
 
-## Architecture Overview
-
-Silicon-Seeds uses an **event-driven architecture** where the Bun server acts as the central orchestrator:
-- **Bun Server**: Receives API requests, coordinates all components, passes prompts from LLM to ComfyUI
-- **LLM (Qwen via LM Studio)**: Generates scripts and visual prompts via HTTP SDK
-- **ComfyUI**: Executes image, video, audio, and instrumental generation workflows via REST API
-- **Event System**: Pub/Sub messaging with Node.js EventEmitter coordinates all components
+## Overview
 
 ```
-┌───────────────────────────────────────────────────────────────────────────────┐
-║                    SILICON-SEEDS ARCHITECTURE OVERVIEW                        ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-
-                              ┌──────────────┐
-                              │   Client     │
-                              │  (Browser/   │
-                              │   API)       │
-                              └──────┬───────┘
-                                     │ HTTP POST
-                                     ▼
-                        ┌──────────────────────────┐
-                        │    BUN SERVER          │
-                        │     main.ts            │
-                        └──────────┬─────────────┘
-                                   │
-         ┌─────────────────────────┼─────────────────────────┐
-         │                         │                         │
-         ▼                         ▼                         ▼
-┌───────────────────┐   ┌───────────────────┐   ┌───────────────────┐
-│  API LAYER        │   │ PROMPT LAYER      │   │ INFRASTRUCTURE    │
-│                   │   │                   │   │                   │
-│ compose-video.ts  │──▶│ PromptGenerator   │──▶│ EventSystem       │
-│ script-to-scenes  │   │ - txt_to_img()    │   │ - EventEmitter    │
-│ text-to-image     │   │ - image_scene()   │   │ - QueueManager    │
-└───────────────────┘   └────────┬──────────┘   └────────┬──────────┘
-                                 │                       │
-                                 ▼                       │
-                        ┌───────────────────┐            │
-                        │     LLM           │◀───────────┼─▶ WebSocket
-                        │  (LM Studio)      │            │   listener
-                        │  qwen/qwen3-vl-  │            │
-                        │    30b            │            │
-                        └────────┬──────────┘            ▼
-                                 │                       │
-                                 │ HTTP SDK              │
-                                 │                       │
-                         ┌───────▼───────────────┐       │
-                         │ BUN SERVER (HTTP)     │◀──────┘
-                         │ comfyClient.generate()│
-                         └──────────┬────────────┘
-                                    │ HTTP POST /prompt
-                                    ▼
-                        ┌───────────────────────────┐
-                        │    COMFYUI ENGINE        │
-                        │                           │
-                        │  • Z Image Turbo (SD3.5) │
-                        │  • WAN 2.2 (video)       │
-                        │  • Kokoro TTS            │
-                        │  • ACE Step              │
-                        └──────────┬────────────────┘
-                                   │ HTTP GET /view
-                                   ▼
-                        ┌───────────────────────────┐
-                        │    FILE STORAGE          │
-                        │    (OUTPUT_DIR/INPUT_DIR)│
-                        └───────────────────────────┘
+┌──────────┐    HTTP     ┌───────────────┐
+│  Client  │───POST─────▶│  Bun Server   │
+└──────────┘             └──────┬───────┬─┘
+                                 │       │
+                    WebSocket ▼       ▼ ComfyUI REST
+                         ┌─────────┐  ┌──────────┐
+                         │  LM Studio│  │  ComfyUI │
+                         │ qwen3.5  │  │ Workflows│
+                         └──────────┘  └──────────┘
 ```
 
-## How It Works: compose-video() Job Flow
+## Architecture
 
-The main job orchestrates a complete video creation pipeline:
+Silicon-Seeds uses an event-driven architecture with three main components:
 
-### Sequence Diagram
+- **Bun Server**: Central orchestrator handling API requests and coordinating all generation pipelines
+- **LLM (LM Studio)**: Text and image prompt generation via HTTP SDK (`qwen/qwen3.5-35b-a3b`)
+- **ComfyUI**: Executes generation workflows for images, videos, audio via REST API
+
+### Pipeline Flow
 
 ```
-┌──────┐  ┌─────────────┐  ┌──────┐  ┌─────────────┐  ┌──────────┐
-│Client│  │Bun Server   │  │ LLM  │  │ Bun Server  │  │ ComfyUI  │
-└──┬───┘  └─────┬───────┘  └──┬───┘  └─────┬───────┘  └────┬─────┘
-   │            │              │           │               │
-   │ POST       │              │           │               │
-   │ /compose   │              │           │               │
-   ├───────────▶│              │           │               │
-   │            │              │           │               │
-   │            │ create_script()          │               │
-   │            │◀─────────────┤           │               │
-   │            │              │           │               │
-   │            │ LLM.message  │           │               │
-   │            ├─────────────▶│           │               │
-   │            │              │           │               │
-   │            │ script text  │           │               │
-   │            │◀─────────────┤           │               │
-   │            │              │           │               │
-   │            │ schedule_audio(TTS)       │               │
-   │            ├──────────────────────────▶│               │
-   │            │              │           │               │
-   │            │ (emit NewAudioPrompt)     │               │
-   │            │              │           │               │
-   │ get_audio  │              │           │               │
-   │◀───────────┤              │           │               │
-   │ audio blob │              │           │               │
-   │            │              │           │               │
-   │            │ getDuration()             │               │
-   │            ├─────────────▶│           │               │
-   │            │ duration     │           │               │
-   │            │◀─────────────┤           │               │
-   │            │              │           │               │
-   │            │ schedule_audio(Instrumental)             │
-   │            ├──────────────────────────▶│               │
-   │            │              │           │               │
-   │            │ image_scene_prompts()     │               │
-   │            │ (fire & forget)           │               │
-   │            ├──────────────────────────▶│               │
-   │            │              │           │               │
-   │            │ LLM.message(scene prompts)              │
-   │            ├─────────────▶│           │               │
-   │            │              │           │               │
-   │            │ JSON array of scenes     │               │
-   │            │◀─────────────┤           │               │
-   │            │              │           │               │
-   │            │ for each scene:          │               │
-   │            │ txt_to_img_prompt()      │               │
-   │            ├──────────────────────────▶│               │
-   │            │              │           │               │
-   │            │ LLM.message(image prompt)             │
-   │            ├─────────────▶│           │               │
-   │            │              │           │               │
-   │ NewImagePrompt event     │           │               │
-   │◀─────────────────────────┤           │               │
-   │              (emit)       │           │               │
-   │            │              │           │               │
-   │            │ generate()   │           │               │
-   │            ├──────────────────────────▶│               │
-   │            │ POST /prompt             │               │
-   │            │ {workflow + prompt}       │               │
-   │            │              │           │               │
-   │            │ ◀────────────┤execution_success│         │
-   │            │              │           │               │
-   │◀───────────┤              │           │               │
-   │ {queued}   │              │           │               │
-   │            │              │           │               │
+Script Generation      Audio Generation       Image Generation        Video Generation
+─────────────────     ───────────────────    ────────────────        ───────────────
+
+   User Prompt              Script           ┌────────────────┐         ┌──────────────┐
+       │                   (Text)            │  Z Image Turbo │         │   WAN 2.2    │
+       ├─────────────────▶ Prompt Generator  │   (SD3.5)      │         │   i2v /      │
+       │                   (LLM)             └────────┬─────────┘         │ transitions  │
+       │                                              │                  │              │
+       │                                              ▼                  ▼              ▼
+       │                                         Image Queue        Video Queue
+       │                                              │                  │
+       │                                              ▼                  ▼
+       │                                        Audio Queue      Transition Queue
+       │                                              │
+       └────────────────▶ Audio Scheduling ◀──────────┘
+                              (Kokoro TTS / ACE Step)
 ```
 
-### Step-by-Step Breakdown
+## How It Works
+
+### Main Video Composition Pipeline (`compose-video`)
 
 1. **Script Generation** (Blocking)
    ```
    POST /api/jobs/videos/compose
-     → PromptGenerator.txt_to_script(prompt)
-       → LLM.message("Create essay: ")
-         → Returns ~1000 word essay
+     → TextGenerator.create_script(prompt)
+       → LLM.message("Create essay: ...")
+         → Returns ~800-1300 word essay
    ```
 
 2. **Voiceover TTS** (Blocking)
    ```
-   AudioGenerator.schedule_audio({id, prompt: script})
-     → Emits NewAudioPrompt event
-       → ComfyUI Kokoro TTS workflow executes
-         → Returns audio blob
+   AudioGenerator.schedule_audio({prompt: script})
+     → Kokoro TTS workflow executes
+       → Returns audio blob
    ```
 
 3. **Duration Extraction & Music Queue**
    ```
    Metadata.getAudioDuration(audio_blob)
-     → ffprobe extracts duration in seconds
-       → AudioGenerator.schedule_audio({id, duration})
-         → ACE Step instrumental workflow queued
+     → ffprobe extracts duration
+       → ACE Step instrumental queued
    ```
 
-4. **Scene Prompts Generation** (Non-blocking)
+4. **Scene Prompts** (Non-blocking)
    ```
-   PromptGenerator.image_scene_prompts(script, 40 scenes)
-     → LLM.message("Generate JSON array of scene prompts...")
-       → Returns ["scene1", "scene2", ...]
-         → For each scene:
-           → txt_to_img_prompt(scene_description)
-             → LLM.message("Create image prompt: ")
-               → Emits NewImagePrompt event
-   ```
-
-5. **Async Image Generation** (Parallel)
-   ```
-   EventSystem.NewImagePrompt
-     → QueueManager.pop("image")
-       → comfyClient.generate({kind: "text-to-image", prompt})
-         → POST /prompt to ComfyUI
-           → Z Image Turbo workflow executes
-             → Returns image file paths
+   PromptGenerator.image_scene_prompts(script, count)
+     → LLM generates JSON array of scene descriptions
+       → For each scene:
+         → txt_to_img_prompt() → Image Generator
+           → Z Image Turbo workflow
+             → Returns image files
    ```
 
-6. **Completion**
+5. **Video Generation** (Async)
    ```
-   All 40 images generated and stored in OUTPUT_DIR
-   Ready for video assembly (FFmpeg integration planned)
+   VideoGenerator.schedule_video({filename, prompt})
+     → WAN 2.2 i2v workflow executes
+       → Returns video file
+
+   VideoGenerator.prepare_transitions()
+     → FFmpeg extracts frames
+       → LLM creates transition prompts
+         → WAN 2.2 transitions queued
    ```
 
 ## Project Structure
 
 ```
-silicon-seeds/
-├── src/
-│   ├── api/                    # API entry points
-│   │   └── jobs/              # Job orchestrators
-│   │       ├── compose-video.ts
-│   │       ├── script-to-scenes.ts
-│   │       └── text-to-*.ts
-│   ├── audio/                 # Audio generation pipeline
-│   │   └── audio-generator.ts
-│   ├── comfyui/               # ComfyUI HTTP client & configs
-│   │   ├── comfyui-client.ts
-│   │   ├── api/               # JSON workflow definitions
-│   │   └── workflows/         # Extra PNG info workflows
-│   ├── events/                # Event system
-│   │   └── events.ts
-│   ├── image/                 # Image generation pipeline
-│   │   └── image-generator.ts
-│   ├── llm/                   # LM Studio client wrapper
-│   │   └── llm.ts
-│   ├── meta/                  # Metadata utilities
-│   │   └── meta.ts
-│   ├── prompts/               # Prompt generation layer
-│   │   └── prompt-generator.ts
-│   ├── queue/                 # Queue management
-│   │   └── queue-manager.ts
-│   ├── socket/                # ComfyUI WebSocket listener
-│   │   └── socket-server.ts
-│   ├── styles/                # Visual style system
-│   │   ├── presets.ts
-│   │   ├── styles.ts
-│   │   └── system.ts
-│   └── video/                 # Video generation pipeline
-│       └── video-generator.ts
-├── package.json
-└── README.md
+src/
+├── api/               # API endpoints
+│   └── jobs/         # Job orchestrators
+│       ├── compose-video.ts
+│       ├── script-to-scenes.ts
+│       ├── text-to-*.ts
+│       └── video-transition.ts
+├── audio/            # Audio generation (TTS, instrumental)
+├── comfyui/          # ComfyUI HTTP client + JSON workflows
+│   ├── api/         # Workflow configs
+│   └── workflows/   # Full workflow templates
+├── events/           # Event system (EventEmitter)
+├── image/            # Image generation pipeline
+├── jobs/             # Job tracking & management
+├── llm/              # LM Studio SDK wrapper
+├── logger/           # Logging utilities
+├── meta/             # Metadata utilities
+├── prompts/          # Prompt generation layer
+├── queue/            # Queue management
+├── socket/           # ComfyUI WebSocket listener
+├── styles/           # Visual style presets
+├── text/             # Text/Script generation
+└── video/            # Video generation pipeline
 ```
 
 ## Key Components
 
 ### Event System (`events/events.ts`)
-- Node.js EventEmitter-based pub/sub messaging
-- Type-safe event emission via `Event.emit()` and subscriptions via `Event.on()`
-- Defines job modes: Text, Image, Video, Speech, Instrumental
-- Events: `NewImagePrompt`, `NewVideoPrompt`, `NewAudioPrompt`, `ComfyExecuted`
+- **Pub/Sub**: Node.js EventEmitter-based messaging
+- **Event Types**:
+  - `NewImagePrompt`: Schedule image generation
+  - `NewVideoPrompt`: Schedule video from image
+  - `NewTransitionPrompt`: Schedule video transitions
+  - `NewAudioPrompt`: Schedule audio (TTS/instrumental)
+  - `ComfyExecuted`: Workflow completion notification
 
 ### Queue Manager (`queue/queue-manager.ts`)
-- Three separate queues (image/video/audio) with smart blocking logic
-- Prevents overloading ComfyUI GPU based on real-time queue depth:
-  - Audio: allows up to 3 concurrent jobs
-  - Image: blocks when comfyQueue > 0
-  - Video: waits for all images and memory to be free
-- Tracks completed events in `completed` array for retrieval by ID
+- **Three queues**: Image, Video, Audio with independent scheduling
+- **Smart blocking** based on ComfyUI queue depth:
+  - Audio: Max 3 concurrent jobs
+  - Image: Blocks when ComfyUI queue > 0
+  - Video: Waits for all images to complete
 
 ### ComfyUI Client (`comfyui/comfyui-client.ts`)
-- HTTP client wrapping ComfyUI REST API
-- **generate(input)**: Submits workflows via POST /prompt
-  - Injects prompts into pre-defined JSON workflow templates
-  - Maps `kind` (text-to-image, image-to-video, etc.) to correct API config
-  - Sets prompt_id and client_id for WebSocket event tracking
-- **getAsset()**: Fetches generated content from GET /view endpoint
-- **getImageOutput()**: Extracts output metadata from workflow history
-- **freeMemory()**: Triggers VRAM cleanup via POST /free endpoint
+- HTTP client for `/prompt`, `/history`, `/queue`, `/view` endpoints
+- **Workflow Types**:
+  - `text-to-image`: Z Image Turbo (SD3.5, 720p)
+  - `image-to-video`: WAN 2.2 (720p, 5s)
+  - `image-to-transition`: WAN 2.2 transitions
+  - `text-to-speech`: Kokoro TTS
+  - `text-to-instrumental`: ACE Step
 
 ### Prompt Generator (`prompts/prompt-generator.ts`)
-- Converts text/scripts into visual prompts via LLM
-- **txt_to_img_prompt**: Single image prompt generation
-- **image_scene_prompts**: Batch scene generation from script (returns JSON array)
-- **img_to_vid_prompt**: Vision-based video prompt from generated images
-- Supports style presets (watercolor, oil paint, mixed media, etc.)
+- Converts scripts to visual prompts via LLM
+- **Methods**:
+  - `txt_to_img_prompt()`: Single image prompt generation
+  - `image_scene_prompts()`: Batch scene generation (JSON array)
+  - `img_to_vid_prompt()`: Vision-based video prompt from images
+- Supports style presets: watercolor, oil paint, mixed media, etc.
 
 ### Audio Generator (`audio/audio-generator.ts`)
-- Handles both TTS and instrumental generation
-- **schedule_audio()**: Creates `AudioPromptEvent`, emits via EventSystem
-  - Speech mode: Uses Kokoro TTS workflow with prompt text
-  - Instrumental mode: Uses ACE Step with duration parameter
-- **get_audio(id)**: Blocks until `ComfyExecuted` event confirms completion (30s timeout)
-- Routes to correct ComfyUI workflow based on audio type
-
-### LLM Integration (`llm/llm.ts`)
-- LM Studio SDK wrapper for local LLM inference
-- Uses `qwen/qwen3-vl-30b` model (vision-capable)
-- **message(prompt, images?)**: Text-only or multimodal queries
-- Returns structured response with content field
+- TTS via Kokoro workflow, instrumental via ACE Step
+- Blocking `get_audio(id)` waits for completion (120s timeout)
 
 ## ComfyUI Workflows
 
-| Kind                  | API Config File                | Model                    |
-|-----------------------|--------------------------------|--------------------------|
-| text-to-image         | `image_z_image_turbo_*.json`   | Z Image Turbo (SD3.5)    |
-| image-to-video        | `video_wan2_2_14B_i2v_*.json`  | WAN 2.2 (720p, 5s)       |
-| text-to-speech        | `kokoro-tts.json`              | Kokoro TTS               |
-| text-to-instrumental  | `audio_ace_step_1_0_*.json`    | ACE Step                 |
+| Kind                   | API Config                  | Model                      |
+|------------------------|-----------------------------|----------------------------|
+| text-to-image          | image_z_image_turbo_*.json  | Z Image Turbo (SD3.5)      |
+| image-to-video         | video_wan2_2_14B_i2v_*.json | WAN 2.2 (720p, 5s)         |
+| image-to-transition    | video_wan2_2_14B_trans.json | WAN 2.2 transitions        |
+| text-to-speech         | kokoro-tts.json             | Kokoro TTS                 |
+| text-to-instrumental   | audio_ace_step_*.json       | ACE Step                   |
 
-Workflows are stored as raw JSON and modified at runtime:
+Workflows stored as JSON and modified at runtime:
 ```typescript
-api["9.57:27"].inputs.text = input.prompt;  // Inject prompt
-api["17"].inputs.seconds = input.duration;  // Set duration
+api["57:27"].inputs.text = input.prompt;     // Inject prompt
+api["17"].inputs.seconds = input.duration;   // Set duration
 ```
 
-## Running the Server
+## Configuration
 
-### Prerequisites
-- **Bun.js** runtime (v1.x+)
-- **LM Studio** with `qwen/qwen3-vl-30b` model loaded and server running
-- **ComfyUI** running on port 8188
-- **ffprobe** (part of FFmpeg) for audio duration extraction
-
-### Environment Variables (.env)
-```
+### Environment Variables (`.env`)
+```bash
 COMFYUI_BASE_URL=http://localhost:8188
 OUTPUT_DIR=/path/to/comfyui/output
 INPUT_DIR=/path/to/comfyui/input
 ```
 
-### Start Server
-```bash
-# Install dependencies
-bun install
+### Prerequisites
+- **Bun.js** runtime (v1.x+)
+- **LM Studio** with `qwen/qwen3.5-35b-a3b` model loaded
+- **ComfyUI** running on port 8188
+- **FFmpeg/ffprobe** for audio duration and video frame extraction
 
-# Start server
+### Running
+```bash
+bun install
 bun src/main.ts
 ```
 
-### API Endpoints
+## API Endpoints
 
-**POST /api/jobs/videos/compose**
-```json
-{
-  "prompt": "The symbolism of baptism, creation, the void..."
-}
-// Returns: { message: "job queued" }
-```
+| Method | Endpoint                     | Description                              |
+|--------|------------------------------|------------------------------------------|
+| POST   | `/api/jobs/videos/compose`   | Compose complete video from script       |
+| POST   | `/api/jobs/scenes`           | Generate scenes from text                |
+| POST   | `/api/jobs/images`           | Generate images from prompts             |
+| POST   | `/api/jobs/videos/transition`| Create video transitions                 |
+| POST   | `/api/jobs/tts`              | Generate speech audio                    |
+| POST   | `/api/jobs/instrumental`     | Generate instrumental music              |
+| GET    | `/api/health`                | Health check                             |
 
-## Technical Notes
+## Job Tracking
 
-### Event Correlation Pattern
-All tasks within a job chain share a `jobId` for correlation:
+Jobs use UUIDv7 for correlation:
 ```typescript
 const jobId = Metadata.randomId();      // Parent job ID
 const ttsId = Metadata.randomId();      // Child task IDs
-const instId = Metadata.randomId();     // Instrumental audio ID
-```
-This enables grouping related assets (future SQLite integration).
-
-### Blocking vs Non-Blocking
-```typescript
-// Blocking - wait for completion
-const ttsRes = await AudioGenerator.get_audio(ttsId);
-
-// Non-blocking - fire and forget
-void PromptGenerator.image_scene_prompts(...);
 ```
 
-### Rate Limiting Logic
-QueueManager implements smart blocking to prevent GPU overloading:
-```typescript
-// Audio: block if queue empty OR comfyQueue > 3
-if (this.audioQueue.length === 0 || this.comfyQueue > 3) return;
+Events stored in memory (TODO: SQLite integration planned).
 
-// Image: block if queue empty OR comfyQueue > 0
-if (this.imageQueue.length === 0 || this.comfyQueue > 0) return;
+## Current Status
 
-// Video: block if queue empty OR image queue has items OR comfyQueue > 0
-if (this.videoQueue.length === 0 || 
-    this.imageQueue.length > 0 || 
-    this.comfyQueue > 0) return;
-```
+**Active Features**:
+- ✅ Script generation via LLM
+- ✅ TTS audio generation (Kokoro)
+- ✅ Instrumental generation (ACE Step)
+- ✅ Image generation (Z Image Turbo)
+- ✅ Video generation from images (WAN 2.2 i2v)
+- ✅ Video transitions between clips
+- ✅ Event-driven queue management
+
+**Planned**:
+- ⏳ SQLite database for job/event persistence
+- ⏳ User authentication (better-auth, JWT)
+- ⏳ FFmpeg video assembly pipeline
+- ⏳ Content library with RAG vector search
+- ⏳ Web frontend (Daisy UI)
 
 ## License
 
