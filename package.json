@@ -15,7 +15,8 @@
   "type": "commonjs",
   "main": "src/main.ts",
   "scripts": {
-    "start": "bun src/main.ts",
+    "prestart": "tsc --noEmit",
+    "start": "bun --watch src/main.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "private": true,
