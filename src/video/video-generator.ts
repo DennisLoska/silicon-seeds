@@ -302,7 +302,7 @@ Your response should only include the newly generated prompt!
       const meta = JobOrchestrator.jobs[jobId].meta[e.id] as any;
       Utils.assert(meta && meta.images, `Missing metadata for event ${e.id}`);
 
-      const filename = meta.images[0]?.filename;
+      const filename = `tmp/${jobId}_${e.id}.mp4`;
       Utils.assert(filename, `No filename found in metadata for event ${e.id}`);
 
       Logger.info(
