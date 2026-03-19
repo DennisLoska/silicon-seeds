@@ -18,6 +18,7 @@ export namespace ImageGenerator {
     jobId: string;
     mode: JobMode;
     prompt: string;
+    index?: number;
   }) {
     JobOrchestrator.schedule_task({
       ...event,

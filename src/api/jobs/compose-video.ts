@@ -27,7 +27,7 @@ export async function compose_video() {
     // prompt: script,
   });
 
-  const ttsRes = await AudioGenerator.get_audio(ttsId);
+  const ttsRes = (await AudioGenerator.get_audio(ttsId)) as any;
   const ttsMeta = ttsRes?.data?.audio?.[0];
   const tts = await comfyClient.getAsset(
     ttsMeta.filename,

@@ -270,7 +270,13 @@ export class ComfyUIClient {
       api["68"].inputs.image = input.startImage;
       api["67"].inputs.length = Metadata.TRANSITION_DURATION * Metadata.FPS + 1;
       api["62"].inputs.image = input.endImage;
+      api["61"].inputs.filename_prefix = input.id;
     }
+
+    Utils.assert(
+      api,
+      `ComfyUI workflow does not exist for event kind: ${input.kind}`,
+    );
 
     return api;
   }

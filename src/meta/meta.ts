@@ -50,7 +50,11 @@ export namespace Metadata {
       const decoder = new TextDecoder();
       let output = "";
       for await (const chunk of ffprobeProcess.stdout) {
-        output += decoder.decode(chunk, { stream: true });
+        if (typeof chunk === "string") {
+          output += chunk;
+        } else {
+          output += decoder.decode(chunk);
+        }
       }
 
       const status = await ffprobeProcess.exited;

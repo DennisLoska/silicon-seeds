@@ -13,7 +13,7 @@ export async function text_to_instrumental() {
   AudioGenerator.schedule_audio({ id, jobId, duration, prompt });
 
   try {
-    const res = await AudioGenerator.get_audio(id);
+    const res = (await AudioGenerator.get_audio(id)) as any;
     const metadata = res?.data?.audio?.[0];
 
     return new Response(JSON.stringify({ message: { ...metadata } }));
