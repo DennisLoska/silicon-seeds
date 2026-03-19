@@ -35,12 +35,6 @@ export interface ImagePromptEvent extends JobBaseEvent {
   index?: number;
 }
 
-export interface AudioPromptEvent extends JobBaseEvent {
-  prompt?: string;
-  duration?: number;
-  type: Event.NewAudioPrompt;
-}
-
 export interface VideoPromptEvent extends JobBaseEvent {
   prompt: string;
   type: Event.NewVideoPrompt;
@@ -54,6 +48,12 @@ export interface TransitionPromptEvent extends JobBaseEvent {
   startImg: string;
   endImg: string;
   index?: number;
+}
+
+export interface AudioPromptEvent extends JobBaseEvent {
+  prompt?: string;
+  duration?: number;
+  type: Event.NewAudioPrompt;
 }
 
 export interface ComfyExecutedEvent extends BaseEvent {

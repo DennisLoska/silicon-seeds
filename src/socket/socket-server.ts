@@ -65,6 +65,7 @@ export namespace SocketServer {
     }
 
     if (msg.type === "execution_success") {
+      Logger.info("===execution_success===");
       const { prompt_id: promptId } = msg.data;
 
       QueueManager.comfyQueue--;
@@ -100,16 +101,45 @@ export namespace SocketServer {
 
       if (event.type === Event.NewVideoPrompt && event.mode === JobMode.Video) {
         const transitions = await VideoGenerator.prepare_transitions(event);
-        if (!transitions) return;
-
-        for (const transition of transitions) {
-          VideoGenerator.schedule_transition({
-            jobId: event.jobId,
-            prompt: transition.prompt,
-            startImg: transition.first,
-            endImg: transition.last,
-          });
+        if (transitions) {
+          for (const transition of transitions) {
+            VideoGenerator.schedule_transition({
+              jobId: event.jobId,
+              prompt: transition.prompt,
+              startImg: transition.first,
+              endImg: transition.last,
+            });
+          }
         }
+      }
+
+      if (
+        !(
+          event.type === Event.NewVideoPrompt ||
+          event.type === Event.NewTransitionPrompt
+        )
+      ) {
+        Logger.info("Not a video or transition event");
+        return;
+      }
+
+      const events = JobOrchestrator.job_events(event.jobId);
+      const allComplete = events
+        .filter(
+          (e) =>
+            e.type === Event.NewImagePrompt ||
+            e.type === Event.NewVideoPrompt ||
+            e.type === Event.NewTransitionPrompt,
+        )
+        .every((e) => e.status === "complete");
+
+      Logger.info("Job complete?", {
+        allComplete,
+      });
+
+      if (allComplete) {
+        Logger.info(`Triggering video combiner for job ${currentJob.id}`);
+        void VideoGenerator.combine_outputs(currentJob.id);
       }
     }
   }
