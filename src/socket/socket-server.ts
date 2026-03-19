@@ -15,7 +15,9 @@ export namespace SocketServer {
   let currentEvent: JobEvent;
 
   export async function start() {
-    ws = new WebSocket(`ws://127.0.0.1:8188/ws?clientId=${Metadata.clientId}`);
+    ws = new WebSocket(
+      `${Bun.env.COMFYUI_BASE_WS}/ws?clientId=${Metadata.clientId}`,
+    );
 
     ws.addEventListener("message", message);
     ws.addEventListener("error", error);

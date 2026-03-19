@@ -23,8 +23,8 @@ export async function compose_video() {
     id: ttsId,
     jobId,
     // TODO remove substring dev hack
-    // prompt: script.substring(0, 100),
-    prompt: script,
+    prompt: script.substring(0, 300),
+    // prompt: script,
   });
 
   const ttsRes = await AudioGenerator.get_audio(ttsId);

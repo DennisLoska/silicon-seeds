@@ -7,22 +7,30 @@ import { SocketServer } from "./socket/socket-server";
 import { VideoGenerator } from "./video/video-generator";
 
 // TODO list:
+// - combine videos
+// - Optimize WAN2.2 workflow
+// - Add LoRA support
+// - env files: dev, prod
+// - db integration
+//
+// Job
+// - user initiated retry on individual assets (or work with batches)
+//
+// Smarter Pipelines
+// - Content Poker -> LLM judge to suggest rolling dice on some assets
+// - Analyzer module to judge all prompts and output -> free content classification!
 //
 // Bugs
-// - race condition qhen queueing multiple jobs at same time (queue block check)
-//
-// Error Handling
-// - trycatch in comfy client
-// - add meaningful retries in prompt generator
+// - race condition when queueing multiple jobs at same time (queue block check)
 //
 // Pipelines:
 //   combined_video, tts, instrumental -> final cut
 //
 // - script -> scenes -> find content in content library -> metadata
 // - captions? content library?
-// - Make sure images and videos are in correct order using the index
 //
 // Api
+// - Perhaps use Hono framework?
 // - parameterize the art style, client id, batch size
 //
 // Content Library
