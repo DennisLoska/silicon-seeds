@@ -1,4 +1,4 @@
-import db from "./client";
+import { DB } from "./db";
 import { createTables } from "./tables";
 
-await createTables(db);
+await createTables(DB.client);

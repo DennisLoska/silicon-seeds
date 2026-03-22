@@ -23,12 +23,19 @@ export interface DbSchema {
     meta_data: string | null;
     created_at: Date;
   };
+  meta: {
+    id: string;
+    event_id: string;
+    filename: string;
+    subfolder: string;
+    type: string;
+  };
 }
 
-const db = new Kysely<DbSchema>({
-  dialect: new BunSqliteDialect({
-    database: new Database("silicon-seeds.sqlite"),
-  }),
-});
-
-export default db;
+export namespace DB {
+  export const client = new Kysely<DbSchema>({
+    dialect: new BunSqliteDialect({
+      database: new Database("silicon-seeds.sqlite"),
+    }),
+  });
+}

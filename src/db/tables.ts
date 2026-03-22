@@ -1,5 +1,5 @@
 import { Kysely } from "kysely";
-import type { DbSchema } from "./client";
+import type { DbSchema } from "./db";
 
 export async function createTables(db: Kysely<DbSchema>): Promise<void> {
   await db.schema
@@ -24,8 +24,19 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .addColumn("duration", "integer")
     .addColumn("lora", "text")
     .addColumn("index", "integer")
-    .addColumn("meta_data", "text")
     .addColumn("created_at", "text", (col) => col.notNull())
+    .execute();
+
+  await db.schema
+    .createTable("meta")
+    .ifNotExists()
+    .addColumn("id", "text", (col) => col.primaryKey())
+    .addColumn("event_id", "text", (col) =>
+      col.notNull().references("events.id"),
+    )
+    .addColumn("filename", "text", (col) => col.notNull())
+    .addColumn("subfolder", "text", (col) => col.notNull())
+    .addColumn("type", "text", (col) => col.notNull())
     .execute();
 
   await db.schema
