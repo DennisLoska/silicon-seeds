@@ -32,18 +32,14 @@ export enum Event {
 export interface ImagePromptEvent extends JobBaseEvent {
   prompt: string;
   type: Event.NewImagePrompt;
-}
-
-export interface AudioPromptEvent extends JobBaseEvent {
-  prompt?: string;
-  duration?: number;
-  type: Event.NewAudioPrompt;
+  index?: number;
 }
 
 export interface VideoPromptEvent extends JobBaseEvent {
   prompt: string;
   type: Event.NewVideoPrompt;
   filename: string;
+  index?: number;
 }
 
 export interface TransitionPromptEvent extends JobBaseEvent {
@@ -51,6 +47,13 @@ export interface TransitionPromptEvent extends JobBaseEvent {
   type: Event.NewTransitionPrompt;
   startImg: string;
   endImg: string;
+  index?: number;
+}
+
+export interface AudioPromptEvent extends JobBaseEvent {
+  prompt?: string;
+  duration?: number;
+  type: Event.NewAudioPrompt;
 }
 
 export interface ComfyExecutedEvent extends BaseEvent {

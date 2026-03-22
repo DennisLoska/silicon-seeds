@@ -15,7 +15,6 @@ export namespace JobOrchestrator {
 
   export function init() {
     Event.on(Event.ComfyExecuted, (event) => {
-      // TODO replace with db call
       const e = QueueManager.findEventById(event.id);
       Utils.assert(e, "Associated event not found!");
 
@@ -80,6 +79,7 @@ export namespace JobOrchestrator {
           ...base,
           type: Event.NewImagePrompt,
           prompt,
+          index: event.index,
         };
 
       case Event.NewVideoPrompt:
@@ -95,6 +95,7 @@ export namespace JobOrchestrator {
           type: Event.NewVideoPrompt,
           prompt,
           filename,
+          index: event.index,
         };
 
       case Event.NewTransitionPrompt:
@@ -118,6 +119,7 @@ export namespace JobOrchestrator {
           prompt,
           startImg,
           endImg,
+          index: event.index,
         };
 
       case Event.NewAudioPrompt:

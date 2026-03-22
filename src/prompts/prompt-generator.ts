@@ -15,6 +15,7 @@ export namespace PromptGenerator {
     message: string,
     batchSize = 1,
     preset?: Presets,
+    index?: number,
   ) {
     const instructions = preset
       ? StylePresets.presets[preset]({ title: message })
@@ -25,13 +26,13 @@ export namespace PromptGenerator {
         `Create an excellent image prompt based on these instructions: ${instructions}`,
       );
       if (res === null || !res.content || res.content.trim() === "") {
-        // TODO could add retry
         Logger.warn("Failed to generate image prompt - skipping");
+        // TODO could add retry
         return null;
       }
       let prompt = res.content.trim();
 
-      ImageGenerator.schedule_image({ jobId, mode, prompt });
+      ImageGenerator.schedule_image({ jobId, mode, prompt, index });
     }
   }
 
@@ -77,7 +78,6 @@ ${event.prompt}`,
     );
 
     if (!response?.content) {
-      // TODO could add retry
       Logger.warn("Failed to generate video prompt - skipping");
       return null;
     }
@@ -86,6 +86,7 @@ ${event.prompt}`,
       jobId: event.jobId,
       prompt: response.content,
       filename,
+      index: event.index,
     });
   }
 
@@ -124,7 +125,7 @@ into the actual prompts. There should be no words, signs.
 
 Create a list of ${amount} image prompts in chronological
 order which should describe this video script visually in it's totality from
-tart to finish:
+start to finish:
 
 ${text}
 `;
@@ -169,9 +170,10 @@ Make sure to only include the JSON array in your response and nothing more!
     }
 
     for (const scene of scenes) {
+      const index = scenes.indexOf(scene);
       preset
-        ? txt_to_img_prompt(jobId, mode, scene, 1, preset)
-        : txt_to_img_prompt(jobId, mode, scene, 1);
+        ? txt_to_img_prompt(jobId, mode, scene, 1, preset, index)
+        : txt_to_img_prompt(jobId, mode, scene, 1, undefined, index);
     }
   }
 }

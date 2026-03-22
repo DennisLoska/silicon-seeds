@@ -65,6 +65,7 @@ export namespace SocketServer {
     }
 
     if (msg.type === "execution_success") {
+      Logger.info("===execution_success===");
       const { prompt_id: promptId } = msg.data;
 
       QueueManager.comfyQueue--;
@@ -98,18 +99,69 @@ export namespace SocketServer {
         PromptGenerator.img_to_vid_prompt(promptId);
       }
 
+      if (
+        event.type === Event.NewVideoPrompt ||
+        event.type === Event.NewTransitionPrompt
+      ) {
+        Logger.info("Saving video or transition to /tmp");
+        try {
+          const meta = currentJob.meta[event.id] as any;
+          const metadata = meta.images[0];
+
+          const videoBlob = await comfyClient.getAsset(
+            metadata.filename,
+            metadata.subfolder,
+            metadata.type,
+          );
+
+          const tmpFile = `/tmp/${event.jobId}_${event.id}.mp4`;
+          await Bun.write(tmpFile, await videoBlob.arrayBuffer());
+        } catch (error) {
+          Logger.error("OH MY GOD", error);
+        }
+      }
+
       if (event.type === Event.NewVideoPrompt && event.mode === JobMode.Video) {
         const transitions = await VideoGenerator.prepare_transitions(event);
-        if (!transitions) return;
-
-        for (const transition of transitions) {
-          VideoGenerator.schedule_transition({
-            jobId: event.jobId,
-            prompt: transition.prompt,
-            startImg: transition.first,
-            endImg: transition.last,
-          });
+        if (transitions) {
+          for (const transition of transitions) {
+            VideoGenerator.schedule_transition({
+              jobId: event.jobId,
+              prompt: transition.prompt,
+              startImg: transition.first,
+              endImg: transition.last,
+            });
+          }
         }
+      }
+
+      if (
+        !(
+          event.type === Event.NewVideoPrompt ||
+          event.type === Event.NewTransitionPrompt
+        )
+      ) {
+        Logger.info("Not a video or transition event");
+        return;
+      }
+
+      const events = JobOrchestrator.job_events(event.jobId);
+      const allComplete = events
+        .filter(
+          (e) =>
+            e.type === Event.NewImagePrompt ||
+            e.type === Event.NewVideoPrompt ||
+            e.type === Event.NewTransitionPrompt,
+        )
+        .every((e) => e.status === "complete");
+
+      Logger.info("Job complete?", {
+        allComplete,
+      });
+
+      if (allComplete) {
+        Logger.info(`Triggering video combiner for job ${currentJob.id}`);
+        void VideoGenerator.combine_outputs(currentJob.id);
       }
     }
   }

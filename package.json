@@ -15,16 +15,26 @@
   "type": "commonjs",
   "main": "src/main.ts",
   "scripts": {
-    "start": "bun src/main.ts",
+    "prestart": "tsc --noEmit",
+    "start": "bun --watch src/main.ts",
+    "lint": "eslint .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@eslint/js": "^10.0.1",
+    "@types/bun": "latest",
+    "@typescript-eslint/eslint-plugin": "^8.57.1",
+    "@typescript-eslint/parser": "^8.57.1",
+    "eslint": "^10.0.3",
+    "globals": "^17.4.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.1"
   },
   "dependencies": {
     "@lmstudio/sdk": "^1.5.0",
     "@logtape/logtape": "^2.0.4",
-    "@logtape/pretty": "^2.0.4"
+    "@logtape/pretty": "^2.0.4",
+    "jiti": "^2.6.1"
   }
 }

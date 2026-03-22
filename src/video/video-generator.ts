@@ -1,5 +1,11 @@
 import { comfyClient } from "../comfyui/comfyui-client";
-import { Event, JobEvent, JobMode, VideoPromptEvent } from "../events/events";
+import {
+  Event,
+  JobEvent,
+  JobMode,
+  VideoPromptEvent,
+  TransitionPromptEvent,
+} from "../events/events";
 import { QueueManager } from "../queue/queue-manager";
 import { JobOrchestrator } from "../jobs/jobs";
 import { spawn } from "bun";
@@ -7,6 +13,8 @@ import { Metadata } from "../meta/meta";
 import { LLM } from "../llm/llm";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
+
+const OUTPUT_DIR = Bun.env.OUTPUT_DIR;
 
 export namespace VideoGenerator {
   export function init() {
@@ -24,6 +32,7 @@ export namespace VideoGenerator {
     jobId: string;
     prompt: string;
     filename: string;
+    index?: number;
   }) {
     JobOrchestrator.schedule_task({
       ...event,
@@ -37,6 +46,7 @@ export namespace VideoGenerator {
     prompt: string;
     startImg: string;
     endImg: string;
+    index?: number;
   }) {
     JobOrchestrator.schedule_task({
       ...event,
@@ -93,22 +103,14 @@ export namespace VideoGenerator {
       (e) => e.type === Event.NewVideoPrompt && e.status === "complete",
     ) as VideoPromptEvent[];
 
-    // TODO might want to actively sort by chronological order
+    // Sort by index to ensure correct order regardless of generation completion time
+    completedClips.sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+
     const frames: { first: string; last: string }[] = [];
     const prompts: string[] = [];
 
     for (const clip of completedClips) {
-      const meta = job.meta[clip.id] as any;
-      const metadata = meta.images[0];
-
-      const videoBlob = await comfyClient.getAsset(
-        metadata.filename,
-        metadata.subfolder,
-        metadata.type,
-      );
-
       const tmpFile = `/tmp/${event.jobId}_${clip.id}.mp4`;
-      await Bun.write(tmpFile, await videoBlob.arrayBuffer());
       const [first, last] = await video_frames(clip.id, tmpFile);
 
       frames.push({
@@ -141,6 +143,10 @@ export namespace VideoGenerator {
         last: next.first,
         prompt,
       });
+
+      Logger.info(
+        `Preparing transition ${i} between clip ${completedClips[i].id} and ${completedClips[i + 1].id}`,
+      );
     }
 
     return transitions;
@@ -231,5 +237,115 @@ Your response should only include the newly generated prompt!
 
     const res = await LLM.message(instructions);
     return res?.content ?? null;
+  }
+
+  export async function combine_outputs(jobId: string): Promise<void> {
+    Logger.info(`Starting video combination for job ${jobId}`);
+
+    const events = JobOrchestrator.job_events(jobId);
+    Logger.info(`Found ${events.length} total events for job ${jobId}`);
+
+    // Separate videos and transitions
+    const videoEvents = events.filter(
+      (e) => e.status === "complete" && e.type === Event.NewVideoPrompt,
+    );
+
+    const transitionEvents = events.filter(
+      (e) => e.status === "complete" && e.type === Event.NewTransitionPrompt,
+    );
+
+    Logger.info(`Found ${videoEvents.length} video events`);
+    Logger.info(`Found ${transitionEvents.length} transition events`);
+
+    // Sort videos by their explicit index
+    videoEvents.sort((a, b) => {
+      const aIndex = (a as VideoPromptEvent).index ?? Number.MAX_SAFE_INTEGER;
+      const bIndex = (b as VideoPromptEvent).index ?? Number.MAX_SAFE_INTEGER;
+      return aIndex - bIndex;
+    });
+
+    Logger.info(
+      `Sorted video events by index:`,
+      videoEvents.map((e) => ({
+        type: e.type,
+        index: (e as VideoPromptEvent).index,
+      })),
+    );
+
+    // Combine videos and transitions in order
+    const outputEvents = [];
+    for (let i = 0; i < videoEvents.length; i++) {
+      if (i < videoEvents.length) outputEvents.push(videoEvents[i]);
+      if (i < transitionEvents.length) outputEvents.push(transitionEvents[i]);
+    }
+
+    Logger.info(
+      `Final combined event order:`,
+      outputEvents.map((e) => ({
+        type: e.type,
+        index: (e as VideoPromptEvent | TransitionPromptEvent).index,
+      })),
+    );
+
+    const files: string[] = [];
+    for (const e of outputEvents) {
+      const meta = JobOrchestrator.jobs[jobId].meta[e.id] as any;
+      Utils.assert(meta && meta.images, `Missing metadata for event ${e.id}`);
+
+      const filename = `/tmp/${jobId}_${e.id}.mp4`;
+      Utils.assert(filename, `No filename found in metadata for event ${e.id}`);
+
+      Logger.info(
+        `Adding file to combine: ${filename} (index: ${(e as any).index})`,
+      );
+
+      files.push(filename);
+    }
+
+    const fileList = files.map((f) => `file '${f}'`).join("\n") + "\n";
+    const listFile = `/tmp/${jobId}_concat.txt`;
+    await Bun.write(listFile, fileList);
+
+    try {
+      Logger.info(
+        `Executing ffmpeg to create ${OUTPUT_DIR}/output-combined.mp4`,
+      );
+
+      const ffmpegProcess = spawn({
+        cmd: [
+          "ffmpeg",
+          "-y",
+          "-f",
+          "concat",
+          "-safe",
+          "0",
+          "-i",
+          listFile,
+          "-c",
+          "copy",
+          `${OUTPUT_DIR}/output-combined.mp4`,
+        ],
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+
+      for await (const chunk of ffmpegProcess.stderr!) {
+        if (typeof chunk === "string") {
+          Logger.info("ffmpeg:", chunk);
+        } else {
+          Logger.info("ffmpeg:", new TextDecoder().decode(chunk));
+        }
+      }
+
+      const status = await ffmpegProcess.exited;
+      if (status !== 0) {
+        throw new Error(`FFmpeg failed with exit code ${status}`);
+      }
+
+      Logger.info(`Video combination completed successfully!`);
+    } catch (error: any) {
+      Logger.error("Video combination failed:", error.message);
+    } finally {
+      // await Bun.file(listFile).delete();
+    }
   }
 }
