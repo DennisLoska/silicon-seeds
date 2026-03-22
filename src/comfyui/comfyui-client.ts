@@ -1,5 +1,6 @@
 import { Metadata } from "../meta/meta";
-import zImageTurboApi from "./api/image_z_image_turbo_12_steps_720p.json";
+import zImageTurboApi from "./api/image_z_image_turbo_720p.json";
+import zImageTurboWithLoraApi from "./api/image_z_image_turbo_lora_720p.json";
 import wan2_2_img2vidApi from "./api/video_wan2_2_14B_i2v_720p_5s.json";
 import wan2_2_img2transitionApi from "./api/video_wan2_2_14B_transitions.json";
 import ace_step_1_0_api from "./api/audio_ace_step_1_0_instrumental.json";
@@ -205,8 +206,6 @@ export class ComfyUIClient {
 
     if (input.kind === "image-to-video") {
       const workflow = wan2_2_img2vidWorkflow;
-      // workflow["93"].inputs.text = input.prompt;
-      // workflow["97"].inputs.image = input.imagePath;
 
       return JSON.stringify({
         ...base,
@@ -232,11 +231,18 @@ export class ComfyUIClient {
     let api;
 
     if (input.kind === "text-to-image") {
-      api = zImageTurboApi;
-      api["9"].inputs.filename_prefix = input.id;
-      api["57:27"].inputs.text = input.prompt;
+      // api = zImageTurboApi;
+      // api["9"].inputs.filename_prefix = input.id;
+      // api["57:27"].inputs.text = input.prompt;
       // baby seed: 189246353926834
-      api["57:3"].inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
+      // api["57:3"].inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
+
+      api = zImageTurboWithLoraApi;
+      api["9"].inputs.filename_prefix = input.id;
+      api["45"].inputs.text = input.prompt;
+      api["44"].inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
+      api["51"].inputs.lora_name = "Zimage_pencil_sketch.safetensors";
+      api["51"].inputs.strength_model = 0.7;
     }
 
     if (input.kind === "image-to-video") {

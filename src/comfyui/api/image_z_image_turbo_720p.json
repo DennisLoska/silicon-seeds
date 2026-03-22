@@ -30,7 +30,7 @@
   },
   "57:27": {
     "inputs": {
-      "text": "Latina female with thick wavy hair, harbor boats and pastel houses behind. Breezy seaside light, warm tones, cinematic close-up. ",
+      "text": "the actual prompt goes here",
       "clip": ["57:30", 0]
     },
     "class_type": "CLIPTextEncode",
