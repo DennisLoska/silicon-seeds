@@ -7,9 +7,7 @@ import { SocketServer } from "./socket/socket-server";
 import { VideoGenerator } from "./video/video-generator";
 
 // TODO list:
-// - combine videos
 // - Optimize WAN2.2 workflow
-// - Add LoRA support
 // - env files: dev, prod
 // - db integration
 //
