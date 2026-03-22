@@ -4,6 +4,7 @@ import { QueueManager } from "../queue/queue-manager";
 import { Metadata } from "../meta/meta";
 import { JobOrchestrator } from "../jobs/jobs";
 import { Utils } from "../utils/utils";
+import { Lora } from "../styles/presets";
 
 export namespace ImageGenerator {
   export function init() {
@@ -18,6 +19,7 @@ export namespace ImageGenerator {
     jobId: string;
     mode: JobMode;
     prompt: string;
+    lora?: Lora;
     index?: number;
   }) {
     JobOrchestrator.schedule_task({
@@ -32,8 +34,8 @@ export namespace ImageGenerator {
     const item = QueueManager.pop("image");
     Utils.assert(item.type === Event.NewImagePrompt, "Incorrect event type!");
 
-    const { prompt, id } = item;
-    void comfyClient.generate({ id, kind: "text-to-image", prompt });
+    const { prompt, id, lora } = item;
+    void comfyClient.generate({ id, kind: "text-to-image", prompt, lora });
   }
 
   export async function get_image(id: string): Promise<ComfyExecutedEvent> {

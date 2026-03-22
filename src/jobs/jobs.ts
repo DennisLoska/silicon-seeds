@@ -79,6 +79,7 @@ export namespace JobOrchestrator {
           ...base,
           type: Event.NewImagePrompt,
           prompt,
+          lora: event.lora,
           index: event.index,
         };
 

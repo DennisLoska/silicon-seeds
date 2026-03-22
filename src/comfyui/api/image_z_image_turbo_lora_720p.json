@@ -1,7 +1,7 @@
 {
   "9": {
     "inputs": {
-      "filename_prefix": "z-image-turbo",
+      "filename_prefix": "z-image",
       "images": ["43", 0]
     },
     "class_type": "SaveImage",
@@ -112,16 +112,6 @@
       "lora_name": "Zimage_pencil_sketch.safetensors",
       "strength_model": 0.7,
       "model": ["46", 0]
-    },
-    "class_type": "LoraLoaderModelOnly",
-    "_meta": {
-      "title": "Load LoRA"
-    }
-  },
-  "52": {
-    "inputs": {
-      "lora_name": "pixel_art_style_z_image_turbo.safetensors",
-      "strength_model": 0.7
     },
     "class_type": "LoraLoaderModelOnly",
     "_meta": {

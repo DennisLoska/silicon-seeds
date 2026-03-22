@@ -17,14 +17,17 @@ export namespace PromptGenerator {
     preset?: Presets,
     index?: number,
   ) {
-    const instructions = preset
-      ? StylePresets.presets[preset]({ title: message })
-      : StylePresets.presets[Presets.SYSTEM]({ title: message });
+    const styleFn = preset
+      ? StylePresets.presets[preset]
+      : StylePresets.presets[Presets.SYSTEM];
+
+    const { instructions, lora } = styleFn({ title: message });
 
     for (let i = 0; i < batchSize; i++) {
       const res = await LLM.message(
         `Create an excellent image prompt based on these instructions: ${instructions}`,
       );
+
       if (res === null || !res.content || res.content.trim() === "") {
         Logger.warn("Failed to generate image prompt - skipping");
         // TODO could add retry
@@ -32,7 +35,7 @@ export namespace PromptGenerator {
       }
       let prompt = res.content.trim();
 
-      ImageGenerator.schedule_image({ jobId, mode, prompt, index });
+      ImageGenerator.schedule_image({ jobId, mode, prompt, lora, index });
     }
   }
 
