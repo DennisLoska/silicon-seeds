@@ -1,26 +1,33 @@
-import { Kysely, SqliteDialect } from "kysely";
-import Database from "better-sqlite3";
+import { Kysely } from "kysely";
+import { BunSqliteDialect } from "kysely-bun-sqlite";
+import { Database } from "bun:sqlite";
 
 export interface DbSchema {
   jobs: {
-    id: number;
-    name: string;
-    status: string;
+    id: string;
     created_at: Date;
-    updated_at: Date;
   };
   events: {
-    id: number;
-    job_id: number | null;
+    id: string;
+    job_id: string;
     type: string;
-    data: string;
+    mode: string;
+    status: string;
+    prompt: string | null;
+    filename: string | null;
+    start_img: string | null;
+    end_img: string | null;
+    duration: number | null;
+    lora: string | null;
+    index: number | null;
+    meta_data: string | null;
     created_at: Date;
   };
 }
 
 const db = new Kysely<DbSchema>({
-  dialect: new SqliteDialect({
-    database: async () => new Database("silicon-seeds.sqlite"),
+  dialect: new BunSqliteDialect({
+    database: new Database("silicon-seeds.sqlite"),
   }),
 });
 
