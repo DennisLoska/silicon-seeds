@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hello World - daisyUI</title>
+    <link href="./output.css" rel="stylesheet" />
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  </head>
+  <body class="min-h-screen bg-base-100">
+    <div class="flex flex-col items-center justify-center min-h-full p-8">
+      <div class="text-center max-w-lg">
+        <h1 class="text-5xl font-bold mb-4">Hello World!</h1>
+        <p class="mb-6 text-lg">Silicon Seeds Health Check</p>
+
+        <button
+          class="btn btn-primary btn-lg"
+          hx-get="/api/health"
+          hx-target="#status-card"
+          hx-swap="outerHTML"
+        >
+          Check Status
+        </button>
+
+        <div id="status-card" class="mt-8"></div>
+      </div>
+    </div>
+  </body>
+</html>

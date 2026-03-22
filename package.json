@@ -16,8 +16,9 @@
   "main": "src/main.ts",
   "scripts": {
     "prestart": "tsc --noEmit",
-    "start": "bun --watch src/main.ts",
+    "start": "bun src/main.ts",
     "lint": "eslint .",
+    "build:css": "npx @tailwindcss/cli -i src/ui/app.css -o public/output.css",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "private": true,
@@ -35,6 +36,9 @@
     "@lmstudio/sdk": "^1.5.0",
     "@logtape/logtape": "^2.0.4",
     "@logtape/pretty": "^2.0.4",
-    "jiti": "^2.6.1"
+    "@tailwindcss/cli": "^4.2.2",
+    "daisyui": "^5.5.19",
+    "jiti": "^2.6.1",
+    "tailwindcss": "^4.2.2"
   }
 }
