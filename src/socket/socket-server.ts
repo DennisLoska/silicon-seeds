@@ -99,6 +99,28 @@ export namespace SocketServer {
         PromptGenerator.img_to_vid_prompt(promptId);
       }
 
+      if (
+        event.type === Event.NewVideoPrompt ||
+        event.type === Event.NewTransitionPrompt
+      ) {
+        Logger.info("Saving video or transition to /tmp");
+        try {
+          const meta = currentJob.meta[event.id] as any;
+          const metadata = meta.images[0];
+
+          const videoBlob = await comfyClient.getAsset(
+            metadata.filename,
+            metadata.subfolder,
+            metadata.type,
+          );
+
+          const tmpFile = `/tmp/${event.jobId}_${event.id}.mp4`;
+          await Bun.write(tmpFile, await videoBlob.arrayBuffer());
+        } catch (error) {
+          Logger.error("OH MY GOD", error);
+        }
+      }
+
       if (event.type === Event.NewVideoPrompt && event.mode === JobMode.Video) {
         const transitions = await VideoGenerator.prepare_transitions(event);
         if (transitions) {

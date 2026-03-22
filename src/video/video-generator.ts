@@ -110,17 +110,7 @@ export namespace VideoGenerator {
     const prompts: string[] = [];
 
     for (const clip of completedClips) {
-      const meta = job.meta[clip.id] as any;
-      const metadata = meta.images[0];
-
-      const videoBlob = await comfyClient.getAsset(
-        metadata.filename,
-        metadata.subfolder,
-        metadata.type,
-      );
-
       const tmpFile = `/tmp/${event.jobId}_${clip.id}.mp4`;
-      await Bun.write(tmpFile, await videoBlob.arrayBuffer());
       const [first, last] = await video_frames(clip.id, tmpFile);
 
       frames.push({
@@ -302,7 +292,7 @@ Your response should only include the newly generated prompt!
       const meta = JobOrchestrator.jobs[jobId].meta[e.id] as any;
       Utils.assert(meta && meta.images, `Missing metadata for event ${e.id}`);
 
-      const filename = `tmp/${jobId}_${e.id}.mp4`;
+      const filename = `/tmp/${jobId}_${e.id}.mp4`;
       Utils.assert(filename, `No filename found in metadata for event ${e.id}`);
 
       Logger.info(
@@ -312,14 +302,13 @@ Your response should only include the newly generated prompt!
       files.push(filename);
     }
 
-    const fileList = files.map((f) => `file '${f}'`).join("\n");
+    const fileList = files.map((f) => `file '${f}'`).join("\n") + "\n";
     const listFile = `/tmp/${jobId}_concat.txt`;
     await Bun.write(listFile, fileList);
 
     try {
-      const outputExt = Bun.env.COMBINED_OUTPUT_FORMAT || "mp4";
       Logger.info(
-        `Executing ffmpeg to create ${OUTPUT_DIR}/output-combined.${outputExt}`,
+        `Executing ffmpeg to create ${OUTPUT_DIR}/output-combined.mp4`,
       );
 
       const ffmpegProcess = spawn({
@@ -334,7 +323,7 @@ Your response should only include the newly generated prompt!
           listFile,
           "-c",
           "copy",
-          `${OUTPUT_DIR}/output-combined.${outputExt}`,
+          `${OUTPUT_DIR}/output-combined.mp4`,
         ],
         stdio: ["ignore", "pipe", "pipe"],
       });
@@ -356,7 +345,7 @@ Your response should only include the newly generated prompt!
     } catch (error: any) {
       Logger.error("Video combination failed:", error.message);
     } finally {
-      await Bun.file(listFile).delete();
+      // await Bun.file(listFile).delete();
     }
   }
 }

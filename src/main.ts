@@ -22,6 +22,7 @@ import { VideoGenerator } from "./video/video-generator";
 //
 // Bugs
 // - race condition when queueing multiple jobs at same time (queue block check)
+// - reconnecting websockets
 //
 // Pipelines:
 //   combined_video, tts, instrumental -> final cut
