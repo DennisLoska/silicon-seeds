@@ -9,11 +9,13 @@ import wan2_2_img2vidWorkflow from "./workflows/video_wan2_2_14B_i2v_720p_5s.jso
 import wan2_2_img2transWorkflow from "./workflows/video_wan2_2_14B_transitions.json";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
+import { Lora } from "../styles/presets";
 
 type Text2ImgInput = {
   id: string;
   kind: "text-to-image";
   prompt: string;
+  lora?: Lora;
 };
 
 type Img2VidInput = {
@@ -231,6 +233,7 @@ export class ComfyUIClient {
     let api;
 
     if (input.kind === "text-to-image") {
+      // TODO replace or keep?
       // api = zImageTurboApi;
       // api["9"].inputs.filename_prefix = input.id;
       // api["57:27"].inputs.text = input.prompt;
@@ -241,8 +244,11 @@ export class ComfyUIClient {
       api["9"].inputs.filename_prefix = input.id;
       api["45"].inputs.text = input.prompt;
       api["44"].inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
-      api["51"].inputs.lora_name = "Zimage_pencil_sketch.safetensors";
       api["51"].inputs.strength_model = 0.7;
+
+      if (input.lora) {
+        api["51"].inputs.lora_name = `${input.lora}.safetensors`;
+      }
     }
 
     if (input.kind === "image-to-video") {

@@ -16,7 +16,7 @@ export async function text_to_image() {
     JobMode.Image,
     prompt,
     batchSize,
-    Presets.WATERCOLOR,
+    Presets.PENCIL_WATERCOLOR,
   );
 
   return new Response(JSON.stringify({ message: "job queued" }));

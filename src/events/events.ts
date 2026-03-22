@@ -1,5 +1,6 @@
 import EventEmitter from "node:events";
 import { Logger } from "../logger/logger";
+import { Lora } from "../styles/presets";
 
 export enum JobMode {
   Text = "text",
@@ -32,6 +33,7 @@ export enum Event {
 export interface ImagePromptEvent extends JobBaseEvent {
   prompt: string;
   type: Event.NewImagePrompt;
+  lora?: Lora;
   index?: number;
 }
 
