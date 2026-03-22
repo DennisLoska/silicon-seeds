@@ -1,3 +1,4 @@
+import { DB } from "../db/db";
 import { Event, JobBaseEvent, JobEvent } from "../events/events";
 import { Metadata } from "../meta/meta";
 import { QueueManager } from "../queue/queue-manager";
@@ -20,6 +21,23 @@ export namespace JobOrchestrator {
 
       if (!jobs[e.jobId].events[e.id]) return;
       jobs[e.jobId].meta[e.id] = event.data;
+
+      const data: { filename: string; subfolder: string; type: string }[] =
+        event.data.images as any;
+      Utils.assert(Array.isArray(data), "Metadata is not an array");
+      const [metadata] = data;
+
+      void DB.client
+        .insertInto("meta")
+        .orFail()
+        .values({
+          id: Metadata.randomId(),
+          event_id: event.id,
+          filename: metadata.filename,
+          subfolder: metadata.subfolder,
+          type: metadata.type,
+        })
+        .execute();
     });
   }
 

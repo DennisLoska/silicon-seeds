@@ -106,6 +106,7 @@ export namespace SocketServer {
         Logger.info("Saving video or transition to /tmp");
         try {
           const meta = currentJob.meta[event.id] as any;
+          // TODO get from db instead
           const metadata = meta.images[0];
 
           const videoBlob = await comfyClient.getAsset(
