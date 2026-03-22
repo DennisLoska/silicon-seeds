@@ -146,3 +146,6 @@ silicon-seeds.sqlite
 
 # Opencode
 AGENTS.md
+
+# UI
+public/output.css
