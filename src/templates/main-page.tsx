@@ -28,22 +28,21 @@ export const main = (
       </aside>
 
       <section class="flex-1">
-        <h1 class="text-5xl font-bold mb-4">Hello World!</h1>
-        <p class="mb-6 text-lg">Silicon Seeds Health Check</p>
-
-        <button
-          class="btn btn-primary btn-lg"
-          hx-get="/api/health"
-          hx-target="#status-card"
-          hx-swap="outerHTML"
+        <div
+          id="empty-state"
+          class="text-center py-20 text-base-content/70 min-h-[400px]"
         >
-          Check Status
-        </button>
-
-        <div id="status-card" class="mt-8"></div>
+          <p>Select a job from the sidebar to view its details</p>
+        </div>
+        
+        <div
+          id="job-detail-area"
+          class="hidden"
+        ></div>
       </section>
     </main>
 
     <div id="settings-content"></div>
   </body>
 );
+

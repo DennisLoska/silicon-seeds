@@ -63,7 +63,7 @@ app.post("/api/jobs/text", async (c) => {
   return text_to_text();
 });
 
-app.post("/api/jobs/images", async (c) => {
+app.get("/api/jobs/images", async (c) => {
   return text_to_image();
 });
 
@@ -79,7 +79,7 @@ app.post("/api/jobs/videos", async (c) => {
   return text_to_image_to_video();
 });
 
-app.post("/api/jobs/videos/compose", async (c) => {
+app.get("/api/jobs/videos/compose", async (c) => {
   return compose_video();
 });
 
@@ -97,4 +97,12 @@ app.post("/api/jobs/instrumental", async (c) => {
 
 app.get("/api/jobs/list", async (c) => {
   return c.html(await list_jobs());
+});
+
+app.get("/api/jobs/detail", async (c) => {
+  const jobId = c.req.query("jobId");
+  if (!jobId) {
+    return c.text("No job selected", 400);
+  }
+  return c.render(Templates.jobDetailFragment(jobId));
 });
