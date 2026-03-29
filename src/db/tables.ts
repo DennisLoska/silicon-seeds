@@ -1,29 +1,24 @@
-import { Kysely } from "kysely";
+import { Kysely, sql } from "kysely";
 import type { DbSchema } from "./db";
-import { Metadata } from "../meta/meta";
 
 export async function createTables(db: Kysely<DbSchema>): Promise<void> {
-  await db.schema.dropTable("jobs").execute();
-  await db.schema.dropTable("events").execute();
-  await db.schema.dropTable("meta").execute();
+  await db.schema.dropTable("jobs").ifExists().execute();
+  await db.schema.dropTable("events").ifExists().execute();
+  await db.schema.dropTable("meta").ifExists().execute();
 
   await db.schema
     .createTable("jobs")
     .ifNotExists()
-    .addColumn("id", "text", (col) =>
-      col.primaryKey().defaultTo(Metadata.randomId()),
-    )
+    .addColumn("id", "text", (col) => col.primaryKey().notNull())
     .addColumn("created_at", "text", (col) =>
-      col.notNull().defaultTo(new Date().toISOString()),
+      col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull(),
     )
     .execute();
 
   await db.schema
     .createTable("events")
     .ifNotExists()
-    .addColumn("id", "text", (col) =>
-      col.primaryKey().defaultTo(Metadata.randomId()),
-    )
+    .addColumn("id", "text", (col) => col.primaryKey().notNull())
     .addColumn("job_id", "text", (col) => col.notNull().references("jobs.id"))
     .addColumn("type", "text", (col) => col.notNull())
     .addColumn("mode", "text", (col) => col.notNull())
@@ -36,16 +31,14 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .addColumn("lora", "text")
     .addColumn("index", "integer")
     .addColumn("created_at", "text", (col) =>
-      col.notNull().defaultTo(new Date().toISOString()),
+      col.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
     )
     .execute();
 
   await db.schema
     .createTable("meta")
     .ifNotExists()
-    .addColumn("id", "text", (col) =>
-      col.primaryKey().defaultTo(Metadata.randomId()),
-    )
+    .addColumn("id", "text", (col) => col.primaryKey().notNull())
     .addColumn("event_id", "text", (col) =>
       col.notNull().references("events.id"),
     )

@@ -2,30 +2,17 @@ import { Kysely } from "kysely";
 import { BunSqliteDialect } from "kysely-bun-sqlite";
 import { Database } from "bun:sqlite";
 import { Generated } from "kysely";
+import { Metadata } from "../meta/meta";
+import { JobEvent } from "../events/events";
 
 export interface DbSchema {
   jobs: {
-    id: Generated<string>;
+    id: string;
     created_at: Generated<string>;
   };
-  events: {
-    id: Generated<string>;
-    job_id: string;
-    type: string;
-    mode: string;
-    status: string;
-    prompt: string | null;
-    filename: string | null;
-    start_img: string | null;
-    end_img: string | null;
-    duration: number | null;
-    lora: string | null;
-    index: number | null;
-    meta_data: string | null;
-    created_at: Generated<string>;
-  };
+  events: Omit<JobEvent, "created_at">;
   meta: {
-    id: Generated<string>;
+    id: string;
     event_id: string;
     filename: string;
     subfolder: string;
@@ -44,7 +31,24 @@ export namespace DB {
     export async function create_job() {
       return await db
         .insertInto("jobs")
-        .defaultValues()
+        .values({
+          id: Metadata.randomId(),
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow();
+    }
+  }
+
+  export namespace Events {
+    export async function create_event(
+      payload: Omit<DbSchema["events"], "id" | "created_at">,
+    ) {
+      return await db
+        .insertInto("events")
+        .values({
+          ...payload,
+          id: Metadata.randomId(),
+        })
         .returningAll()
         .executeTakeFirstOrThrow();
     }
@@ -56,6 +60,7 @@ export namespace DB {
         .insertInto("meta")
         .orFail()
         .values({
+          id: Metadata.randomId(),
           ...payload,
         })
         .execute();

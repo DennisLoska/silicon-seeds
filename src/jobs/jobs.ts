@@ -1,6 +1,5 @@
 import { DB } from "../db/db";
 import { Event, JobBaseEvent, JobEvent } from "../events/events";
-import { Metadata } from "../meta/meta";
 import { QueueManager } from "../queue/queue-manager";
 import { Utils } from "../utils/utils";
 
@@ -66,7 +65,7 @@ export namespace JobOrchestrator {
     if (event.status !== "complete") return;
     jobs[jobId].events[id].status = event.status;
 
-    // TODO Save to actual database
+    void DB.Events.create_event(event);
   }
 
   export function schedule_task(event: Partial<JobEvent>) {
@@ -155,14 +154,5 @@ export namespace JobOrchestrator {
     }
 
     throw new Error(`Task of type ${event.type} does not exist.`);
-  }
-
-  function get_a_new_job(id: string): Job {
-    return {
-      id,
-      created_at: new Date().toISOString(),
-      events: {},
-      meta: {},
-    };
   }
 }
