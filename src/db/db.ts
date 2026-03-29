@@ -3,14 +3,29 @@ import { BunSqliteDialect } from "kysely-bun-sqlite";
 import { Database } from "bun:sqlite";
 import { Generated } from "kysely";
 import { Metadata } from "../meta/meta";
-import { JobEvent } from "../events/events";
+import { Event, JobEvent, JobMode } from "../events/events";
+import { Lora } from "../styles/presets";
 
 export interface DbSchema {
   jobs: {
     id: string;
     created_at: Generated<string>;
   };
-  events: Omit<JobEvent, "created_at">;
+  events: {
+    id: string;
+    created_at: Generated<string>;
+    job_id: string;
+    mode: JobMode;
+    status: string;
+    type: Event;
+    prompt: string | null;
+    filename: string | null;
+    start_img: string | null;
+    end_img: string | null;
+    duration: number | null;
+    lora: Lora | null;
+    index: number | null;
+  };
   meta: {
     id: string;
     event_id: string;
@@ -40,15 +55,61 @@ export namespace DB {
   }
 
   export namespace Events {
-    export async function create_event(
-      payload: Omit<DbSchema["events"], "id" | "created_at">,
-    ) {
+    function eventToRow(event: JobEvent) {
+      const base = {
+        id: Metadata.randomId(),
+        job_id: event.jobId,
+        mode: event.mode,
+        status: event.status,
+        type: event.type,
+        prompt: event.prompt ?? null,
+        lora: "lora" in event ? event.lora : null,
+        index: "index" in event ? event.index : null,
+      };
+
+      switch (event.type) {
+        case Event.NewImagePrompt:
+          return {
+            ...base,
+            filename: null,
+            start_img: null,
+            end_img: null,
+            duration: null,
+          };
+
+        case Event.NewVideoPrompt:
+          return {
+            ...base,
+            filename: event.filename,
+            start_img: null,
+            end_img: null,
+            duration: null,
+          };
+
+        case Event.NewTransitionPrompt:
+          return {
+            ...base,
+            filename: null,
+            start_img: event.startImg,
+            end_img: event.endImg,
+            duration: null,
+          };
+
+        case Event.NewAudioPrompt:
+          return {
+            ...base,
+            filename: null,
+            start_img: null,
+            end_img: null,
+            duration: event.duration ?? null,
+          };
+      }
+    }
+
+    export async function create_event(payload: JobEvent) {
       return await db
         .insertInto("events")
-        .values({
-          ...payload,
-          id: Metadata.randomId(),
-        })
+        .values(eventToRow(payload))
         .returningAll()
         .executeTakeFirstOrThrow();
     }
