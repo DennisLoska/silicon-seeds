@@ -107,12 +107,7 @@ export namespace SocketServer {
         Logger.info("Saving video or transition to /tmp");
 
         try {
-          // const meta = currentJob.meta[event.id] as any;
-          // const metadata = meta.images[0];
-
-          // TODO get from db instead
           const metadata = await DB.Meta.findByEventId(event.id);
-
           const videoBlob = await comfyClient.getAsset(
             metadata.filename,
             metadata.subfolder,
@@ -122,7 +117,7 @@ export namespace SocketServer {
           const tmpFile = `/tmp/${event.jobId}_${event.id}.mp4`;
           await Bun.write(tmpFile, await videoBlob.arrayBuffer());
         } catch (error) {
-          Logger.error("Failed to create video transition", error);
+          Logger.error("Failed to create video or transition", error);
         }
       }
 

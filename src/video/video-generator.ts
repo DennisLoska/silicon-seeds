@@ -289,11 +289,7 @@ Your response should only include the newly generated prompt!
 
     const files: string[] = [];
     for (const e of outputEvents) {
-      const meta = JobOrchestrator.jobs[jobId].meta[e.id] as any;
-      Utils.assert(meta && meta.images, `Missing metadata for event ${e.id}`);
-
       const filename = `/tmp/${jobId}_${e.id}.mp4`;
-      Utils.assert(filename, `No filename found in metadata for event ${e.id}`);
 
       Logger.info(
         `Adding file to combine: ${filename} (index: ${(e as any).index})`,
