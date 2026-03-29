@@ -1,41 +1,38 @@
+import { Templates } from "./templates";
+
 export const jobDetail = (jobId: string) => (
-  <div>
-    <input type="hidden" id="current-job-id" value={jobId} />
-    
+  <div id="job-tabs-container" data-job-id={jobId}>
     <div class="tabs tabs-box mb-6" role="tablist">
       <button
         class="tab tab-active"
-        hx-get={`/fragment/status/${jobId}`}
-        hx-target="#job-content-area"
-        hx-swap="innerHTML"
-        hx-trigger="click"
+        onclick="switchTab('status', this)"
+        hx-get="/static/placeholder.js"
+        hx-swap="none"
       >
         Status
       </button>
       <button
         class="tab"
-        hx-get={`/fragment/media/${jobId}`}
-        hx-target="#job-content-area"
-        hx-swap="innerHTML"
-        hx-trigger="click"
+        onclick="switchTab('media', this)"
+        hx-get="/static/placeholder.js"
+        hx-swap="none"
       >
         Media
       </button>
       <button
         class="tab"
-        hx-get={`/fragment/events/${jobId}`}
-        hx-target="#job-content-area"
-        hx-swap="innerHTML"
-        hx-trigger="click"
+        onclick="switchTab('events', this)"
+        hx-get="/static/placeholder.js"
+        hx-swap="none"
       >
         Events
       </button>
     </div>
 
     <div id="job-content-area" class="min-h-[400px]">
-      <div class="text-center py-20 text-base-content/70">
-        <p>Loading {jobId} details...</p>
-      </div>
+      <div id="tab-status">{Templates.statusFragment()}</div>
+      <div id="tab-media" class="hidden">{Templates.mediaFragment()}</div>
+      <div id="tab-events" class="hidden">{Templates.eventsFragment()}</div>
     </div>
   </div>
 );

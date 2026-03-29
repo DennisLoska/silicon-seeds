@@ -34,9 +34,12 @@ export const main = (
         >
           <p>Select a job from the sidebar to view its details</p>
         </div>
-        
+
         <div
           id="job-detail-area"
+          hx-get="/api/jobs/detail"
+          hx-trigger="htmx:afterOnLoad"
+          hx-swap="innerHTML"
           class="hidden"
         ></div>
       </section>
@@ -45,4 +48,3 @@ export const main = (
     <div id="settings-content"></div>
   </body>
 );
-

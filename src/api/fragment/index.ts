@@ -1,12 +1,21 @@
 import { Hono } from "hono";
-import { status } from "./status";
-import { media } from "./media";
-import { events } from "./events";
+import { Templates } from "../../templates/templates";
 
 const app = new Hono();
 
-app.get("/status", (c) => status());
-app.get("/media", (c) => media());
-app.get("/events", (c) => events());
+app.get("/status/:jobId", (c) => {
+  const jobId = c.req.param("jobId");
+  return c.render(Templates.statusFragment());
+});
+
+app.get("/media/:jobId", (c) => {
+  const jobId = c.req.param("jobId");
+  return c.render(Templates.mediaFragment());
+});
+
+app.get("/events/:jobId", (c) => {
+  const jobId = c.req.param("jobId");
+  return c.render(Templates.eventsFragment());
+});
 
 export default app;
