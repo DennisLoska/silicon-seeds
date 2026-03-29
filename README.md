@@ -160,7 +160,6 @@ src/
 ├── logger/           # Logging utilities
 ├── meta/             # Metadata utilities
 ├── migrations/       # Database migrations (Kysely format)
-│   └── 2024.03.29T0000_initial_schema.ts
 ├── prompts/          # Prompt generation layer
 ├── queue/            # Queue management
 ├── socket/           # ComfyUI WebSocket listener
@@ -293,46 +292,6 @@ export async function down(db: Kysely<any>): Promise<void> {
 | POST   | `/api/jobs/instrumental`     | Generate instrumental music              |
 | GET    | `/api/health`                | Health check                             |
 
-## Job Tracking
-
-Jobs use UUIDv7 for correlation:
-```typescript
-const jobId = Metadata.randomId();      // Parent job ID
-const ttsId = Metadata.randomId();      // Child task IDs
-```
-
-### Database Schema
-
-The SQLite database uses Kysely ORM with three main tables:
-
-**jobs** - Stores parent job records:
-- `id`: TEXT PRIMARY KEY (UUID)
-- `created_at`: TEXT DEFAULT CURRENT_TIMESTAMP
-
-**events** - Tracks all generation events:
-- `id`: TEXT PRIMARY KEY (UUID)
-- `job_id`: TEXT NOT NULL REFERENCES jobs(id)
-- `type`: TEXT NOT NULL (new_image_prompt | new_video_prompt | new_transition_prompt | new_audio_prompt)
-- `mode`: TEXT NOT NULL (text | image | video | speech | instrumental)
-- `status`: TEXT NOT NULL DEFAULT 'pending' (pending | complete)
-- `prompt`: TEXT (optional)
-- `filename`: TEXT (optional, for videos)
-- `start_img`: TEXT (optional, for transitions)
-- `end_img`: TEXT (optional, for transitions)
-- `duration`: INTEGER (optional, for audio)
-- `lora`: TEXT (optional, for image prompts)
-- `index`: INTEGER (optional)
-- `created_at`: TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-
-**meta** - Stores file metadata:
-- `id`: TEXT PRIMARY KEY (UUID)
-- `event_id`: TEXT NOT NULL REFERENCES events(id)
-- `filename`: TEXT NOT NULL
-- `subfolder`: TEXT NOT NULL
-- `type`: TEXT NOT NULL (input | output | temp)
-
-Database migrations are managed via Kysely's migrator in `src/db/migrate.ts`.
-
 ## Current Status
 
 **Active Features**:
@@ -347,7 +306,6 @@ Database migrations are managed via Kysely's migrator in `src/db/migrate.ts`.
 
 **Planned**:
 - ⏳ User authentication (better-auth, JWT)
-- ⏳ FFmpeg video assembly pipeline
 - ⏳ Content library with RAG vector search
 - ⏳ Web frontend (Daisy UI)
 
