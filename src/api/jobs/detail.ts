@@ -12,5 +12,5 @@ export async function detail(c: any) {
     );
   }
 
-  return c.html(Templates.jobDetailFragment(jobId));
+  return c.render(Templates.jobDetailFragment(jobId));
 }

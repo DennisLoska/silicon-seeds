@@ -3,7 +3,7 @@ export const jobDetail = (jobId: string) => (
     <div class="tabs tabs-box mb-6" role="tablist">
       <button
         class="tab tab-active"
-        hx-get={`/fragment/status/${jobId}`}
+        hx-get={`/fragment/${jobId}`}
         hx-target="#job-content-area"
         hx-swap="innerHTML"
       >
@@ -11,7 +11,7 @@ export const jobDetail = (jobId: string) => (
       </button>
       <button
         class="tab"
-        hx-get={`/fragment/media/${jobId}`}
+        hx-get={`/fragment/${jobId}?tab=media`}
         hx-target="#job-content-area"
         hx-swap="innerHTML"
       >
@@ -19,7 +19,7 @@ export const jobDetail = (jobId: string) => (
       </button>
       <button
         class="tab"
-        hx-get={`/fragment/events/${jobId}`}
+        hx-get={`/fragment/${jobId}?tab=events`}
         hx-target="#job-content-area"
         hx-swap="innerHTML"
       >
@@ -27,10 +27,6 @@ export const jobDetail = (jobId: string) => (
       </button>
     </div>
 
-    <div id="job-content-area" class="min-h-[400px]">
-      <div class="text-center py-20 text-base-content/70">
-        <p>Select a tab to view details</p>
-      </div>
-    </div>
+    <div id="job-content-area" class="min-h-[400px]"></div>
   </div>
 );
