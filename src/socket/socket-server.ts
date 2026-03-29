@@ -112,7 +112,6 @@ export namespace SocketServer {
 
           // TODO get from db instead
           const metadata = await DB.Meta.findByEventId(event.id);
-          Logger.info("YAAAAA", metadata);
 
           const videoBlob = await comfyClient.getAsset(
             metadata.filename,

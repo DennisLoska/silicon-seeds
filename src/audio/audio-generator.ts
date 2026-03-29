@@ -14,7 +14,7 @@ export namespace AudioGenerator {
   }
 
   export function schedule_audio(event: {
-    id: string;
+    id?: string;
     jobId: string;
     prompt?: string;
     duration?: number;

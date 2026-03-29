@@ -2,7 +2,6 @@ import { DB } from "../db/db";
 import { Event, JobBaseEvent, JobEvent, JobStatus } from "../events/events";
 import { Logger } from "../logger/logger";
 import { Metadata } from "../meta/meta";
-import { QueueManager } from "../queue/queue-manager";
 import { Utils } from "../utils/utils";
 
 type Job = {
@@ -81,12 +80,13 @@ export namespace JobOrchestrator {
 
   // TypeScript sucks
   function create_task(event: Partial<JobEvent>): JobEvent {
-    const { jobId, mode, type, prompt } = event;
+    const { id, jobId, mode, type, prompt } = event;
     Utils.assert(jobId && type, "Must provide task type to define a task!");
     Utils.assert(mode, "Must provide 'mode' to define a  task!");
 
     const base: JobBaseEvent = {
-      id: Metadata.randomId(),
+      // TODO only passed in compose endpoint (refactor this)
+      id: id ?? Metadata.randomId(),
       status: JobStatus.Pending,
       jobId,
       mode,
