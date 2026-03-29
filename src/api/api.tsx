@@ -11,6 +11,7 @@ import { text_to_text } from "./jobs/text-to-text";
 import { Metadata } from "../meta/meta";
 import { health } from "./health";
 import { Templates } from "../templates/templates";
+import { not_found } from "./not_found";
 
 const app = new Hono();
 
@@ -29,14 +30,16 @@ export namespace ApiServer {
   }
 }
 
-// Layout renderer
 app.get("*", Templates.layoutPage);
 
-// Main page
 app.get("/", (c) => c.render(Templates.mainPage));
 
 app.get("/api/health", (c) => {
   return health();
+});
+
+app.notFound((c) => {
+  return not_found();
 });
 
 app.post("/api/jobs/text", async (c) => {
