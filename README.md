@@ -2,35 +2,49 @@
 
 Whoever has ears, let them hear.
 
-A modular, event-driven generative media orchestration platform that creates videos by coordinating LLM-based content generation with ComfyUI workflows via a Bun.js server.
+A modular, event-driven generative media orchestration platform that creates videos by coordinating LLM-based content generation with ComfyUI workflows via a Hono + JSX web application running on Bun.js.
 
 ## Overview
 
 ```
 ┌──────────┐    HTTP     ┌───────────────┐
-│  Client  │───POST─────▶│  Bun Server   │
+│  Client  │───POST─────▶│  Hono Server  │
 └──────────┘             └──────┬───────┬─┘
-                                  │       │
-                     WebSocket ▼       ▼ ComfyUI REST
-                          ┌─────────┐  ┌──────────┐
-                          │  LM Studio│  │  ComfyUI │
-                          │ qwen3.5  │  │ Workflows│
-                          └──────────┘  └──────────┘
-                                  │
-                             SQLite DB (Kysely)
-                          ┌─────────────────────┐
-                          │   Jobs, Events, Meta│
-                          └─────────────────────┘
+                                   │       │
+                      WebSocket ▼       ▼ ComfyUI REST
+                           ┌─────────┐  ┌──────────┐
+                           │  LM Studio│  │  ComfyUI │
+                           │ qwen3.5  │  │ Workflows│
+                           └──────────┘  └──────────┘
+                                   │
+                              SQLite DB (Kysely)
+                           ┌─────────────────────┐
+                           │   Jobs, Events, Meta│
+                           └─────────────────────┘
+
+Client Stack:
+- HTMX: Dynamic UI interactions via SSE/HTTP
+- Daisy UI: React-like component library
+- Tailwind CSS: Utility-first styling
 ```
 
 ## Architecture
 
 Silicon-Seeds uses an event-driven architecture with four main components:
 
-- **Bun Server**: Central orchestrator handling API requests and coordinating all generation pipelines
+- **Hono Server**: Web framework handling API requests, SSR via JSX templates, and coordination of all generation pipelines
 - **LLM (LM Studio)**: Text and image prompt generation via HTTP SDK (`qwen/qwen3.5-35b-a3b`)
 - **ComfyUI**: Executes generation workflows for images, videos, audio via REST API
 - **SQLite Database (Kysely ORM)**: Persists jobs, events, and metadata with type-safe queries
+
+### Web Interface
+
+The application features a server-side rendered web interface using:
+
+- **Hono JSX Renderer**: Server-side component rendering with React-like syntax
+- **Daisy UI**: Component library providing pre-styled UI elements (buttons, cards, navbar)
+- **HTMX**: Dynamic client-side interactions without custom JavaScript
+- **Tailwind CSS**: Utility classes for additional styling flexibility
 
 ### Pipeline Flow
 
@@ -138,12 +152,15 @@ Socket server (`socket-server.ts`) reads events from the database when workflows
 
 ```
 src/
-├── api/               # API endpoints
-│   └── jobs/         # Job orchestrators
-│       ├── compose-video.ts
-│       ├── script-to-scenes.ts
-│       ├── text-to-*.ts
-│       └── video-transition.ts
+├── api/               # API endpoints and SSR routes
+│   ├── jobs/         # Job orchestrators
+│   │   ├── compose-video.ts
+│   │   ├── script-to-scenes.ts
+│   │   ├── text-to-*.ts
+│   │   └── video-transition.ts
+│   ├── health.ts     # Health check endpoint
+│   ├── not_found.ts  # 404 handler
+│   └── api.tsx       # Hono app with JSX routes
 ├── audio/            # Audio generation (TTS, instrumental)
 ├── comfyui/          # ComfyUI HTTP client + JSON workflows
 │   ├── api/         # Workflow configs
@@ -164,11 +181,18 @@ src/
 ├── queue/            # Queue management
 ├── socket/           # ComfyUI WebSocket listener
 ├── styles/           # Visual style presets
+├── templates/        # JSX server-side templates
 ├── text/             # Text/Script generation
 └── video/            # Video generation pipeline
 ```
 
 ## Key Components
+
+### Web Framework (`api/api.tsx`)
+- **Hono**: Lightweight web framework with JSX rendering support
+- **Routes**: Mixed API (JSON) and SSR (HTML) endpoints
+- **Middleware**: Error handling, 404 fallback, request routing
+- **JSX Templates**: Server-side component composition
 
 ### Database Layer (`db/db.ts`)
 - **Kysely ORM**: Type-safe SQL queries with full TypeScript support
@@ -248,6 +272,14 @@ INPUT_DIR=/path/to/comfyui/input
 - **FFmpeg/ffprobe** for audio duration and video frame extraction
 - **SQLite** (built into Bun, no separate installation needed)
 
+### Frontend Dependencies (CDN)
+The web interface uses CDN-hosted libraries:
+- **Daisy UI**: Component library via `cdn.jsdelivr.net`
+- **HTMX**: Dynamic interactions via `unpkg.com`
+- **Tailwind CSS**: Utility classes via `cdn.tailwindcss.com`
+
+No build step required - templates render server-side and HTMX handles client-side updates.
+
 ### Database Setup
 The project uses Kysely with SQLite migrations. The database is created automatically on first run.
 
@@ -284,13 +316,28 @@ export async function down(db: Kysely<any>): Promise<void> {
 
 | Method | Endpoint                     | Description                              |
 |--------|------------------------------|------------------------------------------|
+| GET    | `/`                          | Main page (SSR via JSX)                  |
+| GET    | `/api/jobs/list`             | Job list fragment (HTMX)                 |
 | POST   | `/api/jobs/videos/compose`   | Compose complete video from script       |
 | POST   | `/api/jobs/scenes`           | Generate scenes from text                |
 | POST   | `/api/jobs/images`           | Generate images from prompts             |
 | POST   | `/api/jobs/videos/transition`| Create video transitions                 |
 | POST   | `/api/jobs/tts`              | Generate speech audio                    |
 | POST   | `/api/jobs/instrumental`     | Generate instrumental music              |
-| GET    | `/api/health`                | Health check                             |
+| GET    | `/api/health`                | Health check (JSON)                      |
+
+## Web Interface
+
+The web interface uses server-side rendering with JSX and dynamic updates via HTMX:
+
+- **Main Page**: Layout shell with navbar, job sidebar, and status regions
+- **Job Sidebar**: HTMX-powered list that auto-updates from `/api/jobs/list`
+- **Status Card**: Interactive health check with button-triggered refresh
+
+Templates are located in `src/templates/`:
+- `layout.tsx`: HTML wrapper with Daisy UI + Tailwind CDN setup
+- `main-page.tsx`: Home page structure with HTMX-enabled regions
+- `job-list.tsx`: Job list fragment for partial updates
 
 ## Current Status
 
@@ -303,11 +350,13 @@ export async function down(db: Kysely<any>): Promise<void> {
 - ✅ Video transitions between clips
 - ✅ Event-driven queue management
 - ✅ SQLite database for job/event persistence
+- ✅ Hono web framework with JSX server-side rendering
+- ✅ Daisy UI component library for styling
+- ✅ HTMX-powered dynamic UI updates
 
 **Planned**:
 - ⏳ User authentication (better-auth, JWT)
 - ⏳ Content library with RAG vector search
-- ⏳ Web frontend (Daisy UI)
 
 ## License
 
