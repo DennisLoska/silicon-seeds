@@ -44,7 +44,7 @@ export namespace DB {
     export async function create_job() {
       return await db
         .insertInto("jobs")
-        .values({})
+        .defaultValues()
         .returningAll()
         .executeTakeFirstOrThrow();
     }
