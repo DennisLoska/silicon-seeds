@@ -1,7 +1,6 @@
 import { Kysely, sql } from "kysely";
-import type { DbSchema } from "./db";
 
-export async function createTables(db: Kysely<DbSchema>): Promise<void> {
+export async function up(db: Kysely<any>): Promise<void> {
   await db.schema.dropTable("jobs").ifExists().execute();
   await db.schema.dropTable("events").ifExists().execute();
   await db.schema.dropTable("meta").ifExists().execute();
@@ -23,7 +22,7 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .addColumn("type", "text", (col) => col.notNull())
     .addColumn("mode", "text", (col) => col.notNull())
     .addColumn("status", "text", (col) => col.notNull().defaultTo("pending"))
-    .addColumn("prompt", "text", (col) => col.defaultTo(null))
+    .addColumn("prompt", "text")
     .addColumn("filename", "text")
     .addColumn("start_img", "text")
     .addColumn("end_img", "text")
@@ -53,4 +52,10 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .column("job_id")
     .ifNotExists()
     .execute();
+}
+
+export async function down(db: Kysely<any>): Promise<void> {
+  // await db.schema.dropTable("meta").execute();
+  // await db.schema.dropTable("events").execute();
+  // await db.schema.dropTable("jobs").execute();
 }

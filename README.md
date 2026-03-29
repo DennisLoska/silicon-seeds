@@ -10,21 +10,27 @@ A modular, event-driven generative media orchestration platform that creates vid
 ┌──────────┐    HTTP     ┌───────────────┐
 │  Client  │───POST─────▶│  Bun Server   │
 └──────────┘             └──────┬───────┬─┘
-                                 │       │
-                    WebSocket ▼       ▼ ComfyUI REST
-                         ┌─────────┐  ┌──────────┐
-                         │  LM Studio│  │  ComfyUI │
-                         │ qwen3.5  │  │ Workflows│
-                         └──────────┘  └──────────┘
+                                  │       │
+                     WebSocket ▼       ▼ ComfyUI REST
+                          ┌─────────┐  ┌──────────┐
+                          │  LM Studio│  │  ComfyUI │
+                          │ qwen3.5  │  │ Workflows│
+                          └──────────┘  └──────────┘
+                                  │
+                             SQLite DB (Kysely)
+                          ┌─────────────────────┐
+                          │   Jobs, Events, Meta│
+                          └─────────────────────┘
 ```
 
 ## Architecture
 
-Silicon-Seeds uses an event-driven architecture with three main components:
+Silicon-Seeds uses an event-driven architecture with four main components:
 
 - **Bun Server**: Central orchestrator handling API requests and coordinating all generation pipelines
 - **LLM (LM Studio)**: Text and image prompt generation via HTTP SDK (`qwen/qwen3.5-35b-a3b`)
 - **ComfyUI**: Executes generation workflows for images, videos, audio via REST API
+- **SQLite Database (Kysely ORM)**: Persists jobs, events, and metadata with type-safe queries
 
 ### Pipeline Flow
 
@@ -44,14 +50,22 @@ Script Generation      Audio Generation       Image Generation        Video Gene
        │                                        Audio Queue      Transition Queue
        │                                              │
        └────────────────▶ Audio Scheduling ◀──────────┘
-                              (Kokoro TTS / ACE Step)
+                               (Kokoro TTS / ACE Step)
 ```
 
 ## How It Works
 
 ### Main Video Composition Pipeline (`compose-video`)
 
-1. **Script Generation** (Blocking)
+1. **Database Initialization**
+   ```
+   JobOrchestrator.create_job()
+     → DB.Jobs.create_job()
+       → SQLite INSERT INTO jobs (id, created_at)
+         → Returns job record with UUID
+   ```
+
+2. **Script Generation** (Blocking)
    ```
    POST /api/jobs/videos/compose
      → TextGenerator.create_script(prompt)
@@ -59,41 +73,66 @@ Script Generation      Audio Generation       Image Generation        Video Gene
          → Returns ~800-1300 word essay
    ```
 
-2. **Voiceover TTS** (Blocking)
+3. **Voiceover TTS** (Blocking)
    ```
    AudioGenerator.schedule_audio({prompt: script})
      → Kokoro TTS workflow executes
-       → Returns audio blob
+       → DB.Events.create() persists event with status=pending
+         → Returns audio blob
    ```
 
-3. **Duration Extraction & Music Queue**
+4. **Duration Extraction & Music Queue**
    ```
    Metadata.getAudioDuration(audio_blob)
      → ffprobe extracts duration
        → ACE Step instrumental queued
+         → Event tracked in database with status=pending
    ```
 
-4. **Scene Prompts** (Non-blocking)
+5. **Scene Prompts** (Non-blocking)
    ```
    PromptGenerator.image_scene_prompts(script, count)
      → LLM generates JSON array of scene descriptions
        → For each scene:
-         → txt_to_img_prompt() → Image Generator
-           → Z Image Turbo workflow
-             → Returns image files
+         → DB.Events.create() stores event for tracking
+           → txt_to_img_prompt() → Image Generator
+             → Z Image Turbo workflow
+               → DB.Meta.create() stores file metadata
+                 → Returns image files
    ```
 
-5. **Video Generation** (Async)
+6. **Video Generation** (Async)
    ```
    VideoGenerator.schedule_video({filename, prompt})
      → WAN 2.2 i2v workflow executes
-       → Returns video file
+       → DB.Events.updateStatus() marks event complete
+         → Returns video file
 
    VideoGenerator.prepare_transitions()
      → FFmpeg extracts frames
        → LLM creates transition prompts
-         → WAN 2.2 transitions queued
+         → WAN 2.2 transitions queued and tracked in database
    ```
+
+### Database Integration
+
+The database persists all job lifecycle events:
+
+- **Jobs Table**: Stores parent job records (id, created_at)
+- **Events Table**: Tracks all generation events with:
+  - `status`: pending | complete
+  - `mode`: text | image | video | speech | instrumental
+  - `type`: new_image_prompt | new_video_prompt | new_transition_prompt | new_audio_prompt
+  - `prompt`: The generation prompt (if applicable)
+  - `filename`, `start_img`, `end_img`: Asset references
+  - `duration`, `lora`, `index`: Event-specific fields
+
+- **Meta Table**: Stores file metadata:
+  - `filename`: Output filename
+  - `subfolder`: ComfyUI subfolder path
+  - `type`: input | output | temp
+
+Socket server (`socket-server.ts`) reads events from the database when workflows complete and updates status to "complete".
 
 ## Project Structure
 
@@ -109,12 +148,18 @@ src/
 ├── comfyui/          # ComfyUI HTTP client + JSON workflows
 │   ├── api/         # Workflow configs
 │   └── workflows/   # Full workflow templates
+├── db/               # Database layer (Kysely ORM)
+│   ├── db.ts         # Database connection & schema types
+│   ├── tables.ts     # TypeScript type definitions for tables
+│   ├── migrate.ts    # Migration runner
+│   └── rollback.ts   # Rollback handler
 ├── events/           # Event system (EventEmitter)
 ├── image/            # Image generation pipeline
 ├── jobs/             # Job tracking & management
 ├── llm/              # LM Studio SDK wrapper
 ├── logger/           # Logging utilities
 ├── meta/             # Metadata utilities
+├── migrations/       # Database migrations (Kysely format)
 ├── prompts/          # Prompt generation layer
 ├── queue/            # Queue management
 ├── socket/           # ComfyUI WebSocket listener
@@ -124,6 +169,15 @@ src/
 ```
 
 ## Key Components
+
+### Database Layer (`db/db.ts`)
+- **Kysely ORM**: Type-safe SQL queries with full TypeScript support
+- **BunSQLite dialect**: Native Bun SQLite integration for高性能
+- **Schema Types**: Compile-time type safety for all database operations
+- **Three Tables**:
+  - `jobs`: Stores job records (id, created_at)
+  - `events`: Tracks generation events with status, mode, prompts, and assets
+  - `meta`: Stores file metadata (filename, subfolder, type)
 
 ### Event System (`events/events.ts`)
 - **Pub/Sub**: Node.js EventEmitter-based messaging
@@ -192,11 +246,38 @@ INPUT_DIR=/path/to/comfyui/input
 - **LM Studio** with `qwen/qwen3.5-35b-a3b` model loaded
 - **ComfyUI** running on port 8188
 - **FFmpeg/ffprobe** for audio duration and video frame extraction
+- **SQLite** (built into Bun, no separate installation needed)
 
-### Running
+### Database Setup
+The project uses Kysely with SQLite migrations. The database is created automatically on first run.
+
 ```bash
 bun install
+bun db:migrate
 bun src/main.ts
+```
+
+### Migrations
+
+Database schema changes are managed via migration files in `migrations/`:
+
+```bash
+# Run pending migrations
+bun db:migrate
+
+# Rollback last migration (for development)
+bun db:rollback
+```
+
+Migration file structure:
+```typescript
+export async function up(db: Kysely<any>): Promise<void> {
+  await db.schema.createTable("example").execute();
+}
+
+export async function down(db: Kysely<any>): Promise<void> {
+  await db.schema.dropTable("example").execute();
+}
 ```
 
 ## API Endpoints
@@ -211,16 +292,6 @@ bun src/main.ts
 | POST   | `/api/jobs/instrumental`     | Generate instrumental music              |
 | GET    | `/api/health`                | Health check                             |
 
-## Job Tracking
-
-Jobs use UUIDv7 for correlation:
-```typescript
-const jobId = Metadata.randomId();      // Parent job ID
-const ttsId = Metadata.randomId();      // Child task IDs
-```
-
-Events stored in memory (TODO: SQLite integration planned).
-
 ## Current Status
 
 **Active Features**:
@@ -231,11 +302,10 @@ Events stored in memory (TODO: SQLite integration planned).
 - ✅ Video generation from images (WAN 2.2 i2v)
 - ✅ Video transitions between clips
 - ✅ Event-driven queue management
+- ✅ SQLite database for job/event persistence
 
 **Planned**:
-- ⏳ SQLite database for job/event persistence
 - ⏳ User authentication (better-auth, JWT)
-- ⏳ FFmpeg video assembly pipeline
 - ⏳ Content library with RAG vector search
 - ⏳ Web frontend (Daisy UI)
 

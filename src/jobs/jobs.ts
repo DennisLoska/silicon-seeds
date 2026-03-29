@@ -1,7 +1,7 @@
 import { DB } from "../db/db";
-import { Event, JobBaseEvent, JobEvent } from "../events/events";
+import { Event, JobBaseEvent, JobEvent, JobStatus } from "../events/events";
+import { Logger } from "../logger/logger";
 import { Metadata } from "../meta/meta";
-import { QueueManager } from "../queue/queue-manager";
 import { Utils } from "../utils/utils";
 
 type Job = {
@@ -16,39 +16,37 @@ export namespace JobOrchestrator {
 
   export function init() {
     Event.on(Event.ComfyExecuted, (event) => {
-      const e = QueueManager.findEventById(event.id);
-      Utils.assert(e, "Associated event not found!");
+      let data: { filename: string; subfolder: string; type: string }[];
 
-      if (!jobs[e.jobId].events[e.id]) return;
-      jobs[e.jobId].meta[e.id] = event.data;
+      if (event.data.audio) {
+        data = event.data.audio as any;
+      } else if (event.data.images) {
+        data = event.data.images as any;
+      } else {
+        Logger.error("Unknown event data encountered", { data: event.data });
+        return;
+      }
 
-      const data: { filename: string; subfolder: string; type: string }[] =
-        event.data.images as any;
       Utils.assert(Array.isArray(data), "Metadata is not an array");
       const [metadata] = data;
 
-      void DB.client
-        .insertInto("meta")
-        .orFail()
-        .values({
-          id: Metadata.randomId(),
-          event_id: event.id,
-          filename: metadata.filename,
-          subfolder: metadata.subfolder,
-          type: metadata.type,
-        })
-        .execute();
+      void DB.Meta.create({
+        event_id: event.id,
+        filename: metadata.filename,
+        subfolder: metadata.subfolder,
+        type: metadata.type as "input" | "output" | "temp",
+      });
     });
   }
 
   export async function create_job() {
-    const id = Metadata.randomId();
-    // Let me know!
-    const job: Job = get_a_new_job(id);
+    const job = await DB.Jobs.create_job();
 
-    // TODO Save to actual database
-    // - jobs, events
-    jobs[id] = job;
+    jobs[job.id] = {
+      ...job,
+      events: {},
+      meta: {},
+    };
 
     return job;
   }
@@ -60,14 +58,18 @@ export namespace JobOrchestrator {
   export function update_schedule(event: JobEvent) {
     const { jobId, id } = event;
 
-    if (!jobs[jobId].events[id]) {
-      jobs[jobId].events[id] = event;
+    if (event.status === JobStatus.Pending) {
+      if (!jobs[jobId].events[id]) {
+        jobs[jobId].events[id] = event;
+      }
+
+      void DB.Events.create(event);
     }
 
-    if (event.status !== "complete") return;
+    if (event.status !== JobStatus.Complete) return;
     jobs[jobId].events[id].status = event.status;
 
-    // TODO Save to actual database
+    void DB.Events.updateStatus(event.id, event.status);
   }
 
   export function schedule_task(event: Partial<JobEvent>) {
@@ -78,14 +80,14 @@ export namespace JobOrchestrator {
 
   // TypeScript sucks
   function create_task(event: Partial<JobEvent>): JobEvent {
-    const { jobId, id, mode, type, prompt } = event;
+    const { id, jobId, mode, type, prompt } = event;
     Utils.assert(jobId && type, "Must provide task type to define a task!");
     Utils.assert(mode, "Must provide 'mode' to define a  task!");
 
     const base: JobBaseEvent = {
-      id: id ?? Bun.randomUUIDv7(),
-      created_at: new Date().toISOString(),
-      status: "pending",
+      // TODO only passed in compose endpoint (refactor this)
+      id: id ?? Metadata.randomId(),
+      status: JobStatus.Pending,
       jobId,
       mode,
     };
@@ -147,7 +149,7 @@ export namespace JobOrchestrator {
         return {
           ...base,
           type: Event.NewAudioPrompt,
-          prompt,
+          prompt: prompt ?? null,
           duration,
         };
 
@@ -156,14 +158,5 @@ export namespace JobOrchestrator {
     }
 
     throw new Error(`Task of type ${event.type} does not exist.`);
-  }
-
-  function get_a_new_job(id: string): Job {
-    return {
-      id,
-      created_at: new Date().toISOString(),
-      events: {},
-      meta: {},
-    };
   }
 }

@@ -10,15 +10,20 @@ export enum JobMode {
   Instrumental = "instrumental",
 }
 
+export enum JobStatus {
+  Pending = "pending",
+  Complete = "complete",
+}
+
 interface BaseEvent {
   id: string;
-  created_at: string;
+  created_at?: string;
 }
 
 export interface JobBaseEvent extends BaseEvent {
   jobId: string;
   mode: JobMode;
-  status: "pending" | "complete";
+  status: JobStatus;
   meta?: Record<string, unknown>;
 }
 
@@ -53,7 +58,7 @@ export interface TransitionPromptEvent extends JobBaseEvent {
 }
 
 export interface AudioPromptEvent extends JobBaseEvent {
-  prompt?: string;
+  prompt: string | null;
   duration?: number;
   type: Event.NewAudioPrompt;
 }

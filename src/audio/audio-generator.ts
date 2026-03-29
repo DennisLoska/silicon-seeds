@@ -14,7 +14,7 @@ export namespace AudioGenerator {
   }
 
   export function schedule_audio(event: {
-    id: string;
+    id?: string;
     jobId: string;
     prompt?: string;
     duration?: number;
@@ -48,7 +48,7 @@ export namespace AudioGenerator {
       void comfyClient.generate({
         id,
         kind: "text-to-instrumental",
-        prompt,
+        prompt: prompt ?? null,
         duration,
       });
     }

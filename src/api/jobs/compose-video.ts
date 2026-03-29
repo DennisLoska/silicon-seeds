@@ -36,10 +36,8 @@ export async function compose_video() {
   );
 
   const duration = await Metadata.getAudioDuration(tts);
-  const instId = Metadata.randomId();
 
   AudioGenerator.schedule_audio({
-    id: instId,
     jobId,
     duration,
   });
