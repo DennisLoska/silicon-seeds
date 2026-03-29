@@ -46,11 +46,6 @@ import { VideoGenerator } from "./video/video-generator";
 // - defines video transcript / captions to be pot. used
 // - add metadata to generated videos and images (used prompt, prompt id, job id, index)
 //
-// Database
-// - store jobs in db
-// - store connected job assets in db via job id
-// - associate jobs with a user id
-//
 // User
 // - better-auth for authentication
 // - Use jwt tokens in headers for verification

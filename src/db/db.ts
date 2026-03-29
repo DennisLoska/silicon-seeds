@@ -3,8 +3,10 @@ import { BunSqliteDialect } from "kysely-bun-sqlite";
 import { Database } from "bun:sqlite";
 import { Generated } from "kysely";
 import { Metadata } from "../meta/meta";
-import { Event, JobEvent, JobMode } from "../events/events";
+import { Event, JobEvent, JobMode, JobStatus } from "../events/events";
 import { Lora } from "../styles/presets";
+import { Utils } from "../utils/utils";
+import { Logger } from "../logger/logger";
 
 export interface DbSchema {
   jobs: {
@@ -16,7 +18,7 @@ export interface DbSchema {
     created_at: Generated<string>;
     job_id: string;
     mode: JobMode;
-    status: string;
+    status: JobStatus;
     type: Event;
     prompt: string | null;
     filename: string | null;
@@ -31,7 +33,7 @@ export interface DbSchema {
     event_id: string;
     filename: string;
     subfolder: string;
-    type: string;
+    type: "input" | "output" | "temp";
   };
 }
 
@@ -57,14 +59,12 @@ export namespace DB {
   export namespace Events {
     function eventToRow(event: JobEvent) {
       const base = {
-        id: Metadata.randomId(),
+        id: event.id,
         job_id: event.jobId,
         mode: event.mode,
         status: event.status,
         type: event.type,
-        prompt: event.prompt ?? null,
-        lora: "lora" in event ? event.lora : null,
-        index: "index" in event ? event.index : null,
+        prompt: event.prompt,
       };
 
       switch (event.type) {
@@ -72,9 +72,11 @@ export namespace DB {
           return {
             ...base,
             filename: null,
+            lora: event.lora,
             start_img: null,
             end_img: null,
             duration: null,
+            index: event.index,
           };
 
         case Event.NewVideoPrompt:
@@ -84,6 +86,7 @@ export namespace DB {
             start_img: null,
             end_img: null,
             duration: null,
+            index: event.index,
           };
 
         case Event.NewTransitionPrompt:
@@ -93,6 +96,7 @@ export namespace DB {
             start_img: event.startImg,
             end_img: event.endImg,
             duration: null,
+            index: event.index,
           };
 
         case Event.NewAudioPrompt:
@@ -106,17 +110,98 @@ export namespace DB {
       }
     }
 
-    export async function create_event(payload: JobEvent) {
-      return await db
+    function rowToEvent(
+      row: Omit<DbSchema["events"], "created_at"> & { created_at: string },
+    ): JobEvent {
+      const base = {
+        id: row.id,
+        jobId: row.job_id,
+        mode: row.mode,
+        status: row.status,
+        type: row.type,
+        created_at: row.created_at,
+        prompt: row.prompt,
+      };
+
+      switch (row.type) {
+        case Event.NewImagePrompt:
+          Utils.assert(row.prompt, "'prompt' is not null");
+          return {
+            ...base,
+            lora: row.lora ?? undefined,
+            index: row.index ?? undefined,
+            type: Event.NewImagePrompt,
+            prompt: row.prompt,
+          };
+        case Event.NewVideoPrompt:
+          Utils.assert(row.prompt, "'prompt' is not null");
+          return {
+            ...base,
+            filename: row.filename!,
+            index: row.index ?? undefined,
+            type: Event.NewVideoPrompt,
+            prompt: row.prompt,
+          };
+        case Event.NewTransitionPrompt:
+          Utils.assert(row.prompt, "'prompt' is not null");
+          return {
+            ...base,
+            startImg: row.start_img!,
+            endImg: row.end_img!,
+            index: row.index ?? undefined,
+            type: Event.NewTransitionPrompt,
+            prompt: row.prompt,
+          };
+        case Event.NewAudioPrompt:
+          return {
+            ...base,
+            duration: row.duration ?? undefined,
+            type: Event.NewAudioPrompt,
+            prompt: row.prompt,
+          };
+        default:
+          throw new Error(`Unknown event type`);
+      }
+    }
+
+    export async function create(payload: JobEvent) {
+      Logger.info("WHYYYY");
+
+      const res = await db
         .insertInto("events")
         .values(eventToRow(payload))
         .returningAll()
         .executeTakeFirstOrThrow();
+
+      Logger.info("EYYYY", res);
+
+      return rowToEvent(res);
+    }
+
+    export async function findById(id: string) {
+      const res = await db
+        .selectFrom("events")
+        .selectAll()
+        .where("id", "=", id)
+        .executeTakeFirstOrThrow();
+
+      return rowToEvent(res);
+    }
+
+    export async function updateStatus(id: string, status: JobStatus) {
+      const res = await db
+        .updateTable("events")
+        .set("status", status)
+        .where("id", "=", id)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+
+      return rowToEvent(res);
     }
   }
 
   export namespace Meta {
-    export async function insert_meta(payload: Omit<DbSchema["meta"], "id">) {
+    export async function create(payload: Omit<DbSchema["meta"], "id">) {
       return await db
         .insertInto("meta")
         .orFail()
@@ -125,6 +210,16 @@ export namespace DB {
           ...payload,
         })
         .execute();
+    }
+
+    export async function findByEventId(eventId: string) {
+      const res = await db
+        .selectFrom("meta")
+        .selectAll()
+        .where("event_id", "=", eventId)
+        .executeTakeFirstOrThrow();
+
+      return res;
     }
   }
 }

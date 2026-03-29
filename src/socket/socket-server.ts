@@ -4,11 +4,12 @@ import { PromptGenerator } from "../prompts/prompt-generator";
 import { QueueManager } from "../queue/queue-manager";
 import { VideoGenerator } from "../video/video-generator";
 import { comfyClient } from "../comfyui/comfyui-client";
-import { Event, JobEvent, JobMode } from "../events/events";
+import { Event, JobEvent, JobMode, JobStatus } from "../events/events";
 import { AudioGenerator } from "../audio/audio-generator";
 import { JobOrchestrator } from "../jobs/jobs";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
+import { DB } from "../db/db";
 
 export namespace SocketServer {
   let ws: WebSocket;
@@ -69,12 +70,12 @@ export namespace SocketServer {
       const { prompt_id: promptId } = msg.data;
 
       QueueManager.comfyQueue--;
-      // TODO find in actual db
-      const event = QueueManager.findEventById(promptId);
+
+      const event = await DB.Events.findById(promptId);
       Utils.assert(event, "Event is missing");
 
       // update status to complete
-      JobOrchestrator.update_schedule({ ...event, status: "complete" });
+      JobOrchestrator.update_schedule({ ...event, status: JobStatus.Complete });
       const currentJob = JobOrchestrator.jobs[event.jobId];
       Logger.info("current job: ", currentJob);
 
@@ -104,10 +105,14 @@ export namespace SocketServer {
         event.type === Event.NewTransitionPrompt
       ) {
         Logger.info("Saving video or transition to /tmp");
+
         try {
-          const meta = currentJob.meta[event.id] as any;
+          // const meta = currentJob.meta[event.id] as any;
+          // const metadata = meta.images[0];
+
           // TODO get from db instead
-          const metadata = meta.images[0];
+          const metadata = await DB.Meta.findByEventId(event.id);
+          Logger.info("YAAAAA", metadata);
 
           const videoBlob = await comfyClient.getAsset(
             metadata.filename,
@@ -118,7 +123,7 @@ export namespace SocketServer {
           const tmpFile = `/tmp/${event.jobId}_${event.id}.mp4`;
           await Bun.write(tmpFile, await videoBlob.arrayBuffer());
         } catch (error) {
-          Logger.error("OH MY GOD", error);
+          Logger.error("Failed to create video transition", error);
         }
       }
 

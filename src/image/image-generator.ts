@@ -15,7 +15,6 @@ export namespace ImageGenerator {
   }
 
   export function schedule_image(event: {
-    id?: string;
     jobId: string;
     mode: JobMode;
     prompt: string;

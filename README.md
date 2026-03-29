@@ -219,8 +219,6 @@ const jobId = Metadata.randomId();      // Parent job ID
 const ttsId = Metadata.randomId();      // Child task IDs
 ```
 
-Events stored in memory (TODO: SQLite integration planned).
-
 ## Current Status
 
 **Active Features**:

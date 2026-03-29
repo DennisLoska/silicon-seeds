@@ -48,7 +48,7 @@ export namespace AudioGenerator {
       void comfyClient.generate({
         id,
         kind: "text-to-instrumental",
-        prompt,
+        prompt: prompt ?? null,
         duration,
       });
     }

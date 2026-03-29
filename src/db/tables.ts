@@ -23,7 +23,7 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .addColumn("type", "text", (col) => col.notNull())
     .addColumn("mode", "text", (col) => col.notNull())
     .addColumn("status", "text", (col) => col.notNull().defaultTo("pending"))
-    .addColumn("prompt", "text")
+    .addColumn("prompt", "text", (col) => col.defaultTo(null))
     .addColumn("filename", "text")
     .addColumn("start_img", "text")
     .addColumn("end_img", "text")

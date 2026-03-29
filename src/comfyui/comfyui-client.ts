@@ -34,7 +34,7 @@ type Text2SpeechInput = {
 type Text2Instrumental = {
   id: string;
   kind: "text-to-instrumental";
-  prompt?: string;
+  prompt: string | null;
   duration: number;
 };
 
