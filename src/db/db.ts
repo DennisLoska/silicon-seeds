@@ -6,7 +6,6 @@ import { Metadata } from "../meta/meta";
 import { Event, JobEvent, JobMode, JobStatus } from "../events/events";
 import { Lora } from "../styles/presets";
 import { Utils } from "../utils/utils";
-import { Logger } from "../logger/logger";
 
 export interface DbSchema {
   jobs: {
