@@ -53,6 +53,14 @@ export namespace DB {
         .returningAll()
         .executeTakeFirstOrThrow();
     }
+
+    export async function list() {
+      return await DB.db
+        .selectFrom("jobs")
+        .selectAll()
+        .orderBy("created_at", "desc")
+        .execute();
+    }
   }
 
   export namespace Events {

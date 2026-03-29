@@ -12,6 +12,7 @@ import { Metadata } from "../meta/meta";
 import { health } from "./health";
 import { Templates } from "../templates/templates";
 import { not_found } from "./not_found";
+import { Logger } from "../logger/logger";
 
 const app = new Hono();
 
@@ -33,6 +34,11 @@ export namespace ApiServer {
 app.get("*", Templates.layoutPage);
 
 app.get("/", (c) => c.render(Templates.mainPage));
+
+app.onError((error, c) => {
+  Logger.error("api error", error);
+  return c.text("Api error", 500);
+});
 
 app.get("/api/health", (c) => {
   return health();
