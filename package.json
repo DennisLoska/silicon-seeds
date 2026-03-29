@@ -17,7 +17,9 @@
   "scripts": {
     "prestart": "tsc --noEmit",
     "start": "bun src/main.ts",
-    "setup:db": "bun src/db/setup.ts",
+    "db:init": "bun src/db/setup.ts",
+    "db:migrate": "bun src/db/migrate.ts",
+    "db:rollback": "bun src/db/rollback.ts",
     "lint": "eslint .",
     "build:css": "npx @tailwindcss/cli -i src/ui/app.css -o public/output.css",
     "test": "echo \"Error: no test specified\" && exit 1"
