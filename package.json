@@ -18,6 +18,8 @@
     "prestart": "tsc --noEmit",
     "start": "bun src/main.ts",
     "start:hot": "bun --hot src/main.ts",
+    "build:css": "npx @tailwindcss/cli -i src/templates/app.css -o public/style.css",
+    "watch:css": "npx @tailwindcss/cli -i src/templates/app.css -o public/style.css --watch",
     "db:migrate": "bun src/db/migrate.ts",
     "db:rollback": "bun src/db/rollback.ts",
     "lint": "eslint .",
