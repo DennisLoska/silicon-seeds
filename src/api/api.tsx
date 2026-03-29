@@ -8,9 +8,9 @@ import { text_to_speech } from "./jobs/text-to-speech";
 import { text_to_instrumental } from "./jobs/text-to-instrumental";
 import { compose_video } from "./jobs/compose-video";
 import { text_to_text } from "./jobs/text-to-text";
-import { jsxRenderer } from "hono/jsx-renderer";
 import { Metadata } from "../meta/meta";
 import { health } from "./health";
+import { Templates } from "../templates/api/layout";
 
 const app = new Hono();
 
@@ -30,25 +30,7 @@ export namespace ApiServer {
 }
 
 // Layout renderer
-app.get(
-  "*",
-  jsxRenderer(({ children }) => (
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Silicon Seeds</title>
-        <link
-          href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css"
-          rel="stylesheet"
-        />
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script src="https://unpkg.com/htmx.org@2.0.4"></script>
-      </head>
-      <body>{children}</body>
-    </html>
-  )),
-);
+app.get("*", Templates.layout);
 
 // Main page
 app.get("/", (c) =>
