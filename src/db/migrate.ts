@@ -9,12 +9,14 @@ export const migrator = new Migrator({
   db: DB.db,
   provider: new FileMigrationProvider({
     fs: {
-      readdir: async (p) => await fs.promises.readdir(p),
-      stat: (p) => fs.promises.stat(p),
-      read: async (p) => await fs.promises.readFile(p, "utf-8"),
+      async readdir(p) {
+        return await fs.promises.readdir(p);
+      },
     },
     path: {
-      join: (...paths) => paths.join("/"),
+      join(...paths) {
+        return paths.join("/");
+      },
     },
     migrationFolder,
   }),
@@ -32,5 +34,3 @@ results?.forEach((it) => {
     console.log(`✓ Migration "${it.migrationName}" executed`);
   }
 });
-
-await DB.db.destroy();
