@@ -17,14 +17,17 @@ export namespace JobOrchestrator {
 
   export function init() {
     Event.on(Event.ComfyExecuted, (event) => {
-      const e = QueueManager.findEventById(event.id);
-      Utils.assert(e, "Associated event not found!");
+      let data: { filename: string; subfolder: string; type: string }[];
 
-      if (!jobs[e.jobId].events[e.id]) return;
-      jobs[e.jobId].meta[e.id] = event.data;
+      if (event.data.audio) {
+        data = event.data.audio as any;
+      } else if (event.data.images) {
+        data = event.data.images as any;
+      } else {
+        Logger.error("Unknown event data encountered", { data: event.data });
+        return;
+      }
 
-      const data: { filename: string; subfolder: string; type: string }[] =
-        event.data.images as any;
       Utils.assert(Array.isArray(data), "Metadata is not an array");
       const [metadata] = data;
 
@@ -40,7 +43,6 @@ export namespace JobOrchestrator {
   export async function create_job() {
     const job = await DB.Jobs.create_job();
 
-    // - jobs, events
     jobs[job.id] = {
       ...job,
       events: {},
