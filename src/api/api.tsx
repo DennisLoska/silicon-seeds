@@ -13,6 +13,7 @@ import { health } from "./health";
 import { Templates } from "../templates/templates";
 import { not_found } from "./not_found";
 import { Logger } from "../logger/logger";
+import { serveStatic } from "hono/bun";
 
 const app = new Hono();
 
@@ -30,6 +31,16 @@ export namespace ApiServer {
     server.stop();
   }
 }
+
+app.use(
+  "/static/*",
+  serveStatic({
+    root: "./",
+    onNotFound: (path, c) => {
+      Logger.warn(`${path} is not found, you access ${c.req.path}`);
+    },
+  }),
+);
 
 app.get("*", Templates.layoutPage);
 
