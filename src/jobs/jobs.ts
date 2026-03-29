@@ -27,28 +27,27 @@ export namespace JobOrchestrator {
       Utils.assert(Array.isArray(data), "Metadata is not an array");
       const [metadata] = data;
 
-      void DB.client
-        .insertInto("meta")
-        .orFail()
-        .values({
-          id: Metadata.randomId(),
-          event_id: event.id,
-          filename: metadata.filename,
-          subfolder: metadata.subfolder,
-          type: metadata.type,
-        })
-        .execute();
+      void DB.Meta.insert_meta({
+        event_id: event.id,
+        filename: metadata.filename,
+        subfolder: metadata.subfolder,
+        type: metadata.type,
+      });
     });
   }
 
   export async function create_job() {
-    const id = Metadata.randomId();
     // Let me know!
-    const job: Job = get_a_new_job(id);
+    // const job: Job = get_a_new_job(id);
+    const job = await DB.Jobs.create_job();
 
     // TODO Save to actual database
     // - jobs, events
-    jobs[id] = job;
+    jobs[job.id] = {
+      ...job,
+      events: {},
+      meta: {},
+    };
 
     return job;
   }

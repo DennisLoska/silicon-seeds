@@ -1,14 +1,15 @@
 import { Kysely } from "kysely";
 import { BunSqliteDialect } from "kysely-bun-sqlite";
 import { Database } from "bun:sqlite";
+import { Generated } from "kysely";
 
 export interface DbSchema {
   jobs: {
-    id: string;
-    created_at: Date;
+    id: Generated<string>;
+    created_at: Generated<string>;
   };
   events: {
-    id: string;
+    id: Generated<string>;
     job_id: string;
     type: string;
     mode: string;
@@ -21,10 +22,10 @@ export interface DbSchema {
     lora: string | null;
     index: number | null;
     meta_data: string | null;
-    created_at: Date;
+    created_at: Generated<string>;
   };
   meta: {
-    id: string;
+    id: Generated<string>;
     event_id: string;
     filename: string;
     subfolder: string;
@@ -33,9 +34,31 @@ export interface DbSchema {
 }
 
 export namespace DB {
-  export const client = new Kysely<DbSchema>({
+  export const db = new Kysely<DbSchema>({
     dialect: new BunSqliteDialect({
       database: new Database("silicon-seeds.sqlite"),
     }),
   });
+
+  export namespace Jobs {
+    export async function create_job() {
+      return await db
+        .insertInto("jobs")
+        .values({})
+        .returningAll()
+        .executeTakeFirstOrThrow();
+    }
+  }
+
+  export namespace Meta {
+    export async function insert_meta(payload: Omit<DbSchema["meta"], "id">) {
+      return await db
+        .insertInto("meta")
+        .orFail()
+        .values({
+          ...payload,
+        })
+        .execute();
+    }
+  }
 }
