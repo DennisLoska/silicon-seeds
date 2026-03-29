@@ -21,8 +21,6 @@
     "db:migrate": "bun src/db/migrate.ts",
     "db:rollback": "bun src/db/rollback.ts",
     "lint": "eslint .",
-    "build:css": "npx @tailwindcss/cli -i src/ui/app.css -o public/output.css",
-    "watch:css": "npx @tailwindcss/cli -i src/ui/app.css -o public/output.css --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "private": true,

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { list as list_jobs } from "./jobs/list";
 import { Metadata } from "../meta/meta";
+import { jsxRenderer } from "hono/jsx-renderer";
 
 const app = new Hono();
 
@@ -19,30 +20,81 @@ export namespace ApiServer {
   }
 }
 
-app.get("/", async (c) => {
-  const url = new URL(c.req.url);
+app.get(
+  "*",
+  jsxRenderer(({ children }) => (
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Silicon Seeds</title>
+        <link
+          href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css"
+          rel="stylesheet"
+        />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+      </head>
+      <body>{children}</body>
+    </html>
+  )),
+);
 
-  // Try to serve static file from public/
-  let filePath = `public${url.pathname}`;
+app.get("/", (c) =>
+  c.render(
+    <body class="min-h-screen bg-base-100">
+      <header class="navbar bg-base-200 px-6">
+        <div class="navbar-start">
+          <div class="text-lg font-bold">Silicon Seeds</div>
+        </div>
+        <div class="navbar-end">
+          <button
+            class="btn btn-square"
+            hx-get="/api/settings"
+            hx-target="#settings-content"
+            hx-swap="innerHTML"
+          >
+            ⚙️
+          </button>
+        </div>
+      </header>
 
-  // If path is root, serve index.html
-  if (url.pathname === "/") {
-    filePath = "public/index.html";
-  }
+      <main class="flex min-h-[calc(100vh-4rem)] px-6">
+        <aside class="w-64 bg-base-200 rounded-box mr-8 p-4">
+          <h2 class="text-lg font-bold mb-4">Jobs</h2>
+          <div
+            id="job-list"
+            hx-get="/api/jobs/list"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+          ></div>
+        </aside>
 
-  const file = Bun.file(filePath);
-  const exists = await file.exists();
+        <section class="flex-1">
+          <h1 class="text-5xl font-bold mb-4">Hello World!</h1>
+          <p class="mb-6 text-lg">Silicon Seeds Health Check</p>
 
-  if (exists) {
-    return new Response(file);
-  }
+          <button
+            class="btn btn-primary btn-lg"
+            hx-get="/api/health"
+            hx-target="#status-card"
+            hx-swap="outerHTML"
+          >
+            Check Status
+          </button>
 
-  return new Response("Not found", { status: 404 });
-});
+          <div id="status-card" class="mt-8"></div>
+        </section>
+      </main>
+
+      <div id="settings-content"></div>
+    </body>,
+  ),
+);
 
 // Health check endpoint
 app.get("/api/health", (c) => {
-  return c.text("OK");
+  return c.json({ status: "up" });
 });
 
 // Message endpoint
