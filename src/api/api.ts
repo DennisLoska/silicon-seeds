@@ -9,49 +9,48 @@ import { text_to_script } from "./jobs/text-to-script";
 import { text_to_speech } from "./jobs/text-to-speech";
 import { text_to_text } from "./jobs/text-to-text";
 import { video_transition } from "./jobs/video-transition";
+import { list as jobs_list } from "./jobs/list";
 import { not_found } from "./void";
 
 export namespace ApiServer {
   let server: Bun.Server<undefined>;
 
   export function start() {
+    const handlers = {
+      health,
+      not_found,
+      text_to_text,
+      text_to_script,
+      text_to_image,
+      script_to_scenes,
+      text_to_image_to_video,
+      text_to_speech,
+      text_to_instrumental,
+      compose_video,
+      video_transition,
+      jobs_list,
+    };
+
     server = Bun.serve({
       port: 3000,
       idleTimeout: Metadata.TIMEOUT,
       routes: {
-        "/api/health": Api.handlers.health,
-        "/api/message": Api.handlers.text_to_text,
-        "/api/jobs/images": Api.handlers.text_to_image,
-        // "/api/jobs/scripts": Api.handlers.text_to_script,
-        "/api/jobs/scenes": Api.handlers.script_to_scenes,
-        "/api/jobs/videos": Api.handlers.text_to_image_to_video,
-        "/api/jobs/videos/compose": Api.handlers.compose_video,
-        "/api/jobs/videos/transition": Api.handlers.video_transition,
-        "/api/jobs/tts": Api.handlers.text_to_speech,
-        "/api/jobs/instrumental": Api.handlers.text_to_instrumental,
-        // TODO text to video
+        "/api/health": handlers.health,
+        "/api/message": handlers.text_to_text,
+        "/api/jobs/images": handlers.text_to_image,
+        "/api/jobs/scenes": handlers.script_to_scenes,
+        "/api/jobs/videos": handlers.text_to_image_to_video,
+        "/api/jobs/videos/compose": handlers.compose_video,
+        "/api/jobs/videos/transition": handlers.video_transition,
+        "/api/jobs/tts": handlers.text_to_speech,
+        "/api/jobs/instrumental": handlers.text_to_instrumental,
+        "/api/jobs/list": handlers.jobs_list,
       },
-      fetch: Api.handlers.not_found,
+      fetch: handlers.not_found,
     });
   }
 
   export async function stop() {
     await server.stop(true);
   }
-}
-
-namespace Api {
-  export const handlers = {
-    health,
-    not_found,
-    text_to_text,
-    text_to_script,
-    text_to_image,
-    script_to_scenes,
-    text_to_image_to_video,
-    text_to_speech,
-    text_to_instrumental,
-    compose_video,
-    video_transition,
-  };
 }
