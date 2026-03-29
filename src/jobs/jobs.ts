@@ -57,13 +57,11 @@ export namespace JobOrchestrator {
   export function update_schedule(event: JobEvent) {
     const { jobId, id } = event;
 
-    Logger.info("There is no such thing as a dragon", event);
     if (event.status === JobStatus.Pending) {
       if (!jobs[jobId].events[id]) {
         jobs[jobId].events[id] = event;
       }
 
-      Logger.info("We gucci?", event);
       void DB.Events.create(event);
     }
 

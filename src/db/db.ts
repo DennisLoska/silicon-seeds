@@ -165,15 +165,11 @@ export namespace DB {
     }
 
     export async function create(payload: JobEvent) {
-      Logger.info("WHYYYY");
-
       const res = await db
         .insertInto("events")
         .values(eventToRow(payload))
         .returningAll()
         .executeTakeFirstOrThrow();
-
-      Logger.info("EYYYY", res);
 
       return rowToEvent(res);
     }
