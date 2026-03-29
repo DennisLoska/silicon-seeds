@@ -1,9 +1,11 @@
+import { Templates } from "./templates";
+
 export const jobDetail = (jobId: string) => (
   <div id="job-tabs-container" data-job-id={jobId}>
     <div class="tabs tabs-box mb-6" role="tablist">
       <button
         class="tab tab-active"
-        hx-get={`/fragment/${jobId}`}
+        hx-get={`/fragment/${jobId}?tab=status`}
         hx-target="#job-content-area"
         hx-swap="innerHTML"
       >
@@ -27,6 +29,8 @@ export const jobDetail = (jobId: string) => (
       </button>
     </div>
 
-    <div id="job-content-area" class="min-h-[400px]"></div>
+    <div id="job-content-area" class="min-h-[400px]">
+      {Templates.statusFragment()}
+    </div>
   </div>
 );
