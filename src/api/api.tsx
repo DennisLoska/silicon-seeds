@@ -1,7 +1,16 @@
 import { Hono } from "hono";
 import { list as list_jobs } from "./jobs/list";
-import { Metadata } from "../meta/meta";
+import { text_to_image } from "./jobs/text-to-image";
+import { script_to_scenes } from "./jobs/script-to-scenes";
+import { text_to_image_to_video } from "./jobs/text-to-image-to-video";
+import { video_transition } from "./jobs/video-transition";
+import { text_to_speech } from "./jobs/text-to-speech";
+import { text_to_instrumental } from "./jobs/text-to-instrumental";
+import { compose_video } from "./jobs/compose-video";
+import { text_to_text } from "./jobs/text-to-text";
 import { jsxRenderer } from "hono/jsx-renderer";
+import { Metadata } from "../meta/meta";
+import { health } from "./health";
 
 const app = new Hono();
 
@@ -20,6 +29,7 @@ export namespace ApiServer {
   }
 }
 
+// Layout renderer
 app.get(
   "*",
   jsxRenderer(({ children }) => (
@@ -40,6 +50,7 @@ app.get(
   )),
 );
 
+// Main page
 app.get("/", (c) =>
   c.render(
     <body class="min-h-screen bg-base-100">
@@ -94,7 +105,7 @@ app.get("/", (c) =>
 
 // Health check endpoint
 app.get("/api/health", (c) => {
-  return c.json({ status: "up" });
+  return health();
 });
 
 // Message endpoint
@@ -104,38 +115,38 @@ app.post("/api/message", async (c) => {
 });
 
 // Jobs images endpoint
-app.post("/api/jobs/images", async (c) => {
-  return c.text("Images created");
+app.get("/api/jobs/images", async (c) => {
+  return text_to_image();
 });
 
 // Jobs scenes endpoint
 app.post("/api/jobs/scenes", async (c) => {
-  return c.text("Scenes created");
+  return script_to_scenes();
 });
 
 // Jobs videos endpoint
 app.post("/api/jobs/videos", async (c) => {
-  return c.text("Videos created");
+  return text_to_image_to_video();
 });
 
 // Jobs videos compose endpoint
 app.post("/api/jobs/videos/compose", async (c) => {
-  return c.text("Video composed");
+  return compose_video();
 });
 
 // Jobs videos transition endpoint
 app.post("/api/jobs/videos/transition", async (c) => {
-  return c.text("Transition created");
+  return video_transition();
 });
 
 // Jobs TTS endpoint
 app.post("/api/jobs/tts", async (c) => {
-  return c.text("TTS created");
+  return text_to_speech();
 });
 
 // Jobs instrumental endpoint
 app.post("/api/jobs/instrumental", async (c) => {
-  return c.text("Instrumental created");
+  return text_to_instrumental();
 });
 
 // Jobs list endpoint with JSX
