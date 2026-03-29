@@ -28,6 +28,7 @@ export const main = (
       </aside>
 
       <section class="flex-1">
+        <div id="settings-content"></div>
         <div
           id="empty-state"
           class="text-center py-20 text-base-content/70 min-h-[400px]"
@@ -44,7 +45,5 @@ export const main = (
         ></div>
       </section>
     </main>
-
-    <div id="settings-content"></div>
   </body>
 );

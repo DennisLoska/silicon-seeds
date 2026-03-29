@@ -3,19 +3,19 @@ import { Templates } from "../../templates/templates";
 
 const app = new Hono();
 
-app.get("/status/:jobId", (c) => {
+app.get("/:jobId", (c) => {
   const jobId = c.req.param("jobId");
-  return c.render(Templates.statusFragment());
-});
-
-app.get("/media/:jobId", (c) => {
-  const jobId = c.req.param("jobId");
-  return c.render(Templates.mediaFragment());
-});
-
-app.get("/events/:jobId", (c) => {
-  const jobId = c.req.param("jobId");
-  return c.render(Templates.eventsFragment());
+  const tab = c.req.query("tab") || "status";
+  
+  if (tab === "status") {
+    return c.render(Templates.statusFragment());
+  } else if (tab === "media") {
+    return c.render(Templates.mediaFragment());
+  } else if (tab === "events") {
+    return c.render(Templates.eventsFragment());
+  }
+  
+  return c.text("Invalid tab", 400);
 });
 
 export default app;
