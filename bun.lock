@@ -15,6 +15,7 @@
         "kysely": "^0.28.14",
         "kysely-bun-sqlite": "^0.4.0",
         "tailwindcss": "^4.2.2",
+        "typed-htmx": "^0.3.1",
       },
       "devDependencies": {
         "@eslint/js": "^10.0.1",
@@ -338,6 +339,10 @@
     "ts-api-utils": ["ts-api-utils@2.5.0", "", { "peerDependencies": { "typescript": ">=4.8.4" } }, "sha512-OJ/ibxhPlqrMM0UiNHJ/0CKQkoKF243/AEmplt3qpRgkW8VG7IfOS41h7V8TjITqdByHzrjcS/2si+y4lIh8NA=="],
 
     "type-check": ["type-check@0.4.0", "", { "dependencies": { "prelude-ls": "^1.2.1" } }, "sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew=="],
+
+    "typed-html": ["typed-html@3.0.1", "", {}, "sha512-JKCM9zTfPDuPqQqdGZBWSEiItShliKkBFg5c6yOR8zth43v763XkAzTWaOlVqc0Y6p9ee8AaAbipGfUnCsYZUA=="],
+
+    "typed-htmx": ["typed-htmx@0.3.1", "", { "dependencies": { "typed-html": "^3.0.1" } }, "sha512-6WSPsukTIOEMsVbx5wzgVSvldLmgBUVcFIm2vJlBpRPtcbDOGC5y1IYrCWNX1yUlNsrv1Ngcw4gGM8jsPyNV7w=="],
 
     "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 

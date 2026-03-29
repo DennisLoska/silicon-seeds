@@ -41,10 +41,11 @@
     "@logtape/pretty": "^2.0.4",
     "@tailwindcss/cli": "^4.2.2",
     "daisyui": "^5.5.19",
+    "hono": "^4.12.9",
     "jiti": "^2.6.1",
     "kysely": "^0.28.14",
     "kysely-bun-sqlite": "^0.4.0",
     "tailwindcss": "^4.2.2",
-    "hono": "^4.12.9"
+    "typed-htmx": "^0.3.1"
   }
 }
