@@ -16,6 +16,7 @@ import { not_found } from "./not_found";
 import { Logger } from "../logger/logger";
 import { serveStatic } from "hono/bun";
 import fragmentRoutes from "./fragment";
+import { jsxRenderer } from "hono/jsx-renderer";
 
 const app = new Hono();
 
@@ -106,7 +107,7 @@ app.get("/api/jobs/detail", async (c) => {
   if (!jobId) {
     return c.text("No job selected", 400);
   }
-  return c.render(Templates.jobDetailFragment(jobId));
+  return c.html(Templates.jobDetailFragment(jobId));
 });
 
 app.route("/fragment", fragmentRoutes);

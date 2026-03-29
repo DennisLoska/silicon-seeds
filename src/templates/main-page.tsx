@@ -28,22 +28,17 @@ export const main = (
       </aside>
 
       <section class="flex-1">
-        <div id="settings-content"></div>
         <div
-          id="empty-state"
-          class="text-center py-20 text-base-content/70 min-h-[400px]"
+          id="job-content-container"
+          class="min-h-[400px]"
         >
-          <p>Select a job from the sidebar to view its details</p>
+          <div class="text-center py-20 text-base-content/70">
+            <p>Select a job from the sidebar to view its details</p>
+          </div>
         </div>
-
-        <div
-          id="job-detail-area"
-          hx-get="/api/jobs/detail"
-          hx-trigger="htmx:afterOnLoad"
-          hx-swap="innerHTML"
-          class="hidden"
-        ></div>
       </section>
     </main>
+
+    <div id="settings-content"></div>
   </body>
 );
