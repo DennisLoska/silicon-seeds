@@ -2,10 +2,10 @@ import { FileHandle, LMStudioClient } from "@lmstudio/sdk";
 import { Logger } from "../logger/logger";
 
 const llmClient = new LMStudioClient();
-let llm = await llmClient.llm.model("qwen/qwen3-vl-30b");
+const llm = await llmClient.llm.model("qwen/qwen3-vl-30b");
 // TODO finetune the new model:
-// let llm = await llmClient.llm.model("qwen/qwen3.5-35b-a3b");
-// let llm = await llmClient.llm.model("qwen/qwen3.5-9b");
+// const llm = await llmClient.llm.model("qwen/qwen3.5-35b-a3b");
+// const llm = await llmClient.llm.model("qwen/qwen3.5-9b");
 
 export namespace LLM {
   export const client = llmClient;

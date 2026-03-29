@@ -33,7 +33,7 @@ export namespace PromptGenerator {
         // TODO could add retry
         return null;
       }
-      let prompt = res.content.trim();
+      const prompt = res.content.trim();
 
       ImageGenerator.schedule_image({ jobId, mode, prompt, lora, index });
     }
@@ -174,9 +174,11 @@ Make sure to only include the JSON array in your response and nothing more!
 
     for (const scene of scenes) {
       const index = scenes.indexOf(scene);
-      preset
-        ? txt_to_img_prompt(jobId, mode, scene, 1, preset, index)
-        : txt_to_img_prompt(jobId, mode, scene, 1, undefined, index);
+      if (preset) {
+        txt_to_img_prompt(jobId, mode, scene, 1, preset, index);
+      } else {
+        txt_to_img_prompt(jobId, mode, scene, 1, undefined, index);
+      }
     }
   }
 }
