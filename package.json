@@ -17,6 +17,7 @@
   "scripts": {
     "prestart": "tsc --noEmit",
     "start": "bun src/main.ts",
+    "start:hot": "bun --hot src/main.ts",
     "db:migrate": "bun src/db/migrate.ts",
     "db:rollback": "bun src/db/rollback.ts",
     "lint": "eslint .",
@@ -32,6 +33,7 @@
     "@typescript-eslint/parser": "^8.57.1",
     "eslint": "^10.0.3",
     "globals": "^17.4.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.1"
   },
