@@ -20,6 +20,10 @@ interface BaseEvent {
   created_at?: string;
 }
 
+export interface Job extends BaseEvent {
+  created_at: string;
+}
+
 export interface JobBaseEvent extends BaseEvent {
   jobId: string;
   mode: JobMode;

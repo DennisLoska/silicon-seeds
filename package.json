@@ -17,10 +17,10 @@
   "scripts": {
     "prestart": "tsc --noEmit",
     "start": "bun src/main.ts",
+    "start:hot": "bun --hot src/main.ts",
     "db:migrate": "bun src/db/migrate.ts",
     "db:rollback": "bun src/db/rollback.ts",
     "lint": "eslint .",
-    "build:css": "npx @tailwindcss/cli -i src/ui/app.css -o public/output.css",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "private": true,
@@ -31,6 +31,7 @@
     "@typescript-eslint/parser": "^8.57.1",
     "eslint": "^10.0.3",
     "globals": "^17.4.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.1"
   },
@@ -40,9 +41,11 @@
     "@logtape/pretty": "^2.0.4",
     "@tailwindcss/cli": "^4.2.2",
     "daisyui": "^5.5.19",
+    "hono": "^4.12.9",
     "jiti": "^2.6.1",
     "kysely": "^0.28.14",
     "kysely-bun-sqlite": "^0.4.0",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.2",
+    "typed-htmx": "^0.3.1"
   }
 }
