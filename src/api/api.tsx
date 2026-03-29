@@ -103,54 +103,46 @@ app.get("/", (c) =>
   ),
 );
 
-// Health check endpoint
 app.get("/api/health", (c) => {
   return health();
 });
 
-// Message endpoint
-app.post("/api/message", async (c) => {
-  const body = await c.req.json();
-  return c.text(body.message);
+app.post("/api/jobs/text", async (c) => {
+  return text_to_text();
 });
 
-// Jobs images endpoint
-app.get("/api/jobs/images", async (c) => {
+app.post("/api/jobs/images", async (c) => {
   return text_to_image();
 });
 
-// Jobs scenes endpoint
+app.post("/api/jobs/images", async (c) => {
+  return text_to_image();
+});
+
 app.post("/api/jobs/scenes", async (c) => {
   return script_to_scenes();
 });
 
-// Jobs videos endpoint
 app.post("/api/jobs/videos", async (c) => {
   return text_to_image_to_video();
 });
 
-// Jobs videos compose endpoint
 app.post("/api/jobs/videos/compose", async (c) => {
   return compose_video();
 });
 
-// Jobs videos transition endpoint
 app.post("/api/jobs/videos/transition", async (c) => {
   return video_transition();
 });
 
-// Jobs TTS endpoint
 app.post("/api/jobs/tts", async (c) => {
   return text_to_speech();
 });
 
-// Jobs instrumental endpoint
 app.post("/api/jobs/instrumental", async (c) => {
   return text_to_instrumental();
 });
 
-// Jobs list endpoint with JSX
 app.get("/api/jobs/list", async (c) => {
-  const jobs = await list_jobs();
-  return c.html(jobs);
+  return c.html(await list_jobs());
 });
