@@ -1,4 +1,5 @@
 import { spawn } from "bun";
+import { Logger } from "../logger/logger";
 
 // This is sort of like a utils directory
 export namespace Metadata {
@@ -66,7 +67,8 @@ export namespace Metadata {
       try {
         const json = JSON.parse(output);
         return parseInt(json.format.duration);
-      } catch (e) {
+      } catch (error) {
+        Logger.error("Failed to parse audio metadata", { error });
         throw new Error("Failed to parse audio metadata");
       }
     } finally {

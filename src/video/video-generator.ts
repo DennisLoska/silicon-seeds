@@ -189,7 +189,7 @@ export namespace VideoGenerator {
     ];
 
     for (const process of processes) {
-      let ffmpegProcess = spawn({
+      const ffmpegProcess = spawn({
         cmd: process.args,
         stdio: ["ignore", "ignore", "ignore"],
       });
