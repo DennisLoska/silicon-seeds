@@ -6,7 +6,7 @@ const app = new Hono();
 app.get("/:jobId", (c) => {
   const jobId = c.req.param("jobId");
   const tab = c.req.query("tab") || "status";
-  
+
   if (tab === "status") {
     return c.render(Templates.statusFragment());
   } else if (tab === "media") {
@@ -14,7 +14,7 @@ app.get("/:jobId", (c) => {
   } else if (tab === "events") {
     return c.render(Templates.eventsFragment());
   }
-  
+
   return c.text("Invalid tab", 400);
 });
 
