@@ -64,10 +64,6 @@ app.post("/api/jobs/text", async (c) => {
   return text_to_text();
 });
 
-app.get("/api/jobs/images", async (c) => {
-  return text_to_image();
-});
-
 app.post("/api/jobs/images", async (c) => {
   return text_to_image();
 });
@@ -80,7 +76,7 @@ app.post("/api/jobs/videos", async (c) => {
   return text_to_image_to_video();
 });
 
-app.get("/api/jobs/videos/compose", async (c) => {
+app.post("/api/jobs/videos/compose", async (c) => {
   return compose_video();
 });
 
@@ -105,7 +101,7 @@ app.get("/api/jobs/detail", async (c) => {
   if (!jobId) {
     return c.text("No job selected", 400);
   }
-  return c.html(Templates.jobDetailFragment(jobId));
+  return c.html(await Templates.jobDetailFragment(jobId));
 });
 
 app.route("/fragment", fragmentRoutes);
