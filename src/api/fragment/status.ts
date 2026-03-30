@@ -1,7 +1,8 @@
 import { Templates } from "../../templates/templates";
 
 export async function status() {
-  return new Response(Templates.statusFragment(), {
+  const fragment = await Templates.statusFragment();
+  return new Response(fragment, {
     headers: { "Content-Type": "text/html" },
   });
 }

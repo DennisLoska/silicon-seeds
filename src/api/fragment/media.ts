@@ -1,7 +1,8 @@
 import { Templates } from "../../templates/templates";
 
 export async function media() {
-  return new Response(Templates.mediaFragment(), {
+  const fragment = await Templates.mediaFragment();
+  return new Response(fragment, {
     headers: { "Content-Type": "text/html" },
   });
 }

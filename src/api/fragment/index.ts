@@ -3,16 +3,16 @@ import { Templates } from "../../templates/templates";
 
 const app = new Hono();
 
-app.get("/:jobId", (c) => {
+app.get("/:jobId", async (c) => {
   const jobId = c.req.param("jobId");
   const tab = c.req.query("tab") || "status";
 
   if (tab === "status") {
-    return c.render(Templates.statusFragment());
+    return c.html(await Templates.statusFragment());
   } else if (tab === "media") {
-    return c.render(Templates.mediaFragment());
+    return c.html(await Templates.mediaFragment());
   } else if (tab === "events") {
-    return c.render(Templates.eventsFragment());
+    return c.html(await Templates.eventsFragment());
   }
 
   return c.text("Invalid tab", 400);

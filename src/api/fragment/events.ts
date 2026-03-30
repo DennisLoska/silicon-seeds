@@ -1,7 +1,8 @@
 import { Templates } from "../../templates/templates";
 
 export async function events() {
-  return new Response(Templates.eventsFragment(), {
+  const fragment = await Templates.eventsFragment();
+  return new Response(fragment, {
     headers: { "Content-Type": "text/html" },
   });
 }

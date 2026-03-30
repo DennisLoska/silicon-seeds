@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { list as list_jobs } from "./jobs/list";
-import { detail } from "./jobs/detail";
 import { text_to_image } from "./jobs/text-to-image";
 import { script_to_scenes } from "./jobs/script-to-scenes";
 import { text_to_image_to_video } from "./jobs/text-to-image-to-video";
@@ -16,7 +15,6 @@ import { not_found } from "./not_found";
 import { Logger } from "../logger/logger";
 import { serveStatic } from "hono/bun";
 import fragmentRoutes from "./fragment";
-import { jsxRenderer } from "hono/jsx-renderer";
 
 const app = new Hono();
 
