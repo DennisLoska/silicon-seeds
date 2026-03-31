@@ -15,7 +15,7 @@ export const jobList = (jobs: Job[]) => (
             hx-get={`/api/jobs/detail?job_id=${job.id}`}
             hx-target="#job-content-container"
             hx-swap="innerHTML"
-            hx-push-url="true"
+            hx-push-url={`?job_id=${job.id}&tab=status`}
           >
             <div class="card-body p-3">
               <div class="text-sm font-bold">{job.id}</div>

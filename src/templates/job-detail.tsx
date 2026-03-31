@@ -26,6 +26,7 @@ export const jobDetail = (jobId: string, activeTab?: string) => {
           hx-get={`/fragment/${jobId}?tab=status`}
           hx-target="#job-tabs-container"
           hx-swap="innerHTML"
+          hx-push-url={`?job_id=${jobId}&tab=status`}
         >
           Status
         </button>
@@ -34,6 +35,7 @@ export const jobDetail = (jobId: string, activeTab?: string) => {
           hx-get={`/fragment/${jobId}?tab=media`}
           hx-target="#job-tabs-container"
           hx-swap="innerHTML"
+          hx-push-url={`?job_id=${jobId}&tab=media`}
         >
           Media
         </button>
@@ -42,6 +44,7 @@ export const jobDetail = (jobId: string, activeTab?: string) => {
           hx-get={`/fragment/${jobId}?tab=events`}
           hx-target="#job-tabs-container"
           hx-swap="innerHTML"
+          hx-push-url={`?job_id=${jobId}&tab=events`}
         >
           Events
         </button>

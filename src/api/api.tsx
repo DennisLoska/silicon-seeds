@@ -80,6 +80,10 @@ app.post("/api/jobs/videos", async (c) => {
   return text_to_image_to_video();
 });
 
+app.get("/api/jobs/videos/compose", async (c) => {
+  return compose_video();
+});
+
 app.post("/api/jobs/videos/compose", async (c) => {
   return compose_video();
 });
