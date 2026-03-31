@@ -145,7 +145,6 @@ vite.config.ts.timestamp-*
 silicon-seeds.sqlite
 
 # Opencode
-AGENTS.md
 docs/
 
 # UI
