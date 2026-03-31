@@ -64,6 +64,10 @@ app.post("/api/jobs/text", async (c) => {
   return text_to_text();
 });
 
+app.get("/api/jobs/images", async (c) => {
+  return text_to_image();
+});
+
 app.post("/api/jobs/images", async (c) => {
   return text_to_image();
 });
