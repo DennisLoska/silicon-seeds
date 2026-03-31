@@ -45,7 +45,7 @@ app.use(
 
 app.get("*", Templates.layoutPage);
 
-app.get("/", (c) => c.render(Templates.mainPage));
+app.get("/", (c) => c.render(Templates.app));
 
 app.onError((error, c) => {
   Logger.error("api error", error);

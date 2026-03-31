@@ -1,4 +1,4 @@
-export const main = (
+export const app = (
   <body class="min-h-screen bg-base-100">
     <header class="navbar bg-base-200 px-6">
       <div class="navbar-start">
@@ -28,10 +28,7 @@ export const main = (
       </aside>
 
       <section class="flex-1">
-        <div
-          id="job-content-container"
-          class="min-h-[400px]"
-        >
+        <div id="job-content-container" class="min-h-[400px]">
           <div class="text-center py-20 text-base-content/70">
             <p>Select a job from the sidebar to view its details</p>
           </div>
