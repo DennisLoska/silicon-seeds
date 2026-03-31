@@ -101,11 +101,12 @@ app.get("/api/jobs/list", async (c) => {
 });
 
 app.get("/api/jobs/detail", async (c) => {
-  const jobId = c.req.query("jobId");
+  const jobId = c.req.query("job_id");
   if (!jobId) {
     return c.text("No job selected", 400);
   }
-  return c.html(await Templates.jobDetailFragment(jobId));
+  const tab = c.req.query("tab") || "status";
+  return c.html(await Templates.jobDetailFragment(jobId, tab));
 });
 
 app.route("/fragment", fragmentRoutes);
