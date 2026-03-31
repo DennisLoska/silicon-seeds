@@ -24,12 +24,19 @@ export const app = (
           hx-get="/api/jobs/list"
           hx-trigger="load"
           hx-swap="innerHTML"
-        ></div>
+          aria-live="polite"
+        >
+          <span class="loading loading-spinner"></span>
+        </div>
       </aside>
 
       <section class="flex-1">
         <div id="job-content-container" class="min-h-[400px]">
-          <div class="text-center py-20 text-base-content/70">
+          <div
+            hx-target="#job-content-container"
+            hx-swap="innerHTML"
+            class="text-center py-20 text-base-content/70"
+          >
             <p>Select a job from the sidebar to view its details</p>
           </div>
         </div>
