@@ -1,6 +1,6 @@
-import { jsxRenderer } from "hono/jsx-renderer";
+import { Child } from "hono/jsx";
 
-export const layout = jsxRenderer(({ children }) => (
+export const layout = (children: Child) => (
   <html lang="en">
     <head>
       <meta charset="UTF-8" />
@@ -11,4 +11,4 @@ export const layout = jsxRenderer(({ children }) => (
     </head>
     <body>{children}</body>
   </html>
-));
+);

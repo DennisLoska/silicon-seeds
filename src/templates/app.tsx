@@ -1,5 +1,7 @@
-export const app = (
-  <body class="min-h-screen bg-base-100">
+import { Child } from "hono/jsx";
+
+export const app = (content: Child) => (
+  <div class="min-h-screen bg-base-100">
     <header class="navbar bg-base-200 px-6">
       <div class="navbar-start">
         <div class="text-lg font-bold">Silicon Seeds</div>
@@ -30,19 +32,9 @@ export const app = (
         </div>
       </aside>
 
-      <section class="flex-1">
-        <div id="job-content-container" class="min-h-[400px]">
-          <div
-            hx-target="#job-content-container"
-            hx-swap="innerHTML"
-            class="text-center py-20 text-base-content/70"
-          >
-            <p>Select a job from the sidebar to view its details</p>
-          </div>
-        </div>
-      </section>
+      <section class="flex-1">{content}</section>
     </main>
 
     <div id="settings-content"></div>
-  </body>
+  </div>
 );

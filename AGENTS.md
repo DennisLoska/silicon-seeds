@@ -19,6 +19,16 @@ Assume that the knowledge you already have is not uptodate so you should always 
 Always use the kysely skill when working with SQL or database queries.
 Always use the daisy-ui skill when working with the frontend, HTML, CSS or UI.
 
+# Development
+
+Start the server in hot reload mode:
+
+`bun start:hot`
+
+Verify the server's response using `curl`. Here is an example url:
+
+http://localhost:3000/?job_id=019d4556-bbe7-7000-88da-b48bf06182dc&tab=status
+
 # Documentation
 
 Always read the project's readme to understand the architecture:

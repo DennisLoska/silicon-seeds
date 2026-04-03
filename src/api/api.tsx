@@ -15,6 +15,7 @@ import { not_found } from "./not_found";
 import { Logger } from "../logger/logger";
 import { serveStatic } from "hono/bun";
 import fragmentRoutes from "./fragment";
+import { renderFragment } from "./utils";
 
 const app = new Hono();
 
@@ -43,9 +44,30 @@ app.use(
   }),
 );
 
-app.get("*", Templates.layoutPage);
+// Smart Root Route
+app.get("/", async (c) => {
+  const jobId = c.req.query("job_id");
+  const tab = c.req.query("tab") || "status";
 
-app.get("/", (c) => c.render(Templates.app));
+  if (jobId) {
+    return renderFragment(c, Templates.jobDetailFragment(jobId, tab));
+  } else {
+    return renderFragment(
+      c,
+      Promise.resolve(
+        <div id="job-content-container" class="min-h-[400px]">
+          <div
+            hx-target="#job-content-container"
+            hx-swap="innerHTML"
+            class="text-center py-20 text-base-content/70"
+          >
+            <p>Select a job from the sidebar to view its details</p>
+          </div>
+        </div>,
+      ),
+    );
+  }
+});
 
 app.onError((error, c) => {
   Logger.error("api error", error);
@@ -57,11 +79,7 @@ app.get("/api/health", (c) => {
 });
 
 app.notFound((c) => {
-  return not_found();
-});
-
-app.post("/api/jobs/text", async (c) => {
-  return text_to_text();
+  return renderFragment(c, not_found());
 });
 
 app.get("/api/jobs/images", async (c) => {
