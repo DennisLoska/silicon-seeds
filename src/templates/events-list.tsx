@@ -105,24 +105,28 @@ export async function eventsListFragment(jobId: string) {
 
         {/* Content box - always on the right (timeline-end) */}
         <div class="timeline-end timeline-box">
-          <details class="card bg-base-100 shadow-sm w-full max-w-md">
-            <summary class="cursor-pointer p-4 card-title">
+          <details class="w-full max-w-md bg-base-100 open:bg-base-100">
+            <summary class="cursor-pointer list-none p-4 card-title hover:bg-base-200 rounded-lg transition-colors">
               <div class="flex items-center justify-between gap-4">
                 <div class="flex items-center gap-2 flex-wrap">
                   {statusBadge}
                   <span class="text-sm text-base-content/60">{typeLabel}</span>
                 </div>
-                <span class="text-xs text-base-content/40 whitespace-nowrap">{timestamp}</span>
+                <span class="text-xs text-base-content/40 whitespace-nowrap">
+                  {timestamp}
+                </span>
               </div>
             </summary>
 
             {/* Expanded content */}
-            <div class="p-4 pt-0 space-y-3">
+            <div class="p-4 pt-0 mt-4 space-y-3 rounded-b-lg">
               {metadataBadges.length > 0 && (
                 <div class="flex flex-wrap gap-2">{metadataBadges}</div>
               )}
               <div>
-                <p class="text-sm font-medium mb-1 text-base-content/60">Prompt:</p>
+                <p class="text-sm font-medium mb-1 text-base-content/60">
+                  Prompt:
+                </p>
                 <div class="prompt-text p-3 bg-base-200 rounded-lg text-sm line-clamp-4 break-words">
                   {promptText}
                 </div>
@@ -133,11 +137,11 @@ export async function eventsListFragment(jobId: string) {
 
         {/* Icon in the middle */}
         <div class="timeline-middle">
-          <div 
+          <div
             class={`w-8 h-8 rounded-full flex items-center justify-center text-lg shadow-sm transition-all ${
-              isComplete 
-                ? 'bg-gradient-to-br from-success to-success/70' 
-                : 'bg-base-200'
+              isComplete
+                ? "bg-gradient-to-br from-success to-success/70"
+                : "bg-base-200"
             }`}
           >
             {typeIcon}
@@ -150,16 +154,7 @@ export async function eventsListFragment(jobId: string) {
     );
   });
 
-  return (
-    <ul class="timeline timeline-vertical">
-      {eventItems}
-    </ul>
-  );
-}
-
-function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + "...";
+  return <ul class="timeline timeline-vertical">{eventItems}</ul>;
 }
 
 function escapeHtml(text: string): string {

@@ -56,7 +56,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
         </button>
       </div>
 
-      <div id="job-content-area" class="min-h-[700px]">
+      <div id="job-content-area" class="min-h-[500px]">
         {contentFragment}
       </div>
     </div>
