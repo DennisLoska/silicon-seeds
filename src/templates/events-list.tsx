@@ -1,14 +1,9 @@
+import { JSX } from "hono/jsx";
 import { DB } from "../db/db";
 import { Event, JobStatus } from "../events/events";
 
 export async function eventsListFragment(jobId: string) {
-  let jobEvents = await DB.Events.findByJobId(jobId);
-
-  // Sort by created_at in the fragment (ascending - oldest first)
-  jobEvents.sort(
-    (a, b) =>
-      new Date(a.created_at!).getTime() - new Date(b.created_at!).getTime(),
-  );
+  const jobEvents = await DB.Events.findByJobId(jobId);
 
   if (jobEvents.length === 0) {
     return (
@@ -49,7 +44,7 @@ export async function eventsListFragment(jobId: string) {
     );
 
     // Build metadata badges
-    const metadataBadges: any[] = [];
+    const metadataBadges: JSX.HTMLAttributes[] = [];
 
     switch (evt.type) {
       case Event.NewImagePrompt:
@@ -92,7 +87,6 @@ export async function eventsListFragment(jobId: string) {
         break;
     }
 
-    // Prompt content with truncation
     const promptText = evt.prompt ? escapeHtml(evt.prompt) : "Instrumental";
 
     // Determine line color based on status

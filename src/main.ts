@@ -53,7 +53,6 @@ import { VideoGenerator } from "./video/video-generator";
 // - use user id in /api/jobs endpoint
 //
 // Frontend
-// - Use i.e. Daisy UI to create a webapp
 // - Distinct mode: image generation, audio generation, video generation
 // - Composite mode: compose entire video from a video script (main pipeline)
 

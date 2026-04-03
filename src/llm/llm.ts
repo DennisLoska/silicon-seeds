@@ -3,7 +3,7 @@ import { Logger } from "../logger/logger";
 
 const llmClient = new LMStudioClient();
 const llm = await llmClient.llm.model("qwen/qwen3-vl-30b");
-// const llm = await llmClient.llm.model("google/gemma-4-26b-a4b");
+// const llm = await llmClient.llm.model("qwen/qwen3.5-35b-a3b");
 // const llm = await llmClient.llm.model("qwen/qwen3.5-9b");
 
 export namespace LLM {
