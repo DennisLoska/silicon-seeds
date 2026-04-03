@@ -12,9 +12,9 @@ export namespace Templates {
   export const app = application;
   export const layoutPage = layout;
   export const jobListFragment = (jobs: Job[], activeJobId?: string) => jobList(jobs, activeJobId);
-  export const statusFragment = (job: Job, activeTab?: string) => status(job, activeTab);
-  export const mediaFragment = (job: Job, activeTab?: string) => media(job, activeTab);
-  export const eventsFragment = (job: Job, activeTab?: string) => events(job, activeTab);
+  export const statusFragment = (job: Job) => status(job);
+  export const mediaFragment = (job: Job) => media(job);
+  export const eventsFragment = (job: Job) => events(job);
   export const jobDetailFragment = jobDetail;
   export const notSelectedFragment = notSelected;
 }

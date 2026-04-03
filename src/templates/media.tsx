@@ -1,6 +1,6 @@
 import { Job } from "../events/events";
 
-export const media = async (job: Job, activeTab?: string) => {
+export const media = async (job: Job) => {
   return (
     <div class="space-y-4">
       <h2 class="text-3xl font-bold mb-4">Media</h2>

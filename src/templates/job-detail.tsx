@@ -11,16 +11,16 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
 
   switch (currentTab) {
     case "status":
-      contentFragment = Templates.statusFragment(job, currentTab);
+      contentFragment = Templates.statusFragment(job);
       break;
     case "media":
-      contentFragment = Templates.mediaFragment(job, currentTab);
+      contentFragment = Templates.mediaFragment(job);
       break;
     case "events":
-      contentFragment = Templates.eventsFragment(job, currentTab);
+      contentFragment = Templates.eventsFragment(job);
       break;
     default:
-      contentFragment = Templates.statusFragment(job, "status");
+      contentFragment = Templates.statusFragment(job);
   }
 
   return (
