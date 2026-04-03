@@ -98,70 +98,38 @@ export async function eventsListFragment(jobId: string) {
     // Determine line color based on status
     const lineClass = isComplete ? "bg-success" : "";
 
-    // Alternate between start and end for visual variety
-    const isStart = index % 2 === 0;
-
     return (
       <li key={evt.id}>
         {/* HR before (not on first item) */}
         {index > 0 && <hr class={lineClass} />}
 
-        {/* Content box - alternates between start and end */}
-        {isStart ? (
-          <div class="timeline-start timeline-box">
-            <details class="card bg-base-100 shadow-sm w-full max-w-md">
-              <summary class="cursor-pointer p-4 card-title">
-                <div class="flex items-center justify-between gap-4">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    {statusBadge}
-                    <span class="text-sm text-base-content/60">{typeLabel}</span>
-                  </div>
-                  <span class="text-xs text-base-content/40 whitespace-nowrap">{timestamp}</span>
+        {/* Content box - always on the right (timeline-end) */}
+        <div class="timeline-end timeline-box">
+          <details class="card bg-base-100 shadow-sm w-full max-w-md">
+            <summary class="cursor-pointer p-4 card-title">
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2 flex-wrap">
+                  {statusBadge}
+                  <span class="text-sm text-base-content/60">{typeLabel}</span>
                 </div>
-              </summary>
+                <span class="text-xs text-base-content/40 whitespace-nowrap">{timestamp}</span>
+              </div>
+            </summary>
 
-              {/* Expanded content */}
-              <div class="p-4 pt-0 space-y-3">
-                {metadataBadges.length > 0 && (
-                  <div class="flex flex-wrap gap-2">{metadataBadges}</div>
-                )}
-                <div>
-                  <p class="text-sm font-medium mb-1 text-base-content/60">Prompt:</p>
-                  <div class="prompt-text p-3 bg-base-200 rounded-lg text-sm line-clamp-4 break-words">
-                    {promptText}
-                  </div>
+            {/* Expanded content */}
+            <div class="p-4 pt-0 space-y-3">
+              {metadataBadges.length > 0 && (
+                <div class="flex flex-wrap gap-2">{metadataBadges}</div>
+              )}
+              <div>
+                <p class="text-sm font-medium mb-1 text-base-content/60">Prompt:</p>
+                <div class="prompt-text p-3 bg-base-200 rounded-lg text-sm line-clamp-4 break-words">
+                  {promptText}
                 </div>
               </div>
-            </details>
-          </div>
-        ) : (
-          <div class="timeline-end timeline-box">
-            <details class="card bg-base-100 shadow-sm w-full max-w-md">
-              <summary class="cursor-pointer p-4 card-title">
-                <div class="flex items-center justify-between gap-4">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    {statusBadge}
-                    <span class="text-sm text-base-content/60">{typeLabel}</span>
-                  </div>
-                  <span class="text-xs text-base-content/40 whitespace-nowrap">{timestamp}</span>
-                </div>
-              </summary>
-
-              {/* Expanded content */}
-              <div class="p-4 pt-0 space-y-3">
-                {metadataBadges.length > 0 && (
-                  <div class="flex flex-wrap gap-2">{metadataBadges}</div>
-                )}
-                <div>
-                  <p class="text-sm font-medium mb-1 text-base-content/60">Prompt:</p>
-                  <div class="prompt-text p-3 bg-base-200 rounded-lg text-sm line-clamp-4 break-words">
-                    {promptText}
-                  </div>
-                </div>
-              </div>
-            </details>
-          </div>
-        )}
+            </div>
+          </details>
+        </div>
 
         {/* Icon in the middle */}
         <div class="timeline-middle">
