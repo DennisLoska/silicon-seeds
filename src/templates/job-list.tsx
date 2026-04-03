@@ -12,7 +12,7 @@ export const jobList = (jobs: Job[]) => (
             key={job.id}
             href="#"
             class="block card bg-base-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-            hx-get={`/api/jobs/detail?job_id=${job.id}`}
+             hx-get={`/fragment/${job.id}`}
             hx-target="#job-content-container"
             hx-swap="innerHTML"
             hx-push-url={`?job_id=${job.id}&tab=status`}
