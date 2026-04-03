@@ -11,7 +11,7 @@ import { Job } from "../events/events";
 export namespace Templates {
   export const app = application;
   export const layoutPage = layout;
-  export const jobListFragment = (jobs: Job[], activeJobId?: string) => jobList(jobs, activeJobId);
+  export const jobListFragment = (activeJobId?: string) => jobList(activeJobId);
   export const statusFragment = (job: Job) => status(job);
   export const mediaFragment = (job: Job) => media(job);
   export const eventsFragment = (job: Job) => events(job);

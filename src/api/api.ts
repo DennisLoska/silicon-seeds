@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { list as list_jobs } from "./jobs/list";
+import { list_jobs } from "./jobs/list";
 import { text_to_image } from "./jobs/text-to-image";
 import { script_to_scenes } from "./jobs/script-to-scenes";
 import { text_to_image_to_video } from "./jobs/text-to-image-to-video";
@@ -34,14 +34,14 @@ export namespace ApiServer {
   }
 }
 
-function renderFragment(c: Context, fragment: any) {
+function renderFragment(c: Context, fragment: any, jobId?: string) {
   // If it's an HTMX request, just return the fragment
   if (c.req.header("HX-Request")) {
     return c.html(fragment);
   }
 
   // Otherwise, wrap it in the full application layout for a browser load
-  return c.html(Templates.layoutPage(Templates.app(fragment)));
+  return c.html(Templates.layoutPage(Templates.app(fragment, jobId)));
 }
 
 app.use(
@@ -64,11 +64,15 @@ app.use(async (c, next) => {
 
 // Smart Root Route
 app.get("/", async (c) => {
-  const jobId = c.req.query("job_id");
+  const jobId = c.req.query("job_id") ?? null;
   const tab = c.req.query("tab") ?? "status";
 
   if (jobId) {
-    return renderFragment(c, await Templates.jobDetailFragment(jobId, tab));
+    return renderFragment(
+      c,
+      await Templates.jobDetailFragment(jobId, tab),
+      jobId,
+    );
   } else {
     return renderFragment(c, Templates.notSelectedFragment());
   }
@@ -128,8 +132,9 @@ app.post("/api/jobs/instrumental", async (c) => {
 });
 
 app.get("/api/jobs/list", async (c) => {
-  const jobId = c.req.query("job_id");
-  return c.html(await list_jobs(jobId));
+  const jobId = c.req.query("current_id");
+  const list = await list_jobs(jobId);
+  return c.html(list);
 });
 
 app.route("/fragment", fragmentRoutes);

@@ -4,6 +4,7 @@ import { Job } from "../events/events";
 
 export const jobDetail = async (jobId: string, activeTab?: string) => {
   const job: Job = await DB.Jobs.findById(jobId);
+
   if (!job) return <div class="p-6 text-error font-bold">Job not found</div>;
 
   const currentTab = activeTab || "status";

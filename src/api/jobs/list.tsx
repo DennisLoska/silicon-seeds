@@ -1,8 +1,5 @@
-import { DB } from "../../db/db";
 import { Templates } from "../../templates/templates";
 
-export async function list(activeJobId?: string) {
-  const jobs = await DB.Jobs.list();
-
-  return Templates.jobListFragment(jobs, activeJobId);
+export async function list_jobs(activeJobId?: string) {
+  return <div id="sidebar">{await Templates.jobListFragment(activeJobId)}</div>;
 }
