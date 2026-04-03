@@ -104,8 +104,8 @@ export async function eventsListFragment(jobId: string) {
         {index > 0 && <hr class={lineClass} />}
 
         {/* Content box - always on the right (timeline-end) */}
-        <div class="timeline-end timeline-box">
-          <details class="w-full max-w-md bg-base-100 open:bg-base-100">
+        <div class="timeline-end timeline-box xl:w-1/3">
+          <details class="w-full bg-base-100 open:bg-base-100">
             <summary class="cursor-pointer list-none p-4 card-title hover:bg-base-200 rounded-lg transition-colors">
               <div class="flex items-center justify-between gap-4">
                 <div class="flex items-center gap-2 flex-wrap">
