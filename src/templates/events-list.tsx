@@ -127,7 +127,7 @@ export async function eventsListFragment(jobId: string) {
                 <p class="text-sm font-medium mb-1 text-base-content/60">
                   Prompt:
                 </p>
-                <div class="prompt-text p-3 bg-base-200 rounded-lg text-sm line-clamp-4 break-words">
+                <div class="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words">
                   {promptText}
                 </div>
               </div>
