@@ -15,7 +15,7 @@ import { not_found } from "./not_found";
 import { Logger } from "../logger/logger";
 import { serveStatic } from "hono/bun";
 import fragmentRoutes from "./fragment";
-import { renderFragment } from "./utils";
+import { Context } from "hono";
 
 const app = new Hono();
 
@@ -32,6 +32,16 @@ export namespace ApiServer {
   export function stop() {
     server.stop();
   }
+}
+
+function renderFragment(c: Context, fragment: any) {
+  // If it's an HTMX request, just return the fragment
+  if (c.req.header("HX-Request")) {
+    return c.html(fragment);
+  }
+
+  // Otherwise, wrap it in the full application layout for a browser load
+  return c.html(Templates.layoutPage(Templates.app(fragment)));
 }
 
 app.use(
