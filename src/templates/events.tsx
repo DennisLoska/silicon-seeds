@@ -8,7 +8,7 @@ export const events = async (job: Job, activeTab?: string) => {
         <div
           id="events-container"
           class="card-body"
-          hx-get={`/events?job_id=${job.id}`}
+          hx-get={`/api/events?job_id=${job.id}`}
           hx-trigger="load"
         >
           {/* Skeleton loading state */}

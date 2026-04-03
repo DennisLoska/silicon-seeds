@@ -29,7 +29,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
       <div class="tabs tabs-bordered mb-8" role="tablist">
         <button
           class={`tab ${currentTab === "status" ? "tab-active" : ""}`}
-          hx-get={`/fragment/${jobId}?tab=status`}
+          hx-get={`/api/fragment/${jobId}?tab=status`}
           hx-target="#job-tabs-container"
           hx-swap="innerHTML"
           hx-push-url={`?job_id=${jobId}&tab=status`}
@@ -38,7 +38,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
         </button>
         <button
           class={`tab ${currentTab === "media" ? "tab-active" : ""}`}
-          hx-get={`/fragment/${jobId}?tab=media`}
+          hx-get={`/api/fragment/${jobId}?tab=media`}
           hx-target="#job-tabs-container"
           hx-swap="innerHTML"
           hx-push-url={`?job_id=${jobId}&tab=media`}
@@ -47,7 +47,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
         </button>
         <button
           class={`tab ${currentTab === "events" ? "tab-active" : ""}`}
-          hx-get={`/fragment/${jobId}?tab=events`}
+          hx-get={`/api/fragment/${jobId}?tab=events`}
           hx-target="#job-tabs-container"
           hx-swap="innerHTML"
           hx-push-url={`?job_id=${jobId}&tab=events`}

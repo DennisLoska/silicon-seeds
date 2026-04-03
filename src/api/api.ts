@@ -145,5 +145,5 @@ app.get("/api/jobs/list", async (c) => {
   return c.html(list);
 });
 
-app.route("/fragment", fragmentRoutes);
-app.route("/events", eventsRoutes);
+app.route("/api/fragment", fragmentRoutes);
+app.route("/api/events", eventsRoutes);
