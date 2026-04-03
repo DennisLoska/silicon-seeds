@@ -10,15 +10,6 @@ This project uses the following technologies:
 - Daisy UI for frontend components and styles
 - HTMX using SSE (server-sent-events) for API integration
 
-
-## Use the following skills
-
-Always use the Bun or LM Studio skill when the request is about Bun or working with LLMs locally.
-Assume that the knowledge you already have is not uptodate so you should always refer to the skills.
-
-Always use the kysely skill when working with SQL or database queries.
-Always use the daisy-ui skill when working with the frontend, HTML, CSS or UI.
-
 # Development
 
 Start the server in hot reload mode:
@@ -48,7 +39,7 @@ Daisy UI:
 
 Kysely: 
 
-~/work/silicon-seeds/docs/daisyui.md
+~/work/silicon-seeds/docs/kysely.md
 
 LM Studio:
 
