@@ -24,6 +24,6 @@
 
 ## 4. Frontend - Events Tab Integration
 
-- [ ] 4.1 Update `src/templates/events.tsx` to include HTMX container that loads from `/events?job_id=${jobId}`
-- [ ] 4.2 Add loading indicator or skeleton state while events are being fetched
-- [ ] 4.3 Ensure job_id is correctly passed from URL parameters or page context
+- [x] 4.1 Update `src/templates/events.tsx` to include HTMX container that loads from `/events?job_id=${jobId}`
+- [x] 4.2 Add loading indicator or skeleton state while events are being fetched
+- [x] 4.3 Ensure job_id is correctly passed from URL parameters or page context

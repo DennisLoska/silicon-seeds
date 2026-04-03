@@ -43,33 +43,33 @@ export namespace DB {
     }),
   });
 
-    export namespace Jobs {
-      export async function create_job() {
-        return await db
-          .insertInto("jobs")
-          .values({
-            id: Metadata.randomId(),
-          })
-          .returningAll()
-          .executeTakeFirstOrThrow();
-      }
-
-      export async function list() {
-        return await DB.db
-          .selectFrom("jobs")
-          .selectAll()
-          .orderBy("created_at", "desc")
-          .execute();
-      }
-
-      export async function findById(id: string) {
-        return await DB.db
-          .selectFrom("jobs")
-          .selectAll()
-          .where("id", "=", id)
-          .executeTakeFirstOrThrow();
-      }
+  export namespace Jobs {
+    export async function create_job() {
+      return await db
+        .insertInto("jobs")
+        .values({
+          id: Metadata.randomId(),
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow();
     }
+
+    export async function list() {
+      return await DB.db
+        .selectFrom("jobs")
+        .selectAll()
+        .orderBy("created_at", "desc")
+        .execute();
+    }
+
+    export async function findById(id: string) {
+      return await DB.db
+        .selectFrom("jobs")
+        .selectAll()
+        .where("id", "=", id)
+        .executeTakeFirstOrThrow();
+    }
+  }
 
   export namespace Events {
     function eventToRow(event: JobEvent) {
@@ -208,6 +208,17 @@ export namespace DB {
         .executeTakeFirstOrThrow();
 
       return rowToEvent(res);
+    }
+
+    export async function findByJobId(jobId: string) {
+      const res = await db
+        .selectFrom("events")
+        .selectAll()
+        .where("job_id", "=", jobId)
+        .orderBy("created_at", "asc")
+        .execute();
+
+      return res.map(rowToEvent);
     }
   }
 

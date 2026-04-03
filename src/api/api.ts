@@ -15,6 +15,7 @@ import { not_found } from "./not_found";
 import { Logger } from "../logger/logger";
 import { serveStatic } from "hono/bun";
 import fragmentRoutes from "./fragment";
+import eventsRoutes from "./events";
 import { Context } from "hono";
 
 const app = new Hono();
@@ -43,6 +44,13 @@ function renderFragment(c: Context, fragment: any, jobId?: string) {
   // Otherwise, wrap it in the full application layout for a browser load
   return c.html(Templates.layoutPage(Templates.app(fragment, jobId)));
 }
+
+app.use("/static/*", async (c, next) => {
+  await next();
+  if (c.res.ok) {
+    // c.res.headers.set("Cache-Control", "public, max-age=3600");
+  }
+});
 
 app.use(
   "/static/*",
@@ -138,3 +146,4 @@ app.get("/api/jobs/list", async (c) => {
 });
 
 app.route("/fragment", fragmentRoutes);
+app.route("/events", eventsRoutes);
