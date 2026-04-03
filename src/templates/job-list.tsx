@@ -1,21 +1,34 @@
-import { Job } from "../events/events";
+import { DB } from "../db/db";
 
-export const jobList = (jobs: Job[]) => (
-  <div>
-    {jobs.length === 0 ? (
-      <p class="text-base-content/70">No jobs yet</p>
-    ) : (
-      jobs.map((job) => {
-        const date = new Date(job.created_at).toLocaleString();
-        return (
-          <div key={job.id} class="card bg-base-100 shadow-sm">
-            <div class="card-body p-3">
-              <div class="text-sm font-bold">{job.id}</div>
-              <div class="text-xs text-base-content/70">{date}</div>
-            </div>
-          </div>
-        );
-      })
-    )}
-  </div>
-);
+export const jobList = async (activeJobId?: string) => {
+  const jobs = await DB.Jobs.list();
+
+  return (
+    <ul class="menu menu-md w-full p-0">
+      {jobs.length === 0 ? (
+        <li class="px-4 py-2 text-sm text-base-content/50">No jobs yet</li>
+      ) : (
+        jobs.map((job) => {
+          const date = new Date(job.created_at).toLocaleString();
+          const isActive = activeJobId === job.id;
+          return (
+            <li key={job.id}>
+              <a
+                class={`flex flex-col items-start py-3 px-4 hover:bg-base-300 transition-colors ${isActive ? "active bg-primary text-primary-content" : ""}`}
+                hx-get={`/api/fragment/${job.id}`}
+                hx-target="#job-content-container"
+                hx-swap="innerHTML"
+                hx-push-url={`?job_id=${job.id}&tab=status`}
+              >
+                <span class="font-bold text-sm truncate" title={job.id}>
+                  {job.id.slice(0, 8)}
+                </span>
+                <span class="text-[10px] opacity-60">{date}</span>
+              </a>
+            </li>
+          );
+        })
+      )}
+    </ul>
+  );
+};

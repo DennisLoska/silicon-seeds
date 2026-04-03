@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { list as list_jobs } from "./jobs/list";
+import { list_jobs } from "./jobs/list";
 import { text_to_image } from "./jobs/text-to-image";
 import { script_to_scenes } from "./jobs/script-to-scenes";
 import { text_to_image_to_video } from "./jobs/text-to-image-to-video";
@@ -14,6 +14,9 @@ import { Templates } from "../templates/templates";
 import { not_found } from "./not_found";
 import { Logger } from "../logger/logger";
 import { serveStatic } from "hono/bun";
+import fragmentRoutes from "./fragment";
+import eventsRoutes from "./events";
+import { Context } from "hono";
 
 const app = new Hono();
 
@@ -32,6 +35,23 @@ export namespace ApiServer {
   }
 }
 
+function renderFragment(c: Context, fragment: any, jobId?: string) {
+  // If it's an HTMX request, just return the fragment
+  if (c.req.header("HX-Request")) {
+    return c.html(fragment);
+  }
+
+  // Otherwise, wrap it in the full application layout for a browser load
+  return c.html(Templates.layoutPage(Templates.app(fragment, jobId)));
+}
+
+app.use("/static/*", async (c, next) => {
+  await next();
+  if (c.res.ok) {
+    // c.res.headers.set("Cache-Control", "public, max-age=3600");
+  }
+});
+
 app.use(
   "/static/*",
   serveStatic({
@@ -42,9 +62,29 @@ app.use(
   }),
 );
 
-app.get("*", Templates.layoutPage);
+app.use(async (c, next) => {
+  c.setRenderer((content) => {
+    return c.html(Templates.layoutPage(content));
+  });
 
-app.get("/", (c) => c.render(Templates.mainPage));
+  await next();
+});
+
+// Smart Root Route
+app.get("/", async (c) => {
+  const jobId = c.req.query("job_id") ?? null;
+  const tab = c.req.query("tab") ?? "status";
+
+  if (jobId) {
+    return renderFragment(
+      c,
+      await Templates.jobDetailFragment(jobId, tab),
+      jobId,
+    );
+  } else {
+    return renderFragment(c, Templates.notSelectedFragment());
+  }
+});
 
 app.onError((error, c) => {
   Logger.error("api error", error);
@@ -59,11 +99,11 @@ app.notFound((c) => {
   return not_found();
 });
 
-app.post("/api/jobs/text", async (c) => {
+app.get("/api/jobs/text", async (c) => {
   return text_to_text();
 });
 
-app.post("/api/jobs/images", async (c) => {
+app.get("/api/jobs/images", async (c) => {
   return text_to_image();
 });
 
@@ -77,6 +117,10 @@ app.post("/api/jobs/scenes", async (c) => {
 
 app.post("/api/jobs/videos", async (c) => {
   return text_to_image_to_video();
+});
+
+app.get("/api/jobs/videos/compose", async (c) => {
+  return compose_video();
 });
 
 app.post("/api/jobs/videos/compose", async (c) => {
@@ -96,5 +140,10 @@ app.post("/api/jobs/instrumental", async (c) => {
 });
 
 app.get("/api/jobs/list", async (c) => {
-  return c.html(await list_jobs());
+  const jobId = c.req.query("current_id");
+  const list = await list_jobs(jobId);
+  return c.html(list);
 });
+
+app.route("/api/fragment", fragmentRoutes);
+app.route("/api/events", eventsRoutes);

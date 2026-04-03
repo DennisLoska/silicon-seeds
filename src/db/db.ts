@@ -61,6 +61,14 @@ export namespace DB {
         .orderBy("created_at", "desc")
         .execute();
     }
+
+    export async function findById(id: string) {
+      return await DB.db
+        .selectFrom("jobs")
+        .selectAll()
+        .where("id", "=", id)
+        .executeTakeFirstOrThrow();
+    }
   }
 
   export namespace Events {
@@ -200,6 +208,17 @@ export namespace DB {
         .executeTakeFirstOrThrow();
 
       return rowToEvent(res);
+    }
+
+    export async function findByJobId(jobId: string) {
+      const res = await db
+        .selectFrom("events")
+        .selectAll()
+        .where("job_id", "=", jobId)
+        .orderBy("created_at", "asc")
+        .execute();
+
+      return res.map(rowToEvent);
     }
   }
 

@@ -3,7 +3,6 @@ import { Logger } from "../logger/logger";
 
 const llmClient = new LMStudioClient();
 const llm = await llmClient.llm.model("qwen/qwen3-vl-30b");
-// TODO finetune the new model:
 // const llm = await llmClient.llm.model("qwen/qwen3.5-35b-a3b");
 // const llm = await llmClient.llm.model("qwen/qwen3.5-9b");
 

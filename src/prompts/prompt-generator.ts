@@ -25,7 +25,12 @@ export namespace PromptGenerator {
 
     for (let i = 0; i < batchSize; i++) {
       const res = await LLM.message(
-        `Create an excellent image prompt based on these instructions: ${instructions}`,
+        `Create an excellent image prompt based on these instructions:
+
+${instructions}
+
+Make sure to only include the actual image prompt in your response and nothing more!
+`,
       );
 
       if (res === null || !res.content || res.content.trim() === "") {
@@ -76,7 +81,10 @@ It is very important that you describe the ending position of the video to preve
 
 Also consider the original prompt which was used to generate the image for richer context:
 
-${event.prompt}`,
+${event.prompt}
+
+Make sure to only include the actual video generation prompt in your response and nothing more!
+`,
       [image],
     );
 
@@ -101,7 +109,7 @@ If the description does not provide details about the length of the essay make s
 
 Make sure to remove any markdown syntax so that the content is just plain text.
 
-Your response should only include the actual essay including it's title - nothing more!
+Your response should only include the actual essay including it's title and nothing more!
 `;
   }
 

@@ -1,7 +1,7 @@
-import { jsxRenderer } from "hono/jsx-renderer";
+import { Child } from "hono/jsx";
 
-export const layout = jsxRenderer(({ children }) => (
-  <html lang="en">
+export const layout = (children: Child) => (
+  <html lang="en" data-theme="bumblebee">
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,4 +11,4 @@ export const layout = jsxRenderer(({ children }) => (
     </head>
     <body>{children}</body>
   </html>
-));
+);
