@@ -15,12 +15,14 @@ export const jobList = async (activeJobId?: string) => {
             <li key={job.id}>
               <a
                 class={`flex flex-col items-start py-3 px-4 hover:bg-base-300 transition-colors ${isActive ? "active bg-primary text-primary-content" : ""}`}
-                hx-get={`/fragment/${job.id}`}
+                hx-get={`/api/fragment/${job.id}`}
                 hx-target="#job-content-container"
                 hx-swap="innerHTML"
                 hx-push-url={`?job_id=${job.id}&tab=status`}
               >
-                <span class="font-bold text-sm truncate" title={job.id}>{job.id.slice(0, 8)}</span>
+                <span class="font-bold text-sm truncate" title={job.id}>
+                  {job.id.slice(0, 8)}
+                </span>
                 <span class="text-[10px] opacity-60">{date}</span>
               </a>
             </li>
