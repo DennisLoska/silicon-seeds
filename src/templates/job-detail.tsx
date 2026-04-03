@@ -1,21 +1,26 @@
 import { Templates } from "./templates";
+import { DB } from "../db/db";
+import { Job } from "../events/events";
 
-export const jobDetail = (jobId: string, activeTab?: string) => {
+export const jobDetail = async (jobId: string, activeTab?: string) => {
+  const job: Job = await DB.Jobs.findById(jobId);
+  if (!job) return <div class="p-6 text-error font-bold">Job not found</div>;
+
   const currentTab = activeTab || "status";
   let contentFragment;
 
   switch (currentTab) {
     case "status":
-      contentFragment = Templates.statusFragment(jobId, currentTab);
+      contentFragment = Templates.statusFragment(job, currentTab);
       break;
     case "media":
-      contentFragment = Templates.mediaFragment(jobId, currentTab);
+      contentFragment = Templates.mediaFragment(job, currentTab);
       break;
     case "events":
-      contentFragment = Templates.eventsFragment(jobId, currentTab);
+      contentFragment = Templates.eventsFragment(job, currentTab);
       break;
     default:
-      contentFragment = Templates.statusFragment(jobId, "status");
+      contentFragment = Templates.statusFragment(job, "status");
   }
 
   return (

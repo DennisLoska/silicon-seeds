@@ -35,13 +35,15 @@ export namespace ApiServer {
 }
 
 function renderFragment(c: Context, fragment: any) {
+  const jobId = c.req.query("job_id");
+  
   // If it's an HTMX request, just return the fragment
   if (c.req.header("HX-Request")) {
     return c.html(fragment);
   }
 
   // Otherwise, wrap it in the full application layout for a browser load
-  return c.html(Templates.layoutPage(Templates.app(fragment)));
+  return c.html(Templates.layoutPage(Templates.app(fragment, jobId)));
 }
 
 app.use(
@@ -60,7 +62,7 @@ app.get("/", async (c) => {
   const tab = c.req.query("tab") ?? "status";
 
   if (jobId) {
-    return renderFragment(c, Templates.jobDetailFragment(jobId, tab));
+    return renderFragment(c, await Templates.jobDetailFragment(jobId, tab));
   } else {
     return renderFragment(c, Templates.notSelectedFragment());
   }
@@ -120,7 +122,8 @@ app.post("/api/jobs/instrumental", async (c) => {
 });
 
 app.get("/api/jobs/list", async (c) => {
-  return c.html(await list_jobs());
+  const jobId = c.req.query("job_id");
+  return c.html(await list_jobs(jobId));
 });
 
 app.route("/fragment", fragmentRoutes);
