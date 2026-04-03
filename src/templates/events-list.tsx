@@ -154,7 +154,9 @@ export async function eventsListFragment(jobId: string) {
     );
   });
 
-  return <ul class="timeline timeline-vertical">{eventItems}</ul>;
+  return (
+    <ul class="timeline timeline-compact timeline-vertical">{eventItems}</ul>
+  );
 }
 
 function escapeHtml(text: string): string {
