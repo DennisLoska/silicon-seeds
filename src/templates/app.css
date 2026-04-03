@@ -3,6 +3,11 @@
   themes:
     light --default,
     dark --prefersdark,
+    night,
+    forest,
+    dracula,
+    luxury,
+    cyberbunk,
     cupcake,
     bumblebee;
 }

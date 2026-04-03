@@ -9,8 +9,6 @@ export namespace Metadata {
   export const TRANSITION_DURATION = 3;
   export const clientId = Bun.randomUUIDv7();
 
-  export const THEME = "bumblebee";
-
   export function randomId() {
     return Bun.randomUUIDv7();
   }

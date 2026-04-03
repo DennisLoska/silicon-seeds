@@ -1,8 +1,7 @@
 import { Child } from "hono/jsx";
-import { Metadata } from "../meta/meta";
 
 export const layout = (children: Child) => (
-  <html lang="en" data-theme={Metadata.THEME}>
+  <html lang="en" data-theme="bumblebee">
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
