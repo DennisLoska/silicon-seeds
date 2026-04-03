@@ -35,15 +35,13 @@ export namespace ApiServer {
 }
 
 function renderFragment(c: Context, fragment: any) {
-  const jobId = c.req.query("job_id");
-  
   // If it's an HTMX request, just return the fragment
   if (c.req.header("HX-Request")) {
     return c.html(fragment);
   }
 
   // Otherwise, wrap it in the full application layout for a browser load
-  return c.html(Templates.layoutPage(Templates.app(fragment, jobId)));
+  return c.html(Templates.layoutPage(Templates.app(fragment)));
 }
 
 app.use(
@@ -55,6 +53,14 @@ app.use(
     },
   }),
 );
+
+app.use(async (c, next) => {
+  c.setRenderer((content) => {
+    return c.html(Templates.layoutPage(content));
+  });
+
+  await next();
+});
 
 // Smart Root Route
 app.get("/", async (c) => {

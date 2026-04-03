@@ -1,6 +1,6 @@
 import { Child } from "hono/jsx";
 
-export const app = (content: Child, jobId?: string) => (
+export const app = (content: Child) => (
   <div class="drawer lg:drawer-open min-h-screen bg-base-100">
     <input id="sidebar-toggle" type="checkbox" class="drawer-toggle" />
 
@@ -55,14 +55,12 @@ export const app = (content: Child, jobId?: string) => (
         <h2 class="text-xl font-bold mb-4 px-2 text-primary">Jobs</h2>
         <div
           id="job-list"
-          hx-get={`/api/jobs/list${jobId ? `?job_id=${jobId}` : ""}`}
-          hx-trigger="load, htmx:pushedIntoHistory"
+          hx-get="/api/jobs/list"
+          hx-trigger="load"
           hx-swap="innerHTML"
           aria-live="polite"
           class="overflow-y-auto"
-        >
-          <span class="loading loading-spinner"></span>
-        </div>
+        ></div>
       </div>
     </aside>
 
