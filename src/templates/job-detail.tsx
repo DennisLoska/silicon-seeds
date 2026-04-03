@@ -20,7 +20,7 @@ export const jobDetail = (jobId: string, activeTab?: string) => {
 
   return (
     <div id="job-tabs-container" data-job-id={jobId}>
-      <div class="tabs tabs-box mb-6" role="tablist">
+      <div class="tabs tabs-bordered mb-8" role="tablist">
         <button
           class={`tab ${currentTab === "status" ? "tab-active" : ""}`}
           hx-get={`/fragment/${jobId}?tab=status`}
