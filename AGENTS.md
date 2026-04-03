@@ -21,6 +21,10 @@ Always use the daisy-ui skill when working with the frontend, HTML, CSS or UI.
 
 # Documentation
 
+Always read the project's readme to understand the architecture:
+
+~/work/silicon-seeds/README.md
+
 Always read and refer to the following files when the user wants to use one of the specific
 technologies:
 
