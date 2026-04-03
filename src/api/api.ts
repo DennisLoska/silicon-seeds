@@ -47,25 +47,12 @@ app.use(
 // Smart Root Route
 app.get("/", async (c) => {
   const jobId = c.req.query("job_id");
-  const tab = c.req.query("tab") || "status";
+  const tab = c.req.query("tab") ?? "status";
 
   if (jobId) {
     return renderFragment(c, Templates.jobDetailFragment(jobId, tab));
   } else {
-    return renderFragment(
-      c,
-      Promise.resolve(
-        <div id="job-content-container" class="min-h-[400px]">
-          <div
-            hx-target="#job-content-container"
-            hx-swap="innerHTML"
-            class="text-center py-20 text-base-content/70"
-          >
-            <p>Select a job from the sidebar to view its details</p>
-          </div>
-        </div>,
-      ),
-    );
+    return renderFragment(c, Templates.notSelectedFragment());
   }
 });
 
@@ -79,7 +66,11 @@ app.get("/api/health", (c) => {
 });
 
 app.notFound((c) => {
-  return renderFragment(c, not_found());
+  return not_found();
+});
+
+app.get("/api/jobs/text", async (c) => {
+  return text_to_text();
 });
 
 app.get("/api/jobs/images", async (c) => {

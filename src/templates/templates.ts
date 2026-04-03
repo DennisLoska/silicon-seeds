@@ -5,6 +5,7 @@ import { status } from "./status";
 import { media } from "./media";
 import { events } from "./events";
 import { jobDetail } from "./job-detail";
+import { notSelected } from "./not-selected";
 
 export namespace Templates {
   export const app = application;
@@ -14,4 +15,5 @@ export namespace Templates {
   export const mediaFragment = media;
   export const eventsFragment = events;
   export const jobDetailFragment = jobDetail;
+  export const notSelectedFragment = notSelected;
 }
