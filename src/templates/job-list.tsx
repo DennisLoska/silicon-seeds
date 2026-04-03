@@ -20,7 +20,7 @@ export const jobList = async (activeJobId?: string) => {
                 hx-swap="innerHTML"
                 hx-push-url={`?job_id=${job.id}&tab=status`}
               >
-                <span class="font-bold text-sm truncate w-full">{job.id}</span>
+                <span class="font-bold text-sm truncate" title={job.id}>{job.id.slice(0, 8)}</span>
                 <span class="text-[10px] opacity-60">{date}</span>
               </a>
             </li>
