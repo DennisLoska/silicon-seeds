@@ -82,28 +82,43 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
           return (
             <li
               key={job.id}
-              className={`list-row flex items-center justify-between py-3 px-4 rounded-sm shadow-sm hover:shadow-md transition-all cursor-pointer ${isActive ? "bg-primary text-primary-content" : "hover:bg-base-300"}`}
-              hx-get={`/api/fragment/${job.id}`}
-              hx-target="#job-content-container"
-              hx-swap="innerHTML"
-              hx-push-url={`?job_id=${job.id}&tab=status`}
+              className={`list-row p-0 flex items-center justify-between rounded-sm shadow-sm hover:shadow-md transition-all ${isActive ? "bg-primary text-primary-content" : "hover:bg-base-300"}`}
             >
-              <div className="flex flex-col items-start">
-                <span className="font-bold text-sm lg:hidden" style={{ maxWidth: '8ch', overflow: 'hidden', textOverflow: 'ellipsis' }}>{truncateJobId(job.id)}</span>
-                <span className="font-bold text-sm hidden lg:inline">{job.id}</span>
-                <span className="text-xs opacity-60">{date}</span>
+              <div
+                className="flex items-center gap-2 cursor-pointer flex-grow-1 w-full h-full px-4 py-3"
+                hx-get={`/api/fragment/${job.id}`}
+                hx-target="#job-content-container"
+                hx-swap="innerHTML"
+                hx-push-url={`?job_id=${job.id}&tab=status`}
+              >
+                <span className={`badge ${isCompleted ? "badge-success" : "badge-warning"}`}>
+                  {isCompleted ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                </span>
+                <div className="flex flex-col items-start">
+                  <span className="font-bold text-sm lg:hidden" style={{ maxWidth: '8ch', overflow: 'hidden', textOverflow: 'ellipsis' }}>{truncateJobId(job.id)}</span>
+                  <span className="font-bold text-sm hidden lg:inline">{job.id}</span>
+                  <span className="text-xs opacity-60">{date}</span>
+                </div>
               </div>
-              <span className={`badge ${isCompleted ? "badge-success" : "badge-warning"}`}>
-                {isCompleted ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                )}
-              </span>
+              <button
+                class="btn btn-ghost btn-sm mr-4"
+                hx-delete={`/api/jobs/${job.id}`}
+                hx-target="#job-content-container"
+                hx-swap="innerHTML"
+                title="Delete job"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </button>
             </li>
           );
         })}

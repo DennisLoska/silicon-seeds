@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { list_jobs } from "./jobs/list";
 import { text_to_image } from "./jobs/text-to-image";
+import { delete_job } from "./jobs/delete";
 import { script_to_scenes } from "./jobs/script-to-scenes";
 import { text_to_image_to_video } from "./jobs/text-to-image-to-video";
 import { video_transition } from "./jobs/video-transition";
@@ -161,3 +162,9 @@ app.route("/api/settings/page", settingsRoutes);
 app.route("/api/jobs/list-view", listViewRoutes);
 app.route("/api/fragment", fragmentRoutes);
 app.route("/api/events", eventsRoutes);
+
+// Delete job endpoint - RESTful: DELETE /api/jobs/:job_id
+app.delete("/api/jobs/:job_id", async (c) => {
+  const jobId = c.req.param("job_id");
+  return delete_job(jobId);
+});
