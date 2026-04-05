@@ -29,37 +29,17 @@ export const media = async (job: Job, mediaData?: MediaData) => {
     pending: [],
   };
 
-  // Check if there are any assets at all
-  const hasAssets = data.images.length > 0 || data.videos.length > 0 || data.audio.length > 0 || data.pending.length > 0;
-
-  if (!hasAssets) {
-    // Empty state - no media assets
-    return (
-      <div className="space-y-4">
-        <h2 className="text-3xl font-bold mb-4">Media</h2>
-        <div className="card bg-base-200 shadow-sm" style={{ width: 'fit-content' }}>
-          <div className="card-body p-4">
-            <h2 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold">
-              Media
-            </h2>
-            <p className="text-base-content/50">No media assets found for this job.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold mb-4">Media</h2>
       
       {/* Images Section */}
-      {data.images.length > 0 && (
-        <div className="card shadow-sm">
-          <div className="card-body p-4">
-            <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">
-              Images
-            </h3>
+      <div className="card shadow-sm">
+        <div className="card-body p-4">
+          <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">
+            Images
+          </h3>
+          {data.images.length > 0 ? (
             <div className="flex flex-wrap gap-4">
               {data.images.map((image, index) => (
                 <div key={index} className="bg-base-200 rounded-lg p-4" style={{ width: 'fit-content' }}>
@@ -74,17 +54,24 @@ export const media = async (job: Job, mediaData?: MediaData) => {
                 </div>
               ))}
             </div>
-          </div>
+          ) : (
+            <div className="alert alert-info">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span className="font-bold">No images found for this job.</span>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Videos Section */}
-      {data.videos.length > 0 && (
-        <div className="card shadow-sm">
-          <div className="card-body p-4">
-            <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">
-              Videos
-            </h3>
+      <div className="card shadow-sm">
+        <div className="card-body p-4">
+          <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">
+            Videos
+          </h3>
+          {data.videos.length > 0 ? (
             <div className="flex flex-wrap gap-4">
               {data.videos.map((video, index) => (
                 <div key={index} className="bg-base-200 rounded-lg p-4" style={{ width: 'fit-content' }}>
@@ -98,17 +85,24 @@ export const media = async (job: Job, mediaData?: MediaData) => {
                 </div>
               ))}
             </div>
-          </div>
+          ) : (
+            <div className="alert alert-info">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span className="font-bold">No videos found for this job.</span>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Audio Section */}
-      {data.audio.length > 0 && (
-        <div className="card shadow-sm">
-          <div className="card-body p-4">
-            <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">
-              Audio
-            </h3>
+      <div className="card shadow-sm">
+        <div className="card-body p-4">
+          <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">
+            Audio
+          </h3>
+          {data.audio.length > 0 ? (
             <div className="flex flex-wrap gap-4">
               {data.audio.map((audio, index) => (
                 <div key={index} className="bg-base-200 rounded-lg p-4" style={{ width: 'fit-content' }}>
@@ -122,9 +116,16 @@ export const media = async (job: Job, mediaData?: MediaData) => {
                 </div>
               ))}
             </div>
-          </div>
+          ) : (
+            <div className="alert alert-info">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span className="font-bold">No audio files found for this job.</span>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Pending Assets Section */}
       {data.pending.length > 0 && (
