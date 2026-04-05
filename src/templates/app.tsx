@@ -50,7 +50,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
               hx-target="#job-content-container"
               hx-swap="innerHTML"
               id="sidebar-dashboard-link"
-              className={page === "dashboard" ? "active bg-primary text-primary-content" : ""}
+              className={page === "dashboard" ? "active" : ""}
             >
               📊 Dashboard
             </a>
@@ -59,28 +59,18 @@ export const app = (content: Child, jobId?: string, page?: string) => (
           {/* Divider */}
           <div className="divider my-1"></div>
 
-          {/* Jobs Dropdown - no caret icon, clickable summary */}
-          <details className="dropdown">
-            <summary 
-              id="sidebar-jobs-summary"
-              className={page === "jobs" ? "font-bold flex items-center gap-2 cursor-pointer active bg-primary text-primary-content" : "font-bold flex items-center gap-2 cursor-pointer"}
+          {/* Jobs */}
+          <li>
+            <a
               hx-get="/api/jobs/list-view?page=jobs"
               hx-target="#job-content-container"
               hx-swap="innerHTML"
+              id="sidebar-jobs-summary"
+              className={page === "jobs" ? "active" : ""}
             >
               📁 Jobs
-            </summary>
-            <ul className="menu menu-xs dropdown-content bg-base-200 p-2 rounded-box w-56">
-              <div
-                id="job-list"
-                hx-get={`/api/jobs/list${jobId ? `?current_id=${jobId}` : ""}`}
-                hx-trigger="load"
-                hx-swap="innerHTML"
-                aria-live="polite"
-                className="overflow-y-auto"
-              ></div>
-            </ul>
-          </details>
+            </a>
+          </li>
 
           {/* Divider */}
           <div className="divider my-1"></div>
@@ -92,7 +82,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
               hx-target="#job-content-container"
               hx-swap="innerHTML"
               id="sidebar-settings-link"
-              className={page === "settings" ? "active bg-primary text-primary-content" : ""}
+              className={page === "settings" ? "active" : ""}
             >
               ⚙️ Settings
             </a>
