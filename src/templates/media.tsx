@@ -34,7 +34,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
       <h2 className="text-3xl font-bold mb-4">Media</h2>
       
       {/* Images Section */}
-      <div className="card shadow-sm">
+      <div className="card shadow-sm bg-base-200" style={{ width: 'fit-content', minWidth: '300px' }}>
         <div className="card-body p-4">
           <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">
             Images
@@ -42,7 +42,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
           {data.images.length > 0 ? (
             <div className="flex flex-wrap gap-4">
               {data.images.map((image, index) => (
-                <div key={index} className="bg-base-200 rounded-lg p-4" style={{ width: 'fit-content' }}>
+                <div key={index} className="bg-neutral rounded-lg p-4" style={{ width: 'fit-content' }}>
                   <img
                     src={getAssetPath(image.subfolder, image.filename)}
                     alt={`Image ${index + 1}`}
@@ -55,7 +55,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
               ))}
             </div>
           ) : (
-            <div className="alert alert-info">
+            <div className="alert alert-info" style={{ width: 'fit-content' }}>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
@@ -66,7 +66,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
       </div>
 
       {/* Videos Section */}
-      <div className="card shadow-sm">
+      <div className="card shadow-sm bg-base-200" style={{ width: 'fit-content', minWidth: '300px' }}>
         <div className="card-body p-4">
           <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">
             Videos
@@ -74,7 +74,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
           {data.videos.length > 0 ? (
             <div className="flex flex-wrap gap-4">
               {data.videos.map((video, index) => (
-                <div key={index} className="bg-base-200 rounded-lg p-4" style={{ width: 'fit-content' }}>
+                <div key={index} className="bg-neutral rounded-lg p-4" style={{ width: 'fit-content' }}>
                   <video controls className="w-full max-w-lg rounded-lg shadow-md">
                     <source src={getAssetPath(video.subfolder, video.filename)} type="video/mp4" />
                     Your browser does not support the video tag.
@@ -86,7 +86,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
               ))}
             </div>
           ) : (
-            <div className="alert alert-info">
+            <div className="alert alert-info" style={{ width: 'fit-content' }}>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
@@ -97,7 +97,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
       </div>
 
       {/* Audio Section */}
-      <div className="card shadow-sm">
+      <div className="card shadow-sm bg-base-200" style={{ width: 'fit-content', minWidth: '300px' }}>
         <div className="card-body p-4">
           <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">
             Audio
@@ -105,7 +105,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
           {data.audio.length > 0 ? (
             <div className="flex flex-wrap gap-4">
               {data.audio.map((audio, index) => (
-                <div key={index} className="bg-base-200 rounded-lg p-4" style={{ width: 'fit-content' }}>
+                <div key={index} className="bg-neutral rounded-lg p-4" style={{ width: 'fit-content' }}>
                   <audio controls className="w-full max-w-lg">
                     <source src={getAssetPath(audio.subfolder, audio.filename)} type="audio/mpeg" />
                     Your browser does not support the audio element.
@@ -117,11 +117,11 @@ export const media = async (job: Job, mediaData?: MediaData) => {
               ))}
             </div>
           ) : (
-            <div className="alert alert-info">
+            <div className="alert alert-info" style={{ width: 'fit-content' }}>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              <span className="font-bold">No audio files found for this job.</span>
+              <span className="font-bold">No audios found for this job.</span>
             </div>
           )}
         </div>
