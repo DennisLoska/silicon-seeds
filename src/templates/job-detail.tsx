@@ -26,6 +26,25 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
 
   return (
     <div id="job-tabs-container" data-job-id={jobId}>
+      {/* Breadcrumbs */}
+      <div className="breadcrumbs mb-6">
+        <ul>
+          <li>
+            <a
+              hx-get="/api/jobs/list-view?page=jobs"
+              hx-target="#job-content-container"
+              hx-swap="innerHTML"
+              hx-push-url="/?page=jobs"
+            >
+              Jobs
+            </a>
+          </li>
+          <li>
+            <span className="text-base-content/60">{jobId.slice(0, 8)}</span>
+          </li>
+        </ul>
+      </div>
+      
       <div className="tabs tabs-bordered mb-8" role="tablist">
         <button
           className={`tab ${currentTab === "status" ? "tab-active" : ""}`}
