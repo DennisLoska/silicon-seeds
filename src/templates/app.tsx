@@ -44,12 +44,24 @@ export const app = (content: Child, jobId?: string, page?: string) => (
       </main>
     </div>
 
+    {/* Delete Confirmation Modal */}
+    <dialog id="delete-confirm-modal" class="modal"></dialog>
+
     {/* Sidebar */}
     <aside className="drawer-side z-20">
       <label htmlFor="sidebar-toggle" className="drawer-overlay"></label>
       <div className="w-64 min-h-full bg-base-200 border-r border-base-300 p-4 flex flex-col">
         {/* Silicon Seeds title at top of sidebar */}
-        <h1 className="text-xl font-bold mb-4 px-2 text-primary">Silicon Seeds</h1>
+        <a
+          href="/"
+          hx-get="/"
+          hx-target="#job-content-container"
+          hx-swap="innerHTML"
+          hx-push-url="/"
+          className="text-xl font-bold mb-4 px-2 text-primary"
+        >
+          Silicon Seeds
+        </a>
 
         <ul className="menu menu-md w-full">
           {/* Dashboard */}
@@ -62,7 +74,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
               id="sidebar-dashboard-link"
               className="w-full"
             >
-              📊 Dashboard
+              <span className="font-bold">Dashboard</span>
             </a>
           </li>
 
@@ -79,7 +91,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
               id="sidebar-jobs-summary"
               className="w-full"
             >
-              📁 Jobs
+              <span className="font-bold">Jobs</span>
             </a>
           </li>
 
@@ -96,7 +108,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
               id="sidebar-settings-link"
               className="w-full"
             >
-              ⚙️ Settings
+              <span className="font-bold">Settings</span>
             </a>
           </li>
         </ul>

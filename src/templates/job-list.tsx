@@ -64,10 +64,10 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
         <details class="dropdown">
           <summary class="btn btn-md">Filter</summary>
           <ul class="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-52 mt-1.5">
-            <li><a hx-get="/api/jobs/list-view?page=jobs&current_id=&filter=all" hx-target="#job-content-container" hx-swap="innerHTML">All</a></li>
-            <li><a hx-get="/api/jobs/list-view?page=jobs&current_id=&filter=recent" hx-target="#job-content-container" hx-swap="innerHTML">Recent</a></li>
-            <li><a hx-get="/api/jobs/list-view?page=jobs&current_id=&filter=pending" hx-target="#job-content-container" hx-swap="innerHTML">Pending</a></li>
-            <li><a hx-get="/api/jobs/list-view?page=jobs&current_id=&filter=completed" hx-target="#job-content-container" hx-swap="innerHTML">Completed</a></li>
+            <li><a hx-get="/api/jobs/list-view?page=jobs&filter=all" hx-target="#job-content-container" hx-swap="innerHTML">All</a></li>
+            <li><a hx-get="/api/jobs/list-view?page=jobs&filter=recent" hx-target="#job-content-container" hx-swap="innerHTML">Recent</a></li>
+            <li><a hx-get="/api/jobs/list-view?page=jobs&filter=pending" hx-target="#job-content-container" hx-swap="innerHTML">Pending</a></li>
+            <li><a hx-get="/api/jobs/list-view?page=jobs&filter=completed" hx-target="#job-content-container" hx-swap="innerHTML">Completed</a></li>
           </ul>
         </details>
       </div>
@@ -86,7 +86,7 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
             >
               <div
                 className="flex items-center gap-2 cursor-pointer flex-grow-1 w-full h-full px-4 py-3"
-                hx-get={`/api/fragment/${job.id}`}
+                hx-get={`/api/fragment/job/${job.id}`}
                 hx-target="#job-content-container"
                 hx-swap="innerHTML"
                 hx-push-url={`?job_id=${job.id}&tab=status`}
@@ -110,10 +110,9 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
               </div>
               <button
                 class="btn btn-ghost btn-sm mr-4"
-                hx-delete={`/api/jobs/${job.id}`}
-                hx-target="#job-content-container"
+                hx-get={`/api/fragment/delete-modal?jobId=${job.id}`}
+                hx-target="#delete-confirm-modal"
                 hx-swap="innerHTML"
-                hx-confirm="Are you sure you want to delete this job? This action cannot be undone."
                 title="Delete job"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">

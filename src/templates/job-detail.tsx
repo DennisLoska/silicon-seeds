@@ -32,7 +32,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
         <div className="tabs w-full" role="tablist">
           <button
             className={`tab rounded-t-lg ${currentTab === "status" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
-            hx-get={`/api/fragment/${jobId}?tab=status`}
+            hx-get={`/api/fragment/job/${jobId}?tab=status`}
             hx-target="#job-tabs-container"
             hx-swap="innerHTML"
             hx-push-url={`?job_id=${jobId}&tab=status`}
@@ -41,7 +41,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
           </button>
           <button
             className={`tab rounded-t-lg ${currentTab === "media" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
-            hx-get={`/api/fragment/${jobId}?tab=media`}
+            hx-get={`/api/fragment/job/${jobId}?tab=media`}
             hx-target="#job-tabs-container"
             hx-swap="innerHTML"
             hx-push-url={`?job_id=${jobId}&tab=media`}
@@ -50,7 +50,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
           </button>
           <button
             className={`tab rounded-t-lg ${currentTab === "events" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
-            hx-get={`/api/fragment/${jobId}?tab=events`}
+            hx-get={`/api/fragment/job/${jobId}?tab=events`}
             hx-target="#job-tabs-container"
             hx-swap="innerHTML"
             hx-push-url={`?job_id=${jobId}&tab=events`}
@@ -65,10 +65,10 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
         <ul>
           <li>
             <a
-              hx-get={`/api/jobs/list-view?page=jobs&current_id=${jobId}`}
+              hx-get="/api/jobs/list-view?page=jobs"
               hx-target="#job-content-container"
               hx-swap="innerHTML"
-              hx-push-url={`/?page=jobs&current_id=${jobId}`}
+              hx-push-url="/"
             >
               Jobs
             </a>
