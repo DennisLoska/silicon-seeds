@@ -7,6 +7,17 @@ interface MediaData {
   pending: Array<{ mode: string; filename: string | null; status: string }>;
 }
 
+// Helper function to construct asset path
+function getAssetPath(subfolder: string, filename: string): string {
+  // Remove trailing slash from subfolder if present
+  const cleanSubfolder = subfolder.endsWith("/") ? subfolder.slice(0, -1) : subfolder;
+  // Handle empty subfolder - return just filename
+  if (!cleanSubfolder || cleanSubfolder.trim() === "") {
+    return filename;
+  }
+  return `${cleanSubfolder}/${filename}`;
+}
+
 export const media = async (job: Job, mediaData?: MediaData) => {
   // Default empty media data if not provided
   const data = mediaData || {
@@ -52,7 +63,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
                 <div key={index} className="carousel-item">
                   <div className="flex flex-col gap-2">
                     <img
-                      src={`/assets/${image.subfolder}/${image.filename}`}
+                      src={getAssetPath(image.subfolder, image.filename)}
                       alt={`Image ${index + 1}`}
                       className="max-h-96 rounded-lg shadow-md"
                     />
@@ -79,7 +90,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
               {data.videos.map((video, index) => (
                 <div key={index} className="flex flex-col gap-2">
                   <video controls className="w-full max-w-lg rounded-lg shadow-md">
-                    <source src={`/assets/${video.subfolder}/${video.filename}`} type="video/mp4" />
+                    <source src={getAssetPath(video.subfolder, video.filename)} type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
                   <div className="flex justify-between items-center">
@@ -104,7 +115,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
               {data.audio.map((audio, index) => (
                 <div key={index} className="flex flex-col gap-2">
                   <audio controls className="w-full max-w-lg">
-                    <source src={`/assets/${audio.subfolder}/${audio.filename}`} type="audio/mpeg" />
+                    <source src={getAssetPath(audio.subfolder, audio.filename)} type="audio/mpeg" />
                     Your browser does not support the audio element.
                   </audio>
                   <div className="flex justify-between items-center">

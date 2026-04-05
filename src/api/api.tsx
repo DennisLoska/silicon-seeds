@@ -71,15 +71,20 @@ app.use(
   }),
 );
 
-// Serve static assets from OUTPUT_DIR at /assets/*
+// Serve static assets from OUTPUT_DIR
 const OUTPUT_DIR = process.env.OUTPUT_DIR || "./comfyui/output";
 
+// Serve files directly from OUTPUT_DIR at root path
+// Files are stored in OUTPUT_DIR/<filename>, so we serve them at /<filename>
 app.use(
-  "/assets/*",
+  "/*",
   serveStatic({
     root: OUTPUT_DIR,
     onNotFound: (path, c) => {
-      Logger.warn(`${path} is not found, you access ${c.req.path}`);
+      // Only log if it's not a known route
+      if (!c.req.path.startsWith("/api/") && c.req.path !== "/") {
+        Logger.warn(`${path} is not found, you access ${c.req.path}`);
+      }
     },
   }),
 );
