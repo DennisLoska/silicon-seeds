@@ -112,7 +112,7 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
                 class="btn btn-ghost btn-sm mr-4"
                 hx-get={`/api/fragment/delete-modal?jobId=${job.id}`}
                 hx-target="#delete-confirm-modal"
-                hx-swap="innerHTML"
+                hx-swap="outerHTML"
                 title="Delete job"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
