@@ -81,8 +81,48 @@ app.use("/assets/*", async (c) => {
   const file = Bun.file(filePath);
   if (await file.exists()) {
     const contentType = Utils.getContentType(filePath);
+    // Get file stats for ETag
+    const stats = await file.stat();
+    const etag = `"${stats.size}-${stats.mtime.getTime()}"`;
+    
+    // Check for conditional request
+    const ifNoneMatch = c.req.header("If-None-Match");
+    if (ifNoneMatch === etag) {
+      return new Response(null, { status: 304, headers: { ETag: etag } });
+    }
+    
+    // Get range header for partial content
+    const range = c.req.header("Range");
+    if (range) {
+      // Parse range header (format: "bytes=start-end")
+      const match = range.match(/bytes=(\d+)-(\d+)/);
+      if (match) {
+        const start = parseInt(match[1]);
+        const end = parseInt(match[2]) || stats.size - 1;
+        const contentLength = end - start + 1;
+        
+        // Read partial content
+        const buffer = await file.bytes(start, end + 1);
+        
+        return new Response(buffer, {
+          status: 206,
+          headers: {
+            "Content-Type": contentType,
+            "Content-Length": contentLength.toString(),
+            "Content-Range": `bytes ${start}-${end}/${stats.size}`,
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "ETag": etag,
+          },
+        });
+      }
+    }
+    
+    // Full content
     return c.body(await file.arrayBuffer(), 200, {
       "Content-Type": contentType,
+      "Content-Length": stats.size.toString(),
+      "Cache-Control": "public, max-age=31536000, immutable", // Cache for 1 year
+      "ETag": etag,
     });
   }
 
