@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { list_jobs } from "./jobs/list";
+import { Utils } from "../utils/utils";
 import { text_to_image } from "./jobs/text-to-image";
 import { delete_job } from "./jobs/delete";
 import { script_to_scenes } from "./jobs/script-to-scenes";
@@ -71,47 +72,23 @@ app.use(
   }),
 );
 
-// Serve static assets from OUTPUT_DIR
-const OUTPUT_DIR = process.env.OUTPUT_DIR || "./comfyui/output";
-
-// Debug route to test if /assets/* is being matched
-app.get("/assets/debug", (c) => {
-  return c.text("/assets/* route is working!");
-});
-
 // Serve media files under /assets/*
 // Files are stored in OUTPUT_DIR/<filename>, so we serve them at /assets/<filename>
-// Custom handler to strip /assets/ prefix
+// Custom handler strips the /assets/ prefix before serving
 app.use("/assets/*", async (c) => {
-  Logger.info("/assets/* middleware hit, path:", c.req.path);
-  Logger.info("OUTPUT_DIR:", OUTPUT_DIR);
-
   const pathAfterAssets = c.req.path.replace("/assets", "");
-  Logger.info("Path after stripping /assets:", pathAfterAssets);
-  const filePath = `${OUTPUT_DIR}${pathAfterAssets}`;
-  Logger.info("Looking for file:", filePath);
+  const filePath = `${Bun.env.OUTPUT_DIR}${pathAfterAssets}`;
   const file = Bun.file(filePath);
   if (await file.exists()) {
-    Logger.info("File found, serving...");
-    const contentType = getContentType(filePath);
-    return c.body(await file.arrayBuffer(), 200, { "Content-Type": contentType });
+    const contentType = Utils.getContentType(filePath);
+    return c.body(await file.arrayBuffer(), 200, {
+      "Content-Type": contentType,
+    });
   }
 
   Logger.warn(`${filePath} is not found, you access ${c.req.path}`);
   return c.text("Not found", 404);
 });
-
-function getContentType(path: string): string {
-  if (path.endsWith(".png")) return "image/png";
-  if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
-  if (path.endsWith(".webp")) return "image/webp";
-  if (path.endsWith(".mp4")) return "video/mp4";
-  if (path.endsWith(".webm")) return "video/webm";
-  if (path.endsWith(".mp3")) return "audio/mpeg";
-  if (path.endsWith(".wav")) return "audio/wav";
-  if (path.endsWith(".json")) return "application/json";
-  return "application/octet-stream";
-}
 
 app.use(async (c, next) => {
   c.setRenderer((content) => {
