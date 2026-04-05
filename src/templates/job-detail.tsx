@@ -60,7 +60,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
       </div>
 
       {/* Breadcrumbs */}
-      <div className="breadcrumbs mb-6">
+      <div className="breadcrumbs mt-2 mb-4">
         <ul>
           <li>
             <a
