@@ -70,9 +70,11 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
           const isCompleted = statusInfo?.isCompleted ?? false;
           
           return (
-            <li key={job.id}>
+            <li
+              key={job.id}
+              className={`list-row flex items-center justify-between py-3 px-4 rounded-sm shadow-sm hover:shadow-md transition-all ${isActive ? "bg-primary text-primary-content" : "hover:bg-base-300"}`}
+            >
               <a
-                className={`list-row flex items-center justify-between py-3 px-4 rounded-sm shadow-sm hover:shadow-md transition-all cursor-pointer ${isActive ? "bg-primary text-primary-content" : "hover:bg-base-300"}`}
                 hx-get={`/api/fragment/${job.id}`}
                 hx-target="#job-content-container"
                 hx-swap="innerHTML"
@@ -82,7 +84,14 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
                   <span className="font-bold text-sm">{job.id}</span>
                   <span className="text-xs opacity-60">{date}</span>
                 </div>
-                <span className={`badge ${isCompleted ? "badge-success" : "badge-warning"}`}>
+              </a>
+              <a
+                hx-get={`/api/fragment/${job.id}`}
+                hx-target="#job-content-container"
+                hx-swap="innerHTML"
+                hx-push-url={`?job_id=${job.id}&tab=status`}
+              >
+                <span className={`badge ${isCompleted ? "badge-success" : "badge-warning"} !rounded-full`}>
                   {isCompleted ? (
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
