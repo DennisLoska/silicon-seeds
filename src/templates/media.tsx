@@ -42,7 +42,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
           {data.images.length > 0 ? (
             <div className="flex flex-wrap gap-4">
               {data.images.map((image, index) => (
-                <div key={index} className="bg-neutral rounded-lg p-4" style={{ width: 'fit-content' }}>
+                <div key={index} className="bg-base-200 rounded-lg p-4" style={{ width: 'fit-content' }}>
                   <img
                     src={getAssetPath(image.subfolder, image.filename)}
                     alt={`Image ${index + 1}`}
@@ -74,7 +74,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
           {data.videos.length > 0 ? (
             <div className="flex flex-wrap gap-4">
               {data.videos.map((video, index) => (
-                <div key={index} className="bg-neutral rounded-lg p-4" style={{ width: 'fit-content' }}>
+                <div key={index} className="bg-base-200 rounded-lg p-4" style={{ width: 'fit-content' }}>
                   <video controls className="w-full max-w-lg rounded-lg shadow-md">
                     <source src={getAssetPath(video.subfolder, video.filename)} type="video/mp4" />
                     Your browser does not support the video tag.
@@ -105,7 +105,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
           {data.audio.length > 0 ? (
             <div className="flex flex-wrap gap-4">
               {data.audio.map((audio, index) => (
-                <div key={index} className="bg-neutral rounded-lg p-4" style={{ width: 'fit-content' }}>
+                <div key={index} className="bg-base-200 rounded-lg p-4" style={{ width: 'fit-content' }}>
                   <audio controls className="w-full max-w-lg">
                     <source src={getAssetPath(audio.subfolder, audio.filename)} type="audio/mpeg" />
                     Your browser does not support the audio element.
