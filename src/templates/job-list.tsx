@@ -113,6 +113,7 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
                 hx-delete={`/api/jobs/${job.id}`}
                 hx-target="#job-content-container"
                 hx-swap="innerHTML"
+                hx-confirm="Are you sure you want to delete this job? This action cannot be undone."
                 title="Delete job"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
