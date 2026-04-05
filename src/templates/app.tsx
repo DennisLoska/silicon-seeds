@@ -1,19 +1,28 @@
 import { Child } from "hono/jsx";
 
-export const app = (content: Child, jobId?: string) => (
-  <div class="drawer lg:drawer-open min-h-screen bg-base-100">
-    <input id="sidebar-toggle" type="checkbox" class="drawer-toggle" />
+export const app = (content: Child, jobId?: string, page?: string) => (
+  <div className="drawer lg:drawer-open min-h-screen bg-base-100">
+    <input id="sidebar-toggle" type="checkbox" className="drawer-toggle" />
 
-    <div class="drawer-content flex flex-col">
+    <div className="drawer-content flex flex-col">
       {/* Header */}
-      <header class="navbar bg-base-200 px-6 shadow-sm z-10">
-        <div class="flex-none lg:hidden">
-          <label htmlFor="sidebar-toggle" class="btn btn-square btn-ghost">
+      <header className="navbar bg-base-200 px-6 shadow-sm z-10">
+        <div className="flex-1">
+          <h1 id="header-title" className="text-xl font-bold">
+            {page === "dashboard" && "Dashboard"}
+            {page === "jobs" && "Jobs"}
+            {page === "settings" && "Settings"}
+            {page === "job" && "Job"}
+            {!page && "Silicon Seeds"}
+          </h1>
+        </div>
+        <div className="flex-none lg:hidden">
+          <label htmlFor="sidebar-toggle" className="btn btn-square btn-ghost">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
-              class="inline-block w-6 h-6 text-current"
+              className="inline-block w-6 h-6 text-current"
             >
               <path
                 stroke="currentColor"
@@ -25,10 +34,87 @@ export const app = (content: Child, jobId?: string) => (
             </svg>
           </label>
         </div>
-        <div class="navbar-start">
-          <div class="text-lg font-bold">Silicon Seeds</div>
+      </header>
+
+      {/* Main Content Area */}
+      <main className="p-6 flex-1">
+        <div id="job-content-container" className="min-h-[400px]">
+          {content}
         </div>
-        <div class="navbar-end">
+      </main>
+    </div>
+
+    {/* Delete Confirmation Modal */}
+    <dialog id="delete-confirm-modal" className="modal"></dialog>
+
+    {/* Sidebar */}
+    <aside className="drawer-side z-20">
+      <label htmlFor="sidebar-toggle" className="drawer-overlay"></label>
+      <div className="w-64 min-h-full bg-base-200 border-r border-base-300 p-4 flex flex-col">
+        {/* Silicon Seeds title at top of sidebar */}
+        <a
+          href="/"
+          hx-get="/"
+          hx-target="#job-content-container"
+          hx-swap="innerHTML"
+          hx-push-url="/"
+          className="text-xl font-bold mb-4 px-2 text-primary"
+        >
+          Silicon Seeds
+        </a>
+
+        <ul className="menu menu-md w-full">
+          {/* Dashboard */}
+          <li>
+            <a
+              hx-get="/api/dashboard?page=dashboard"
+              hx-target="#job-content-container"
+              hx-swap="innerHTML"
+              hx-push-url="/?page=dashboard"
+              id="sidebar-dashboard-link"
+              className="w-full"
+            >
+              <span className="font-bold">Dashboard</span>
+            </a>
+          </li>
+
+          {/* Divider */}
+          <div className="divider my-1"></div>
+
+          {/* Jobs */}
+          <li>
+            <a
+              hx-get="/api/jobs/list-view?page=jobs"
+              hx-target="#job-content-container"
+              hx-swap="innerHTML"
+              hx-push-url="/?page=jobs"
+              id="sidebar-jobs-summary"
+              className="w-full"
+            >
+              <span className="font-bold">Jobs</span>
+            </a>
+          </li>
+
+          {/* Divider */}
+          <div className="divider my-1"></div>
+
+          {/* Settings */}
+          <li>
+            <a
+              hx-get="/api/settings/page?page=settings"
+              hx-target="#job-content-container"
+              hx-swap="innerHTML"
+              hx-push-url="/?page=settings"
+              id="sidebar-settings-link"
+              className="w-full"
+            >
+              <span className="font-bold">Settings</span>
+            </a>
+          </li>
+        </ul>
+
+        {/* Sidebar footer with theme toggle */}
+        <div className="mt-auto pt-4 border-t border-base-300 flex justify-end items-center">
           <label className="swap swap-rotate">
             {/* this hidden checkbox controls the state */}
             <input
@@ -39,7 +125,7 @@ export const app = (content: Child, jobId?: string) => (
 
             {/* sun icon */}
             <svg
-              className="swap-off h-10 w-10 fill-current"
+              className="swap-off h-8 w-8 fill-current"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
             >
@@ -48,50 +134,15 @@ export const app = (content: Child, jobId?: string) => (
 
             {/* moon icon */}
             <svg
-              className="swap-on h-10 w-10 fill-current"
+              className="swap-on h-8 w-8 fill-current"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
             >
               <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z" />
             </svg>
           </label>
-
-          <button
-            class="btn btn-square"
-            hx-get="/api/settings"
-            hx-target="#settings-content"
-            hx-swap="innerHTML"
-          >
-            ⚙️
-          </button>
         </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main class="p-6 flex-1">
-        <div id="job-content-container" class="min-h-[400px]">
-          {content}
-        </div>
-      </main>
-    </div>
-
-    {/* Sidebar */}
-    <aside class="drawer-side z-20">
-      <label htmlFor="sidebar-toggle" class="drawer-overlay"></label>
-      <div class="w-64 min-h-full bg-base-200 border-r border-base-300 p-4 flex flex-col">
-        <h2 class="text-xl font-bold mb-4 px-2 text-primary">Jobs</h2>
-        <div
-          id="job-list"
-          hx-get={`/api/jobs/list${jobId ? `?current_id=${jobId}` : ""}`}
-          hx-trigger="load"
-          hx-swap="innerHTML"
-          aria-live="polite"
-          class="overflow-y-auto"
-        ></div>
       </div>
     </aside>
-
-    {/* Settings Overlay/Content */}
-    <div id="settings-content"></div>
   </div>
 );
