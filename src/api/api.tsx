@@ -39,7 +39,12 @@ export namespace ApiServer {
   }
 }
 
-function renderFragment(c: Context, fragment: any, jobId?: string, page?: string) {
+function renderFragment(
+  c: Context,
+  fragment: any,
+  jobId?: string,
+  page?: string,
+) {
   // If it's an HTMX request, just return the fragment
   if (c.req.header("HX-Request")) {
     return c.html(fragment);
@@ -90,7 +95,12 @@ app.get("/", async (c) => {
   } else if (page === "dashboard") {
     return renderFragment(c, Templates.dashboardFragment(), undefined, page);
   } else if (page === "jobs") {
-    return renderFragment(c, await Templates.jobListFragment(), undefined, page);
+    return renderFragment(
+      c,
+      await Templates.jobListFragment(),
+      undefined,
+      page,
+    );
   } else if (page === "settings") {
     return renderFragment(c, Templates.settingsFragment(), undefined, page);
   } else {
@@ -157,14 +167,14 @@ app.get("/api/jobs/list", async (c) => {
   return c.html(list);
 });
 
-app.route("/api/dashboard", dashboardRoutes);
-app.route("/api/settings/page", settingsRoutes);
-app.route("/api/jobs/list-view", listViewRoutes);
-app.route("/api/fragment", fragmentRoutes);
-app.route("/api/events", eventsRoutes);
-
 // Delete job endpoint - RESTful: DELETE /api/jobs/:job_id
 app.delete("/api/jobs/:job_id", async (c) => {
   const jobId = c.req.param("job_id");
   return delete_job(jobId);
 });
+
+app.route("/api/dashboard", dashboardRoutes);
+app.route("/api/settings/page", settingsRoutes);
+app.route("/api/jobs/list-view", listViewRoutes);
+app.route("/api/fragment", fragmentRoutes);
+app.route("/api/events", eventsRoutes);
