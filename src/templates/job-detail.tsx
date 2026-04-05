@@ -31,16 +31,16 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
         <ul>
           <li>
             <a
-              hx-get="/api/jobs/list-view?page=jobs"
+              hx-get={`/api/jobs/list-view?page=jobs&current_id=${jobId}`}
               hx-target="#job-content-container"
               hx-swap="innerHTML"
-              hx-push-url="/?page=jobs"
+              hx-push-url={`/?page=jobs&current_id=${jobId}`}
             >
               Jobs
             </a>
           </li>
           <li>
-            <span className="text-base-content/60">{jobId.slice(0, 8)}</span>
+            <span className="text-base-content/60">{jobId}</span>
           </li>
         </ul>
       </div>
