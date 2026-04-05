@@ -17,9 +17,13 @@ app.get("/delete-modal", async (c) => {
           undone.
         </p>
         <div class="modal-action">
-          <form method="dialog">
-            <button class="btn">Cancel</button>
-          </form>
+          <button
+            class="btn"
+            hx-swap="none"
+            onclick="this.closest('.modal').classList.remove('modal-open')"
+          >
+            Cancel
+          </button>
           <button
             id="confirm-delete-btn"
             class="btn btn-error"
@@ -32,10 +36,7 @@ app.get("/delete-modal", async (c) => {
           </button>
         </div>
       </div>
-      <form method="dialog" class="modal-backdrop">
-        <button>close</button>
-      </form>
-    </dialog>
+    </dialog>,
   );
 });
 
@@ -52,7 +53,7 @@ app.get("/job/:jobId", async (c) => {
         <div id="header-title" hx-swap-oob="true">
           <h1 className="text-xl font-bold">Job</h1>
         </div>
-      </>
+      </>,
     );
   }
 
