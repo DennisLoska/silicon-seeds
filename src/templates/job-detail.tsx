@@ -27,7 +27,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
   return (
     <div id="job-tabs-container" data-job-id={jobId}>
       {/* Tabs Section - Dedicated section with background and border, snaps to header/sidebar */}
-      <div className="bg-base-200 px-6 py-1 -mt-6 rounded-t-lg border-b border-base-300">
+      <div className="bg-base-200 px-6 py-1 -mt-6 -mx-6 border-b border-base-300">
         <div className="tabs tabs-bordered w-full" role="tablist">
           <button
             className={`tab ${currentTab === "status" ? "tab-active" : ""}`}
