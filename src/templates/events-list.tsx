@@ -7,7 +7,7 @@ export async function eventsListFragment(jobId: string) {
 
   if (jobEvents.length === 0) {
     return (
-      <div class="p-6 text-center text-base-content/60">
+      <div className="p-6 text-center text-base-content/60">
         No events yet for this job.
       </div>
     );
@@ -38,9 +38,9 @@ export async function eventsListFragment(jobId: string) {
 
     // Status badge
     const statusBadge = isComplete ? (
-      <span class="badge badge-success text-xs">Complete</span>
+      <span className="badge badge-success text-xs">Complete</span>
     ) : (
-      <span class="badge badge-warning text-xs">Pending</span>
+      <span className="badge badge-warning text-xs">Pending</span>
     );
 
     // Build metadata badges
@@ -50,7 +50,7 @@ export async function eventsListFragment(jobId: string) {
       case Event.NewImagePrompt:
         if (evt.lora) {
           metadataBadges.push(
-            <span key="lora" class="badge badge-info text-xs">
+            <span key="lora" className="badge badge-info text-xs">
               LoRA: {evt.lora}
             </span>,
           );
@@ -59,7 +59,7 @@ export async function eventsListFragment(jobId: string) {
 
       case Event.NewVideoPrompt:
         metadataBadges.push(
-          <span key="source" class="badge badge-secondary text-xs">
+          <span key="source" className="badge badge-secondary text-xs">
             Source: {evt.filename}
           </span>,
         );
@@ -67,10 +67,10 @@ export async function eventsListFragment(jobId: string) {
 
       case Event.NewTransitionPrompt:
         metadataBadges.push(
-          <span key="start" class="badge badge-secondary text-xs">
+          <span key="start" className="badge badge-secondary text-xs">
             Start: {evt.startImg}
           </span>,
-          <span key="end" class="badge badge-secondary text-xs">
+          <span key="end" className="badge badge-secondary text-xs">
             End: {evt.endImg}
           </span>,
         );
@@ -79,7 +79,7 @@ export async function eventsListFragment(jobId: string) {
       case Event.NewAudioPrompt:
         if (evt.duration) {
           metadataBadges.push(
-            <span key="duration" class="badge badge-accent text-xs">
+            <span key="duration" className="badge badge-accent text-xs">
               Duration: {evt.duration}s
             </span>,
           );
@@ -95,33 +95,33 @@ export async function eventsListFragment(jobId: string) {
     return (
       <li key={evt.id}>
         {/* HR before (not on first item) */}
-        {index > 0 && <hr class={lineClass} />}
+        {index > 0 && <hr className={lineClass} />}
 
         {/* Content box - always on the right (timeline-end) */}
-        <div class="timeline-end timeline-box xl:w-1/3">
-          <details class="w-full bg-base-100 open:bg-base-100">
-            <summary class="cursor-pointer list-none p-4 card-title hover:bg-base-200 rounded-lg transition-colors">
-              <div class="flex items-center justify-between gap-4">
-                <div class="flex items-center gap-2 flex-wrap">
+        <div className="timeline-end timeline-box xl:w-1/3">
+          <details className="w-full bg-base-100 open:bg-base-100">
+            <summary className="cursor-pointer list-none p-4 card-title hover:bg-base-200 rounded-lg transition-colors">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2 flex-wrap">
                   {statusBadge}
-                  <span class="text-sm text-base-content/60">{typeLabel}</span>
+                  <span className="text-sm text-base-content/60">{typeLabel}</span>
                 </div>
-                <span class="text-xs text-base-content/40 whitespace-nowrap">
+                <span className="text-xs text-base-content/40 whitespace-nowrap">
                   {timestamp}
                 </span>
               </div>
             </summary>
 
             {/* Expanded content */}
-            <div class="p-4 pt-0 mt-4 space-y-3 rounded-b-lg">
+            <div className="p-4 pt-0 mt-4 space-y-3 rounded-b-lg">
               {metadataBadges.length > 0 && (
-                <div class="flex flex-wrap gap-2">{metadataBadges}</div>
+                <div className="flex flex-wrap gap-2">{metadataBadges}</div>
               )}
               <div>
-                <p class="text-sm font-medium mb-1 text-base-content/60">
+                <p className="text-sm font-medium mb-1 text-base-content/60">
                   Prompt:
                 </p>
-                <div class="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words">
+                <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words">
                   {promptText}
                 </div>
               </div>
@@ -130,9 +130,9 @@ export async function eventsListFragment(jobId: string) {
         </div>
 
         {/* Icon in the middle */}
-        <div class="timeline-middle">
+        <div className="timeline-middle">
           <div
-            class={`w-8 h-8 rounded-full flex items-center justify-center text-lg shadow-sm transition-all ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-lg shadow-sm transition-all ${
               isComplete
                 ? "bg-gradient-to-br from-success to-success/70"
                 : "bg-base-200"
@@ -143,13 +143,13 @@ export async function eventsListFragment(jobId: string) {
         </div>
 
         {/* HR after (not on last item) */}
-        {index < jobEvents.length - 1 && <hr class={lineClass} />}
+        {index < jobEvents.length - 1 && <hr className={lineClass} />}
       </li>
     );
   });
 
   return (
-    <ul class="timeline timeline-compact timeline-vertical">{eventItems}</ul>
+    <ul className="timeline timeline-compact timeline-vertical">{eventItems}</ul>
   );
 }
 

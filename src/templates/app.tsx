@@ -1,19 +1,19 @@
 import { Child } from "hono/jsx";
 
-export const app = (content: Child, jobId?: string) => (
-  <div class="drawer lg:drawer-open min-h-screen bg-base-100">
-    <input id="sidebar-toggle" type="checkbox" class="drawer-toggle" />
+export const app = (content: Child, jobId?: string, page?: string) => (
+  <div className="drawer lg:drawer-open min-h-screen bg-base-100">
+    <input id="sidebar-toggle" type="checkbox" className="drawer-toggle" />
 
-    <div class="drawer-content flex flex-col">
+    <div className="drawer-content flex flex-col">
       {/* Header */}
-      <header class="navbar bg-base-200 px-6 shadow-sm z-10">
-        <div class="flex-none lg:hidden">
-          <label htmlFor="sidebar-toggle" class="btn btn-square btn-ghost">
+      <header className="navbar bg-base-200 px-6 shadow-sm z-10">
+        <div className="flex-none lg:hidden">
+          <label htmlFor="sidebar-toggle" className="btn btn-square btn-ghost">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
-              class="inline-block w-6 h-6 text-current"
+              className="inline-block w-6 h-6 text-current"
             >
               <path
                 stroke="currentColor"
@@ -25,7 +25,82 @@ export const app = (content: Child, jobId?: string) => (
             </svg>
           </label>
         </div>
-        <div class="navbar-end">
+      </header>
+
+      {/* Main Content Area */}
+      <main className="p-6 flex-1">
+        <div id="job-content-container" className="min-h-[400px]">
+          {content}
+        </div>
+      </main>
+    </div>
+
+    {/* Sidebar */}
+    <aside className="drawer-side z-20">
+      <label htmlFor="sidebar-toggle" className="drawer-overlay"></label>
+      <div className="w-64 min-h-full bg-base-200 border-r border-base-300 p-4 flex flex-col">
+        {/* Silicon Seeds title at top of sidebar */}
+        <h1 className="text-xl font-bold mb-4 px-2 text-primary">Silicon Seeds</h1>
+
+        <ul className="menu menu-md w-full">
+          {/* Dashboard */}
+          <li>
+            <a
+              hx-get="/api/dashboard?page=dashboard"
+              hx-target="#job-content-container"
+              hx-swap="innerHTML"
+              id="sidebar-dashboard-link"
+              className={page === "dashboard" ? "active bg-primary text-primary-content" : ""}
+            >
+              📊 Dashboard
+            </a>
+          </li>
+
+          {/* Divider */}
+          <div className="divider my-1"></div>
+
+          {/* Jobs Dropdown - no caret icon, clickable summary */}
+          <details className="dropdown">
+            <summary 
+              id="sidebar-jobs-summary"
+              className={page === "jobs" ? "font-bold flex items-center gap-2 cursor-pointer active bg-primary text-primary-content" : "font-bold flex items-center gap-2 cursor-pointer"}
+              hx-get="/api/jobs/list-view?page=jobs"
+              hx-target="#job-content-container"
+              hx-swap="innerHTML"
+            >
+              📁 Jobs
+            </summary>
+            <ul className="menu menu-xs dropdown-content bg-base-200 p-2 rounded-box w-56">
+              <div
+                id="job-list"
+                hx-get={`/api/jobs/list${jobId ? `?current_id=${jobId}` : ""}`}
+                hx-trigger="load"
+                hx-swap="innerHTML"
+                aria-live="polite"
+                className="overflow-y-auto"
+              ></div>
+            </ul>
+          </details>
+
+          {/* Divider */}
+          <div className="divider my-1"></div>
+
+          {/* Settings */}
+          <li>
+            <a
+              hx-get="/api/settings/page?page=settings"
+              hx-target="#job-content-container"
+              hx-swap="innerHTML"
+              id="sidebar-settings-link"
+              className={page === "settings" ? "active bg-primary text-primary-content" : ""}
+            >
+              ⚙️ Settings
+            </a>
+          </li>
+        </ul>
+
+        {/* Sidebar footer with theme toggle */}
+        <div className="mt-auto pt-4 border-t border-base-300">
           <label className="swap swap-rotate">
             {/* this hidden checkbox controls the state */}
             <input
@@ -53,73 +128,6 @@ export const app = (content: Child, jobId?: string) => (
             </svg>
           </label>
         </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main class="p-6 flex-1">
-        <div id="job-content-container" class="min-h-[400px]">
-          {content}
-        </div>
-      </main>
-    </div>
-
-    {/* Sidebar */}
-    <aside class="drawer-side z-20">
-      <label htmlFor="sidebar-toggle" class="drawer-overlay"></label>
-      <div class="w-64 min-h-full bg-base-200 border-r border-base-300 p-4 flex flex-col">
-        {/* Silicon Seeds title at top of sidebar */}
-        <h1 class="text-xl font-bold mb-4 px-2 text-primary">Silicon Seeds</h1>
-
-        <ul class="menu menu-md w-full">
-          {/* Dashboard */}
-          <li>
-            <a
-              hx-get="/api/dashboard"
-              hx-target="#job-content-container"
-              hx-swap="innerHTML"
-              id="sidebar-dashboard-link"
-              class="dashboard-active"
-            >
-              📊 Dashboard
-            </a>
-          </li>
-
-          {/* Divider */}
-          <div class="divider my-1"></div>
-
-          {/* Jobs Dropdown - no caret icon */}
-          <details class="dropdown">
-            <summary class="font-bold flex items-center gap-2">
-              📁 Jobs
-            </summary>
-            <ul class="menu menu-xs dropdown-content bg-base-200 p-2 rounded-box w-56">
-              <div
-                id="job-list"
-                hx-get={`/api/jobs/list${jobId ? `?current_id=${jobId}` : ""}`}
-                hx-trigger="load"
-                hx-swap="innerHTML"
-                aria-live="polite"
-                class="overflow-y-auto"
-              ></div>
-            </ul>
-          </details>
-
-          {/* Divider */}
-          <div class="divider my-1"></div>
-
-          {/* Settings */}
-          <li>
-            <a
-              hx-get="/api/settings/page"
-              hx-target="#job-content-container"
-              hx-swap="innerHTML"
-              id="sidebar-settings-link"
-              class="settings-active"
-            >
-              ⚙️ Settings
-            </a>
-          </li>
-        </ul>
       </div>
     </aside>
   </div>

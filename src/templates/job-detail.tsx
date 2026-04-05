@@ -5,7 +5,7 @@ import { Job } from "../events/events";
 export const jobDetail = async (jobId: string, activeTab?: string) => {
   const job: Job = await DB.Jobs.findById(jobId);
 
-  if (!job) return <div class="p-6 text-error font-bold">Job not found</div>;
+  if (!job) return <div className="p-6 text-error font-bold">Job not found</div>;
 
   const currentTab = activeTab || "status";
   let contentFragment;
@@ -26,9 +26,9 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
 
   return (
     <div id="job-tabs-container" data-job-id={jobId}>
-      <div class="tabs tabs-bordered mb-8" role="tablist">
+      <div className="tabs tabs-bordered mb-8" role="tablist">
         <button
-          class={`tab ${currentTab === "status" ? "tab-active" : ""}`}
+          className={`tab ${currentTab === "status" ? "tab-active" : ""}`}
           hx-get={`/api/fragment/${jobId}?tab=status`}
           hx-target="#job-tabs-container"
           hx-swap="innerHTML"
@@ -37,7 +37,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
           Status
         </button>
         <button
-          class={`tab ${currentTab === "media" ? "tab-active" : ""}`}
+          className={`tab ${currentTab === "media" ? "tab-active" : ""}`}
           hx-get={`/api/fragment/${jobId}?tab=media`}
           hx-target="#job-tabs-container"
           hx-swap="innerHTML"
@@ -46,7 +46,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
           Media
         </button>
         <button
-          class={`tab ${currentTab === "events" ? "tab-active" : ""}`}
+          className={`tab ${currentTab === "events" ? "tab-active" : ""}`}
           hx-get={`/api/fragment/${jobId}?tab=events`}
           hx-target="#job-tabs-container"
           hx-swap="innerHTML"
@@ -56,7 +56,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
         </button>
       </div>
 
-      <div id="job-content-area" class="min-h-[500px]">
+      <div id="job-content-area" className="min-h-[500px]">
         {contentFragment}
       </div>
     </div>

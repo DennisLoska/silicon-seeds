@@ -18,6 +18,7 @@ import fragmentRoutes from "./fragment";
 import eventsRoutes from "./events";
 import dashboardRoutes from "./dashboard";
 import settingsRoutes from "./settings";
+import listViewRoutes from "./jobs/list-view";
 import { Context } from "hono";
 
 const app = new Hono();
@@ -37,14 +38,14 @@ export namespace ApiServer {
   }
 }
 
-function renderFragment(c: Context, fragment: any, jobId?: string) {
+function renderFragment(c: Context, fragment: any, jobId?: string, page?: string) {
   // If it's an HTMX request, just return the fragment
   if (c.req.header("HX-Request")) {
     return c.html(fragment);
   }
 
   // Otherwise, wrap it in the full application layout for a browser load
-  return c.html(Templates.layoutPage(Templates.app(fragment, jobId)));
+  return c.html(Templates.layoutPage(Templates.app(fragment, jobId, page)));
 }
 
 app.use("/static/*", async (c, next) => {
@@ -76,15 +77,18 @@ app.use(async (c, next) => {
 app.get("/", async (c) => {
   const jobId = c.req.query("job_id") ?? null;
   const tab = c.req.query("tab") ?? "status";
+  // Default to "jobs" page when viewing a job, otherwise use provided page or undefined
+  const page = jobId ? (c.req.query("page") || "jobs") : c.req.query("page");
 
   if (jobId) {
     return renderFragment(
       c,
       await Templates.jobDetailFragment(jobId, tab),
       jobId,
+      page,
     );
   } else {
-    return renderFragment(c, Templates.notSelectedFragment());
+    return renderFragment(c, Templates.notSelectedFragment(), undefined, page);
   }
 });
 
@@ -149,5 +153,6 @@ app.get("/api/jobs/list", async (c) => {
 
 app.route("/api/dashboard", dashboardRoutes);
 app.route("/api/settings/page", settingsRoutes);
+app.route("/api/jobs/list-view", listViewRoutes);
 app.route("/api/fragment", fragmentRoutes);
 app.route("/api/events", eventsRoutes);

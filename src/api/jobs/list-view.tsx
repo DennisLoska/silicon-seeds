@@ -3,22 +3,19 @@ import { Templates } from "../../templates/templates";
 
 const app = new Hono();
 
-app.get("/:jobId", async (c) => {
-  const jobId = c.req.param("jobId");
-  const tab = c.req.query("tab") || "status";
-  const page = c.req.query("page") || "jobs"; // Default to jobs when viewing a job
-  const jobDetails = await Templates.jobDetailFragment(jobId, tab);
-  const jobList = await Templates.jobListFragment(jobId);
-
+app.get("/", async (c) => {
+  const page = c.req.query("page") || "jobs";
+  
   if (c.req.header("HX-Request")) {
     return c.html(
       <>
-        {jobDetails}
+        {/* Main content: list of all jobs */}
+        {await Templates.jobListFragment()}
         
         {/* OOB swap for Dashboard link - set active based on current page */}
         <div id="sidebar-dashboard-link" hx-swap-oob="true">
           <a
-            hx-get="/api/dashboard?page=dashboard"
+            hx-get="/api/dashboard"
             hx-target="#job-content-container"
             hx-swap="innerHTML"
             class={page === "dashboard" ? "active bg-primary text-primary-content" : ""}
@@ -32,7 +29,7 @@ app.get("/:jobId", async (c) => {
           <summary
             id="sidebar-jobs-summary"
             class={`font-bold flex items-center gap-2 cursor-pointer ${page === "jobs" ? "active bg-primary text-primary-content" : ""}`}
-            hx-get="/api/jobs/list-view?page=jobs"
+            hx-get="/api/jobs/list-view"
             hx-target="#job-content-container"
             hx-swap="innerHTML"
           >
@@ -43,7 +40,7 @@ app.get("/:jobId", async (c) => {
         {/* OOB swap for Settings link - set active based on current page */}
         <div id="sidebar-settings-link" hx-swap-oob="true">
           <a
-            hx-get="/api/settings/page?page=settings"
+            hx-get="/api/settings/page"
             hx-target="#job-content-container"
             hx-swap="innerHTML"
             class={page === "settings" ? "active bg-primary text-primary-content" : ""}
@@ -55,8 +52,8 @@ app.get("/:jobId", async (c) => {
     );
   }
 
-  // Return the complete job-detail page with the correct active tab
-  return c.html(jobDetails);
+  // Return the complete page with the correct active tab
+  return c.html(Templates.jobListFragment());
 });
 
 export default app;
