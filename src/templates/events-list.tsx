@@ -36,11 +36,19 @@ export async function eventsListFragment(jobId: string) {
     // Determine if event is complete
     const isComplete = evt.status === JobStatus.Complete;
 
-    // Status badge
+    // Status badge with icon
     const statusBadge = isComplete ? (
-      <span className="badge badge-success text-xs">Complete</span>
+      <span className="badge badge-success text-xs">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </span>
     ) : (
-      <span className="badge badge-warning text-xs">Pending</span>
+      <span className="badge badge-warning text-xs">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </span>
     );
 
     // Build metadata badges
@@ -100,15 +108,15 @@ export async function eventsListFragment(jobId: string) {
         {/* Content box - always on the right (timeline-end) */}
         <div className="timeline-end timeline-box xl:w-1/3">
           <details className="w-full bg-base-100 open:bg-base-100">
-            <summary className="cursor-pointer list-none p-4 card-title hover:bg-base-200 rounded-lg transition-colors">
+            <summary className="cursor-pointer list-none p-4 hover:bg-base-200 rounded-lg transition-colors">
               <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2 flex-wrap">
-                  {statusBadge}
+                <div className="flex items-center gap-1">
                   <span className="text-sm text-base-content/60">{typeLabel}</span>
+                  <span className="text-xs text-base-content/40 whitespace-nowrap">
+                    {timestamp}
+                  </span>
                 </div>
-                <span className="text-xs text-base-content/40 whitespace-nowrap">
-                  {timestamp}
-                </span>
+                {statusBadge}
               </div>
             </summary>
 
