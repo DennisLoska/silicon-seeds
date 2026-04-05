@@ -50,9 +50,9 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
   return (
     <div className="space-y-4">
       {/* Filter dropdown - wrapped for hx-target inheritance */}
-      <div class="flex gap-2">
+      <div className="flex gap-2">
         <button
-          class="btn btn-primary btn-md flex justify-end"
+          className="btn btn-primary btn-md flex justify-end"
           hx-post="/api/jobs/images"
           hx-trigger="click"
         >
@@ -61,9 +61,9 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
         </button>
-        <details class="dropdown">
-          <summary class="btn btn-md">Filter</summary>
-          <ul class="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-52 mt-1.5">
+        <details className="dropdown">
+          <summary className="btn btn-md">Filter</summary>
+          <ul className="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-52 mt-1.5">
             <li><a hx-get="/api/jobs/list-view?page=jobs&filter=all" hx-target="#job-content-container" hx-swap="innerHTML">All</a></li>
             <li><a hx-get="/api/jobs/list-view?page=jobs&filter=recent" hx-target="#job-content-container" hx-swap="innerHTML">Recent</a></li>
             <li><a hx-get="/api/jobs/list-view?page=jobs&filter=pending" hx-target="#job-content-container" hx-swap="innerHTML">Pending</a></li>
@@ -109,7 +109,7 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
                 </div>
               </div>
               <button
-                class="btn btn-ghost btn-sm mr-4"
+                className="btn btn-ghost btn-sm mr-4"
                 hx-get={`/api/fragment/delete-modal?jobId=${job.id}`}
                 hx-target="#delete-confirm-modal"
                 hx-swap="outerHTML"

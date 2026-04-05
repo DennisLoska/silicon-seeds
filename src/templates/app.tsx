@@ -45,7 +45,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
     </div>
 
     {/* Delete Confirmation Modal */}
-    <dialog id="delete-confirm-modal" class="modal"></dialog>
+    <dialog id="delete-confirm-modal" className="modal"></dialog>
 
     {/* Sidebar */}
     <aside className="drawer-side z-20">
