@@ -27,10 +27,10 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
   return (
     <div id="job-tabs-container" data-job-id={jobId}>
       {/* Tabs Section - Dedicated section with background and border, snaps to header/sidebar */}
-      <div className="bg-base-200 px-6 py-1 -mt-6 -mx-6 border-b border-base-300">
+      <div className="bg-base-200 py-1 -mt-6 mx-[-1.5rem] border-b border-base-300">
         <div className="tabs tabs-bordered w-full" role="tablist">
           <button
-            className={`tab ${currentTab === "status" ? "tab-active" : ""}`}
+            className={`tab pl-6 ${currentTab === "status" ? "tab-active" : ""}`}
             hx-get={`/api/fragment/${jobId}?tab=status`}
             hx-target="#job-tabs-container"
             hx-swap="innerHTML"
@@ -39,7 +39,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
             Status
           </button>
           <button
-            className={`tab ${currentTab === "media" ? "tab-active" : ""}`}
+            className={`tab pl-6 ${currentTab === "media" ? "tab-active" : ""}`}
             hx-get={`/api/fragment/${jobId}?tab=media`}
             hx-target="#job-tabs-container"
             hx-swap="innerHTML"
@@ -48,7 +48,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
             Media
           </button>
           <button
-            className={`tab ${currentTab === "events" ? "tab-active" : ""}`}
+            className={`tab pl-6 ${currentTab === "events" ? "tab-active" : ""}`}
             hx-get={`/api/fragment/${jobId}?tab=events`}
             hx-target="#job-tabs-container"
             hx-swap="innerHTML"
