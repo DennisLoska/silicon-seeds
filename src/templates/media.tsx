@@ -43,13 +43,25 @@ export const media = async (job: Job, mediaData?: MediaData) => {
             <div className="flex flex-wrap gap-4">
               {data.images.map((image, index) => (
                 <div key={index} className="bg-base-200 rounded-lg p-4" style={{ width: 'fit-content' }}>
-                  <img
-                    src={getAssetPath(image.subfolder, image.filename)}
-                    alt={`Image ${index + 1}`}
-                    className="rounded-lg shadow-md w-full" style={{ maxHeight: '24rem', objectFit: 'contain' }}
-                  />
+                  <div className="relative">
+                    <img
+                      src={getAssetPath(image.subfolder, image.filename)}
+                      alt={`Image ${index + 1}`}
+                      className="rounded-lg shadow-md w-full" style={{ maxHeight: '24rem', objectFit: 'contain' }}
+                    />
+                    <a href={getAssetPath(image.subfolder, image.filename)} download className="absolute top-2 right-2 btn btn-sm btn-circle btn-ghost">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                      </svg>
+                    </a>
+                  </div>
                   <div className="flex justify-start items-center mt-2">
                     <span className="text-xs text-base-content/50">{image.filename}</span>
+                    <a href={getAssetPath(image.subfolder, image.filename)} download className="btn btn-xs btn-circle btn-ghost ml-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                      </svg>
+                    </a>
                   </div>
                 </div>
               ))}
@@ -81,6 +93,11 @@ export const media = async (job: Job, mediaData?: MediaData) => {
                   </video>
                   <div className="flex justify-start items-center mt-2">
                     <span className="text-xs text-base-content/50">{video.filename}</span>
+                    <a href={getAssetPath(video.subfolder, video.filename)} download className="btn btn-xs btn-circle btn-ghost ml-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                      </svg>
+                    </a>
                   </div>
                 </div>
               ))}
@@ -112,6 +129,11 @@ export const media = async (job: Job, mediaData?: MediaData) => {
                   </audio>
                   <div className="flex justify-start items-center mt-2">
                     <span className="text-xs text-base-content/50">{audio.filename}</span>
+                    <a href={getAssetPath(audio.subfolder, audio.filename)} download className="btn btn-xs btn-circle btn-ghost ml-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                      </svg>
+                    </a>
                   </div>
                 </div>
               ))}
@@ -127,26 +149,6 @@ export const media = async (job: Job, mediaData?: MediaData) => {
         </div>
       </div>
 
-      {/* Pending Assets Section */}
-      {data.pending.length > 0 && (
-        <div className="card bg-base-200 shadow-sm" style={{ width: 'fit-content' }}>
-          <div className="card-body p-4">
-            <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">
-              Pending
-            </h3>
-            <div className="space-y-2">
-              {data.pending.map((asset, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <span className="text-sm text-base-content/70">
-                    {asset.mode === "speech" ? "Voiceover" : asset.mode === "instrumental" ? "Background Music" : asset.mode}
-                  </span>
-                  <span className="badge badge-warning">Generating...</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
