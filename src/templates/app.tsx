@@ -50,7 +50,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
               hx-target="#job-content-container"
               hx-swap="innerHTML"
               id="sidebar-dashboard-link"
-              className={page === "dashboard" ? "active" : ""}
+              className="w-full"
             >
               📊 Dashboard
             </a>
@@ -66,7 +66,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
               hx-target="#job-content-container"
               hx-swap="innerHTML"
               id="sidebar-jobs-summary"
-              className={page === "jobs" ? "active" : ""}
+              className="w-full"
             >
               📁 Jobs
             </a>
@@ -82,7 +82,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
               hx-target="#job-content-container"
               hx-swap="innerHTML"
               id="sidebar-settings-link"
-              className={page === "settings" ? "active" : ""}
+              className="w-full"
             >
               ⚙️ Settings
             </a>

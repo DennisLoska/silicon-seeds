@@ -6,57 +6,15 @@ const app = new Hono();
 app.get("/:jobId", async (c) => {
   const jobId = c.req.param("jobId");
   const tab = c.req.query("tab") || "status";
-  const page = c.req.query("page") || "jobs"; // Default to jobs when viewing a job
   const jobDetails = await Templates.jobDetailFragment(jobId, tab);
-  const jobList = await Templates.jobListFragment(jobId);
 
   if (c.req.header("HX-Request")) {
-    return c.html(
-      <>
-        {jobDetails}
-        
-        {/* OOB swap for Dashboard link - set active based on current page */}
-        <div id="sidebar-dashboard-link" hx-swap-oob="true">
-          <a
-            hx-get="/api/dashboard?page=dashboard"
-            hx-target="#job-content-container"
-            hx-swap="innerHTML"
-            class={page === "dashboard" ? "active bg-primary text-primary-content" : ""}
-          >
-            📊 Dashboard
-          </a>
-        </div>
-        
-        {/* OOB swap for Jobs summary - set active based on current page */}
-        <div id="sidebar-jobs-summary" hx-swap-oob="true">
-          <summary
-            id="sidebar-jobs-summary"
-            class={`font-bold flex items-center gap-2 cursor-pointer ${page === "jobs" ? "active bg-primary text-primary-content" : ""}`}
-            hx-get="/api/jobs/list-view?page=jobs"
-            hx-target="#job-content-container"
-            hx-swap="innerHTML"
-          >
-            📁 Jobs
-          </summary>
-        </div>
-        
-        {/* OOB swap for Settings link - set active based on current page */}
-        <div id="sidebar-settings-link" hx-swap-oob="true">
-          <a
-            hx-get="/api/settings/page?page=settings"
-            hx-target="#job-content-container"
-            hx-swap="innerHTML"
-            class={page === "settings" ? "active bg-primary text-primary-content" : ""}
-          >
-            ⚙️ Settings
-          </a>
-        </div>
-      </>,
-    );
+    // HTMX request - return only the content fragment
+    return c.html(jobDetails);
   }
 
-  // Return the complete job-detail page with the correct active tab
-  return c.html(jobDetails);
+  // Full page load - return complete layout with sidebar
+  return c.html(Templates.app(jobDetails, jobId));
 });
 
 export default app;
