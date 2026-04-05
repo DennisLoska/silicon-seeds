@@ -49,6 +49,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
               hx-get="/api/dashboard?page=dashboard"
               hx-target="#job-content-container"
               hx-swap="innerHTML"
+              hx-push-url="/"
               id="sidebar-dashboard-link"
               className="w-full"
             >
@@ -65,6 +66,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
               hx-get="/api/jobs/list-view?page=jobs"
               hx-target="#job-content-container"
               hx-swap="innerHTML"
+              hx-push-url="/"
               id="sidebar-jobs-summary"
               className="w-full"
             >
@@ -81,6 +83,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
               hx-get="/api/settings/page?page=settings"
               hx-target="#job-content-container"
               hx-swap="innerHTML"
+              hx-push-url="/"
               id="sidebar-settings-link"
               className="w-full"
             >
