@@ -85,7 +85,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
             <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">
               Videos
             </h3>
-            <div className="space-y-3">
+            <div className="flex flex-wrap gap-4">
               {data.videos.map((video, index) => (
                 <div key={index} className="bg-base-200 rounded-lg p-4" style={{ width: 'fit-content' }}>
                   <video controls className="w-full max-w-lg rounded-lg shadow-md">
@@ -109,7 +109,7 @@ export const media = async (job: Job, mediaData?: MediaData) => {
             <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">
               Audio
             </h3>
-            <div className="space-y-3">
+            <div className="flex flex-wrap gap-4">
               {data.audio.map((audio, index) => (
                 <div key={index} className="bg-base-200 rounded-lg p-4" style={{ width: 'fit-content' }}>
                   <audio controls className="w-full max-w-lg">
