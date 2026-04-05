@@ -16,6 +16,8 @@ import { Logger } from "../logger/logger";
 import { serveStatic } from "hono/bun";
 import fragmentRoutes from "./fragment";
 import eventsRoutes from "./events";
+import dashboardRoutes from "./dashboard";
+import settingsRoutes from "./settings";
 import { Context } from "hono";
 
 const app = new Hono();
@@ -145,5 +147,7 @@ app.get("/api/jobs/list", async (c) => {
   return c.html(list);
 });
 
+app.route("/api/dashboard", dashboardRoutes);
+app.route("/api/settings/page", settingsRoutes);
 app.route("/api/fragment", fragmentRoutes);
 app.route("/api/events", eventsRoutes);

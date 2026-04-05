@@ -25,9 +25,6 @@ export const app = (content: Child, jobId?: string) => (
             </svg>
           </label>
         </div>
-        <div class="navbar-start">
-          <div class="text-lg font-bold">Silicon Seeds</div>
-        </div>
         <div class="navbar-end">
           <label className="swap swap-rotate">
             {/* this hidden checkbox controls the state */}
@@ -55,15 +52,6 @@ export const app = (content: Child, jobId?: string) => (
               <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z" />
             </svg>
           </label>
-
-          <button
-            class="btn btn-square"
-            hx-get="/api/settings"
-            hx-target="#settings-content"
-            hx-swap="innerHTML"
-          >
-            ⚙️
-          </button>
         </div>
       </header>
 
@@ -79,19 +67,60 @@ export const app = (content: Child, jobId?: string) => (
     <aside class="drawer-side z-20">
       <label htmlFor="sidebar-toggle" class="drawer-overlay"></label>
       <div class="w-64 min-h-full bg-base-200 border-r border-base-300 p-4 flex flex-col">
-        <h2 class="text-xl font-bold mb-4 px-2 text-primary">Jobs</h2>
-        <div
-          id="job-list"
-          hx-get={`/api/jobs/list${jobId ? `?current_id=${jobId}` : ""}`}
-          hx-trigger="load"
-          hx-swap="innerHTML"
-          aria-live="polite"
-          class="overflow-y-auto"
-        ></div>
+        {/* Silicon Seeds title at top of sidebar */}
+        <h1 class="text-xl font-bold mb-4 px-2 text-primary">Silicon Seeds</h1>
+
+        <ul class="menu menu-md w-full">
+          {/* Dashboard */}
+          <li>
+            <a
+              hx-get="/api/dashboard"
+              hx-target="#job-content-container"
+              hx-swap="innerHTML"
+              id="sidebar-dashboard-link"
+              class="dashboard-active"
+            >
+              📊 Dashboard
+            </a>
+          </li>
+
+          {/* Divider */}
+          <div class="divider my-1"></div>
+
+          {/* Jobs Dropdown - no caret icon */}
+          <details class="dropdown">
+            <summary class="font-bold flex items-center gap-2">
+              📁 Jobs
+            </summary>
+            <ul class="menu menu-xs dropdown-content bg-base-200 p-2 rounded-box w-56">
+              <div
+                id="job-list"
+                hx-get={`/api/jobs/list${jobId ? `?current_id=${jobId}` : ""}`}
+                hx-trigger="load"
+                hx-swap="innerHTML"
+                aria-live="polite"
+                class="overflow-y-auto"
+              ></div>
+            </ul>
+          </details>
+
+          {/* Divider */}
+          <div class="divider my-1"></div>
+
+          {/* Settings */}
+          <li>
+            <a
+              hx-get="/api/settings/page"
+              hx-target="#job-content-container"
+              hx-swap="innerHTML"
+              id="sidebar-settings-link"
+              class="settings-active"
+            >
+              ⚙️ Settings
+            </a>
+          </li>
+        </ul>
       </div>
     </aside>
-
-    {/* Settings Overlay/Content */}
-    <div id="settings-content"></div>
   </div>
 );

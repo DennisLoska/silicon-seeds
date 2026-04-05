@@ -6,6 +6,8 @@ import { media } from "./media";
 import { events } from "./events";
 import { jobDetail } from "./job-detail";
 import { notSelected } from "./not-selected";
+import { dashboard } from "./dashboard";
+import { settings as settingsPage } from "./settings";
 import { Job } from "../events/events";
 
 export namespace Templates {
@@ -17,4 +19,6 @@ export namespace Templates {
   export const eventsFragment = (job: Job) => events(job);
   export const jobDetailFragment = jobDetail;
   export const notSelectedFragment = notSelected;
+  export const dashboardFragment = () => dashboard();
+  export const settingsFragment = () => settingsPage();
 }
