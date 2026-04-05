@@ -26,6 +26,39 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
 
   return (
     <div id="job-tabs-container" data-job-id={jobId}>
+      {/* Tabs Section - Dedicated section with background and border, snaps to header/sidebar */}
+      <div className="bg-base-200 px-6 py-1 -mt-6 rounded-t-lg border-b border-base-300">
+        <div className="tabs tabs-bordered w-full" role="tablist">
+          <button
+            className={`tab ${currentTab === "status" ? "tab-active" : ""}`}
+            hx-get={`/api/fragment/${jobId}?tab=status`}
+            hx-target="#job-tabs-container"
+            hx-swap="innerHTML"
+            hx-push-url={`?job_id=${jobId}&tab=status`}
+          >
+            Status
+          </button>
+          <button
+            className={`tab ${currentTab === "media" ? "tab-active" : ""}`}
+            hx-get={`/api/fragment/${jobId}?tab=media`}
+            hx-target="#job-tabs-container"
+            hx-swap="innerHTML"
+            hx-push-url={`?job_id=${jobId}&tab=media`}
+          >
+            Media
+          </button>
+          <button
+            className={`tab ${currentTab === "events" ? "tab-active" : ""}`}
+            hx-get={`/api/fragment/${jobId}?tab=events`}
+            hx-target="#job-tabs-container"
+            hx-swap="innerHTML"
+            hx-push-url={`?job_id=${jobId}&tab=events`}
+          >
+            Events
+          </button>
+        </div>
+      </div>
+
       {/* Breadcrumbs */}
       <div className="breadcrumbs mb-6">
         <ul>
@@ -44,37 +77,8 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
           </li>
         </ul>
       </div>
-      
-      <div className="tabs tabs-bordered mb-8" role="tablist">
-        <button
-          className={`tab ${currentTab === "status" ? "tab-active" : ""}`}
-          hx-get={`/api/fragment/${jobId}?tab=status`}
-          hx-target="#job-tabs-container"
-          hx-swap="innerHTML"
-          hx-push-url={`?job_id=${jobId}&tab=status`}
-        >
-          Status
-        </button>
-        <button
-          className={`tab ${currentTab === "media" ? "tab-active" : ""}`}
-          hx-get={`/api/fragment/${jobId}?tab=media`}
-          hx-target="#job-tabs-container"
-          hx-swap="innerHTML"
-          hx-push-url={`?job_id=${jobId}&tab=media`}
-        >
-          Media
-        </button>
-        <button
-          className={`tab ${currentTab === "events" ? "tab-active" : ""}`}
-          hx-get={`/api/fragment/${jobId}?tab=events`}
-          hx-target="#job-tabs-container"
-          hx-swap="innerHTML"
-          hx-push-url={`?job_id=${jobId}&tab=events`}
-        >
-          Events
-        </button>
-      </div>
 
+      {/* Content Area */}
       <div id="job-content-area" className="min-h-[500px]">
         {contentFragment}
       </div>
