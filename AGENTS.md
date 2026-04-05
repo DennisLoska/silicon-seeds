@@ -22,12 +22,13 @@ http://localhost:3000/?job_id=019d4556-bbe7-7000-88da-b48bf06182dc&tab=status
 
 # Documentation
 
+**CRITICAL:**
+
+Make sure that you read all the documents in `/docs` before starting working on any changes!
+
 Always read the project's readme to understand the architecture:
 
 ~/work/silicon-seeds/README.md
-
-Always read and refer to the following files when the user wants to use one of the specific
-technologies:
 
 Bun:
 
