@@ -62,7 +62,7 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
         </ul>
       </details>
       
-      <ul className="list rounded-sm max-w-md lg:max-w-lg">
+      <ul className="list rounded-sm max-w-md lg:max-w-lg gap-2">
         {jobs.map((job) => {
           const date = new Date(job.created_at).toLocaleString();
           const isActive = activeJobId === job.id;
