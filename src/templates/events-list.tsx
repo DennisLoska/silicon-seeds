@@ -1,19 +1,7 @@
 import { JSX } from "hono/jsx";
 import { DB } from "../db/db";
 import { Event, JobStatus } from "../events/events";
-
-const STATUS_ICONS = {
-  complete: (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  ),
-  pending: (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  ),
-};
+import { STATUS_ICONS_SMALL, DOWNLOAD_ICON_SMALL, COPY_ICON } from "./icons";
 
 const EVENT_LABELS = {
   [Event.NewImagePrompt]: "Image Prompt",
@@ -28,18 +16,6 @@ const EVENT_ICONS = {
   [Event.NewTransitionPrompt]: "🔄",
   [Event.NewAudioPrompt]: "🎵",
 };
-
-const DOWNLOAD_ICON = (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-  </svg>
-);
-
-const COPY_ICON = (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 20.25h4.5v-4.5h-4.5zm-4.5 0h4.5v-4.5H8.25zM3.75 7.5H12v4.5H3.75zm4.5 4.5h4.5v4.5H8.25z" />
-  </svg>
-);
 
 export async function eventsListFragment(jobId: string) {
   const jobEvents = await DB.Events.findByJobId(jobId);
@@ -90,7 +66,7 @@ export async function eventsListFragment(jobId: string) {
       const downloadBtn = (
         <div className="flex justify-end">
           <a href={`/assets/${assetMeta.filename}`} download className="btn btn-sm btn-primary">
-            {DOWNLOAD_ICON}
+            {DOWNLOAD_ICON_SMALL}
             Download
           </a>
         </div>
@@ -144,7 +120,7 @@ export async function eventsListFragment(jobId: string) {
                   <span className="text-xs text-base-content/40 whitespace-nowrap">{timestamp}</span>
                 </div>
                 <span className={isComplete ? "badge badge-success text-xs" : "badge badge-warning text-xs"}>
-                  {STATUS_ICONS[isComplete ? "complete" : "pending"]}
+                  {STATUS_ICONS_SMALL[isComplete ? "complete" : "pending"]}
                 </span>
               </div>
             </summary>

@@ -1,5 +1,6 @@
 import { DB } from "../db/db";
 import { truncateJobId } from "./utils";
+import { NEW_JOB_ICON, DELETE_ICON, STATUS_ICONS_SMALL } from "./icons";
 
 export const jobList = async (activeJobId?: string, filter?: string) => {
   let jobs = await DB.Jobs.list();
@@ -57,9 +58,7 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
           hx-trigger="click"
         >
           New Job
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
+          {NEW_JOB_ICON}
         </button>
         <details className="dropdown">
           <summary className="btn btn-md">Filter</summary>
@@ -92,15 +91,7 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
                 hx-push-url={`?job_id=${job.id}&tab=status`}
               >
                 <span className={`badge ${isCompleted ? "badge-success" : "badge-warning"}`}>
-                  {isCompleted ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  )}
+                  {STATUS_ICONS_SMALL[isCompleted ? "complete" : "pending"]}
                 </span>
                 <div className="flex flex-col items-start">
                   <span className="font-bold text-sm lg:hidden" style={{ maxWidth: '8ch', overflow: 'hidden', textOverflow: 'ellipsis' }}>{truncateJobId(job.id)}</span>
