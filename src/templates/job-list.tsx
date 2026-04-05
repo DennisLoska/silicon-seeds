@@ -49,13 +49,12 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
 
   return (
     <div className="space-y-4">
-      {/* Filter dropdown */}
+      {/* Filter dropdown - wrapped for hx-target inheritance */}
       <div class="flex gap-2">
         <button
           class="btn btn-primary btn-md flex justify-end"
           hx-post="/api/jobs/images"
-          hx-target="#job-content-container"
-          hx-swap="innerHTML"
+          hx-trigger="click"
         >
           New Job
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">

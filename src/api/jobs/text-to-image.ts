@@ -19,5 +19,7 @@ export async function text_to_image() {
     Presets.PENCIL_WATERCOLOR,
   );
 
-  return new Response(JSON.stringify({ message: "job queued" }));
+  const response = new Response(JSON.stringify({ message: "job queued" }));
+  response.headers.set("HX-Refresh", "true");
+  return response;
 }
