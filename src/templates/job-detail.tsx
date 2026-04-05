@@ -16,7 +16,56 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
       contentFragment = Templates.statusFragment(job);
       break;
     case "media":
-      contentFragment = Templates.mediaFragment(job);
+      // Fetch media data and pass to template
+      const events = await DB.Events.findByJobId(jobId);
+      const mediaData: {
+        images: Array<{ filename: string; subfolder: string; type: string; status: string }>;
+        videos: Array<{ filename: string; subfolder: string; type: string; status: string }>;
+        audio: Array<{ filename: string; subfolder: string; type: string; status: string }>;
+        pending: Array<{ mode: string; filename: string | null; status: string }>;
+      } = {
+        images: [],
+        videos: [],
+        audio: [],
+        pending: [],
+      };
+
+      for (const event of events) {
+        if (event.status === "pending") {
+          mediaData.pending.push({
+            mode: event.mode,
+            filename: (event as any).filename ?? null,
+            status: event.status,
+          });
+        } else {
+          const meta = await DB.Meta.findByEventId(event.id).catch(() => null);
+          if (meta) {
+            if (event.mode === "image") {
+              mediaData.images.push({
+                filename: meta.filename,
+                subfolder: meta.subfolder,
+                type: meta.type,
+                status: event.status,
+              });
+            } else if (event.mode === "video") {
+              mediaData.videos.push({
+                filename: meta.filename,
+                subfolder: meta.subfolder,
+                type: meta.type,
+                status: event.status,
+              });
+            } else if (event.mode === "speech" || event.mode === "instrumental") {
+              mediaData.audio.push({
+                filename: meta.filename,
+                subfolder: meta.subfolder,
+                type: meta.type,
+                status: event.status,
+              });
+            }
+          }
+        }
+      }
+      contentFragment = Templates.mediaFragment(job, mediaData);
       break;
     case "events":
       contentFragment = Templates.eventsFragment(job);

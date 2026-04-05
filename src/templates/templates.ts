@@ -15,7 +15,7 @@ export namespace Templates {
   export const layoutPage = layout;
   export const jobListFragment = (activeJobId?: string, filter?: string) => jobList(activeJobId, filter);
   export const statusFragment = (job: Job) => status(job);
-  export const mediaFragment = (job: Job) => media(job);
+  export const mediaFragment = (job: Job, mediaData?: any) => media(job, mediaData);
   export const eventsFragment = (job: Job) => events(job);
   export const jobDetailFragment = jobDetail;
   export const notSelectedFragment = notSelected;

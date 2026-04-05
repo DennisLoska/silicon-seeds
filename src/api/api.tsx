@@ -71,6 +71,19 @@ app.use(
   }),
 );
 
+// Serve static assets from OUTPUT_DIR at /assets/*
+const OUTPUT_DIR = process.env.OUTPUT_DIR || "./comfyui/output";
+
+app.use(
+  "/assets/*",
+  serveStatic({
+    root: OUTPUT_DIR,
+    onNotFound: (path, c) => {
+      Logger.warn(`${path} is not found, you access ${c.req.path}`);
+    },
+  }),
+);
+
 app.use(async (c, next) => {
   c.setRenderer((content) => {
     return c.html(Templates.layoutPage(content));
