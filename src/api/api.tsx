@@ -84,13 +84,14 @@ app.get("/", async (c) => {
       c,
       await Templates.jobDetailFragment(jobId, tab),
       jobId,
+      "job",
     );
   } else if (page === "dashboard") {
-    return renderFragment(c, Templates.dashboardFragment(), undefined);
+    return renderFragment(c, Templates.dashboardFragment(), undefined, page);
   } else if (page === "jobs") {
-    return renderFragment(c, await Templates.jobListFragment(), undefined);
+    return renderFragment(c, await Templates.jobListFragment(), undefined, page);
   } else if (page === "settings") {
-    return renderFragment(c, Templates.settingsFragment(), undefined);
+    return renderFragment(c, Templates.settingsFragment(), undefined, page);
   } else {
     return renderFragment(c, Templates.notSelectedFragment(), undefined);
   }

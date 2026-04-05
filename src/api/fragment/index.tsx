@@ -9,8 +9,15 @@ app.get("/:jobId", async (c) => {
   const jobDetails = await Templates.jobDetailFragment(jobId, tab);
 
   if (c.req.header("HX-Request")) {
-    // HTMX request - return only the content fragment
-    return c.html(jobDetails);
+    // HTMX request - return main content + OOB header update
+    return c.html(
+      <>
+        {jobDetails}
+        <div id="header-title" hx-swap-oob="true">
+          <h1 className="text-xl font-bold">Job</h1>
+        </div>
+      </>
+    );
   }
 
   // Full page load - return complete layout with sidebar

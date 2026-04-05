@@ -7,6 +7,15 @@ export const app = (content: Child, jobId?: string, page?: string) => (
     <div className="drawer-content flex flex-col">
       {/* Header */}
       <header className="navbar bg-base-200 px-6 shadow-sm z-10">
+        <div className="flex-1">
+          <h1 id="header-title" className="text-xl font-bold">
+            {page === "dashboard" && "Dashboard"}
+            {page === "jobs" && "Jobs"}
+            {page === "settings" && "Settings"}
+            {page === "job" && "Job"}
+            {!page && "Silicon Seeds"}
+          </h1>
+        </div>
         <div className="flex-none lg:hidden">
           <label htmlFor="sidebar-toggle" className="btn btn-square btn-ghost">
             <svg

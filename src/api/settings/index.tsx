@@ -5,8 +5,15 @@ const app = new Hono();
 
 app.get("/", async (c) => {
   if (c.req.header("HX-Request")) {
-    // HTMX request - return only the content fragment
-    return c.html(Templates.settingsFragment());
+    // HTMX request - return content fragment + OOB header update
+    return c.html(
+      <>
+        {Templates.settingsFragment()}
+        <div id="header-title" hx-swap-oob="true">
+          <h1 className="text-xl font-bold">Settings</h1>
+        </div>
+      </>
+    );
   }
 
   // Full page load - return complete layout with sidebar

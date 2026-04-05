@@ -8,8 +8,15 @@ app.get("/", async (c) => {
   const filter = c.req.query("filter");
   
   if (c.req.header("HX-Request")) {
-    // HTMX request - return only the content fragment
-    return c.html(await Templates.jobListFragment(currentId, filter));
+    // HTMX request - return content fragment + OOB header update
+    return c.html(
+      <>
+        {await Templates.jobListFragment(currentId, filter)}
+        <div id="header-title" hx-swap-oob="true">
+          <h1 className="text-xl font-bold">Jobs</h1>
+        </div>
+      </>
+    );
   }
 
   // Full page load - return complete layout with sidebar
