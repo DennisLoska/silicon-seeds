@@ -17,8 +17,8 @@ export async function eventsListFragment(jobId: string) {
     // Format timestamp
     const timestamp = new Date(evt.created_at!).toLocaleString();
 
-    // Get type label
-    const typeLabel = {
+    // Get event name
+    const eventName = {
       [Event.NewImagePrompt]: "Image Prompt",
       [Event.NewVideoPrompt]: "Video Prompt",
       [Event.NewTransitionPrompt]: "Transition Prompt",
@@ -111,7 +111,7 @@ export async function eventsListFragment(jobId: string) {
             <summary className="cursor-pointer list-none p-4 hover:bg-base-200 rounded-lg transition-colors">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-1">
-                  <span className="text-sm text-base-content/60">{typeLabel}</span>
+                  <span className="text-sm font-bold text-base-content/60">{eventName}</span>
                   <span className="text-xs text-base-content/40 whitespace-nowrap">
                     {timestamp}
                   </span>
