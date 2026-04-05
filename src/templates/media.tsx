@@ -12,10 +12,12 @@ function getAssetPath(subfolder: string, filename: string): string {
   // Remove trailing slash from subfolder if present
   const cleanSubfolder = subfolder.endsWith("/") ? subfolder.slice(0, -1) : subfolder;
   // Handle empty subfolder - return just filename
+  // Files are stored in OUTPUT_DIR/<filename>, so we serve them at /assets/<filename>
   if (!cleanSubfolder || cleanSubfolder.trim() === "") {
-    return filename;
+    return `/assets/${filename}`;
   }
-  return `${cleanSubfolder}/${filename}`;
+  // Files are stored in OUTPUT_DIR/<subfolder>/<filename>
+  return `/assets/${cleanSubfolder}/${filename}`;
 }
 
 export const media = async (job: Job, mediaData?: MediaData) => {
