@@ -1,4 +1,5 @@
 import { DB } from "../db/db";
+import { truncateJobId } from "./utils";
 
 export const jobList = async (activeJobId?: string, filter?: string) => {
   let jobs = await DB.Jobs.list();
@@ -39,7 +40,6 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
   if (jobs.length === 0) {
     return (
       <div className="space-y-4">
-        <h2 className="text-3xl font-bold mb-4">Jobs</h2>
       <ul className="list rounded-sm w-full lg:w-2/3 flex-start">
           <li className="list-row px-4 py-2 text-sm text-base-content/50">No jobs yet</li>
         </ul>
@@ -49,18 +49,29 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-3xl font-bold mb-4">Jobs</h2>
-      
       {/* Filter dropdown */}
-      <details class="dropdown">
-        <summary class="btn btn-md">Filter</summary>
-        <ul class="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-52 mt-1.5">
-          <li><a hx-get="/api/jobs/list-view?page=jobs&current_id=&filter=all" hx-target="#job-content-container" hx-swap="innerHTML">All</a></li>
-          <li><a hx-get="/api/jobs/list-view?page=jobs&current_id=&filter=recent" hx-target="#job-content-container" hx-swap="innerHTML">Recent</a></li>
-          <li><a hx-get="/api/jobs/list-view?page=jobs&current_id=&filter=pending" hx-target="#job-content-container" hx-swap="innerHTML">Pending</a></li>
-          <li><a hx-get="/api/jobs/list-view?page=jobs&current_id=&filter=completed" hx-target="#job-content-container" hx-swap="innerHTML">Completed</a></li>
-        </ul>
-      </details>
+      <div class="flex gap-2">
+        <button
+          class="btn btn-primary btn-md flex justify-end"
+          hx-post="/api/jobs/images"
+          hx-target="#job-content-container"
+          hx-swap="innerHTML"
+        >
+          New Job
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+        </button>
+        <details class="dropdown">
+          <summary class="btn btn-md">Filter</summary>
+          <ul class="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-52 mt-1.5">
+            <li><a hx-get="/api/jobs/list-view?page=jobs&current_id=&filter=all" hx-target="#job-content-container" hx-swap="innerHTML">All</a></li>
+            <li><a hx-get="/api/jobs/list-view?page=jobs&current_id=&filter=recent" hx-target="#job-content-container" hx-swap="innerHTML">Recent</a></li>
+            <li><a hx-get="/api/jobs/list-view?page=jobs&current_id=&filter=pending" hx-target="#job-content-container" hx-swap="innerHTML">Pending</a></li>
+            <li><a hx-get="/api/jobs/list-view?page=jobs&current_id=&filter=completed" hx-target="#job-content-container" hx-swap="innerHTML">Completed</a></li>
+          </ul>
+        </details>
+      </div>
       
       <ul className="list rounded-sm max-w-md lg:max-w-lg gap-2">
         {jobs.map((job) => {
@@ -79,7 +90,8 @@ export const jobList = async (activeJobId?: string, filter?: string) => {
               hx-push-url={`?job_id=${job.id}&tab=status`}
             >
               <div className="flex flex-col items-start">
-                <span className="font-bold text-sm">{job.id}</span>
+                <span className="font-bold text-sm lg:hidden" style={{ maxWidth: '8ch', overflow: 'hidden', textOverflow: 'ellipsis' }}>{truncateJobId(job.id)}</span>
+                <span className="font-bold text-sm hidden lg:inline">{job.id}</span>
                 <span className="text-xs opacity-60">{date}</span>
               </div>
               <span className={`badge ${isCompleted ? "badge-success" : "badge-warning"}`}>

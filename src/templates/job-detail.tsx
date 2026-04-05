@@ -1,6 +1,7 @@
 import { Templates } from "./templates";
 import { DB } from "../db/db";
 import { Job } from "../events/events";
+import { truncateJobId } from "./utils";
 
 export const jobDetail = async (jobId: string, activeTab?: string) => {
   const job: Job = await DB.Jobs.findById(jobId);
@@ -73,7 +74,8 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
             </a>
           </li>
           <li>
-            <span className="text-base-content/60">{jobId}</span>
+            <span className="text-base-content/60 lg:hidden" style={{ maxWidth: '8ch', overflow: 'hidden', textOverflow: 'ellipsis' }}>{truncateJobId(jobId)}</span>
+            <span className="text-base-content/60 hidden lg:inline">{jobId}</span>
           </li>
         </ul>
       </div>
