@@ -23,7 +23,7 @@ export async function eventsListFragment(jobId: string) {
   if (jobEvents.length === 0) {
     return (
       <div className="p-6 text-center text-base-content/60">
-        No events yet for this job.
+        Events will appear here once the job runs.
       </div>
     );
   }

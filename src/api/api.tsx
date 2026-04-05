@@ -163,7 +163,8 @@ app.get("/", async (c) => {
   } else if (page === "settings") {
     return renderFragment(c, Templates.settingsFragment(), undefined, page);
   } else {
-    return renderFragment(c, Templates.notSelectedFragment(), undefined);
+    // Default to job list when no page is specified
+    return renderFragment(c, await Templates.jobListFragment(), undefined, "jobs");
   }
 });
 

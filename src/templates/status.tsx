@@ -6,7 +6,7 @@ const EMPTY_STATE = (
   <div className="card bg-base-200 shadow-sm">
     <div className="card-body">
       <h2 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold">Summary</h2>
-      <p className="text-base-content mt-2 italic opacity-80 text-lg">No execution events recorded yet for this job.</p>
+      <p className="text-base-content mt-2 italic opacity-80 text-lg">No events have been logged for this job yet.</p>
     </div>
   </div>
 );

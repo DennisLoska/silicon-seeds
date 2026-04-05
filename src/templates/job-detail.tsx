@@ -114,7 +114,7 @@ export const jobDetail = async (jobId: string, activeTab?: string) => {
         <ul>
           <li>
             <a
-              hx-get="/api/jobs/list-view?page=jobs"
+              hx-get="/"
               hx-target="#job-content-container"
               hx-swap="innerHTML"
               hx-push-url="/"
