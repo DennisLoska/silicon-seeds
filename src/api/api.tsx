@@ -77,18 +77,22 @@ app.use(async (c, next) => {
 app.get("/", async (c) => {
   const jobId = c.req.query("job_id") ?? null;
   const tab = c.req.query("tab") ?? "status";
-  // Default to "jobs" page when viewing a job, otherwise use provided page or undefined
-  const page = jobId ? (c.req.query("page") || "jobs") : c.req.query("page");
+  const page = c.req.query("page");
 
   if (jobId) {
     return renderFragment(
       c,
       await Templates.jobDetailFragment(jobId, tab),
       jobId,
-      page,
     );
+  } else if (page === "dashboard") {
+    return renderFragment(c, Templates.dashboardFragment(), undefined);
+  } else if (page === "jobs") {
+    return renderFragment(c, await Templates.jobListFragment(), undefined);
+  } else if (page === "settings") {
+    return renderFragment(c, Templates.settingsFragment(), undefined);
   } else {
-    return renderFragment(c, Templates.notSelectedFragment(), undefined, page);
+    return renderFragment(c, Templates.notSelectedFragment(), undefined);
   }
 });
 
