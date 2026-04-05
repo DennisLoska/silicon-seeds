@@ -13,7 +13,7 @@ export async function eventsListFragment(jobId: string) {
     );
   }
 
-  const eventItems = jobEvents.map((evt, index) => {
+  const eventItems = jobEvents.map(async (evt, index) => {
     // Format timestamp
     const timestamp = new Date(evt.created_at!).toLocaleString();
 
@@ -35,6 +35,12 @@ export async function eventsListFragment(jobId: string) {
 
     // Determine if event is complete
     const isComplete = evt.status === JobStatus.Complete;
+
+    // Fetch asset metadata for completed events
+    let assetMeta = null;
+    if (isComplete) {
+      assetMeta = await DB.Meta.findByEventId(evt.id).catch(() => null);
+    }
 
     // Status badge with icon
     const statusBadge = isComplete ? (
@@ -60,6 +66,19 @@ export async function eventsListFragment(jobId: string) {
           metadataBadges.push(
             <span key="lora" className="badge badge-info text-xs">
               LoRA: {evt.lora}
+            </span>,
+          );
+        }
+        // Add asset pill next to lora pill
+        if (assetMeta) {
+          metadataBadges.push(
+            <span key="asset" className="badge badge-primary text-xs">
+              {assetMeta.type}
+            </span>,
+          );
+          metadataBadges.push(
+            <span key="filename" className="badge badge-secondary text-xs">
+              {assetMeta.filename}
             </span>,
           );
         }
@@ -125,6 +144,29 @@ export async function eventsListFragment(jobId: string) {
               {metadataBadges.length > 0 && (
                 <div className="flex flex-wrap gap-2">{metadataBadges}</div>
               )}
+              {assetMeta && evt.type === Event.NewImagePrompt && (
+                <div>
+                  <p className="text-sm font-medium mb-1 text-base-content/60">
+                    Generated Image:
+                  </p>
+                  <div className="relative">
+                    <img
+                      src={`/assets/${assetMeta.filename}`}
+                      alt="Generated image"
+                      className="w-full h-auto rounded-lg border border-base-300"
+                    />
+                    <a
+                      href={`/assets/${assetMeta.filename}`}
+                      download
+                      className="absolute top-2 right-2 btn btn-sm btn-circle btn-primary"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+              )}
               <div>
                 <p className="text-sm font-medium mb-1 text-base-content/60">
                   Prompt:
@@ -157,7 +199,7 @@ export async function eventsListFragment(jobId: string) {
   });
 
   return (
-    <ul className="timeline timeline-compact timeline-vertical">{eventItems}</ul>
+    <ul className="timeline timeline-compact timeline-vertical">{await Promise.all(eventItems)}</ul>
   );
 }
 
