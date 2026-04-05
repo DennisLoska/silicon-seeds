@@ -61,42 +61,35 @@ const renderEmptyState = (message: string) => (
   </div>
 );
 
+interface MediaCardProps {
+  title: string;
+  items: Array<{ filename: string; subfolder: string }>;
+  type: "image" | "video" | "audio";
+  emptyMessage: string;
+}
+
+const MediaCard = ({ title, items, type, emptyMessage }: MediaCardProps) => (
+  <div className="card shadow-sm bg-base-200" style={{ width: 'fit-content', minWidth: '300px', maxWidth: '100%', resize: 'both', overflow: 'auto' }}>
+    <div className="card-body p-4">
+      <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">{title}</h3>
+      {items.length > 0 ? (
+        <div className="flex flex-wrap gap-4">
+          {items.map(asset => renderMediaItem(asset, type))}
+        </div>
+      ) : renderEmptyState(emptyMessage)}
+    </div>
+  </div>
+);
+
 export const media = async (job: Job, mediaData?: MediaData) => {
   const data = mediaData || { images: [], videos: [], audio: [], pending: [] };
 
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold mb-4">Media</h2>
-      <div className="card shadow-sm bg-base-200" style={{ width: 'fit-content', minWidth: '300px' }}>
-        <div className="card-body p-4">
-          <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">Images</h3>
-          {data.images.length > 0 ? (
-            <div className="flex flex-wrap gap-4">
-              {data.images.map(asset => renderMediaItem(asset, "image"))}
-            </div>
-          ) : renderEmptyState("No images found for this job.")}
-        </div>
-      </div>
-      <div className="card shadow-sm bg-base-200" style={{ width: 'fit-content', minWidth: '300px' }}>
-        <div className="card-body p-4">
-          <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">Videos</h3>
-          {data.videos.length > 0 ? (
-            <div className="flex flex-wrap gap-4">
-              {data.videos.map(asset => renderMediaItem(asset, "video"))}
-            </div>
-          ) : renderEmptyState("No videos found for this job.")}
-        </div>
-      </div>
-      <div className="card shadow-sm bg-base-200" style={{ width: 'fit-content', minWidth: '300px' }}>
-        <div className="card-body p-4">
-          <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold mb-3">Audio</h3>
-          {data.audio.length > 0 ? (
-            <div className="flex flex-wrap gap-4">
-              {data.audio.map(asset => renderMediaItem(asset, "audio"))}
-            </div>
-          ) : renderEmptyState("No audios found for this job.")}
-        </div>
-      </div>
+      <MediaCard title="Images" items={data.images} type="image" emptyMessage="No images found for this job." />
+      <MediaCard title="Videos" items={data.videos} type="video" emptyMessage="No videos found for this job." />
+      <MediaCard title="Audio" items={data.audio} type="audio" emptyMessage="No audios found for this job." />
     </div>
   );
 };
