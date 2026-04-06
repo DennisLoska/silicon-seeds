@@ -2,7 +2,9 @@ import { Hono } from "hono";
 import { Templates } from "../../templates/templates";
 import { DB } from "../../db/db";
 import { Api } from "../api";
-import type { JobsProps, JobTabsProps, JobDetailsProps } from "../../templates/jobs";
+
+const { JobsFragment, JobTabsFragment, JobDetailsFragment, EventListFragment } =
+  Templates;
 
 const app = new Hono();
 const { Layout, App } = Templates;
@@ -27,11 +29,10 @@ app.get("/", async (c) => {
 
   // Default to first job from filtered list
   const selectedJobId = jobId || jobs[0].id;
-  const JobDetail = await Templates.JobsFragment(selectedJobId, filter, tab);
 
   return Api.renderFragment(
     c,
-    () => JobDetail,
+    () => <JobsFragment jobId={selectedJobId} filter={filter} tab={tab} />,
     "jobs",
     () => oobHeaderElement,
   );
@@ -45,8 +46,11 @@ app.get("/details/:jobId", async (c) => {
   if (c.req.header("HX-Request")) {
     // HTMX request - return content wrapped in #job-content-area div
     // This allows innerHTML swap to replace the entire div while keeping sidebar
-    const JobTabs = Templates.JobTabsFragment(jobId, filter, tab);
-    const content = await Templates.JobDetailsFragment(jobId, tab);
+    const JobTabs = <JobTabsFragment jobId={jobId} filter={filter} tab={tab} />;
+    const content = await (
+      <JobDetailsFragment jobId={jobId} activeTab={tab} />
+    );
+
     return c.html(
       <>
         <div id="job-tabs-container">
@@ -63,10 +67,11 @@ app.get("/details/:jobId", async (c) => {
   }
 
   // Full page load - return complete layout with sidebar
-  const jobDetails = await Templates.JobsFragment(jobId, filter, tab);
   return c.html(
     <Layout>
-      <App>{jobDetails}</App>
+      <App>
+        <JobsFragment jobId={jobId} filter={filter} tab={tab} />
+      </App>
     </Layout>,
   );
 });
@@ -79,8 +84,9 @@ app.get("/events", async (c) => {
     );
   }
 
-  const EventList = await Templates.EventList(jobId);
-  return c.html(EventList);
+  const eventListContent = await (<EventListFragment jobId={jobId} />);
+
+  return c.html(eventListContent);
 });
 
 export default app;
