@@ -46,17 +46,12 @@ app.get("/details/:jobId", async (c) => {
   if (c.req.header("HX-Request")) {
     // HTMX request - return content wrapped in #job-content-area div
     // This allows innerHTML swap to replace the entire div while keeping sidebar
-    const JobTabs = <JobTabsFragment jobId={jobId} filter={filter} tab={tab} />;
-    const content = await (
-      <JobDetailsFragment jobId={jobId} activeTab={tab} />
-    );
-
     return c.html(
       <>
         <div id="job-tabs-container">
-          {JobTabs}
+          <JobTabsFragment jobId={jobId} filter={filter} tab={tab} />
           <div id="job-content-area" className="min-h-[500px] py-4">
-            {content}
+            {await (<JobDetailsFragment jobId={jobId} activeTab={tab} />)}
           </div>
         </div>
         <div id="header-title" hx-swap-oob="true">
@@ -84,9 +79,7 @@ app.get("/events", async (c) => {
     );
   }
 
-  const eventListContent = await (<EventListFragment jobId={jobId} />);
-
-  return c.html(eventListContent);
+  return c.html(await (<EventListFragment jobId={jobId} />));
 });
 
 export default app;
