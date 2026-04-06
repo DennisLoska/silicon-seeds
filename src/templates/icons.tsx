@@ -1,75 +1,75 @@
 export namespace Icons {
-  export const StatusIcons = {
-    complete: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={2.5}
-        stroke="currentColor"
-        className="w-6 h-6"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
-    pending: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={2}
-        stroke="currentColor"
-        className="w-6 h-6"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
-  };
+  // Status Icons
+  export const StatusComplete = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2.5}
+      stroke="currentColor"
+      className="w-6 h-6"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  );
 
-  export const StatusIconsSmall = {
-    complete: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={2.5}
-        stroke="currentColor"
-        className="w-4 h-4"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
-    pending: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={2}
-        stroke="currentColor"
-        className="w-4 h-4"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
-  };
+  export const StatusPending = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      stroke="currentColor"
+      className="w-6 h-6"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  );
 
-  export const InfoIcon = (
+  // Small Status Icons
+  export const StatusCompleteSmall = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2.5}
+      stroke="currentColor"
+      className="w-4 h-4"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  );
+
+  export const StatusPendingSmall = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      stroke="currentColor"
+      className="w-4 h-4"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  );
+
+  export const InfoIcon = () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
@@ -85,7 +85,7 @@ export namespace Icons {
     </svg>
   );
 
-  export const DownloadIconSmall = (
+  export const DownloadIconSmall = () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
@@ -102,7 +102,7 @@ export namespace Icons {
     </svg>
   );
 
-  export const CopyIcon = (
+  export const CopyIcon = () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
@@ -119,7 +119,7 @@ export namespace Icons {
     </svg>
   );
 
-  export const NewJobIcon = (
+  export const NewJobIcon = () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
@@ -136,7 +136,7 @@ export namespace Icons {
     </svg>
   );
 
-  export const DeleteIcon = (
+  export const DeleteIcon = () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
@@ -153,7 +153,7 @@ export namespace Icons {
     </svg>
   );
 
-  export const BurgerIcon = (
+  export const BurgerIcon = () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"

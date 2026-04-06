@@ -46,11 +46,11 @@ export const Status = async (job: Job) => {
       <header>
         <h2 className="text-3xl font-extrabold tracking-tight text-base-content">
           Status{" "}
-          <span
-            className={`badge badge-xl ${isCompleted ? "badge-success" : "badge-warning"}`}
-          >
-            {Icons.StatusIcons[isCompleted ? "complete" : "pending"]}
-          </span>
+            <span
+              className={`badge badge-xl ${isCompleted ? "badge-success" : "badge-warning"}`}
+            >
+              {isCompleted ? <Icons.StatusComplete /> : <Icons.StatusPending />}
+            </span>
         </h2>
         <p className="text-base-content/60 mt-1">
           Detailed overview of job execution and state.

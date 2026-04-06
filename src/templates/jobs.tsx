@@ -187,7 +187,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
           hx-trigger="click"
         >
           New Job
-          {Icons.NewJobIcon}
+          <Icons.NewJobIcon />
         </button>
         <details className="dropdown">
           <summary className="btn btn-md">
@@ -260,11 +260,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
                 <span
                   className={`badge ${isCompleted ? "badge-success" : "badge-warning"}`}
                 >
-                  {
-                    Icons.StatusIconsSmall[
-                      isCompleted ? "complete" : "pending"
-                    ]
-                  }
+                  {isCompleted ? <Icons.StatusCompleteSmall /> : <Icons.StatusPendingSmall />}
                 </span>
                 <div className="flex flex-col items-start">
                   <span
@@ -290,7 +286,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
                 hx-swap="outerHTML"
                 title="Delete job"
               >
-                {Icons.DeleteIcon}
+                <Icons.DeleteIcon />
               </button>
             </li>
           );
@@ -465,7 +461,7 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
         className="fixed bottom-6 right-6 btn btn-circle btn-primary shadow-lg lg:hidden z-50"
         aria-label="Open job list"
       >
-        {Icons.BurgerIcon}
+        <Icons.BurgerIcon />
       </label>
 
       {/* Job List Sidebar */}

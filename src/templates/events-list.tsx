@@ -104,7 +104,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
             download
             className="btn btn-sm btn-primary"
           >
-            {Icons.DownloadIconSmall}
+            <Icons.DownloadIconSmall />
             Download
           </a>
         </div>
@@ -181,17 +181,13 @@ export const EventList = async ({ jobId }: EventListProps) => {
                   </span>
                 </div>
                 <span
-                  className={
+                   className={
                     isComplete
                       ? "badge badge-success text-xs"
                       : "badge badge-warning text-xs"
                   }
                 >
-                  {
-                    Icons.StatusIconsSmall[
-                      isComplete ? "complete" : "pending"
-                    ]
-                  }
+                  {isComplete ? <Icons.StatusCompleteSmall /> : <Icons.StatusPendingSmall />}
                 </span>
               </div>
             </summary>
@@ -213,7 +209,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
                     onclick={`navigator.clipboard.writeText("${escapeForJsString(evt.prompt || "")}")`}
                     className="btn btn-sm btn-secondary mt-2"
                   >
-                    {Icons.CopyIcon}
+                    <Icons.CopyIcon />
                     <span className="ml-1">Copy</span>
                   </button>
                 </div>
