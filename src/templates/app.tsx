@@ -59,6 +59,11 @@ export const App = ({ children, page }: AppProps) => (
               {page === "dashboard" && "Dashboard"}
               {page === "jobs" && "Jobs"}
               {page === "settings" && "Settings"}
+              {page === "compose" && "Compose"}
+              {page === "audio" && "Audio"}
+              {page === "image" && "Image"}
+              {page === "video" && "Video"}
+              {page === "text" && "Text"}
               {!page && "🌀◝(ᵔᗜᵔ)◜"}
             </h1>
           </div>
@@ -101,6 +106,38 @@ export const App = ({ children, page }: AppProps) => (
               id="sidebar-jobs-summary"
               icon={<Icons.Jobs />}
             />
+            <li className="menu-title">Create</li>
+            <SidebarItem
+              href="/create/compose"
+              label="Compose"
+              id="sidebar-compose"
+              icon={<Icons.Compose />}
+            />
+            <SidebarItem
+              href="/create/image"
+              label="Image"
+              id="sidebar-image"
+              icon={<Icons.Image />}
+            />
+            <SidebarItem
+              href="/create/video"
+              label="Video"
+              id="sidebar-video"
+              icon={<Icons.Video />}
+            />
+            <SidebarItem
+              href="/create/audio"
+              label="Audio"
+              id="sidebar-audio"
+              icon={<Icons.Audio />}
+            />
+            <SidebarItem
+              href="/create/text"
+              label="Text"
+              id="sidebar-text"
+              icon={<Icons.Text />}
+            />
+            <li className="menu-title">System</li>
             <SidebarItem
               href="/settings"
               label="Settings"
