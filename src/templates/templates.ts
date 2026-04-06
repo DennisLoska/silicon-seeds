@@ -8,7 +8,7 @@ import { dashboard } from "./dashboard";
 import { settings } from "./settings";
 import { Job } from "../events/events";
 import { OobHeader as header } from "./oob-header";
-import { eventsListFragment } from "./events-list";
+import { EventList } from "./events-list";
 import { JobDetails, Jobs, JobTabs } from "./jobs";
 
 export namespace Templates {
@@ -21,7 +21,7 @@ export namespace Templates {
   export const JobDetailsFragment = JobDetails;
   export const JobTabsFragment = JobTabs;
   export const JobsFragment = Jobs;
-  export const EventList = (jobId: string) => eventsListFragment(jobId);
+  export const EventListFragment = EventList;
   export const Dashboard = () => dashboard();
   export const Settings = () => settings();
   export const OobHeader = header;
