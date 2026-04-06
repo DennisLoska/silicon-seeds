@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { Templates } from "../../templates/templates";
-import { jobDetailContent } from "../../templates/jobs";
+import { jobDetailContent, tabs } from "../../templates/jobs";
 
 const app = new Hono();
 
@@ -48,11 +48,15 @@ app.get("/job/:jobId", async (c) => {
   if (c.req.header("HX-Request")) {
     // HTMX request - return content wrapped in #job-content-area div
     // This allows innerHTML swap to replace the entire div while keeping sidebar
+    const JobTabs = tabs(jobId, tab);
     const content = await jobDetailContent(jobId, tab);
     return c.html(
       <>
-        <div id="job-content-area" className="min-h-[500px]">
-          {content}
+        <div id="job-tabs-container">
+          {JobTabs}
+          <div id="job-content-area" className="min-h-[500px] py-4">
+            {content}
+          </div>
         </div>
         <div id="header-title" hx-swap-oob="true">
           <h1 className="text-xl font-bold">Job</h1>
