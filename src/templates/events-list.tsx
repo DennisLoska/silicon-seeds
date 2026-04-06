@@ -3,6 +3,10 @@ import { DB } from "../db/db";
 import { Event, JobStatus } from "../events/events";
 import { Icons } from "./icons";
 
+export interface EventListProps {
+  jobId: string;
+}
+
 const EVENT_LABELS = {
   [Event.NewImagePrompt]: "Image Prompt",
   [Event.NewVideoPrompt]: "Video Prompt",
@@ -17,7 +21,7 @@ const EVENT_ICONS = {
   [Event.NewAudioPrompt]: "🎵",
 };
 
-export async function eventsListFragment(jobId: string) {
+export const EventList = async ({ jobId }: EventListProps) => {
   const jobEvents = await DB.Events.findByJobId(jobId);
 
   if (jobEvents.length === 0) {

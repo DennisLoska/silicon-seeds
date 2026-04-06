@@ -3,6 +3,9 @@ import { Templates } from "../../templates/templates";
 import { DB } from "../../db/db";
 import { Api } from "../api";
 
+const { JobsFragment, JobTabsFragment, JobDetailsFragment, EventListFragment } =
+  Templates;
+
 const app = new Hono();
 const { Layout, App } = Templates;
 const { OobHeader: OobHeaderComponent } = Templates;
@@ -26,11 +29,10 @@ app.get("/", async (c) => {
 
   // Default to first job from filtered list
   const selectedJobId = jobId || jobs[0].id;
-  const JobDetail = await Templates.JobsFragment(selectedJobId, filter, tab);
 
   return Api.renderFragment(
     c,
-    () => JobDetail,
+    () => <JobsFragment jobId={selectedJobId} filter={filter} tab={tab} />,
     "jobs",
     () => oobHeaderElement,
   );
@@ -44,14 +46,12 @@ app.get("/details/:jobId", async (c) => {
   if (c.req.header("HX-Request")) {
     // HTMX request - return content wrapped in #job-content-area div
     // This allows innerHTML swap to replace the entire div while keeping sidebar
-    const JobTabs = Templates.JobTabsFragment(jobId, filter, tab);
-    const content = await Templates.JobDetailsFragment(jobId, tab);
     return c.html(
       <>
         <div id="job-tabs-container">
-          {JobTabs}
+          <JobTabsFragment jobId={jobId} filter={filter} tab={tab} />
           <div id="job-content-area" className="min-h-[500px] py-4">
-            {content}
+            {await (<JobDetailsFragment jobId={jobId} activeTab={tab} />)}
           </div>
         </div>
         <div id="header-title" hx-swap-oob="true">
@@ -62,10 +62,11 @@ app.get("/details/:jobId", async (c) => {
   }
 
   // Full page load - return complete layout with sidebar
-  const jobDetails = await Templates.JobsFragment(jobId, filter, tab);
   return c.html(
     <Layout>
-      <App>{jobDetails}</App>
+      <App>
+        <JobsFragment jobId={jobId} filter={filter} tab={tab} />
+      </App>
     </Layout>,
   );
 });
@@ -78,8 +79,7 @@ app.get("/events", async (c) => {
     );
   }
 
-  const EventList = await Templates.EventList(jobId);
-  return c.html(EventList);
+  return c.html(await (<EventListFragment jobId={jobId} />));
 });
 
 export default app;

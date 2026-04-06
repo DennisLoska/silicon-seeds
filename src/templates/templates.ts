@@ -3,13 +3,13 @@ import { layout } from "./layout";
 import { Status } from "./status";
 import { Media } from "./media";
 import { Events } from "./events";
-import { jobDetailsFragment, jobs, jobTabs } from "./jobs";
 import { NotSelected } from "./not-selected";
 import { dashboard } from "./dashboard";
 import { settings } from "./settings";
 import { Job } from "../events/events";
 import { OobHeader as header } from "./oob-header";
-import { eventsListFragment } from "./events-list";
+import { EventList } from "./events-list";
+import { JobDetails, Jobs, JobTabs } from "./jobs";
 
 export namespace Templates {
   export const App = application;
@@ -18,10 +18,10 @@ export namespace Templates {
   export const MediaFragment = (mediaData: any) => Media(mediaData);
   export const EventsFragment = (job: Job) => Events(job);
   export const NotSelectedFragment = NotSelected;
-  export const JobDetailsFragment = jobDetailsFragment;
-  export const JobTabsFragment = jobTabs;
-  export const JobsFragment = jobs;
-  export const EventList = (jobId: string) => eventsListFragment(jobId);
+  export const JobDetailsFragment = JobDetails;
+  export const JobTabsFragment = JobTabs;
+  export const JobsFragment = Jobs;
+  export const EventListFragment = EventList;
   export const Dashboard = () => dashboard();
   export const Settings = () => settings();
   export const OobHeader = header;
