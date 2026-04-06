@@ -301,7 +301,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
 };
 
 export const JobTabs = ({ jobId, filter, tab }: JobTabsProps) => (
-  <div className="bg-base-200 px-6 py-0 -mt-6 mx-[-1.5rem] rounded-t-lg border-b border-base-300">
+    <div className="sticky top-[-1.5rem] z-10 bg-base-100 px-6 py-0 -mt-6 mx-[-1.5rem] border border-base-300 shadow-sm">
     <div className="tabs w-full" role="tablist">
       <button
         className={`tab rounded-t-lg ${tab === "status" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
