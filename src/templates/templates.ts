@@ -9,17 +9,19 @@ import { dashboard } from "./dashboard";
 import { settings } from "./settings";
 import { Job } from "../events/events";
 import { OobHeader as header } from "./oob-header";
+import { eventsListFragment } from "./events-list";
 
 export namespace Templates {
   export const app = application;
-  export const layoutPage = layout;
+  export const Layout = layout;
   export const statusFragment = (job: Job) => status(job);
   export const mediaFragment = (job: Job, mediaData?: any) =>
     media(job, mediaData);
   export const eventsFragment = (job: Job) => events(job);
   export const notSelectedFragment = notSelected;
   export const jobsFragment = jobs;
+  export const eventList = (jobId: string) => eventsListFragment(jobId);
   export const Dashboard = dashboard();
   export const Settings = settings();
-  export const oobHeader = header;
+  export const OobHeader = header;
 }

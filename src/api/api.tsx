@@ -7,7 +7,6 @@ import { Logger } from "../logger/logger";
 import { serveStatic } from "hono/bun";
 import apiRoutes from "./api/index";
 import fragmentRoutes from "./fragment";
-import eventsRoutes from "./events";
 import dashboardRoutes from "./dashboard";
 import settingsRoutes from "./settings";
 import jobsRoutes from "./jobs/jobs";
@@ -39,7 +38,9 @@ export namespace Api {
     OobElement?: JSX.Element,
   ) {
     if (!c.req.header("HX-Request")) {
-      return c.html(Templates.layoutPage(Templates.app(Fragment, page)));
+      return c.html(
+        <Templates.Layout children={Templates.app(Fragment, page)} />,
+      );
     }
 
     // If it's an HTMX request, just return the fragment
@@ -134,7 +135,7 @@ app.use("/assets/*", async (c) => {
 
 app.use(async (c, next) => {
   c.setRenderer((content) => {
-    return c.html(Templates.layoutPage(content));
+    return c.html(<Templates.Layout children={content} />);
   });
 
   await next();
@@ -146,7 +147,7 @@ app.get("/", async (c) => {
     c,
     Templates.Dashboard,
     "dashboard",
-    Templates.oobHeader("Dashboard"),
+    <Templates.OobHeader title={"Dashboard"} />,
   );
 });
 
@@ -173,4 +174,3 @@ app.route("/dashboard", dashboardRoutes);
 app.route("/settings", settingsRoutes);
 
 app.route("/api/fragment", fragmentRoutes);
-app.route("/api/events", eventsRoutes);

@@ -68,7 +68,7 @@ app.get("/job/:jobId", async (c) => {
 
   // Full page load - return complete layout with sidebar
   const jobDetails = await Templates.jobsFragment(jobId, filter, tab);
-  return c.html(Templates.layoutPage(Templates.app(jobDetails)));
+  return c.html(<Templates.Layout children={Templates.app(jobDetails)} />);
 });
 
 export default app;

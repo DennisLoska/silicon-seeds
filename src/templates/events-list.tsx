@@ -1,7 +1,7 @@
 import { JSX } from "hono/jsx";
 import { DB } from "../db/db";
 import { Event, JobStatus } from "../events/events";
-import { STATUS_ICONS_SMALL, DOWNLOAD_ICON_SMALL, COPY_ICON } from "./icons";
+import { Icons } from "./icons";
 
 const EVENT_LABELS = {
   [Event.NewImagePrompt]: "Image Prompt",
@@ -100,7 +100,7 @@ export async function eventsListFragment(jobId: string) {
             download
             className="btn btn-sm btn-primary"
           >
-            {DOWNLOAD_ICON_SMALL}
+            {Icons.DOWNLOAD_ICON_SMALL}
             Download
           </a>
         </div>
@@ -183,7 +183,11 @@ export async function eventsListFragment(jobId: string) {
                       : "badge badge-warning text-xs"
                   }
                 >
-                  {STATUS_ICONS_SMALL[isComplete ? "complete" : "pending"]}
+                  {
+                    Icons.STATUS_ICONS_SMALL[
+                      isComplete ? "complete" : "pending"
+                    ]
+                  }
                 </span>
               </div>
             </summary>
@@ -205,7 +209,7 @@ export async function eventsListFragment(jobId: string) {
                     onclick={`navigator.clipboard.writeText("${escapeForJsString(evt.prompt || "")}")`}
                     className="btn btn-sm btn-secondary mt-2"
                   >
-                    {COPY_ICON}
+                    {Icons.COPY_ICON}
                     <span className="ml-1">Copy</span>
                   </button>
                 </div>

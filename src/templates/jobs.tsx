@@ -2,7 +2,7 @@ import { Templates } from "./templates";
 import { DB } from "../db/db";
 import { Job } from "../events/events";
 import { truncateJobId } from "./utils";
-import { NEW_JOB_ICON, DELETE_ICON, STATUS_ICONS_SMALL } from "./icons";
+import { Icons } from "./icons";
 
 const filterMap = {
   all: "All",
@@ -170,7 +170,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
           hx-trigger="click"
         >
           New Job
-          {NEW_JOB_ICON}
+          {Icons.NEW_JOB_ICON}
         </button>
         <details className="dropdown">
           <summary className="btn btn-md">
@@ -243,7 +243,11 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
                 <span
                   className={`badge ${isCompleted ? "badge-success" : "badge-warning"}`}
                 >
-                  {STATUS_ICONS_SMALL[isCompleted ? "complete" : "pending"]}
+                  {
+                    Icons.STATUS_ICONS_SMALL[
+                      isCompleted ? "complete" : "pending"
+                    ]
+                  }
                 </span>
                 <div className="flex flex-col items-start">
                   <span
@@ -269,7 +273,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
                 hx-swap="outerHTML"
                 title="Delete job"
               >
-                {DELETE_ICON}
+                {Icons.DELETE_ICON}
               </button>
             </li>
           );

@@ -18,7 +18,9 @@ app.get("/", async (c) => {
 
   // Full page load - return complete layout with sidebar
   return c.html(
-    Templates.layoutPage(Templates.app(Templates.Settings, "settings")),
+    <Templates.Layout
+      children={Templates.app(Templates.Settings, "settings")}
+    />,
   );
 });
 

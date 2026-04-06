@@ -1,6 +1,6 @@
 import { Child } from "hono/jsx";
 
-export const layout = (children: Child) => (
+export const layout = ({ children }: { children: Child }) => (
   <html lang="en" data-theme="bumblebee">
     <head>
       <meta charset="UTF-8" />
