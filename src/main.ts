@@ -10,6 +10,8 @@ import { VideoGenerator } from "./video/video-generator";
 // - Optimize WAN2.2 workflow
 // - env files: dev, prod
 // - db integration
+// - ability to resume or pause a job
+// - ability to re-generate a specific asset
 //
 // Job
 // - user initiated retry on individual assets (or work with batches)

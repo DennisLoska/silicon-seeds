@@ -13,6 +13,10 @@ export const events = async (job: Job, activeTab?: string) => {
         {/* Skeleton loading state */}
         <span className="skeleton skeleton-text">Melting some GPUs...</span>
       </div>
+      {/* Fallback when no events */}
+      <div id="events-container" className="hidden">
+        <p>Events will appear here once the job runs</p>
+      </div>
     </div>
   );
 };

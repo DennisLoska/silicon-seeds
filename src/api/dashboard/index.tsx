@@ -12,12 +12,16 @@ app.get("/", async (c) => {
         <div id="header-title" hx-swap-oob="true">
           <h1 className="text-xl font-bold">Dashboard</h1>
         </div>
-      </>
+      </>,
     );
   }
 
   // Full page load - return complete layout with sidebar
-  return c.html(Templates.app(Templates.dashboardFragment(), undefined, "dashboard"));
+  return c.html(
+    Templates.layoutPage(
+      Templates.app(Templates.dashboardFragment(), "dashboard"),
+    ),
+  );
 });
 
 // Catch-all for trailing slash variants
