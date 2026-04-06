@@ -8,6 +8,7 @@ const app = new Hono();
 app.get("/", async (c) => {
   const jobId = c.req.query("job_id") ?? null;
   const tab = c.req.query("tab") ?? "status";
+  const filter = c.req.query("filter") ?? "all";
 
   const OobHeader = () => (
     <div id="header-title" hx-swap-oob="true">

@@ -154,7 +154,7 @@ const jobListSidebar = async (activeJobId?: string, filter?: string) => {
   }
 
   return (
-    <>
+    <div id="job-sidebar">
       {/* Filter dropdown - wrapped for hx-target inheritance */}
       <div className="sticky top-0 z-10 bg-base-100 flex gap-2 px-4 py-0 pt-4 pb-4">
         <button
@@ -262,7 +262,7 @@ const jobListSidebar = async (activeJobId?: string, filter?: string) => {
           );
         })}
       </ul>
-    </>
+    </div>
   );
 };
 
@@ -395,7 +395,10 @@ export const jobs = async (jobId: string, activeTab?: string) => {
   }
 
   return (
-    <div className="drawer lg:drawer-open min-h-screen bg-base-100">
+    <div
+      id="job-details"
+      className="drawer lg:drawer-open min-h-screen bg-base-100"
+    >
       <input id="sidebar-toggle" type="checkbox" className="drawer-toggle" />
 
       <div className="drawer-content">
