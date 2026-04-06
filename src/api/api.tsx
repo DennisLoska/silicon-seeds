@@ -43,26 +43,25 @@ export namespace ApiServer {
 export namespace Api {
   export function renderFragment(
     c: Context,
-    fragment: () => JSX.Element,
+    Fragment: JSX.Element,
     page?: string,
-    oob?: () => JSX.Element,
+    OobElement?: JSX.Element,
   ) {
-    // If it's an HTMX request, just return the fragment
-    if (c.req.header("HX-Request")) {
-      if (oob) {
-        return c.html(
-          <>
-            {fragment()}
-            {oob()}
-          </>,
-        );
-      }
-
-      return c.html(fragment());
+    if (!c.req.header("HX-Request")) {
+      return c.html(Templates.layoutPage(Templates.app(Fragment, page)));
     }
 
-    // Otherwise, wrap it in the full application layout for a browser load
-    return c.html(Templates.layoutPage(Templates.app(fragment(), page)));
+    // If it's an HTMX request, just return the fragment
+    if (!OobElement) {
+      return c.html(Fragment);
+    }
+
+    return c.html(
+      <>
+        {Fragment}
+        {OobElement}
+      </>,
+    );
   }
 }
 
@@ -152,17 +151,11 @@ app.use(async (c, next) => {
 
 // Smart Root Route
 app.get("/", async (c) => {
-  const OobHeader = () => (
-    <div id="header-title" hx-swap-oob="true">
-      <h1 className="text-xl font-bold">Dashboard</h1>
-    </div>
-  );
-
   return Api.renderFragment(
     c,
-    Templates.dashboardFragment,
+    Templates.Dashboard,
     "dashboard",
-    OobHeader,
+    Templates.oobHeader("Dashboard"),
   );
 });
 

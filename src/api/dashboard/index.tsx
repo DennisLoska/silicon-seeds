@@ -8,7 +8,7 @@ app.get("/", async (c) => {
     // HTMX request - return content fragment + OOB header update
     return c.html(
       <>
-        {Templates.dashboardFragment()}
+        {Templates.Dashboard}
         <div id="header-title" hx-swap-oob="true">
           <h1 className="text-xl font-bold">Dashboard</h1>
         </div>
@@ -18,9 +18,7 @@ app.get("/", async (c) => {
 
   // Full page load - return complete layout with sidebar
   return c.html(
-    Templates.layoutPage(
-      Templates.app(Templates.dashboardFragment(), "dashboard"),
-    ),
+    Templates.layoutPage(Templates.app(Templates.Dashboard, "dashboard")),
   );
 });
 

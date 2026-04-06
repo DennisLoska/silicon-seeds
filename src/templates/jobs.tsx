@@ -4,6 +4,13 @@ import { Job } from "../events/events";
 import { truncateJobId } from "./utils";
 import { NEW_JOB_ICON, DELETE_ICON, STATUS_ICONS_SMALL } from "./icons";
 
+const filterMap = {
+  all: "All",
+  recent: "Recent",
+  pending: "Pending",
+  completed: "Completed",
+} as const;
+
 export const jobDetailContent = async (jobId: string, activeTab?: string) => {
   const job: Job = await DB.Jobs.findById(jobId);
 
@@ -105,8 +112,6 @@ export const jobDetailContent = async (jobId: string, activeTab?: string) => {
 // Helper function to render just the sidebar (for HTMX partial updates)
 const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
   let jobs = await DB.Jobs.list();
-  console.log(filter);
-  console.log(tab);
 
   // Apply filter if specified
   if (filter === "recent") {
@@ -168,7 +173,9 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
           {NEW_JOB_ICON}
         </button>
         <details className="dropdown">
-          <summary className="btn btn-md">Filter</summary>
+          <summary className="btn btn-md">
+            {filterMap[filter as keyof typeof filterMap]}
+          </summary>
           <ul className="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-52 mt-1.5">
             <li>
               <a

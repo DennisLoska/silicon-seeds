@@ -8,6 +8,7 @@ import { notSelected } from "./not-selected";
 import { dashboard } from "./dashboard";
 import { settings } from "./settings";
 import { Job } from "../events/events";
+import { OobHeader as header } from "./oob-header";
 
 export namespace Templates {
   export const app = application;
@@ -18,6 +19,7 @@ export namespace Templates {
   export const eventsFragment = (job: Job) => events(job);
   export const notSelectedFragment = notSelected;
   export const jobsFragment = jobs;
-  export const dashboardFragment = dashboard;
-  export const settingsFragment = settings;
+  export const Dashboard = dashboard();
+  export const Settings = settings();
+  export const oobHeader = header;
 }
