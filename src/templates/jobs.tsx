@@ -180,14 +180,14 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
   return (
     <div id="job-sidebar">
       {/* Filter dropdown - wrapped for hx-target inheritance */}
-      <div className="sticky top-0 z-10 bg-base-100 flex gap-2 px-4 py-0 pt-4 pb-4">
+      <div className="sticky top-0 z-10 bg-base-100 flex gap-2 px-4 py-0 pt-4 pb-4 border-b border-base-300">
         <button
           className="btn btn-primary btn-md flex justify-end"
           hx-post="/api/jobs/images"
           hx-trigger="click"
         >
           New Job
-          {Icons.NEW_JOB_ICON}
+          <Icons.NewJobIcon />
         </button>
         <details className="dropdown">
           <summary className="btn btn-md">
@@ -238,7 +238,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
         </details>
       </div>
 
-      <ul className="list max-w-[420px]">
+      <ul className="list lg:max-w-[420px] w-full">
         {jobs.map((jobItem) => {
           const date = new Date(jobItem.created_at).toLocaleString();
           const isActive = activeJobId === jobItem.id;
@@ -248,7 +248,11 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
           return (
             <li
               key={jobItem.id}
-              className={`list-row p-0 flex items-center justify-between rounded-sm shadow-sm hover:shadow-md transition-all ${isActive ? "bg-primary text-primary-content" : "hover:bg-base-300"}`}
+              className={`list-row p-0 flex items-center justify-between rounded-sm shadow-sm hover:shadow-md transition-all ${
+                isActive
+                  ? "bg-primary text-primary-content"
+                  : "hover:bg-base-300"
+              }`}
             >
               <div
                 className="flex items-center gap-2 cursor-pointer flex-grow-1 w-full h-full px-4 py-3"
@@ -258,13 +262,15 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
                 hx-push-url={`/jobs?job_id=${jobItem.id}&filter=${filter}&tab=${tab}`}
               >
                 <span
-                  className={`badge ${isCompleted ? "badge-success" : "badge-warning"}`}
+                  className={`badge ${
+                    isCompleted ? "badge-success" : "badge-warning"
+                  }`}
                 >
-                  {
-                    Icons.STATUS_ICONS_SMALL[
-                      isCompleted ? "complete" : "pending"
-                    ]
-                  }
+                  {isCompleted ? (
+                    <Icons.StatusCompleteSmall />
+                  ) : (
+                    <Icons.StatusPendingSmall />
+                  )}
                 </span>
                 <div className="flex flex-col items-start">
                   <span
@@ -290,7 +296,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
                 hx-swap="outerHTML"
                 title="Delete job"
               >
-                {Icons.DELETE_ICON}
+                <Icons.DeleteIcon />
               </button>
             </li>
           );
@@ -300,36 +306,31 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
   );
 };
 
+const TABS = [
+  { value: "status", label: "Status" },
+  { value: "media", label: "Media" },
+  { value: "events", label: "Events" },
+] as const;
+
 export const JobTabs = ({ jobId, filter, tab }: JobTabsProps) => (
-  <div className="bg-base-200 px-6 py-0 -mt-6 mx-[-1.5rem] rounded-t-lg border-b border-base-300">
+  <div className="sticky top-[-1.5rem] z-10 bg-base-100 px-6 py-0 -mt-6 mx-[-1.5rem] border-b border-base-300 shadow-sm">
     <div className="tabs w-full" role="tablist">
-      <button
-        className={`tab rounded-t-lg ${tab === "status" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
-        hx-get={`/jobs/details/${jobId}?tab=status`}
-        hx-target="#job-tabs-container"
-        hx-swap="innerHTML"
-        hx-push-url={`/jobs?job_id=${jobId}&filter=${filter}&tab=status`}
-      >
-        Status
-      </button>
-      <button
-        className={`tab rounded-t-lg ${tab === "media" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
-        hx-get={`/jobs/details/${jobId}?tab=media`}
-        hx-target="#job-tabs-container"
-        hx-swap="innerHTML"
-        hx-push-url={`/jobs?job_id=${jobId}&filter=${filter}&tab=media`}
-      >
-        Media
-      </button>
-      <button
-        className={`tab rounded-t-lg ${tab === "events" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
-        hx-get={`/jobs/details/${jobId}?tab=events`}
-        hx-target="#job-tabs-container"
-        hx-swap="innerHTML"
-        hx-push-url={`jobs?job_id=${jobId}&filter=${filter}&tab=events`}
-      >
-        Events
-      </button>
+      {TABS.map((t) => (
+        <button
+          key={t.value}
+          className={`tab ${
+            tab === t.value
+              ? "tab-active border-b-2 border-primary font-medium"
+              : "hover:bg-base-200"
+          }`}
+          hx-get={`/jobs/details/${jobId}?tab=${t.value}`}
+          hx-target="#job-tabs-container"
+          hx-swap="innerHTML"
+          hx-push-url={`/jobs?job_id=${jobId}&filter=${filter}&tab=${t.value}`}
+        >
+          {t.label}
+        </button>
+      ))}
     </div>
   </div>
 );
@@ -432,7 +433,7 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
       id="job-details"
       className="drawer lg:drawer-open min-h-screen bg-base-100"
     >
-      <input id="sidebar-toggle" type="checkbox" className="drawer-toggle" />
+      <input id="jobs-drawer" type="checkbox" className="drawer-toggle" />
 
       <div className="drawer-content">
         {/* Header */}
@@ -442,29 +443,17 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
           </div>
           <div className="flex-none lg:hidden">
             <label
-              htmlFor="sidebar-toggle"
+              htmlFor="jobs-drawer"
               className="btn btn-square btn-ghost"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                className="inline-block w-6 h-6 text-current"
-              >
-                <path
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M4 6h16M4 12h16M4 18h16"
-                ></path>
-              </svg>
-            </label>
+            ></label>
           </div>
         </header>
 
         {/* Main Content Area */}
-        <main className="p-6 flex-1 overflow-y-auto">
+        <main
+          className="p-6 flex-1 overflow-y-auto"
+          style={{ maxHeight: "calc(100vh - 4rem)" }}
+        >
           <div id="job-tabs-container" data-job-id={jobId}>
             {/* Tabs Section - Dedicated section with background and border, snaps to header/sidebar */}
             <JobTabs jobId={jobId} filter={filter} tab={tab} />
@@ -479,10 +468,21 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
       {/* Delete Confirmation Modal */}
       <dialog id="delete-confirm-modal" className="modal"></dialog>
 
+      {/* Floating Action Button for Job List (mobile only) */}
+      <label
+        htmlFor="jobs-drawer"
+        className="fixed bottom-6 right-6 btn btn-circle btn-primary shadow-lg lg:hidden z-50"
+        aria-label="Open job list"
+      >
+        <Icons.BurgerIcon />
+      </label>
+
       {/* Job List Sidebar */}
-      <aside className="drawer-side z-10 max-h-screen bg-base-100 border-r border-base-300 flex flex-col scrollbar-hide">
-        <label htmlFor="sidebar-toggle" className="drawer-overlay"></label>
-        <div className="scrollbar-hide">{jobSidebar(jobId, filter, tab)}</div>
+      <aside className="drawer-side z-10 max-h-screen bg-base-100 border-r border-base-300 flex flex-col scrollbar-hide w-full lg:w-auto">
+        <label htmlFor="jobs-drawer" className="drawer-overlay"></label>
+        <div className="scrollbar-hide w-full lg:w-auto">
+          {jobSidebar(jobId, filter, tab)}
+        </div>
       </aside>
     </div>
   );

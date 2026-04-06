@@ -104,7 +104,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
             download
             className="btn btn-sm btn-primary"
           >
-            {Icons.DOWNLOAD_ICON_SMALL}
+            <Icons.DownloadIconSmall />
             Download
           </a>
         </div>
@@ -168,7 +168,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
     return (
       <li key={evt.id}>
         {index > 0 && <hr className={lineClass} />}
-        <div className="timeline-end timeline-box xl:w-1/3 resize both overflow-auto border border-base-300 min-w-72 max-w-full">
+        <div className="timeline-end timeline-box scrollbar-hide w-full xl:w-1/3 resize both overflow-auto border border-base-300 min-w-72 max-w-full">
           <details className="w-full bg-base-100 open:bg-base-100">
             <summary className="cursor-pointer list-none p-4 hover:bg-base-200 rounded-lg transition-colors">
               <div className="flex items-center justify-between gap-4">
@@ -187,11 +187,11 @@ export const EventList = async ({ jobId }: EventListProps) => {
                       : "badge badge-warning text-xs"
                   }
                 >
-                  {
-                    Icons.STATUS_ICONS_SMALL[
-                      isComplete ? "complete" : "pending"
-                    ]
-                  }
+                  {isComplete ? (
+                    <Icons.StatusCompleteSmall />
+                  ) : (
+                    <Icons.StatusPendingSmall />
+                  )}
                 </span>
               </div>
             </summary>
@@ -210,10 +210,12 @@ export const EventList = async ({ jobId }: EventListProps) => {
                 <div className="flex justify-end">
                   <button
                     type="button"
-                    onclick={`navigator.clipboard.writeText("${escapeForJsString(evt.prompt || "")}")`}
+                    onclick={`navigator.clipboard.writeText("${escapeForJsString(
+                      evt.prompt || "",
+                    )}")`}
                     className="btn btn-sm btn-secondary mt-2"
                   >
-                    {Icons.COPY_ICON}
+                    <Icons.CopyIcon />
                     <span className="ml-1">Copy</span>
                   </button>
                 </div>
@@ -223,7 +225,11 @@ export const EventList = async ({ jobId }: EventListProps) => {
         </div>
         <div className="timeline-middle">
           <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-lg shadow-sm transition-all ${isComplete ? "bg-gradient-to-br from-success to-success/70" : "bg-base-200"}`}
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-lg shadow-sm transition-all ${
+              isComplete
+                ? "bg-gradient-to-br from-success to-success/70"
+                : "bg-base-200"
+            }`}
           >
             {EVENT_ICONS[evt.type]}
           </div>
@@ -238,7 +244,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
       {await Promise.all(eventItems)}
     </ul>
   );
-}
+};
 
 function escapeHtml(text: string): string {
   const htmlEscapes: Record<string, string> = {
