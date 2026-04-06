@@ -449,7 +449,7 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
         </header>
 
         {/* Main Content Area */}
-        <main className="p-6 flex-1 overflow-y-auto">
+        <main className="p-6 flex-1 overflow-y-auto" style={{ maxHeight: "calc(100vh - 4rem)" }}>
           <div id="job-tabs-container" data-job-id={jobId}>
             {/* Tabs Section - Dedicated section with background and border, snaps to header/sidebar */}
             <JobTabs jobId={jobId} filter={filter} tab={tab} />
