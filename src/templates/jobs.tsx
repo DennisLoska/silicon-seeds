@@ -4,6 +4,23 @@ import { Job } from "../events/events";
 import { truncateJobId } from "./utils";
 import { Icons } from "./icons";
 
+export interface JobsProps {
+  jobId: string;
+  filter: string;
+  tab: string;
+}
+
+export interface JobTabsProps {
+  jobId: string;
+  filter: string;
+  tab: string;
+}
+
+export interface JobDetailsProps {
+  jobId: string;
+  activeTab?: string;
+}
+
 const filterMap = {
   all: "All",
   recent: "Recent",
@@ -11,7 +28,7 @@ const filterMap = {
   completed: "Completed",
 } as const;
 
-export const jobDetailsFragment = async (jobId: string, activeTab?: string) => {
+export const JobDetails = async ({ jobId, activeTab }: JobDetailsProps) => {
   const job: Job = await DB.Jobs.findById(jobId);
 
   if (!job) {
@@ -283,7 +300,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
   );
 };
 
-export const jobTabs = (jobId: string, filter: string, tab: string) => (
+export const JobTabs = ({ jobId, filter, tab }: JobTabsProps) => (
   <div className="bg-base-200 px-6 py-0 -mt-6 mx-[-1.5rem] rounded-t-lg border-b border-base-300">
     <div className="tabs w-full" role="tablist">
       <button
@@ -317,7 +334,7 @@ export const jobTabs = (jobId: string, filter: string, tab: string) => (
   </div>
 );
 
-export const jobs = async (jobId: string, filter: string, tab: string) => {
+export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
   const job: Job = await DB.Jobs.findById(jobId);
 
   if (!job)
@@ -450,7 +467,7 @@ export const jobs = async (jobId: string, filter: string, tab: string) => {
         <main className="p-6 flex-1 overflow-y-auto">
           <div id="job-tabs-container" data-job-id={jobId}>
             {/* Tabs Section - Dedicated section with background and border, snaps to header/sidebar */}
-            {jobTabs(jobId, filter, tab)}
+            <JobTabs jobId={jobId} filter={filter} tab={tab} />
             {/* Content Area */}
             <div id="job-content-area" className="min-h-[500px] py-4">
               {tabFragment}

@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { Templates } from "../../templates/templates";
 import { DB } from "../../db/db";
 import { Api } from "../api";
+import type { JobsProps, JobTabsProps, JobDetailsProps } from "../../templates/jobs";
 
 const app = new Hono();
 const { Layout, App } = Templates;
