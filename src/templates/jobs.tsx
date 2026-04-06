@@ -300,48 +300,31 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
   );
 };
 
+const TABS = [
+  { value: "status", label: "Status" },
+  { value: "media", label: "Media" },
+  { value: "events", label: "Events" },
+] as const;
+
 export const JobTabs = ({ jobId, filter, tab }: JobTabsProps) => (
   <div className="sticky top-[-1.5rem] z-10 bg-base-100 px-6 py-0 -mt-6 mx-[-1.5rem] border-b border-base-300 shadow-sm">
     <div className="tabs w-full" role="tablist">
-      <button
-        className={`tab ${
-          tab === "status"
-            ? "tab-active border-b-2 border-primary font-medium"
-            : "hover:bg-base-200"
-        }`}
-        hx-get={`/jobs/details/${jobId}?tab=status`}
-        hx-target="#job-tabs-container"
-        hx-swap="innerHTML"
-        hx-push-url={`/jobs?job_id=${jobId}&filter=${filter}&tab=status`}
-      >
-        Status
-      </button>
-      <button
-        className={`tab ${
-          tab === "media"
-            ? "tab-active border-b-2 border-primary font-medium"
-            : "hover:bg-base-200"
-        }`}
-        hx-get={`/jobs/details/${jobId}?tab=media`}
-        hx-target="#job-tabs-container"
-        hx-swap="innerHTML"
-        hx-push-url={`/jobs?job_id=${jobId}&filter=${filter}&tab=media`}
-      >
-        Media
-      </button>
-      <button
-        className={`tab ${
-          tab === "events"
-            ? "tab-active border-b-2 border-primary font-medium"
-            : "hover:bg-base-200"
-        }`}
-        hx-get={`/jobs/details/${jobId}?tab=events`}
-        hx-target="#job-tabs-container"
-        hx-swap="innerHTML"
-        hx-push-url={`jobs?job_id=${jobId}&filter=${filter}&tab=events`}
-      >
-        Events
-      </button>
+      {TABS.map((t) => (
+        <button
+          key={t.value}
+          className={`tab ${
+            tab === t.value
+              ? "tab-active border-b-2 border-primary font-medium"
+              : "hover:bg-base-200"
+          }`}
+          hx-get={`/jobs/details/${jobId}?tab=${t.value}`}
+          hx-target="#job-tabs-container"
+          hx-swap="innerHTML"
+          hx-push-url={`/jobs?job_id=${jobId}&filter=${filter}&tab=${t.value}`}
+        >
+          {t.label}
+        </button>
+      ))}
     </div>
   </div>
 );
