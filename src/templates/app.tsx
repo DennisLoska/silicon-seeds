@@ -6,7 +6,6 @@ interface AppProps {
   page?: string;
 }
 
-// Reusable components
 const DrawerToggleButton = () => (
   <label htmlFor="main-drawer" className="btn btn-ghost btn-circle btn-sm">
     <Icons.Drawer />
@@ -105,6 +104,12 @@ export const App = ({ children, page }: AppProps) => (
               label="Jobs"
               id="sidebar-jobs-summary"
               icon={<Icons.Jobs />}
+            />
+            <SidebarItem
+              href="/gallery"
+              label="Gallery"
+              id="sidebar-gallery"
+              icon={<Icons.Gallery />}
             />
             <li className="menu-title">Create</li>
             <SidebarItem
