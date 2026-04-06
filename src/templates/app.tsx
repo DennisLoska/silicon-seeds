@@ -44,7 +44,7 @@ const SidebarItem = ({ href, label, id, icon }: SidebarItemProps) => (
   </li>
 );
 
-export const app = ({ children, page }: AppProps) => {
+export const App = ({ children, page }: AppProps) => {
   return (
     <>
       <div className="drawer lg:drawer-open min-h-screen bg-base-100">

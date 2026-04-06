@@ -1,19 +1,19 @@
-import { app as application } from "./app";
-import { layout } from "./layout";
+import { App as appComponent } from "./app";
+import { Layout as layoutComponent } from "./layout";
 import { Status } from "./status";
 import { Media } from "./media";
 import { Events } from "./events";
 import { NotSelected } from "./not-selected";
-import { dashboard } from "./dashboard";
-import { settings } from "./settings";
+import { Dashboard as dashboardComponent } from "./dashboard";
+import { Settings as settingsComponent } from "./settings";
 import { Job } from "../events/events";
-import { OobHeader as header } from "./oob-header";
+import { OobHeader as oobHeaderComponent } from "./oob-header";
 import { EventList } from "./events-list";
 import { JobDetails, Jobs, JobTabs } from "./jobs";
 
 export namespace Templates {
-  export const App = application;
-  export const Layout = layout;
+  export const App = appComponent;
+  export const Layout = layoutComponent;
   export const StatusFragment = (job: Job) => Status(job);
   export const MediaFragment = (mediaData: any) => Media(mediaData);
   export const EventsFragment = (job: Job) => Events(job);
@@ -22,7 +22,8 @@ export namespace Templates {
   export const JobTabsFragment = JobTabs;
   export const JobsFragment = Jobs;
   export const EventListFragment = EventList;
-  export const Dashboard = () => dashboard();
-  export const Settings = () => settings();
-  export const OobHeader = header;
+  export const Dashboard = dashboardComponent;
+  export const Settings = settingsComponent;
+  export const OobHeader = oobHeaderComponent;
 }
+
