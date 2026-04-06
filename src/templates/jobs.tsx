@@ -170,7 +170,7 @@ const jobListSidebar = async (activeJobId?: string, filter?: string) => {
           <ul className="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-52 mt-1.5">
             <li>
               <a
-                hx-get="/api/jobs/list-view?page=jobs&filter=all"
+                hx-get="/api/jobs?filter=all"
                 hx-target="#job-content-container"
                 hx-swap="innerHTML"
               >
@@ -179,7 +179,7 @@ const jobListSidebar = async (activeJobId?: string, filter?: string) => {
             </li>
             <li>
               <a
-                hx-get="/api/jobs/list-view?page=jobs&filter=recent"
+                hx-get="/api/jobs?filter=recent"
                 hx-target="#job-content-container"
                 hx-swap="innerHTML"
               >
@@ -188,7 +188,7 @@ const jobListSidebar = async (activeJobId?: string, filter?: string) => {
             </li>
             <li>
               <a
-                hx-get="/api/jobs/list-view?page=jobs&filter=pending"
+                hx-get="/api/jobs?filter=pending"
                 hx-target="#job-content-container"
                 hx-swap="innerHTML"
               >
@@ -197,7 +197,7 @@ const jobListSidebar = async (activeJobId?: string, filter?: string) => {
             </li>
             <li>
               <a
-                hx-get="/api/jobs/list-view?page=jobs&filter=completed"
+                hx-get="/api/jobs?filter=completed"
                 hx-target="#job-content-container"
                 hx-swap="innerHTML"
               >
@@ -274,7 +274,7 @@ export const tabs = (jobId: string, currentTab: string) => (
         hx-get={`/api/fragment/job/${jobId}?tab=status`}
         hx-target="#job-tabs-container"
         hx-swap="innerHTML"
-        hx-push-url={`/jobs?job_id=${jobId}&tab=status&page=jobs`}
+        hx-push-url={`/jobs?job_id=${jobId}&tab=status`}
       >
         Status
       </button>
@@ -283,7 +283,7 @@ export const tabs = (jobId: string, currentTab: string) => (
         hx-get={`/api/fragment/job/${jobId}?tab=media`}
         hx-target="#job-tabs-container"
         hx-swap="innerHTML"
-        hx-push-url={`/jobs?job_id=${jobId}&tab=media&page=jobs`}
+        hx-push-url={`/jobs?job_id=${jobId}&tab=media`}
       >
         Media
       </button>
@@ -292,7 +292,7 @@ export const tabs = (jobId: string, currentTab: string) => (
         hx-get={`/api/fragment/job/${jobId}?tab=events`}
         hx-target="#job-tabs-container"
         hx-swap="innerHTML"
-        hx-push-url={`jobs?job_id=${jobId}&tab=events&page=jobs`}
+        hx-push-url={`jobs?job_id=${jobId}&tab=events`}
       >
         Events
       </button>
@@ -307,11 +307,11 @@ export const jobs = async (jobId: string, activeTab?: string) => {
     return <div className="p-6 text-error font-bold">Job not found</div>;
 
   const currentTab = activeTab || "status";
-  let contentFragment;
+  let tabFragment;
 
   switch (currentTab) {
     case "status":
-      contentFragment = Templates.statusFragment(job);
+      tabFragment = Templates.statusFragment(job);
       break;
     case "media":
       // Fetch media data and pass to template
@@ -385,13 +385,13 @@ export const jobs = async (jobId: string, activeTab?: string) => {
           }
         }
       }
-      contentFragment = Templates.mediaFragment(job, mediaData);
+      tabFragment = Templates.mediaFragment(job, mediaData);
       break;
     case "events":
-      contentFragment = Templates.eventsFragment(job);
+      tabFragment = Templates.eventsFragment(job);
       break;
     default:
-      contentFragment = Templates.statusFragment(job);
+      tabFragment = Templates.statusFragment(job);
   }
 
   return (
@@ -434,7 +434,7 @@ export const jobs = async (jobId: string, activeTab?: string) => {
             {tabs(jobId, currentTab)}
             {/* Content Area */}
             <div id="job-content-area" className="min-h-[500px] py-4">
-              {contentFragment}
+              {tabFragment}
             </div>
           </div>
         </main>
