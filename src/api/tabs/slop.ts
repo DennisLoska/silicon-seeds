@@ -4,18 +4,29 @@ import { DB } from "../db/db";
 
 const app = new Hono();
 
-// Media route handler for fetching job media assets (HTMX fragment)
 app.get("/:jobId", async (c) => {
   const jobId = c.req.param("jobId");
-  
-  // Fetch all events for this job
   const events = await DB.Events.findByJobId(jobId);
-  
-  // Get metadata for each event and group by mode
+
   const mediaData: {
-    images: Array<{ filename: string; subfolder: string; type: string; status: string }>;
-    videos: Array<{ filename: string; subfolder: string; type: string; status: string }>;
-    audio: Array<{ filename: string; subfolder: string; type: string; status: string }>;
+    images: Array<{
+      filename: string;
+      subfolder: string;
+      type: string;
+      status: string;
+    }>;
+    videos: Array<{
+      filename: string;
+      subfolder: string;
+      type: string;
+      status: string;
+    }>;
+    audio: Array<{
+      filename: string;
+      subfolder: string;
+      type: string;
+      status: string;
+    }>;
     pending: Array<{ mode: string; filename: string | null; status: string }>;
   } = {
     images: [],
@@ -23,18 +34,15 @@ app.get("/:jobId", async (c) => {
     audio: [],
     pending: [],
   };
-  
-  // Process each event
+
   for (const event of events) {
     if (event.status === "pending") {
-      // Only video events have filename property
       mediaData.pending.push({
         mode: event.mode,
         filename: (event as any).filename ?? null,
         status: event.status,
       });
     } else {
-      // Completed event - get metadata
       const meta = await DB.Meta.findByEventId(event.id).catch(() => null);
       if (meta) {
         if (event.mode === "image") {
@@ -62,10 +70,8 @@ app.get("/:jobId", async (c) => {
       }
     }
   }
-  
-  // Render the media template with the fetched data
-  const job = { id: jobId, created_at: new Date().toISOString() };
-  return c.html(Templates.MediaFragment(job, mediaData));
+
+  return c.html(Templates.MediaFragment(mediaData));
 });
 
 export default app;

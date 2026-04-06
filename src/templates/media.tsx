@@ -1,4 +1,3 @@
-import { Job } from "../events/events";
 import { Icons } from "./icons";
 
 interface MediaData {
@@ -116,7 +115,7 @@ const MediaCard = ({ title, items, type, emptyMessage }: MediaCardProps) => (
   </div>
 );
 
-export const Media = async (job: Job, mediaData?: MediaData) => {
+export const Media = async (mediaData: MediaData) => {
   const data = mediaData || { images: [], videos: [], audio: [], pending: [] };
 
   return (

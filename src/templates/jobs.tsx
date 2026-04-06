@@ -97,7 +97,7 @@ export const jobDetailsFragment = async (jobId: string, activeTab?: string) => {
           }
         }
       }
-      contentFragment = Templates.MediaFragment(job, mediaData);
+      contentFragment = Templates.MediaFragment(mediaData);
       break;
     case "events":
       contentFragment = Templates.EventsFragment(job);
@@ -401,7 +401,7 @@ export const jobs = async (jobId: string, filter: string, tab: string) => {
           }
         }
       }
-      tabFragment = Templates.MediaFragment(job, mediaData);
+      tabFragment = Templates.MediaFragment(mediaData);
       break;
     case "events":
       tabFragment = Templates.EventsFragment(job);

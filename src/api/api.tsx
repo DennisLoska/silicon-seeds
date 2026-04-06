@@ -33,25 +33,29 @@ export namespace ApiServer {
 export namespace Api {
   export function renderFragment(
     c: Context,
-    Fragment: JSX.Element,
+    Fragment: () => JSX.Element,
     page?: string,
-    OobElement?: JSX.Element,
+    OobElement?: () => JSX.Element,
   ) {
     if (!c.req.header("HX-Request")) {
       return c.html(
-        <Templates.Layout children={Templates.app(Fragment, page)} />,
+        <Templates.Layout>
+          <Templates.App page={page}>
+            <Fragment />
+          </Templates.App>
+        </Templates.Layout>,
       );
     }
 
     // If it's an HTMX request, just return the fragment
     if (!OobElement) {
-      return c.html(Fragment);
+      return c.html(<Fragment />);
     }
 
     return c.html(
       <>
-        {Fragment}
-        {OobElement}
+        <Fragment />
+        <OobElement />
       </>,
     );
   }
@@ -143,12 +147,9 @@ app.use(async (c, next) => {
 
 // Smart Root Route
 app.get("/", async (c) => {
-  return Api.renderFragment(
-    c,
-    Templates.Dashboard,
-    "dashboard",
-    <Templates.OobHeader title={"Dashboard"} />,
-  );
+  return Api.renderFragment(c, Templates.Dashboard, "dashboard", () => (
+    <Templates.OobHeader title={"Dashboard"} />
+  ));
 });
 
 app.onError((error, c) => {

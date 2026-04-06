@@ -11,7 +11,7 @@ app.get("/", async (c) => {
     );
   }
 
-  const EventList = await Templates.eventList(jobId);
+  const EventList = await Templates.EventList(jobId);
   return c.html(EventList);
 });
 

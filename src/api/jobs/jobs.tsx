@@ -19,13 +19,19 @@ app.get("/", async (c) => {
       <div className="p-6 text-base-content/50">No jobs found</div>
     );
 
-    return Api.renderFragment(c, <EmptyState />, "jobs", OobHeader);
+    return Api.renderFragment(c, EmptyState, "jobs", () => OobHeader);
   }
 
   // Default to first job from filtered list
   const selectedJobId = jobId || jobs[0].id;
   const JobDetail = await Templates.JobsFragment(selectedJobId, filter, tab);
-  return Api.renderFragment(c, JobDetail, "jobs", OobHeader);
+
+  return Api.renderFragment(
+    c,
+    () => JobDetail,
+    "jobs",
+    () => OobHeader,
+  );
 });
 
 app.get("/details/:jobId", async (c) => {
@@ -55,7 +61,11 @@ app.get("/details/:jobId", async (c) => {
 
   // Full page load - return complete layout with sidebar
   const jobDetails = await Templates.JobsFragment(jobId, filter, tab);
-  return c.html(<Templates.Layout children={Templates.app(jobDetails)} />);
+  return c.html(
+    <Templates.Layout>
+      <Templates.App>{jobDetails}</Templates.App>
+    </Templates.Layout>,
+  );
 });
 
 app.get("/events", async (c) => {
