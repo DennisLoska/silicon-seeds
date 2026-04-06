@@ -60,7 +60,7 @@ app.get("/job/:jobId", async (c) => {
           </div>
         </div>
         <div id="header-title" hx-swap-oob="true">
-          <h1 className="text-xl font-bold">Job</h1>
+          <h1 className="text-xl font-bold">Jobs</h1>
         </div>
       </>,
     );
