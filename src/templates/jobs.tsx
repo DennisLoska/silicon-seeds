@@ -11,7 +11,7 @@ const filterMap = {
   completed: "Completed",
 } as const;
 
-export const jobDetailContent = async (jobId: string, activeTab?: string) => {
+export const jobDetailsFragment = async (jobId: string, activeTab?: string) => {
   const job: Job = await DB.Jobs.findById(jobId);
 
   if (!job) {
@@ -23,7 +23,7 @@ export const jobDetailContent = async (jobId: string, activeTab?: string) => {
 
   switch (currentTab) {
     case "status":
-      contentFragment = Templates.statusFragment(job);
+      contentFragment = Templates.StatusFragment(job);
       break;
     case "media":
       // Fetch media data and pass to template
@@ -97,13 +97,13 @@ export const jobDetailContent = async (jobId: string, activeTab?: string) => {
           }
         }
       }
-      contentFragment = Templates.mediaFragment(job, mediaData);
+      contentFragment = Templates.MediaFragment(job, mediaData);
       break;
     case "events":
-      contentFragment = Templates.eventsFragment(job);
+      contentFragment = Templates.EventsFragment(job);
       break;
     default:
-      contentFragment = Templates.statusFragment(job);
+      contentFragment = Templates.StatusFragment(job);
   }
 
   return contentFragment;
@@ -283,12 +283,12 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
   );
 };
 
-export const tabs = (jobId: string, filter: string, tab: string) => (
+export const jobTabs = (jobId: string, filter: string, tab: string) => (
   <div className="bg-base-200 px-6 py-0 -mt-6 mx-[-1.5rem] rounded-t-lg border-b border-base-300">
     <div className="tabs w-full" role="tablist">
       <button
         className={`tab rounded-t-lg ${tab === "status" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
-        hx-get={`/api/fragment/job/${jobId}?tab=status`}
+        hx-get={`/jobs/details/${jobId}?tab=status`}
         hx-target="#job-tabs-container"
         hx-swap="innerHTML"
         hx-push-url={`/jobs?job_id=${jobId}&filter=${filter}&tab=status`}
@@ -297,7 +297,7 @@ export const tabs = (jobId: string, filter: string, tab: string) => (
       </button>
       <button
         className={`tab rounded-t-lg ${tab === "media" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
-        hx-get={`/api/fragment/job/${jobId}?tab=media`}
+        hx-get={`/jobs/details/${jobId}?tab=media`}
         hx-target="#job-tabs-container"
         hx-swap="innerHTML"
         hx-push-url={`/jobs?job_id=${jobId}&filter=${filter}&tab=media`}
@@ -306,7 +306,7 @@ export const tabs = (jobId: string, filter: string, tab: string) => (
       </button>
       <button
         className={`tab rounded-t-lg ${tab === "events" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
-        hx-get={`/api/fragment/job/${jobId}?tab=events`}
+        hx-get={`/jobs/details/${jobId}?tab=events`}
         hx-target="#job-tabs-container"
         hx-swap="innerHTML"
         hx-push-url={`jobs?job_id=${jobId}&filter=${filter}&tab=events`}
@@ -327,7 +327,7 @@ export const jobs = async (jobId: string, filter: string, tab: string) => {
 
   switch (tab) {
     case "status":
-      tabFragment = Templates.statusFragment(job);
+      tabFragment = Templates.StatusFragment(job);
       break;
     case "media":
       // Fetch media data and pass to template
@@ -401,13 +401,13 @@ export const jobs = async (jobId: string, filter: string, tab: string) => {
           }
         }
       }
-      tabFragment = Templates.mediaFragment(job, mediaData);
+      tabFragment = Templates.MediaFragment(job, mediaData);
       break;
     case "events":
-      tabFragment = Templates.eventsFragment(job);
+      tabFragment = Templates.EventsFragment(job);
       break;
     default:
-      tabFragment = Templates.statusFragment(job);
+      tabFragment = Templates.StatusFragment(job);
   }
 
   return (
@@ -450,7 +450,7 @@ export const jobs = async (jobId: string, filter: string, tab: string) => {
         <main className="p-6 flex-1 overflow-y-auto">
           <div id="job-tabs-container" data-job-id={jobId}>
             {/* Tabs Section - Dedicated section with background and border, snaps to header/sidebar */}
-            {tabs(jobId, filter, tab)}
+            {jobTabs(jobId, filter, tab)}
             {/* Content Area */}
             <div id="job-content-area" className="min-h-[500px] py-4">
               {tabFragment}

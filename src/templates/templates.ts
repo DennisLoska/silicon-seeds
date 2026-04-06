@@ -1,10 +1,10 @@
 import { app as application } from "./app";
 import { layout } from "./layout";
-import { status } from "./status";
-import { media } from "./media";
-import { events } from "./events";
-import { jobs } from "./jobs";
-import { notSelected } from "./not-selected";
+import { Status } from "./status";
+import { Media } from "./media";
+import { Events } from "./events";
+import { jobDetailsFragment, jobs, jobTabs } from "./jobs";
+import { NotSelected } from "./not-selected";
 import { dashboard } from "./dashboard";
 import { settings } from "./settings";
 import { Job } from "../events/events";
@@ -14,13 +14,15 @@ import { eventsListFragment } from "./events-list";
 export namespace Templates {
   export const app = application;
   export const Layout = layout;
-  export const statusFragment = (job: Job) => status(job);
-  export const mediaFragment = (job: Job, mediaData?: any) =>
-    media(job, mediaData);
-  export const eventsFragment = (job: Job) => events(job);
-  export const notSelectedFragment = notSelected;
-  export const jobsFragment = jobs;
-  export const eventList = (jobId: string) => eventsListFragment(jobId);
+  export const StatusFragment = (job: Job) => Status(job);
+  export const MediaFragment = (job: Job, mediaData?: any) =>
+    Media(job, mediaData);
+  export const EventsFragment = (job: Job) => Events(job);
+  export const NotSelectedFragment = NotSelected;
+  export const JobDetailsFragment = jobDetailsFragment;
+  export const JobTabsFragment = jobTabs;
+  export const JobsFragment = jobs;
+  export const EventList = (jobId: string) => eventsListFragment(jobId);
   export const Dashboard = dashboard();
   export const Settings = settings();
   export const OobHeader = header;

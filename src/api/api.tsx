@@ -167,10 +167,7 @@ app.notFound((c) => {
 });
 
 app.route("/api", apiRoutes);
-
-// pages
 app.route("/jobs", jobsRoutes);
 app.route("/dashboard", dashboardRoutes);
 app.route("/settings", settingsRoutes);
-
 app.route("/api/fragment", fragmentRoutes);

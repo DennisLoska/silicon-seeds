@@ -116,7 +116,7 @@ const MediaCard = ({ title, items, type, emptyMessage }: MediaCardProps) => (
   </div>
 );
 
-export const media = async (job: Job, mediaData?: MediaData) => {
+export const Media = async (job: Job, mediaData?: MediaData) => {
   const data = mediaData || { images: [], videos: [], audio: [], pending: [] };
 
   return (

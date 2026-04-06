@@ -1,6 +1,6 @@
 import { Job } from "../events/events";
 
-export const events = async (job: Job) => {
+export const Events = async (job: Job) => {
   return (
     <div className="space-y-4">
       <h2 className="text-3xl font-bold mb-4">Events</h2>

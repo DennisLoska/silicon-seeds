@@ -65,7 +65,7 @@ app.get("/:jobId", async (c) => {
   
   // Render the media template with the fetched data
   const job = { id: jobId, created_at: new Date().toISOString() };
-  return c.html(Templates.mediaFragment(job, mediaData));
+  return c.html(Templates.MediaFragment(job, mediaData));
 });
 
 export default app;

@@ -35,7 +35,7 @@ function calculateJobDuration(job: Job, events: any[]): string {
   return `${durationHours}h ${durationMinutes}m ${durationSeconds}s`;
 }
 
-export const status = async (job: Job) => {
+export const Status = async (job: Job) => {
   const events = await DB.Events.findByJobId(job.id);
   const isCompleted = events.some((e) => e.status === "complete");
   const completedCount = events.filter((e) => e.status === "complete").length;
