@@ -10,31 +10,21 @@ app.get("/", async (c) => {
   const tab = c.req.query("tab") ?? "status";
   const filter = c.req.query("filter") ?? "all";
 
-  const OobHeader = () => (
-    <div id="header-title" hx-swap-oob="true">
-      <h1 className="text-xl font-bold">Jobs</h1>
-    </div>
-  );
+  const jobs = await DB.Jobs.list();
 
-  if (jobId) {
-    const JobDetail = await Templates.jobsFragment(jobId, tab);
-    return Api.renderFragment(c, () => JobDetail, "jobs", OobHeader);
-  }
-
-  // Default to job details (most recent job) when no page is specified
-  const [firstJob] = await DB.Jobs.list();
-
-  if (!firstJob) {
-    // If no jobs exist, show empty state
+  // If no jobs match the filter, show empty state
+  if (jobs.length === 0) {
     const EmptyState = () => (
-      <div className="p-6 text-base-content/50">No jobs yet</div>
+      <div className="p-6 text-base-content/50">No jobs found</div>
     );
 
-    return Api.renderFragment(c, EmptyState, "jobs", OobHeader);
+    return Api.renderFragment(c, EmptyState, "jobs");
   }
 
-  const JobDetail = await Templates.jobsFragment(firstJob.id, tab);
-  return Api.renderFragment(c, () => JobDetail, "jobs", OobHeader);
+  // Default to first job from filtered list
+  const selectedJobId = jobId || jobs[0].id;
+  const JobDetail = await Templates.jobsFragment(selectedJobId, filter, tab);
+  return Api.renderFragment(c, () => JobDetail, "jobs");
 });
 
 export default app;

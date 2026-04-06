@@ -103,8 +103,10 @@ export const jobDetailContent = async (jobId: string, activeTab?: string) => {
 };
 
 // Helper function to render just the sidebar (for HTMX partial updates)
-const jobListSidebar = async (activeJobId?: string, filter?: string) => {
+const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
   let jobs = await DB.Jobs.list();
+  console.log(filter);
+  console.log(tab);
 
   // Apply filter if specified
   if (filter === "recent") {
@@ -170,36 +172,40 @@ const jobListSidebar = async (activeJobId?: string, filter?: string) => {
           <ul className="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-52 mt-1.5">
             <li>
               <a
-                hx-get="/api/jobs?filter=all"
-                hx-target="#job-content-container"
-                hx-swap="innerHTML"
+                hx-get="/jobs?filter=all"
+                hx-target="#job-details"
+                hx-swap="outerHTML"
+                hx-push-url="/jobs?filter=all"
               >
                 All
               </a>
             </li>
             <li>
               <a
-                hx-get="/api/jobs?filter=recent"
-                hx-target="#job-content-container"
-                hx-swap="innerHTML"
+                hx-get="/jobs?filter=recent"
+                hx-target="#job-details"
+                hx-swap="outerHTML"
+                hx-push-url="/jobs?filter=recent"
               >
                 Recent
               </a>
             </li>
             <li>
               <a
-                hx-get="/api/jobs?filter=pending"
-                hx-target="#job-content-container"
-                hx-swap="innerHTML"
+                hx-get="/jobs?filter=pending"
+                hx-target="#job-details"
+                hx-swap="outerHTML"
+                hx-push-url="/jobs?filter=pending"
               >
                 Pending
               </a>
             </li>
             <li>
               <a
-                hx-get="/api/jobs?filter=completed"
-                hx-target="#job-content-container"
-                hx-swap="innerHTML"
+                hx-get="/jobs?filter=completed"
+                hx-target="#job-details"
+                hx-swap="outerHTML"
+                hx-push-url="/jobs?filter=completed"
               >
                 Completed
               </a>
@@ -225,7 +231,7 @@ const jobListSidebar = async (activeJobId?: string, filter?: string) => {
                 hx-get={`/jobs?job_id=${jobItem.id}&tab=status`}
                 hx-target="#job-content-container"
                 hx-swap="innerHTML"
-                hx-push-url={`/jobs?job_id=${jobItem.id}&tab=status`}
+                hx-push-url={`/jobs?job_id=${jobItem.id}&filter=${filter}&tab=${tab}`}
               >
                 <span
                   className={`badge ${isCompleted ? "badge-success" : "badge-warning"}`}
@@ -266,33 +272,33 @@ const jobListSidebar = async (activeJobId?: string, filter?: string) => {
   );
 };
 
-export const tabs = (jobId: string, currentTab: string) => (
+export const tabs = (jobId: string, filter: string, tab: string) => (
   <div className="bg-base-200 px-6 py-0 -mt-6 mx-[-1.5rem] rounded-t-lg border-b border-base-300">
     <div className="tabs w-full" role="tablist">
       <button
-        className={`tab rounded-t-lg ${currentTab === "status" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
+        className={`tab rounded-t-lg ${tab === "status" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
         hx-get={`/api/fragment/job/${jobId}?tab=status`}
         hx-target="#job-tabs-container"
         hx-swap="innerHTML"
-        hx-push-url={`/jobs?job_id=${jobId}&tab=status`}
+        hx-push-url={`/jobs?job_id=${jobId}&filter=${filter}&tab=status`}
       >
         Status
       </button>
       <button
-        className={`tab rounded-t-lg ${currentTab === "media" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
+        className={`tab rounded-t-lg ${tab === "media" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
         hx-get={`/api/fragment/job/${jobId}?tab=media`}
         hx-target="#job-tabs-container"
         hx-swap="innerHTML"
-        hx-push-url={`/jobs?job_id=${jobId}&tab=media`}
+        hx-push-url={`/jobs?job_id=${jobId}&filter=${filter}&tab=media`}
       >
         Media
       </button>
       <button
-        className={`tab rounded-t-lg ${currentTab === "events" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
+        className={`tab rounded-t-lg ${tab === "events" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
         hx-get={`/api/fragment/job/${jobId}?tab=events`}
         hx-target="#job-tabs-container"
         hx-swap="innerHTML"
-        hx-push-url={`jobs?job_id=${jobId}&tab=events`}
+        hx-push-url={`jobs?job_id=${jobId}&filter=${filter}&tab=events`}
       >
         Events
       </button>
@@ -300,16 +306,15 @@ export const tabs = (jobId: string, currentTab: string) => (
   </div>
 );
 
-export const jobs = async (jobId: string, activeTab?: string) => {
+export const jobs = async (jobId: string, filter: string, tab: string) => {
   const job: Job = await DB.Jobs.findById(jobId);
 
   if (!job)
     return <div className="p-6 text-error font-bold">Job not found</div>;
 
-  const currentTab = activeTab || "status";
   let tabFragment;
 
-  switch (currentTab) {
+  switch (tab) {
     case "status":
       tabFragment = Templates.statusFragment(job);
       break;
@@ -434,7 +439,7 @@ export const jobs = async (jobId: string, activeTab?: string) => {
         <main className="p-6 flex-1 overflow-y-auto">
           <div id="job-tabs-container" data-job-id={jobId}>
             {/* Tabs Section - Dedicated section with background and border, snaps to header/sidebar */}
-            {tabs(jobId, currentTab)}
+            {tabs(jobId, filter, tab)}
             {/* Content Area */}
             <div id="job-content-area" className="min-h-[500px] py-4">
               {tabFragment}
@@ -449,7 +454,7 @@ export const jobs = async (jobId: string, activeTab?: string) => {
       {/* Job List Sidebar */}
       <aside className="drawer-side z-10 max-h-screen bg-base-100 border-r border-base-300 flex flex-col scrollbar-hide">
         <label htmlFor="sidebar-toggle" className="drawer-overlay"></label>
-        <div className="scrollbar-hide">{jobListSidebar(jobId, undefined)}</div>
+        <div className="scrollbar-hide">{jobSidebar(jobId, filter, tab)}</div>
       </aside>
     </div>
   );

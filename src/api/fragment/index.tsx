@@ -43,12 +43,13 @@ app.get("/delete-modal", async (c) => {
 
 app.get("/job/:jobId", async (c) => {
   const jobId = c.req.param("jobId");
-  const tab = c.req.query("tab") || "status";
+  const tab = c.req.query("tab") ?? "status";
+  const filter = c.req.query("filter") ?? "all";
 
   if (c.req.header("HX-Request")) {
     // HTMX request - return content wrapped in #job-content-area div
     // This allows innerHTML swap to replace the entire div while keeping sidebar
-    const JobTabs = tabs(jobId, tab);
+    const JobTabs = tabs(jobId, filter, tab);
     const content = await jobDetailContent(jobId, tab);
     return c.html(
       <>
@@ -66,7 +67,7 @@ app.get("/job/:jobId", async (c) => {
   }
 
   // Full page load - return complete layout with sidebar
-  const jobDetails = await Templates.jobsFragment(jobId, tab);
+  const jobDetails = await Templates.jobsFragment(jobId, filter, tab);
   return c.html(Templates.layoutPage(Templates.app(jobDetails)));
 });
 
