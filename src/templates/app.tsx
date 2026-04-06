@@ -28,7 +28,7 @@ interface SidebarItemProps {
 }
 
 const SidebarItem = ({ href, label, id, icon }: SidebarItemProps) => (
-  <li>
+  <li className="w-full">
     <a
       hx-get={href}
       hx-target="#job-content-container"
