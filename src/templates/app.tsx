@@ -57,7 +57,7 @@ export const app = ({ children, page }: AppProps) => {
               <DrawerToggleButton />
             </div>
             <div className="flex-1">
-              <h1 id="header-title" className="text-xl font-bold">
+              <h1 id="header-title" className="text-xl pl-1 font-bold">
                 {page === "dashboard" && "Dashboard"}
                 {page === "jobs" && "Jobs"}
                 {page === "settings" && "Settings"}
@@ -88,7 +88,7 @@ export const app = ({ children, page }: AppProps) => {
               hx-target="#job-content-container"
               hx-swap="innerHTML"
               hx-push-url="/"
-              className="flex items-center gap-3 p-4 w-full hover:bg-base-300 transition-colors"
+              className="flex items-center is-drawer-close:justify-center gap-3 p-4 w-full hover:bg-base-300 transition-colors"
             >
               <Icons.Logo />
               <span className="text-xl font-bold text-primary is-drawer-close:hidden whitespace-nowrap">
