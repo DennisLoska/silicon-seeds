@@ -181,13 +181,17 @@ export const EventList = async ({ jobId }: EventListProps) => {
                   </span>
                 </div>
                 <span
-                   className={
+                  className={
                     isComplete
                       ? "badge badge-success text-xs"
                       : "badge badge-warning text-xs"
                   }
                 >
-                  {isComplete ? <Icons.StatusCompleteSmall /> : <Icons.StatusPendingSmall />}
+                  {isComplete ? (
+                    <Icons.StatusCompleteSmall />
+                  ) : (
+                    <Icons.StatusPendingSmall />
+                  )}
                 </span>
               </div>
             </summary>
@@ -206,7 +210,9 @@ export const EventList = async ({ jobId }: EventListProps) => {
                 <div className="flex justify-end">
                   <button
                     type="button"
-                    onclick={`navigator.clipboard.writeText("${escapeForJsString(evt.prompt || "")}")`}
+                    onclick={`navigator.clipboard.writeText("${escapeForJsString(
+                      evt.prompt || "",
+                    )}")`}
                     className="btn btn-sm btn-secondary mt-2"
                   >
                     <Icons.CopyIcon />
@@ -219,7 +225,11 @@ export const EventList = async ({ jobId }: EventListProps) => {
         </div>
         <div className="timeline-middle">
           <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-lg shadow-sm transition-all ${isComplete ? "bg-gradient-to-br from-success to-success/70" : "bg-base-200"}`}
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-lg shadow-sm transition-all ${
+              isComplete
+                ? "bg-gradient-to-br from-success to-success/70"
+                : "bg-base-200"
+            }`}
           >
             {EVENT_ICONS[evt.type]}
           </div>

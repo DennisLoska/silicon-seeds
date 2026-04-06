@@ -248,7 +248,11 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
           return (
             <li
               key={jobItem.id}
-              className={`list-row p-0 flex items-center justify-between rounded-sm shadow-sm hover:shadow-md transition-all ${isActive ? "bg-primary text-primary-content" : "hover:bg-base-300"}`}
+              className={`list-row p-0 flex items-center justify-between rounded-sm shadow-sm hover:shadow-md transition-all ${
+                isActive
+                  ? "bg-primary text-primary-content"
+                  : "hover:bg-base-300"
+              }`}
             >
               <div
                 className="flex items-center gap-2 cursor-pointer flex-grow-1 w-full h-full px-4 py-3"
@@ -258,9 +262,15 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
                 hx-push-url={`/jobs?job_id=${jobItem.id}&filter=${filter}&tab=${tab}`}
               >
                 <span
-                  className={`badge ${isCompleted ? "badge-success" : "badge-warning"}`}
+                  className={`badge ${
+                    isCompleted ? "badge-success" : "badge-warning"
+                  }`}
                 >
-                  {isCompleted ? <Icons.StatusCompleteSmall /> : <Icons.StatusPendingSmall />}
+                  {isCompleted ? (
+                    <Icons.StatusCompleteSmall />
+                  ) : (
+                    <Icons.StatusPendingSmall />
+                  )}
                 </span>
                 <div className="flex flex-col items-start">
                   <span
@@ -440,7 +450,10 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
         </header>
 
         {/* Main Content Area */}
-        <main className="p-6 flex-1 overflow-y-auto" style={{ maxHeight: "calc(100vh - 4rem)" }}>
+        <main
+          className="p-6 flex-1 overflow-y-auto"
+          style={{ maxHeight: "calc(100vh - 4rem)" }}
+        >
           <div id="job-tabs-container" data-job-id={jobId}>
             {/* Tabs Section - Dedicated section with background and border, snaps to header/sidebar */}
             <JobTabs jobId={jobId} filter={filter} tab={tab} />

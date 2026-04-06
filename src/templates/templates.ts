@@ -26,4 +26,3 @@ export namespace Templates {
   export const Settings = settingsComponent;
   export const OobHeader = oobHeaderComponent;
 }
-
