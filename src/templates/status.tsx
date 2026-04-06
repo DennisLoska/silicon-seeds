@@ -1,8 +1,8 @@
 import { DB } from "../db/db";
 import { Job } from "../events/events";
-import { STATUS_ICONS } from "./icons";
+import { Icons } from "./icons";
 
-const EMPTY_STATE = (
+const EmptyState = () => (
   <div className="card bg-base-200 shadow-sm">
     <div className="card-body">
       <h2 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold">
@@ -35,7 +35,7 @@ function calculateJobDuration(job: Job, events: any[]): string {
   return `${durationHours}h ${durationMinutes}m ${durationSeconds}s`;
 }
 
-export const status = async (job: Job) => {
+export const Status = async (job: Job) => {
   const events = await DB.Events.findByJobId(job.id);
   const isCompleted = events.some((e) => e.status === "complete");
   const completedCount = events.filter((e) => e.status === "complete").length;
@@ -49,7 +49,7 @@ export const status = async (job: Job) => {
           <span
             className={`badge badge-xl ${isCompleted ? "badge-success" : "badge-warning"}`}
           >
-            {STATUS_ICONS[isCompleted ? "complete" : "pending"]}
+            {Icons.STATUS_ICONS[isCompleted ? "complete" : "pending"]}
           </span>
         </h2>
         <p className="text-base-content/60 mt-1">
@@ -106,9 +106,8 @@ export const status = async (job: Job) => {
           </div>
         </div>
       ) : (
-        EMPTY_STATE
+        <EmptyState />
       )}
     </div>
   );
 };
-

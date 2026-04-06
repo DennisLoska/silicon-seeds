@@ -73,12 +73,9 @@ export namespace DB {
     export async function deleteById(id: string) {
       // First delete all related events to avoid orphaned records
       await db.deleteFrom("events").where("job_id", "=", id).execute();
-      
+
       // Then delete the job
-      await db
-        .deleteFrom("jobs")
-        .where("id", "=", id)
-        .execute();
+      await db.deleteFrom("jobs").where("id", "=", id).execute();
     }
   }
 

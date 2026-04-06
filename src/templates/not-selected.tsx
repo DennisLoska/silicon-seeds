@@ -1,4 +1,4 @@
-export const notSelected = () => {
+export const NotSelected = () => {
   return (
     <div id="job-content-container" className="min-h-[500px]">
       <div

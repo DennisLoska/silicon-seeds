@@ -2,25 +2,26 @@ import { Hono } from "hono";
 import { Templates } from "../../templates/templates";
 
 const app = new Hono();
+const { Layout, App, Dashboard, OobHeader } = Templates;
 
 app.get("/", async (c) => {
+  // HTMX request - return content fragment + OOB header update
   if (c.req.header("HX-Request")) {
-    // HTMX request - return content fragment + OOB header update
     return c.html(
       <>
-        {Templates.dashboardFragment()}
-        <div id="header-title" hx-swap-oob="true">
-          <h1 className="text-xl font-bold">Dashboard</h1>
-        </div>
+        <Dashboard />
+        <OobHeader title="Dashboard" />
       </>,
     );
   }
 
   // Full page load - return complete layout with sidebar
   return c.html(
-    Templates.layoutPage(
-      Templates.app(Templates.dashboardFragment(), "dashboard"),
-    ),
+    <Layout>
+      <App page="dashboard">
+        <Dashboard />
+      </App>
+    </Layout>,
   );
 });
 

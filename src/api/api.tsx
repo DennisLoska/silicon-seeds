@@ -1,27 +1,19 @@
 import { Hono } from "hono";
 import { Utils } from "../utils/utils";
-import { text_to_image } from "./jobs/text-to-image";
-import { delete_job } from "./jobs/delete";
-import { script_to_scenes } from "./jobs/script-to-scenes";
-import { text_to_image_to_video } from "./jobs/text-to-image-to-video";
-import { video_transition } from "./jobs/video-transition";
-import { text_to_speech } from "./jobs/text-to-speech";
-import { text_to_instrumental } from "./jobs/text-to-instrumental";
-import { compose_video } from "./jobs/compose-video";
-import { text_to_text } from "./jobs/text-to-text";
 import { Metadata } from "../meta/meta";
-import { health } from "./health";
 import { Templates } from "../templates/templates";
 import { not_found } from "./not_found";
 import { Logger } from "../logger/logger";
 import { serveStatic } from "hono/bun";
-import fragmentRoutes from "./fragment";
-import eventsRoutes from "./events";
+import apiRoutes from "./api/index";
+import fragmentRoutes from "./fragments";
 import dashboardRoutes from "./dashboard";
 import settingsRoutes from "./settings";
 import jobsRoutes from "./jobs/jobs";
 import { Context } from "hono";
 import { JSX } from "hono/jsx/jsx-runtime";
+
+const { Layout, App, Dashboard, OobHeader } = Templates;
 
 const app = new Hono();
 
@@ -43,26 +35,31 @@ export namespace ApiServer {
 export namespace Api {
   export function renderFragment(
     c: Context,
-    fragment: () => JSX.Element,
+    Fragment: () => JSX.Element,
     page?: string,
-    oob?: () => JSX.Element,
+    OobElement?: () => JSX.Element,
   ) {
-    // If it's an HTMX request, just return the fragment
-    if (c.req.header("HX-Request")) {
-      if (oob) {
-        return c.html(
-          <>
-            {fragment()}
-            {oob()}
-          </>,
-        );
-      }
-
-      return c.html(fragment());
+    if (!c.req.header("HX-Request")) {
+      return c.html(
+        <Layout>
+          <App page={page}>
+            <Fragment />
+          </App>
+        </Layout>,
+      );
     }
 
-    // Otherwise, wrap it in the full application layout for a browser load
-    return c.html(Templates.layoutPage(Templates.app(fragment(), page)));
+    // If it's an HTMX request, just return the fragment
+    if (!OobElement) {
+      return c.html(<Fragment />);
+    }
+
+    return c.html(
+      <>
+        <Fragment />
+        <OobElement />
+      </>,
+    );
   }
 }
 
@@ -144,7 +141,7 @@ app.use("/assets/*", async (c) => {
 
 app.use(async (c, next) => {
   c.setRenderer((content) => {
-    return c.html(Templates.layoutPage(content));
+    return c.html(<Layout children={content} />);
   });
 
   await next();
@@ -152,18 +149,9 @@ app.use(async (c, next) => {
 
 // Smart Root Route
 app.get("/", async (c) => {
-  const OobHeader = () => (
-    <div id="header-title" hx-swap-oob="true">
-      <h1 className="text-xl font-bold">Dashboard</h1>
-    </div>
-  );
-
-  return Api.renderFragment(
-    c,
-    Templates.dashboardFragment,
-    "dashboard",
-    OobHeader,
-  );
+  return Api.renderFragment(c, Dashboard, "dashboard", () => (
+    <OobHeader title="Dashboard" />
+  ));
 });
 
 app.onError((error, c) => {
@@ -177,64 +165,12 @@ app.onError((error, c) => {
   );
 });
 
-app.get("/api/health", (c) => {
-  return health();
-});
-
 app.notFound((c) => {
   return not_found();
 });
 
-app.get("/api/jobs/text", async (c) => {
-  return text_to_text();
-});
-
-app.get("/api/jobs/images", async (c) => {
-  return text_to_image();
-});
-
-app.post("/api/jobs/images", async (c) => {
-  return text_to_image();
-});
-
-app.post("/api/jobs/scenes", async (c) => {
-  return script_to_scenes();
-});
-
-app.post("/api/jobs/videos", async (c) => {
-  return text_to_image_to_video();
-});
-
-app.get("/api/jobs/videos/compose", async (c) => {
-  return compose_video();
-});
-
-app.post("/api/jobs/videos/compose", async (c) => {
-  return compose_video();
-});
-
-app.post("/api/jobs/videos/transition", async (c) => {
-  return video_transition();
-});
-
-app.post("/api/jobs/tts", async (c) => {
-  return text_to_speech();
-});
-
-app.post("/api/jobs/instrumental", async (c) => {
-  return text_to_instrumental();
-});
-
-// Delete job endpoint - RESTful: DELETE /api/jobs/:job_id
-app.delete("/api/jobs/:job_id", async (c) => {
-  const jobId = c.req.param("job_id");
-  return delete_job(jobId);
-});
-
-// pages
+app.route("/api", apiRoutes);
 app.route("/jobs", jobsRoutes);
 app.route("/dashboard", dashboardRoutes);
 app.route("/settings", settingsRoutes);
-
-app.route("/api/fragment", fragmentRoutes);
-app.route("/api/events", eventsRoutes);
+app.route("/api/fragments", fragmentRoutes);
