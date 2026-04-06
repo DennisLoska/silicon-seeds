@@ -301,10 +301,14 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
 };
 
 export const JobTabs = ({ jobId, filter, tab }: JobTabsProps) => (
-    <div className="sticky top-[-1.5rem] z-10 bg-base-100 px-6 py-0 -mt-6 mx-[-1.5rem] border border-base-300 shadow-sm">
+  <div className="sticky top-[-1.5rem] z-10 bg-base-100 px-6 py-0 -mt-6 mx-[-1.5rem] border-b border-base-300 shadow-sm">
     <div className="tabs w-full" role="tablist">
       <button
-        className={`tab rounded-t-lg ${tab === "status" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
+        className={`tab ${
+          tab === "status"
+            ? "tab-active border-b-2 border-primary font-medium"
+            : "hover:bg-base-200"
+        }`}
         hx-get={`/jobs/details/${jobId}?tab=status`}
         hx-target="#job-tabs-container"
         hx-swap="innerHTML"
@@ -313,7 +317,11 @@ export const JobTabs = ({ jobId, filter, tab }: JobTabsProps) => (
         Status
       </button>
       <button
-        className={`tab rounded-t-lg ${tab === "media" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
+        className={`tab ${
+          tab === "media"
+            ? "tab-active border-b-2 border-primary font-medium"
+            : "hover:bg-base-200"
+        }`}
         hx-get={`/jobs/details/${jobId}?tab=media`}
         hx-target="#job-tabs-container"
         hx-swap="innerHTML"
@@ -322,7 +330,11 @@ export const JobTabs = ({ jobId, filter, tab }: JobTabsProps) => (
         Media
       </button>
       <button
-        className={`tab rounded-t-lg ${tab === "events" ? "tab-active bg-primary text-primary-content border-b-4 border-primary" : ""}`}
+        className={`tab ${
+          tab === "events"
+            ? "tab-active border-b-2 border-primary font-medium"
+            : "hover:bg-base-200"
+        }`}
         hx-get={`/jobs/details/${jobId}?tab=events`}
         hx-target="#job-tabs-container"
         hx-swap="innerHTML"
