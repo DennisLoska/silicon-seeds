@@ -168,7 +168,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
     return (
       <li key={evt.id}>
         {index > 0 && <hr className={lineClass} />}
-        <div className="timeline-end timeline-box xl:w-1/3 resize both overflow-auto border border-base-300 min-w-72 max-w-full">
+        <div className="timeline-end timeline-box scrollbar-hide w-full xl:w-1/3 resize both overflow-auto border border-base-300 min-w-72 max-w-full">
           <details className="w-full bg-base-100 open:bg-base-100">
             <summary className="cursor-pointer list-none p-4 hover:bg-base-200 rounded-lg transition-colors">
               <div className="flex items-center justify-between gap-4">
@@ -238,7 +238,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
       {await Promise.all(eventItems)}
     </ul>
   );
-}
+};
 
 function escapeHtml(text: string): string {
   const htmlEscapes: Record<string, string> = {

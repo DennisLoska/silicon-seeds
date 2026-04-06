@@ -8,7 +8,7 @@ interface AppProps {
 export const app = ({ children, page }: AppProps) => (
   <>
     <div className="drawer lg:drawer-open min-h-screen bg-base-100">
-      <input id="sidebar-toggle" type="checkbox" className="drawer-toggle" />
+      <input id="main-drawer" type="checkbox" className="drawer-toggle" />
 
       <div className="drawer-content flex flex-col">
         {/* Header */}
@@ -22,7 +22,7 @@ export const app = ({ children, page }: AppProps) => (
             </h1>
           </div>
           <div className="flex-none lg:hidden">
-            <label htmlFor="sidebar-toggle" className="btn btn-square btn-ghost">
+            <label htmlFor="main-drawer" className="btn btn-square btn-ghost">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -54,7 +54,7 @@ export const app = ({ children, page }: AppProps) => (
 
       {/* Sidebar */}
       <aside className="drawer-side z-20">
-        <label htmlFor="sidebar-toggle" className="drawer-overlay"></label>
+        <label htmlFor="main-drawer" className="drawer-overlay"></label>
         <div className="w-64 min-h-full bg-base-200 border-r border-base-300 p-4 flex flex-col">
           {/* Silicon Seeds title at top of sidebar */}
           <a

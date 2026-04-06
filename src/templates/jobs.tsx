@@ -238,7 +238,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
         </details>
       </div>
 
-      <ul className="list max-w-[420px]">
+      <ul className="list lg:max-w-[420px] w-full">
         {jobs.map((jobItem) => {
           const date = new Date(jobItem.created_at).toLocaleString();
           const isActive = activeJobId === jobItem.id;
@@ -432,7 +432,7 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
       id="job-details"
       className="drawer lg:drawer-open min-h-screen bg-base-100"
     >
-      <input id="sidebar-toggle" type="checkbox" className="drawer-toggle" />
+      <input id="jobs-drawer" type="checkbox" className="drawer-toggle" />
 
       <div className="drawer-content">
         {/* Header */}
@@ -442,24 +442,9 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
           </div>
           <div className="flex-none lg:hidden">
             <label
-              htmlFor="sidebar-toggle"
+              htmlFor="jobs-drawer"
               className="btn btn-square btn-ghost"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                className="inline-block w-6 h-6 text-current"
-              >
-                <path
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M4 6h16M4 12h16M4 18h16"
-                ></path>
-              </svg>
-            </label>
+            ></label>
           </div>
         </header>
 
@@ -479,10 +464,21 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
       {/* Delete Confirmation Modal */}
       <dialog id="delete-confirm-modal" className="modal"></dialog>
 
+      {/* Floating Action Button for Job List (mobile only) */}
+      <label
+        htmlFor="jobs-drawer"
+        className="fixed bottom-6 right-6 btn btn-circle btn-primary shadow-lg lg:hidden z-50"
+        aria-label="Open job list"
+      >
+        {Icons.BURGER_ICON}
+      </label>
+
       {/* Job List Sidebar */}
-      <aside className="drawer-side z-10 max-h-screen bg-base-100 border-r border-base-300 flex flex-col scrollbar-hide">
-        <label htmlFor="sidebar-toggle" className="drawer-overlay"></label>
-        <div className="scrollbar-hide">{jobSidebar(jobId, filter, tab)}</div>
+      <aside className="drawer-side z-10 max-h-screen bg-base-100 border-r border-base-300 flex flex-col scrollbar-hide w-full lg:w-auto">
+        <label htmlFor="jobs-drawer" className="drawer-overlay"></label>
+        <div className="scrollbar-hide w-full lg:w-auto">
+          {jobSidebar(jobId, filter, tab)}
+        </div>
       </aside>
     </div>
   );
