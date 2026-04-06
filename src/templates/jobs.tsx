@@ -268,7 +268,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
               </div>
               <button
                 className="btn btn-ghost btn-sm mr-4"
-                hx-get={`/api/fragment/delete-modal?jobId=${jobItem.id}`}
+                hx-get={`/api/fragments/delete-modal?jobId=${jobItem.id}`}
                 hx-target="#delete-confirm-modal"
                 hx-swap="outerHTML"
                 title="Delete job"

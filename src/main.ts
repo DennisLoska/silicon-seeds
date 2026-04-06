@@ -11,6 +11,7 @@ import { VideoGenerator } from "./video/video-generator";
 // - env files: dev, prod
 // - db integration
 // - ability to resume or pause a job
+// - ability to cancel a job
 // - ability to re-generate a specific asset
 //
 // Job
@@ -31,7 +32,6 @@ import { VideoGenerator } from "./video/video-generator";
 // - captions? content library?
 //
 // Api
-// - Perhaps use Hono framework?
 // - parameterize the art style, client id, batch size
 //
 // Content Library

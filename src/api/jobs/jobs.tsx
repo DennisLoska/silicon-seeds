@@ -4,6 +4,8 @@ import { DB } from "../../db/db";
 import { Api } from "../api";
 
 const app = new Hono();
+const { Layout, App } = Templates;
+const { OobHeader: OobHeaderComponent } = Templates;
 
 app.get("/", async (c) => {
   const jobId = c.req.query("job_id") ?? null;
@@ -11,7 +13,7 @@ app.get("/", async (c) => {
   const filter = c.req.query("filter") ?? "all";
 
   const jobs = await DB.Jobs.list();
-  const OobHeader = <Templates.OobHeader title={"Jobs"} />;
+  const oobHeaderElement = <OobHeaderComponent title="Jobs" />;
 
   // If no jobs match the filter, show empty state
   if (jobs.length === 0) {
@@ -19,7 +21,7 @@ app.get("/", async (c) => {
       <div className="p-6 text-base-content/50">No jobs found</div>
     );
 
-    return Api.renderFragment(c, EmptyState, "jobs", () => OobHeader);
+    return Api.renderFragment(c, EmptyState, "jobs", () => oobHeaderElement);
   }
 
   // Default to first job from filtered list
@@ -30,7 +32,7 @@ app.get("/", async (c) => {
     c,
     () => JobDetail,
     "jobs",
-    () => OobHeader,
+    () => oobHeaderElement,
   );
 });
 
@@ -62,9 +64,9 @@ app.get("/details/:jobId", async (c) => {
   // Full page load - return complete layout with sidebar
   const jobDetails = await Templates.JobsFragment(jobId, filter, tab);
   return c.html(
-    <Templates.Layout>
-      <Templates.App>{jobDetails}</Templates.App>
-    </Templates.Layout>,
+    <Layout>
+      <App>{jobDetails}</App>
+    </Layout>,
   );
 });
 

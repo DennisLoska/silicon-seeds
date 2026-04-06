@@ -1,15 +1,15 @@
 import { Hono } from "hono";
 import { Templates } from "../../templates/templates";
-import { OobHeader } from "../../templates/oob-header";
 
 const app = new Hono();
+const { Layout, App, Dashboard, OobHeader } = Templates;
 
 app.get("/", async (c) => {
   // HTMX request - return content fragment + OOB header update
   if (c.req.header("HX-Request")) {
     return c.html(
       <>
-        <Templates.Dashboard />
+        <Dashboard />
         <OobHeader title="Dashboard" />
       </>,
     );
@@ -17,11 +17,11 @@ app.get("/", async (c) => {
 
   // Full page load - return complete layout with sidebar
   return c.html(
-    <Templates.Layout>
-      <Templates.App page="dashboard">
-        <Templates.Dashboard />
-      </Templates.App>
-    </Templates.Layout>,
+    <Layout>
+      <App page="dashboard">
+        <Dashboard />
+      </App>
+    </Layout>,
   );
 });
 

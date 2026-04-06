@@ -6,12 +6,14 @@ import { not_found } from "./not_found";
 import { Logger } from "../logger/logger";
 import { serveStatic } from "hono/bun";
 import apiRoutes from "./api/index";
-import fragmentRoutes from "./fragment";
+import fragmentRoutes from "./fragments";
 import dashboardRoutes from "./dashboard";
 import settingsRoutes from "./settings";
 import jobsRoutes from "./jobs/jobs";
 import { Context } from "hono";
 import { JSX } from "hono/jsx/jsx-runtime";
+
+const { Layout, App, Dashboard, OobHeader } = Templates;
 
 const app = new Hono();
 
@@ -39,11 +41,11 @@ export namespace Api {
   ) {
     if (!c.req.header("HX-Request")) {
       return c.html(
-        <Templates.Layout>
-          <Templates.App page={page}>
+        <Layout>
+          <App page={page}>
             <Fragment />
-          </Templates.App>
-        </Templates.Layout>,
+          </App>
+        </Layout>,
       );
     }
 
@@ -139,7 +141,7 @@ app.use("/assets/*", async (c) => {
 
 app.use(async (c, next) => {
   c.setRenderer((content) => {
-    return c.html(<Templates.Layout children={content} />);
+    return c.html(<Layout children={content} />);
   });
 
   await next();
@@ -147,8 +149,8 @@ app.use(async (c, next) => {
 
 // Smart Root Route
 app.get("/", async (c) => {
-  return Api.renderFragment(c, Templates.Dashboard, "dashboard", () => (
-    <Templates.OobHeader title={"Dashboard"} />
+  return Api.renderFragment(c, Dashboard, "dashboard", () => (
+    <OobHeader title="Dashboard" />
   ));
 });
 
@@ -171,4 +173,4 @@ app.route("/api", apiRoutes);
 app.route("/jobs", jobsRoutes);
 app.route("/dashboard", dashboardRoutes);
 app.route("/settings", settingsRoutes);
-app.route("/api/fragment", fragmentRoutes);
+app.route("/api/fragments", fragmentRoutes);

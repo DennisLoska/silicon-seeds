@@ -1,14 +1,14 @@
 import { Hono } from "hono";
 import { health } from "../health";
-import { text_to_text } from "../jobs/text-to-text";
-import { text_to_image } from "../jobs/text-to-image";
-import { script_to_scenes } from "../jobs/script-to-scenes";
-import { text_to_image_to_video } from "../jobs/text-to-image-to-video";
-import { compose_video } from "../jobs/compose-video";
-import { video_transition } from "../jobs/video-transition";
-import { text_to_speech } from "../jobs/text-to-speech";
-import { text_to_instrumental } from "../jobs/text-to-instrumental";
-import { delete_job } from "../jobs/delete";
+import { text_to_text } from "./text-to-text";
+import { text_to_image } from "./text-to-image";
+import { script_to_scenes } from "./script-to-scenes";
+import { text_to_image_to_video } from "./text-to-image-to-video";
+import { compose_video } from "./compose-video";
+import { video_transition } from "./video-transition";
+import { text_to_speech } from "./text-to-speech";
+import { text_to_instrumental } from "./text-to-instrumental";
+import { delete_job } from "./delete";
 
 const app = new Hono();
 
