@@ -1,20 +1,11 @@
 import { Hono } from "hono";
 import { Utils } from "../utils/utils";
-import { text_to_image } from "./jobs/text-to-image";
-import { delete_job } from "./jobs/delete";
-import { script_to_scenes } from "./jobs/script-to-scenes";
-import { text_to_image_to_video } from "./jobs/text-to-image-to-video";
-import { video_transition } from "./jobs/video-transition";
-import { text_to_speech } from "./jobs/text-to-speech";
-import { text_to_instrumental } from "./jobs/text-to-instrumental";
-import { compose_video } from "./jobs/compose-video";
-import { text_to_text } from "./jobs/text-to-text";
 import { Metadata } from "../meta/meta";
-import { health } from "./health";
 import { Templates } from "../templates/templates";
 import { not_found } from "./not_found";
 import { Logger } from "../logger/logger";
 import { serveStatic } from "hono/bun";
+import apiRoutes from "./api/index";
 import fragmentRoutes from "./fragment";
 import eventsRoutes from "./events";
 import dashboardRoutes from "./dashboard";
@@ -170,59 +161,11 @@ app.onError((error, c) => {
   );
 });
 
-app.get("/api/health", (c) => {
-  return health();
-});
-
 app.notFound((c) => {
   return not_found();
 });
 
-app.get("/api/jobs/text", async (c) => {
-  return text_to_text();
-});
-
-app.get("/api/jobs/images", async (c) => {
-  return text_to_image();
-});
-
-app.post("/api/jobs/images", async (c) => {
-  return text_to_image();
-});
-
-app.post("/api/jobs/scenes", async (c) => {
-  return script_to_scenes();
-});
-
-app.post("/api/jobs/videos", async (c) => {
-  return text_to_image_to_video();
-});
-
-app.get("/api/jobs/videos/compose", async (c) => {
-  return compose_video();
-});
-
-app.post("/api/jobs/videos/compose", async (c) => {
-  return compose_video();
-});
-
-app.post("/api/jobs/videos/transition", async (c) => {
-  return video_transition();
-});
-
-app.post("/api/jobs/tts", async (c) => {
-  return text_to_speech();
-});
-
-app.post("/api/jobs/instrumental", async (c) => {
-  return text_to_instrumental();
-});
-
-// Delete job endpoint - RESTful: DELETE /api/jobs/:job_id
-app.delete("/api/jobs/:job_id", async (c) => {
-  const jobId = c.req.param("job_id");
-  return delete_job(jobId);
-});
+app.route("/api", apiRoutes);
 
 // pages
 app.route("/jobs", jobsRoutes);
