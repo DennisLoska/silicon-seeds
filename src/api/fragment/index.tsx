@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { Templates } from "../../templates/templates";
+import { jobDetailContent } from "../../templates/jobs";
 
 const app = new Hono();
 
@@ -43,13 +44,16 @@ app.get("/delete-modal", async (c) => {
 app.get("/job/:jobId", async (c) => {
   const jobId = c.req.param("jobId");
   const tab = c.req.query("tab") || "status";
-  const jobDetails = await Templates.jobDetailFragment(jobId, tab);
 
   if (c.req.header("HX-Request")) {
-    // HTMX request - return main content + OOB header update
+    // HTMX request - return content wrapped in #job-content-area div
+    // This allows innerHTML swap to replace the entire div while keeping sidebar
+    const content = await jobDetailContent(jobId, tab);
     return c.html(
       <>
-        {jobDetails}
+        <div id="job-content-area" className="min-h-[500px]">
+          {content}
+        </div>
         <div id="header-title" hx-swap-oob="true">
           <h1 className="text-xl font-bold">Job</h1>
         </div>
@@ -58,7 +62,8 @@ app.get("/job/:jobId", async (c) => {
   }
 
   // Full page load - return complete layout with sidebar
-  return c.html(Templates.app(jobDetails, jobId));
+  const jobDetails = await Templates.jobsFragment(jobId, tab);
+  return c.html(Templates.layoutPage(Templates.app(jobDetails)));
 });
 
 export default app;

@@ -1,6 +1,6 @@
 import { Child } from "hono/jsx";
 
-export const app = (content: Child, jobId?: string, page?: string) => (
+export const app = (content: Child, page?: string) => (
   <div className="drawer lg:drawer-open min-h-screen bg-base-100">
     <input id="sidebar-toggle" type="checkbox" className="drawer-toggle" />
 
@@ -12,8 +12,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
             {page === "dashboard" && "Dashboard"}
             {page === "jobs" && "Jobs"}
             {page === "settings" && "Settings"}
-            {page === "job" && "Job"}
-            {!page && "Silicon Seeds"}
+            {!page && "🌀◝(ᵔᗜᵔ)◜"}
           </h1>
         </div>
         <div className="flex-none lg:hidden">
@@ -37,7 +36,7 @@ export const app = (content: Child, jobId?: string, page?: string) => (
       </header>
 
       {/* Main Content Area */}
-      <main className="p-6 flex-1">
+      <main className="flex-1">
         <div id="job-content-container" className="min-h-[400px]">
           {content}
         </div>
@@ -67,10 +66,10 @@ export const app = (content: Child, jobId?: string, page?: string) => (
           {/* Dashboard */}
           <li>
             <a
-              hx-get="/api/dashboard?page=dashboard"
+              hx-get="/dashboard"
               hx-target="#job-content-container"
               hx-swap="innerHTML"
-              hx-push-url="/?page=dashboard"
+              hx-push-url="/dashboard"
               id="sidebar-dashboard-link"
               className="w-full"
             >
@@ -84,10 +83,10 @@ export const app = (content: Child, jobId?: string, page?: string) => (
           {/* Jobs */}
           <li>
             <a
-              hx-get="/api/jobs/list-view?page=jobs"
+              hx-get="/jobs"
               hx-target="#job-content-container"
               hx-swap="innerHTML"
-              hx-push-url="/?page=jobs"
+              hx-push-url="/jobs"
               id="sidebar-jobs-summary"
               className="w-full"
             >
@@ -101,10 +100,10 @@ export const app = (content: Child, jobId?: string, page?: string) => (
           {/* Settings */}
           <li>
             <a
-              hx-get="/api/settings/page?page=settings"
+              hx-get="/settings"
               hx-target="#job-content-container"
               hx-swap="innerHTML"
-              hx-push-url="/?page=settings"
+              hx-push-url="/settings"
               id="sidebar-settings-link"
               className="w-full"
             >

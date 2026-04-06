@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { list_jobs } from "./jobs/list";
 import { Utils } from "../utils/utils";
 import { text_to_image } from "./jobs/text-to-image";
 import { delete_job } from "./jobs/delete";
@@ -20,8 +19,9 @@ import fragmentRoutes from "./fragment";
 import eventsRoutes from "./events";
 import dashboardRoutes from "./dashboard";
 import settingsRoutes from "./settings";
-import listViewRoutes from "./jobs/list-view";
+import jobsRoutes from "./jobs/jobs";
 import { Context } from "hono";
+import { JSX } from "hono/jsx/jsx-runtime";
 
 const app = new Hono();
 
@@ -40,19 +40,30 @@ export namespace ApiServer {
   }
 }
 
-function renderFragment(
-  c: Context,
-  fragment: any,
-  jobId?: string,
-  page?: string,
-) {
-  // If it's an HTMX request, just return the fragment
-  if (c.req.header("HX-Request")) {
-    return c.html(fragment);
-  }
+export namespace Api {
+  export function renderFragment(
+    c: Context,
+    fragment: () => JSX.Element,
+    page?: string,
+    oob?: () => JSX.Element,
+  ) {
+    // If it's an HTMX request, just return the fragment
+    if (c.req.header("HX-Request")) {
+      if (oob) {
+        return c.html(
+          <>
+            {fragment()}
+            {oob()}
+          </>,
+        );
+      }
 
-  // Otherwise, wrap it in the full application layout for a browser load
-  return c.html(Templates.layoutPage(Templates.app(fragment, jobId, page)));
+      return c.html(fragment());
+    }
+
+    // Otherwise, wrap it in the full application layout for a browser load
+    return c.html(Templates.layoutPage(Templates.app(fragment(), page)));
+  }
 }
 
 app.use("/static/*", async (c, next) => {
@@ -79,18 +90,19 @@ app.use("/assets/*", async (c) => {
   const pathAfterAssets = c.req.path.replace("/assets", "");
   const filePath = `${Bun.env.OUTPUT_DIR}${pathAfterAssets}`;
   const file = Bun.file(filePath);
+
   if (await file.exists()) {
     const contentType = Utils.getContentType(filePath);
     // Get file stats for ETag
     const stats = await file.stat();
     const etag = `"${stats.size}-${stats.mtime.getTime()}"`;
-    
+
     // Check for conditional request
     const ifNoneMatch = c.req.header("If-None-Match");
     if (ifNoneMatch === etag) {
       return new Response(null, { status: 304, headers: { ETag: etag } });
     }
-    
+
     // Get range header for partial content
     const range = c.req.header("Range");
     if (range) {
@@ -100,10 +112,10 @@ app.use("/assets/*", async (c) => {
         const start = parseInt(match[1]);
         const end = parseInt(match[2]) || stats.size - 1;
         const contentLength = end - start + 1;
-        
+
         // Read partial content
         const buffer = await file.bytes(start, end + 1);
-        
+
         return new Response(buffer, {
           status: 206,
           headers: {
@@ -111,18 +123,18 @@ app.use("/assets/*", async (c) => {
             "Content-Length": contentLength.toString(),
             "Content-Range": `bytes ${start}-${end}/${stats.size}`,
             "Cache-Control": "public, max-age=31536000, immutable",
-            "ETag": etag,
+            ETag: etag,
           },
         });
       }
     }
-    
+
     // Full content
     return c.body(await file.arrayBuffer(), 200, {
       "Content-Type": contentType,
       "Content-Length": stats.size.toString(),
       "Cache-Control": "public, max-age=31536000, immutable", // Cache for 1 year
-      "ETag": etag,
+      ETag: etag,
     });
   }
 
@@ -140,37 +152,29 @@ app.use(async (c, next) => {
 
 // Smart Root Route
 app.get("/", async (c) => {
-  const jobId = c.req.query("job_id") ?? null;
-  const tab = c.req.query("tab") ?? "status";
-  const page = c.req.query("page");
+  const OobHeader = () => (
+    <div id="header-title" hx-swap-oob="true">
+      <h1 className="text-xl font-bold">Dashboard</h1>
+    </div>
+  );
 
-  if (jobId) {
-    return renderFragment(
-      c,
-      await Templates.jobDetailFragment(jobId, tab),
-      jobId,
-      "job",
-    );
-  } else if (page === "dashboard") {
-    return renderFragment(c, Templates.dashboardFragment(), undefined, page);
-  } else if (page === "jobs") {
-    return renderFragment(
-      c,
-      await Templates.jobListFragment(),
-      undefined,
-      page,
-    );
-  } else if (page === "settings") {
-    return renderFragment(c, Templates.settingsFragment(), undefined, page);
-  } else {
-    // Default to job list when no page is specified
-    return renderFragment(c, await Templates.jobListFragment(), undefined, "jobs");
-  }
+  return Api.renderFragment(
+    c,
+    Templates.dashboardFragment,
+    "dashboard",
+    OobHeader,
+  );
 });
 
 app.onError((error, c) => {
-  Logger.error("api error", error);
-  return c.text("Api error", 500);
+  Logger.error("[API] error", error);
+  return c.json(
+    {
+      name: error.name,
+      message: error.message,
+    },
+    500,
+  );
 });
 
 app.get("/api/health", (c) => {
@@ -221,20 +225,16 @@ app.post("/api/jobs/instrumental", async (c) => {
   return text_to_instrumental();
 });
 
-app.get("/api/jobs/list", async (c) => {
-  const jobId = c.req.query("current_id");
-  const list = await list_jobs(jobId);
-  return c.html(list);
-});
-
 // Delete job endpoint - RESTful: DELETE /api/jobs/:job_id
 app.delete("/api/jobs/:job_id", async (c) => {
   const jobId = c.req.param("job_id");
   return delete_job(jobId);
 });
 
-app.route("/api/dashboard", dashboardRoutes);
-app.route("/api/settings/page", settingsRoutes);
-app.route("/api/jobs/list-view", listViewRoutes);
+// pages
+app.route("/jobs", jobsRoutes);
+app.route("/dashboard", dashboardRoutes);
+app.route("/settings", settingsRoutes);
+
 app.route("/api/fragment", fragmentRoutes);
 app.route("/api/events", eventsRoutes);

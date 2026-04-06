@@ -11,3 +11,20 @@
     cupcake,
     bumblebee;
 }
+
+/* Hide scrollbar while keeping content scrollable */
+.scrollbar-hide {
+  /* Chrome, Safari, Opera */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Prevent body scrolling */
+body {
+  height: 100vh;
+  overflow: hidden;
+}
