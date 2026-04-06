@@ -68,7 +68,7 @@ const renderMediaItem = (
           download
           className="btn btn-xs btn-circle btn-ghost ml-2"
         >
-          {Icons.DOWNLOAD_ICON_SMALL}
+          {Icons.DownloadIconSmall}
         </a>
       </div>
     </div>
@@ -77,7 +77,7 @@ const renderMediaItem = (
 
 const renderEmptyState = (message: string) => (
   <div className="alert alert-info" style={{ width: "fit-content" }}>
-    {Icons.INFO_ICON}
+    {Icons.InfoIcon}
     <span className="font-bold">{message}</span>
   </div>
 );

@@ -49,7 +49,7 @@ export const Status = async (job: Job) => {
           <span
             className={`badge badge-xl ${isCompleted ? "badge-success" : "badge-warning"}`}
           >
-            {Icons.STATUS_ICONS[isCompleted ? "complete" : "pending"]}
+            {Icons.StatusIcons[isCompleted ? "complete" : "pending"]}
           </span>
         </h2>
         <p className="text-base-content/60 mt-1">

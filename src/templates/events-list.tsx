@@ -104,7 +104,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
             download
             className="btn btn-sm btn-primary"
           >
-            {Icons.DOWNLOAD_ICON_SMALL}
+            {Icons.DownloadIconSmall}
             Download
           </a>
         </div>
@@ -188,7 +188,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
                   }
                 >
                   {
-                    Icons.STATUS_ICONS_SMALL[
+                    Icons.StatusIconsSmall[
                       isComplete ? "complete" : "pending"
                     ]
                   }
@@ -213,7 +213,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
                     onclick={`navigator.clipboard.writeText("${escapeForJsString(evt.prompt || "")}")`}
                     className="btn btn-sm btn-secondary mt-2"
                   >
-                    {Icons.COPY_ICON}
+                    {Icons.CopyIcon}
                     <span className="ml-1">Copy</span>
                   </button>
                 </div>

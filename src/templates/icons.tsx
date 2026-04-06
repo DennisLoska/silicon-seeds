@@ -1,5 +1,5 @@
 export namespace Icons {
-  export const STATUS_ICONS = {
+  export const StatusIcons = {
     complete: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -34,7 +34,7 @@ export namespace Icons {
     ),
   };
 
-  export const STATUS_ICONS_SMALL = {
+  export const StatusIconsSmall = {
     complete: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -69,7 +69,7 @@ export namespace Icons {
     ),
   };
 
-  export const INFO_ICON = (
+  export const InfoIcon = (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
@@ -85,7 +85,7 @@ export namespace Icons {
     </svg>
   );
 
-  export const DOWNLOAD_ICON_SMALL = (
+  export const DownloadIconSmall = (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
@@ -102,7 +102,7 @@ export namespace Icons {
     </svg>
   );
 
-  export const COPY_ICON = (
+  export const CopyIcon = (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
@@ -119,7 +119,7 @@ export namespace Icons {
     </svg>
   );
 
-  export const NEW_JOB_ICON = (
+  export const NewJobIcon = (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
@@ -136,7 +136,7 @@ export namespace Icons {
     </svg>
   );
 
-  export const DELETE_ICON = (
+  export const DeleteIcon = (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
@@ -153,7 +153,7 @@ export namespace Icons {
     </svg>
   );
 
-  export const BURGER_ICON = (
+  export const BurgerIcon = (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
