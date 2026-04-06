@@ -1,5 +1,4 @@
-export const NotSelected = () => {
-  return (
+export const NotSelected = () => (
     <div id="job-content-container" className="min-h-[500px]">
       <div
         hx-target="#job-content-container"
@@ -9,5 +8,4 @@ export const NotSelected = () => {
         <p>Select a job from the sidebar to view its details</p>
       </div>
     </div>
-  );
-};
+);
