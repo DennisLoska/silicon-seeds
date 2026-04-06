@@ -180,7 +180,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
   return (
     <div id="job-sidebar">
       {/* Filter dropdown - wrapped for hx-target inheritance */}
-      <div className="sticky top-0 z-10 bg-base-100 flex gap-2 px-4 py-0 pt-4 pb-4">
+      <div className="sticky top-0 z-10 bg-base-100 flex gap-2 px-4 py-0 pt-4 pb-4 border-b border-base-300">
         <button
           className="btn btn-primary btn-md flex justify-end"
           hx-post="/api/jobs/images"
