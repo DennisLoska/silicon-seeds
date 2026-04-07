@@ -3,9 +3,9 @@ export const Compose = () => (
     {/* Main Form Card */}
     <form
       className="card bg-base-100 shadow-xl w-full max-w-4xl"
-      method="post"
-      action="/api/jobs/compose"
-      enctype="multipart/form-data"
+      hx-post="/api/jobs/videos/compose"
+      hx-encoding="multipart/form-data"
+      hx-swap="none"
     >
       <div className="card-body gap-6">
         {/* Script Input Section */}
@@ -285,7 +285,13 @@ export const Compose = () => (
           <p class="label text-sm mb-4">
             Choose a visual style preset for your video.
           </p>
-          <select name="style_preset" class="select select-bordered w-full md:w-auto">
+          <select
+            name="style_preset"
+            class="select select-bordered w-full md:w-auto"
+          >
+            <option value="system">Default</option>
+            <option value="watercolor">Watercolor</option>
+            <option value="pencil_watercolor">Pencil Watercolor</option>
             <option value="cinematic">Cinematic</option>
             <option value="anime">Anime</option>
             <option value="realistic">Realistic</option>
