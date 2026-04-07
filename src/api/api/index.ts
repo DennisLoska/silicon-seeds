@@ -40,9 +40,9 @@ app.post("/jobs/videos", async (c) => {
 
 app.post(
   "/jobs/videos/compose",
-  zValidator("json", PostComposeSchema),
+  zValidator("form", PostComposeSchema),
   async (c) => {
-    const body = c.req.valid("json");
+    const body = c.req.valid("form");
 
     return compose_video(body);
   },

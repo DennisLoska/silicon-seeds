@@ -56,11 +56,18 @@ export async function compose_video(options: PostCompose) {
     JobMode.Video,
     script,
     vidStruct.clipCount,
-    preset,
+    style_preset,
   );
 
   return new Response(
     JSON.stringify({ message: "job queued", meta: vidStruct }),
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "HX-Redirect": `/jobs?job_id=${jobId}`,
+      },
+    },
   );
 }
 
