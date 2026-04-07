@@ -4,27 +4,26 @@ import { JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
 import { Metadata } from "../../meta/meta";
 import { PromptGenerator } from "../../prompts/prompt-generator";
-import { Presets } from "../../styles/presets";
-import { TextGenerator } from "../../text/text-generator";
+import { PostCompose } from "../schemas";
 
-export async function compose_video() {
+export async function compose_video(options: PostCompose) {
+  const {
+    script,
+    style_preset: preset,
+    fps,
+    clip_duration,
+    transition_duration,
+    image_model,
+    video_model,
+  } = options;
+
   const { id: jobId } = await JobOrchestrator.create_job();
-
   const ttsId = Metadata.randomId();
-  const prompt = "A journey with Dante through Inferno.";
-
-  const script = await TextGenerator.create_script(prompt);
-
-  if (!script) {
-    return new Response(JSON.stringify({ message: "Oh no" }), { status: 500 });
-  }
 
   AudioGenerator.schedule_audio({
     id: ttsId,
     jobId,
-    // TODO remove substring dev hack
-    prompt: script.substring(0, 300),
-    // prompt: script,
+    prompt: script,
   });
 
   const ttsRes = (await AudioGenerator.get_audio(ttsId)) as any;
@@ -49,7 +48,7 @@ export async function compose_video() {
     JobMode.Video,
     script,
     vidStruct.clipCount,
-    Presets.WATERCOLOR,
+    preset,
   );
 
   return new Response(

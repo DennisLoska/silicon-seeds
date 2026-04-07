@@ -38,6 +38,7 @@
     "typescript-eslint": "^8.57.1"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.7.6",
     "@lmstudio/sdk": "^1.5.0",
     "@logtape/logtape": "^2.0.4",
     "@logtape/pretty": "^2.0.4",
@@ -48,6 +49,7 @@
     "kysely": "^0.28.14",
     "kysely-bun-sqlite": "^0.4.0",
     "tailwindcss": "^4.2.2",
-    "typed-htmx": "^0.3.1"
+    "typed-htmx": "^0.3.1",
+    "zod": "^4.3.6"
   }
 }

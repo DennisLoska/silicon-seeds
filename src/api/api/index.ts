@@ -9,6 +9,8 @@ import { video_transition } from "./video-transition";
 import { text_to_speech } from "./text-to-speech";
 import { text_to_instrumental } from "./text-to-instrumental";
 import { delete_job } from "./delete";
+import { zValidator } from "@hono/zod-validator";
+import { PostComposeSchema } from "../schemas";
 
 const app = new Hono();
 
@@ -36,13 +38,15 @@ app.post("/jobs/videos", async (c) => {
   return text_to_image_to_video();
 });
 
-app.get("/jobs/videos/compose", async (c) => {
-  return compose_video();
-});
+app.post(
+  "/jobs/videos/compose",
+  zValidator("json", PostComposeSchema),
+  async (c) => {
+    const body = c.req.valid("json");
 
-app.post("/jobs/videos/compose", async (c) => {
-  return compose_video();
-});
+    return compose_video(body);
+  },
+);
 
 app.post("/jobs/videos/transition", async (c) => {
   return video_transition();
