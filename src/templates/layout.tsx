@@ -8,6 +8,7 @@ export const Layout = ({ children }: { children: Child }) => (
       <title>Silicon Seeds</title>
       <link href="/static/style.css" rel="stylesheet" />
       <script src="/static/htmx.min.js"></script>
+      <script defer src="/static/alpine.min.js"></script>
     </head>
     <body>{children}</body>
   </html>

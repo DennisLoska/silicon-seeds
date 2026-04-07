@@ -183,7 +183,7 @@ export const Compose = () => (
             Configure the technical parameters for your video generation.
           </p>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div x-data="{ fps: 16, clipDuration: 5, transitionDuration: 3 }" class="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* FPS Setting */}
             <div class="form-control">
               <label class="label cursor-pointer">
@@ -191,12 +191,10 @@ export const Compose = () => (
                   Frames Per Second (FPS)
                 </span>
                 <output
-                  name="fps"
                   for="fps_range"
                   class="label-text-alt text-primary font-bold text-lg px-2 py-1 min-w-[2.5rem] text-center"
-                >
-                  16
-                </output>
+                  x-text="fps"
+                ></output>
               </label>
               <input
                 id="fps_range"
@@ -204,10 +202,9 @@ export const Compose = () => (
                 name="fps"
                 min="1"
                 max="24"
-                value="16"
                 step="1"
                 class="range range-primary w-full"
-                hx-on:input="this.previousElementSibling.previousElementSibling.querySelector('output').textContent = this.value"
+                x-model="fps"
               />
               <div class="flex justify-between text-xs text-base-content/50 mt-1">
                 <span>1 FPS</span>
@@ -220,12 +217,10 @@ export const Compose = () => (
               <label class="label cursor-pointer">
                 <span class="label-text font-medium">Clip Duration</span>
                 <output
-                  name="clip_duration"
                   for="clip_duration_range"
                   class="label-text-alt text-secondary font-bold text-lg px-2 py-1 min-w-[2.5rem] text-center"
-                >
-                  5s
-                </output>
+                  x-text="clipDuration + 's'"
+                ></output>
               </label>
               <input
                 id="clip_duration_range"
@@ -233,10 +228,9 @@ export const Compose = () => (
                 name="clip_duration"
                 min="1"
                 max="10"
-                value="5"
                 step="1"
                 class="range range-secondary w-full"
-                hx-on:input="this.previousElementSibling.previousElementSibling.querySelector('output').textContent = this.value + 's'"
+                x-model="clipDuration"
               />
               <div class="flex justify-between text-xs text-base-content/50 mt-1">
                 <span>1 sec</span>
@@ -249,12 +243,10 @@ export const Compose = () => (
               <label class="label cursor-pointer">
                 <span class="label-text font-medium">Transition Duration</span>
                 <output
-                  name="transition_duration"
                   for="transition_duration_range"
                   class="label-text-alt text-accent font-bold text-lg px-2 py-1 min-w-[2.5rem] text-center"
-                >
-                  3s
-                </output>
+                  x-text="transitionDuration + 's'"
+                ></output>
               </label>
               <input
                 id="transition_duration_range"
@@ -262,10 +254,9 @@ export const Compose = () => (
                 name="transition_duration"
                 min="1"
                 max="10"
-                value="3"
                 step="0.5"
                 class="range range-accent w-full"
-                hx-on:input="this.previousElementSibling.previousElementSibling.querySelector('output').textContent = this.value + 's'"
+                x-model="transitionDuration"
               />
               <div class="flex justify-between text-xs text-base-content/50 mt-1">
                 <span>1 sec</span>
