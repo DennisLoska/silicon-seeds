@@ -9,7 +9,7 @@ import { PostCompose } from "../schemas";
 export async function compose_video(options: PostCompose) {
   const {
     script,
-    style_preset: preset,
+    style_preset,
     fps,
     clip_duration,
     transition_duration,
@@ -17,7 +17,15 @@ export async function compose_video(options: PostCompose) {
     video_model,
   } = options;
 
-  const { id: jobId } = await JobOrchestrator.create_job();
+  const { id: jobId } = await JobOrchestrator.create_job({
+    fps,
+    clip_duration,
+    transition_duration,
+    image_model,
+    video_model,
+    style_preset,
+  });
+
   const ttsId = Metadata.randomId();
 
   AudioGenerator.schedule_audio({

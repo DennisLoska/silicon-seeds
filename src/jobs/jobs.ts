@@ -1,4 +1,4 @@
-import { DB } from "../db/db";
+import { CreateJob, DB } from "../db/db";
 import { Event, JobBaseEvent, JobEvent, JobStatus } from "../events/events";
 import { Logger } from "../logger/logger";
 import { Metadata } from "../meta/meta";
@@ -39,8 +39,8 @@ export namespace JobOrchestrator {
     });
   }
 
-  export async function create_job() {
-    const job = await DB.Jobs.create_job();
+  export async function create_job(payload: CreateJob) {
+    const job = await DB.Jobs.create_job(payload);
 
     jobs[job.id] = {
       ...job,

@@ -11,6 +11,12 @@ export interface DbSchema {
   jobs: {
     id: string;
     created_at: Generated<string>;
+    fps: number;
+    clip_duration: number;
+    transition_duration: number;
+    image_model: string;
+    video_model: string;
+    style_preset: string;
   };
   events: {
     id: string;
@@ -36,6 +42,8 @@ export interface DbSchema {
   };
 }
 
+export type CreateJob = Omit<DbSchema["jobs"], "id" | "created_at">;
+
 export namespace DB {
   export const db = new Kysely<DbSchema>({
     dialect: new BunSqliteDialect({
@@ -44,11 +52,12 @@ export namespace DB {
   });
 
   export namespace Jobs {
-    export async function create_job() {
+    export async function create_job(payload: CreateJob) {
       return await db
         .insertInto("jobs")
         .values({
           id: Metadata.randomId(),
+          ...payload,
         })
         .returningAll()
         .executeTakeFirstOrThrow();
