@@ -42,7 +42,9 @@ export interface DbSchema {
   };
 }
 
-export type JobsSchema = DbSchema["jobs"];
+export type JobsSchema = Omit<DbSchema["jobs"], "created_at"> & {
+  created_at: string;
+};
 export type EventsSchema = DbSchema["events"];
 export type MetaSchema = DbSchema["meta"];
 
