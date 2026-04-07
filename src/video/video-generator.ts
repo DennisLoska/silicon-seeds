@@ -1,4 +1,4 @@
-import { comfyClient } from "../comfyui/comfyui-client";
+import { comfyClient, ModelVariant } from "../comfyui/comfyui-client";
 import {
   Event,
   JobEvent,
@@ -13,6 +13,7 @@ import { Metadata } from "../meta/meta";
 import { LLM } from "../llm/llm";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
+import { DB } from "../db/db";
 
 const OUTPUT_DIR = Bun.env.OUTPUT_DIR;
 
@@ -55,11 +56,13 @@ export namespace VideoGenerator {
     });
   }
 
-  export function generate_video() {
+  export async function generate_video() {
     // TODO fix potential race condition
     if (QueueManager.isVideoQueueBlocked()) return;
 
     const item = QueueManager.pop("video");
+    const job = await DB.Jobs.findById(item.jobId);
+
     Utils.assert(
       item.type === Event.NewVideoPrompt ||
         item.type === Event.NewTransitionPrompt,
@@ -69,22 +72,26 @@ export namespace VideoGenerator {
     const { id, prompt } = item;
 
     if (item.type === Event.NewTransitionPrompt) {
-      void comfyClient.generate({
+      const modelVariant: ModelVariant = {
         id,
         kind: "image-to-transition",
         prompt,
         startImage: item.startImg,
         endImage: item.endImg,
-      });
+      };
+
+      void comfyClient.generate(modelVariant, job);
     }
 
     if (item.type === Event.NewVideoPrompt) {
-      void comfyClient.generate({
+      const modelVariant: ModelVariant = {
         id,
         kind: "image-to-video",
         prompt,
         imagePath: item.filename,
-      });
+      };
+
+      void comfyClient.generate(modelVariant, job);
     }
   }
 

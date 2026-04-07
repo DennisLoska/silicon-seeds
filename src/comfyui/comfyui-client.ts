@@ -10,6 +10,7 @@ import wan2_2_img2transWorkflow from "./workflows/video_wan2_2_14B_transitions.j
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
 import { Lora } from "../styles/presets";
+import { JobsSchema } from "../db/db";
 
 type Text2ImgInput = {
   id: string;
@@ -69,8 +70,8 @@ export class ComfyUIClient {
     this.baseUrl = config.baseUrl;
   }
 
-  async generate(input: ModelVariant) {
-    const api = this.buildApi(input);
+  async generate(input: ModelVariant, job: JobsSchema) {
+    const api = this.buildApi(input, job);
     const body = this.buildBody(input, api);
 
     await this.prepareInput(input);
@@ -228,7 +229,10 @@ export class ComfyUIClient {
     }
   }
 
-  private buildApi(input: ModelVariant): Record<string, unknown> {
+  private buildApi(
+    input: ModelVariant,
+    job: JobsSchema,
+  ): Record<string, unknown> {
     // Better to raw dog the exported json workflows
     let api;
 
@@ -254,7 +258,9 @@ export class ComfyUIClient {
     if (input.kind === "image-to-video") {
       api = wan2_2_img2vidApi;
       api["93"].inputs.text = input.prompt;
-      api["98"].inputs.length = Metadata.CLIP_DURATION * Metadata.FPS;
+      api["98"].inputs.length =
+        (job.clip_duration || Metadata.CLIP_DURATION) *
+        (job.fps || Metadata.FPS);
       api["108"].inputs.filename_prefix = input.id;
       api["97"].inputs.image = input.imagePath;
     }
@@ -280,7 +286,10 @@ export class ComfyUIClient {
       api = wan2_2_img2transitionApi;
       api["6"].inputs.text = input.prompt;
       api["68"].inputs.image = input.startImage;
-      api["67"].inputs.length = Metadata.TRANSITION_DURATION * Metadata.FPS + 1;
+      api["67"].inputs.length =
+        (job.transition_duration || Metadata.TRANSITION_DURATION) *
+          (job.fps || Metadata.FPS) +
+        1;
       api["62"].inputs.image = input.endImage;
       api["61"].inputs.filename_prefix = input.id;
     }

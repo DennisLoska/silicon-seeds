@@ -10,7 +10,7 @@ import { Utils } from "../utils/utils";
 export interface DbSchema {
   jobs: {
     id: string;
-    created_at: Generated<string>;
+    created_at: Generated<string> | string;
     fps: number;
     clip_duration: number;
     transition_duration: number;
@@ -20,7 +20,7 @@ export interface DbSchema {
   };
   events: {
     id: string;
-    created_at: Generated<string>;
+    created_at: Generated<string> | string;
     job_id: string;
     mode: JobMode;
     status: JobStatus;
@@ -75,7 +75,7 @@ export namespace DB {
         .execute();
     }
 
-    export async function findById(id: string) {
+    export async function findById(id: string): Promise<JobsSchema> {
       return await DB.db
         .selectFrom("jobs")
         .selectAll()
