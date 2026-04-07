@@ -1,14 +1,326 @@
 export const Compose = () => (
-  <div className="flex flex-col items-start p-6 justify-center min-h-[400px]">
-    <h2 className="text-3xl font-bold mb-4">1. Create a video script</h2>
-    <p className="text-base-content/60">
-      Start with a script for a video which will be used as the basis to
-      generate images, audio and videos!
-    </p>
+  <div className="flex flex-col items-center p-6 min-h-screen bg-base-200 overflow-y-auto">
+    {/* Main Form Card */}
+    <form
+      className="card bg-base-100 shadow-xl w-full max-w-4xl"
+      method="post"
+      action="/api/jobs/compose"
+      enctype="multipart/form-data"
+    >
+      <div className="card-body gap-6">
+        {/* Script Input Section */}
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend text-lg font-semibold flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+              />
+            </svg>
+            Video Script
+          </legend>
+          <p class="label text-sm mb-3">
+            Provide your video script by typing it below or uploading a text
+            file.
+          </p>
 
-    <textarea
-      className="textarea textarea-ghost m-6 w-full lg:w-4xl min-h-[420px]"
-      placeholder="Your video script..."
-    ></textarea>
+          {/* Textarea for typing script */}
+          <textarea
+            name="script"
+            id="type-script-tab"
+            class="textarea textarea-bordered w-full min-h-[280px] resize-y"
+            placeholder="Write your video script here...\n\nDescribe scenes, dialogue, and visual elements that you want to appear in your video. Be as detailed as possible for better results!"
+          ></textarea>
+
+          {/* Divider */}
+          <div class="divider my-4">OR</div>
+
+          {/* File upload input */}
+          <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <input
+              type="file"
+              name="script_file"
+              accept=".txt,.md,.json"
+              class="file-input file-input-bordered w-full max-w-xs"
+            />
+          </div>
+        </fieldset>
+
+        {/* AI Models Section */}
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend text-lg font-semibold flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"
+              />
+            </svg>
+            AI Models
+          </legend>
+          <p class="label text-sm mb-4">
+            Select the AI models you want to use for generating images and
+            videos.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Image Model Selection */}
+            <div class="form-control">
+              <label class="label cursor-pointer">
+                <span class="label-text font-medium flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-5 h-5"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                    />
+                  </svg>
+                  Image Generation Model
+                </span>
+              </label>
+              <select name="image_model" class="select select-bordered w-full">
+                <option value="">Select an image model</option>
+                <option value="flux-dev">Flux Dev</option>
+                <option value="flux-pro">Flux Pro</option>
+                <option value="stable-diffusion-xl">Stable Diffusion XL</option>
+                <option value="stable-diffusion-3">Stable Diffusion 3</option>
+                <option value="dall-e-3">DALL-E 3</option>
+                <option value="midjourney-v6">Midjourney v6</option>
+              </select>
+            </div>
+
+            {/* Video Model Selection */}
+            <div class="form-control">
+              <label class="label cursor-pointer">
+                <span class="label-text font-medium flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-5 h-5"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"
+                    />
+                  </svg>
+                  Video Generation Model
+                </span>
+              </label>
+              <select name="video_model" class="select select-bordered w-full">
+                <option value="">Select a video model</option>
+                <option value="sora">Sora</option>
+                <option value="runway-gen-3">Runway Gen-3</option>
+                <option value="pika-labs">Pika Labs</option>
+                <option value="stable-video-diffusion">
+                  Stable Video Diffusion
+                </option>
+                <option value="kling">Kling</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        {/* Video Settings Section */}
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend text-lg font-semibold flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 1 0 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+              />
+            </svg>
+            Video Settings
+          </legend>
+          <p class="label text-sm mb-4">
+            Configure the technical parameters for your video generation.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* FPS Setting */}
+            <div class="form-control">
+              <label class="label cursor-pointer">
+                <span class="label-text font-medium">
+                  Frames Per Second (FPS)
+                </span>
+                <output
+                  name="fps"
+                  for="fps_range"
+                  class="label-text-alt text-primary badge badge-primary px-3 py-1 min-w-[2.5rem] text-center"
+                >
+                  12
+                </output>
+              </label>
+              <input
+                id="fps_range"
+                type="range"
+                name="fps"
+                min="1"
+                max="24"
+                value="12"
+                step="1"
+                class="range range-primary w-full"
+              />
+              <div class="flex justify-between text-xs text-base-content/50 mt-1">
+                <span>1 FPS</span>
+                <span>24 FPS</span>
+              </div>
+            </div>
+
+            {/* Clip Duration Setting */}
+            <div class="form-control">
+              <label class="label cursor-pointer">
+                <span class="label-text font-medium">Clip Duration</span>
+                <output
+                  name="clip_duration"
+                  for="clip_duration_range"
+                  class="label-text-alt text-secondary badge badge-secondary px-3 py-1 min-w-[2.5rem] text-center"
+                >
+                  5s
+                </output>
+              </label>
+              <input
+                id="clip_duration_range"
+                type="range"
+                name="clip_duration"
+                min="1"
+                max="10"
+                value="5"
+                step="1"
+                class="range range-secondary w-full"
+              />
+              <div class="flex justify-between text-xs text-base-content/50 mt-1">
+                <span>1 sec</span>
+                <span>10 secs</span>
+              </div>
+            </div>
+
+            {/* Transition Duration Setting */}
+            <div class="form-control">
+              <label class="label cursor-pointer">
+                <span class="label-text font-medium">Transition Duration</span>
+                <output
+                  name="transition_duration"
+                  for="transition_duration_range"
+                  class="label-text-alt text-accent badge badge-accent px-3 py-1 min-w-[2.5rem] text-center"
+                >
+                  3s
+                </output>
+              </label>
+              <input
+                id="transition_duration_range"
+                type="range"
+                name="transition_duration"
+                min="1"
+                max="10"
+                value="3"
+                step="0.5"
+                class="range range-accent w-full"
+              />
+              <div class="flex justify-between text-xs text-base-content/50 mt-1">
+                <span>1 sec</span>
+                <span>10 secs</span>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        {/* Style Preset Selection */}
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend text-lg font-semibold flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42"
+              />
+            </svg>
+            Style Preset
+          </legend>
+          <p class="label text-sm mb-4">
+            Choose a visual style preset for your video.
+          </p>
+          <select name="style_preset" class="select select-bordered w-full md:w-auto">
+            <option value="cinematic">Cinematic</option>
+            <option value="anime">Anime</option>
+            <option value="realistic">Realistic</option>
+            <option value="cartoon">Cartoon</option>
+            <option value="painting">Painting</option>
+            <option value="3d-model">3D Model</option>
+            <option value="sketch">Sketch</option>
+            <option value="cyberpunk">Cyberpunk</option>
+          </select>
+        </fieldset>
+
+        {/* Action Buttons */}
+        <div class="card-actions justify-end flex flex-wrap gap-3">
+          <button type="reset" class="btn btn-ghost">
+            Reset
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5 mr-2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M8.159 13.341 12 17.25m-3.841-3.909 3.841-3.909m-3.841 3.909 3.841 3.909M12 17.25l3.841-3.909m-3.841 3.909-3.841-3.909m3.841 3.909V3"
+              />
+            </svg>
+            Generate Video
+          </button>
+        </div>
+      </div>
+    </form>
   </div>
 );
