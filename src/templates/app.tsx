@@ -113,7 +113,7 @@ export const App = ({ children, page }: AppProps) => (
             />
             <li className="menu-title">Create</li>
             <SidebarItem
-              href="/create/compose"
+              href="/compose"
               label="Compose"
               id="sidebar-compose"
               icon={<Icons.Compose />}

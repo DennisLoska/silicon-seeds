@@ -11,7 +11,7 @@ export async function compose_video() {
   const { id: jobId } = await JobOrchestrator.create_job();
 
   const ttsId = Metadata.randomId();
-  const prompt = "The seven deadly sins";
+  const prompt = "A journey with Dante through Inferno.";
 
   const script = await TextGenerator.create_script(prompt);
 

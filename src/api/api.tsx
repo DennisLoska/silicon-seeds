@@ -9,6 +9,7 @@ import apiRoutes from "./api/index";
 import fragmentRoutes from "./fragments";
 import dashboardRoutes from "./dashboard";
 import settingsRoutes from "./settings";
+import composeRoutes from "./compose";
 import jobsRoutes from "./jobs/jobs";
 import { Context } from "hono";
 import { JSX } from "hono/jsx/jsx-runtime";
@@ -172,5 +173,6 @@ app.notFound((c) => {
 app.route("/api", apiRoutes);
 app.route("/jobs", jobsRoutes);
 app.route("/dashboard", dashboardRoutes);
+app.route("/compose", composeRoutes);
 app.route("/settings", settingsRoutes);
 app.route("/api/fragments", fragmentRoutes);

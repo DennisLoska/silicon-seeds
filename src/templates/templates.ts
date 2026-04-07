@@ -5,6 +5,7 @@ import { Media } from "./media";
 import { Events } from "./events";
 import { NotSelected } from "./not-selected";
 import { Dashboard as dashboardComponent } from "./dashboard";
+import { Compose as composeComponent } from "./compose";
 import { Settings as settingsComponent } from "./settings";
 import { Job } from "../events/events";
 import { OobHeader as oobHeaderComponent } from "./oob-header";
@@ -24,5 +25,6 @@ export namespace Templates {
   export const EventListFragment = EventList;
   export const Dashboard = dashboardComponent;
   export const Settings = settingsComponent;
+  export const Compose = composeComponent;
   export const OobHeader = oobHeaderComponent;
 }

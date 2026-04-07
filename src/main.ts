@@ -20,6 +20,10 @@ import { VideoGenerator } from "./video/video-generator";
 // Api
 // - parameterize the art style, client id, batch size
 //
+// Performance
+// - scalability issues
+// - race conditions
+//
 // Workflows
 // - LTX workflows
 // - Optimize WAN2.2 workflow
