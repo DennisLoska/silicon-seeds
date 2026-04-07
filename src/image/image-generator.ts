@@ -11,7 +11,7 @@ export namespace ImageGenerator {
   export function init() {
     Event.on(Event.NewImagePrompt, (event) => {
       QueueManager.imageQueue.push(event);
-      generate_image();
+      void generate_image();
     });
   }
 

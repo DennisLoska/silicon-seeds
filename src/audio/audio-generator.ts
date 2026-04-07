@@ -10,7 +10,7 @@ export namespace AudioGenerator {
   export function init() {
     Event.on(Event.NewAudioPrompt, (event) => {
       QueueManager.audioQueue.push(event);
-      generate_audio();
+      void generate_audio();
     });
   }
 

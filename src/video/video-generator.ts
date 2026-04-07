@@ -21,11 +21,11 @@ export namespace VideoGenerator {
   export function init() {
     Event.on(Event.NewVideoPrompt, (event) => {
       QueueManager.videoQueue.push(event);
-      generate_video();
+      void generate_video();
     });
     Event.on(Event.NewTransitionPrompt, (event) => {
       QueueManager.videoQueue.push(event);
-      generate_video();
+      void generate_video();
     });
   }
 
