@@ -42,6 +42,10 @@ export interface DbSchema {
   };
 }
 
+export type JobsSchema = DbSchema["jobs"];
+export type EventsSchema = DbSchema["events"];
+export type MetaSchema = DbSchema["meta"];
+
 export type CreateJob = Omit<DbSchema["jobs"], "id" | "created_at">;
 
 export namespace DB {
@@ -240,7 +244,7 @@ export namespace DB {
   }
 
   export namespace Meta {
-    export async function create(payload: Omit<DbSchema["meta"], "id">) {
+    export async function create(payload: Omit<MetaSchema, "id">) {
       return await db
         .insertInto("meta")
         .orFail()
