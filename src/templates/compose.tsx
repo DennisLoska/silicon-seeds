@@ -254,7 +254,7 @@ export const Compose = () => (
                 name="transition_duration"
                 min="1"
                 max="10"
-                step="0.5"
+                step="1"
                 class="range range-accent w-full"
                 x-model="transitionDuration"
               />
@@ -316,20 +316,6 @@ export const Compose = () => (
             id="submit-btn"
             class="btn btn-primary"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-5 h-5 mr-2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M8.159 13.341 12 17.25m-3.841-3.909 3.841-3.909m-3.841 3.909 3.841 3.909M12 17.25l3.841-3.909m-3.841 3.909-3.841-3.909m3.841 3.909V3"
-              />
-            </svg>
             Generate Video
             <span class="loading loading-spinner loading-md htmx-indicator ml-2"></span>
           </button>
