@@ -6,6 +6,15 @@ export const Compose = () => (
       hx-post="/api/jobs/videos/compose"
       hx-encoding="multipart/form-data"
       hx-swap="none"
+      hx-disable-element="#submit-btn"
+      hx-on={`
+        before-request(this) {
+          this.querySelector('.submit-toggle').checked = true;
+        }
+        after-request(this) {
+          this.querySelector('.submit-toggle').checked = false;
+        }
+      `}
     >
       <div className="card-body gap-6">
         {/* Script Input Section */}
@@ -184,9 +193,9 @@ export const Compose = () => (
                 <output
                   name="fps"
                   for="fps_range"
-                  class="label-text-alt text-primary badge badge-primary px-3 py-1 min-w-[2.5rem] text-center"
+                  class="label-text-alt text-primary font-bold text-lg px-2 py-1 min-w-[2.5rem] text-center"
                 >
-                  12
+                  16
                 </output>
               </label>
               <input
@@ -195,9 +204,10 @@ export const Compose = () => (
                 name="fps"
                 min="1"
                 max="24"
-                value="12"
+                value="16"
                 step="1"
                 class="range range-primary w-full"
+                hx-on:input="this.previousElementSibling.previousElementSibling.querySelector('output').textContent = this.value"
               />
               <div class="flex justify-between text-xs text-base-content/50 mt-1">
                 <span>1 FPS</span>
@@ -212,7 +222,7 @@ export const Compose = () => (
                 <output
                   name="clip_duration"
                   for="clip_duration_range"
-                  class="label-text-alt text-secondary badge badge-secondary px-3 py-1 min-w-[2.5rem] text-center"
+                  class="label-text-alt text-secondary font-bold text-lg px-2 py-1 min-w-[2.5rem] text-center"
                 >
                   5s
                 </output>
@@ -226,6 +236,7 @@ export const Compose = () => (
                 value="5"
                 step="1"
                 class="range range-secondary w-full"
+                hx-on:input="this.previousElementSibling.previousElementSibling.querySelector('output').textContent = this.value + 's'"
               />
               <div class="flex justify-between text-xs text-base-content/50 mt-1">
                 <span>1 sec</span>
@@ -240,7 +251,7 @@ export const Compose = () => (
                 <output
                   name="transition_duration"
                   for="transition_duration_range"
-                  class="label-text-alt text-accent badge badge-accent px-3 py-1 min-w-[2.5rem] text-center"
+                  class="label-text-alt text-accent font-bold text-lg px-2 py-1 min-w-[2.5rem] text-center"
                 >
                   3s
                 </output>
@@ -254,6 +265,7 @@ export const Compose = () => (
                 value="3"
                 step="0.5"
                 class="range range-accent w-full"
+                hx-on:input="this.previousElementSibling.previousElementSibling.querySelector('output').textContent = this.value + 's'"
               />
               <div class="flex justify-between text-xs text-base-content/50 mt-1">
                 <span>1 sec</span>
@@ -308,7 +320,11 @@ export const Compose = () => (
           <button type="reset" class="btn btn-ghost">
             Reset
           </button>
-          <button type="submit" class="btn btn-primary">
+          <button
+            type="submit"
+            id="submit-btn"
+            class="btn btn-primary"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -324,6 +340,7 @@ export const Compose = () => (
               />
             </svg>
             Generate Video
+            <span class="loading loading-spinner loading-md htmx-indicator ml-2"></span>
           </button>
         </div>
       </div>
