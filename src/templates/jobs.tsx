@@ -258,7 +258,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
             >
               <div
                 className="flex items-center gap-2 cursor-pointer flex-grow-1 w-full h-full px-4 py-3"
-                hx-get={`/jobs?job_id=${jobItem.id}&tab=status`}
+                hx-get={`/jobs?job_id=${jobItem.id}&filter=${filter}&tab=status`}
                 hx-target="#job-content-container"
                 hx-swap="innerHTML"
                 hx-push-url={`/jobs?job_id=${jobItem.id}&filter=${filter}&tab=${tab}`}

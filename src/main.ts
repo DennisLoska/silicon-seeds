@@ -21,8 +21,6 @@ import { VideoGenerator } from "./video/video-generator";
 // - Make status updates more pretty
 //
 // Bugs
-// - Fix display of images in media tab
-// - Fix jobs filters
 // - race condition when queueing multiple jobs at same time (queue block check)
 // - reconnecting websockets
 //
