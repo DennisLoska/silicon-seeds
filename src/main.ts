@@ -15,14 +15,16 @@ import { VideoGenerator } from "./video/video-generator";
 // - ability to cancel a job
 // - ability to re-generate a specific asset
 // - Make UI reactive with SSE instead of polling
-// - Fix jobs filters
 // - Add script event
 // - Generate a random name for each job
 // - Add new composition event which includes the combined video
 // - Make status updates more pretty
 //
-// Api
-// - parameterize the art style, client id, batch size
+// Bugs
+// - Fix display of images in media tab
+// - Fix jobs filters
+// - race condition when queueing multiple jobs at same time (queue block check)
+// - reconnecting websockets
 //
 // Performance
 // - scalability issues
@@ -37,10 +39,6 @@ import { VideoGenerator } from "./video/video-generator";
 // Metadata
 // - defines video transcript / captions to be pot. used
 // - add metadata to generated videos and images (used prompt, prompt id, job id, index)
-//
-// Bugs
-// - race condition when queueing multiple jobs at same time (queue block check)
-// - reconnecting websockets
 //
 // Pipelines:
 // - combined_video, tts, instrumental -> final cut
