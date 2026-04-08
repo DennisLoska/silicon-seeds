@@ -1,3 +1,5 @@
+import { ErrorToast } from "./toast";
+
 interface ComposeProps {
   showProgress?: boolean;
   jobId?: string;
@@ -5,6 +7,7 @@ interface ComposeProps {
 
 export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
   <div className="flex flex-col p-6 xl:h-full bg-base-200">
+    <ErrorToast />
     {/* Kanban-style Card Container */}
     <form
       className="flex flex-col xl:flex-row gap-4 xl:h-full"
@@ -244,65 +247,65 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
               </div>
 
               {/* Transition Duration Setting */}
-               <div className="form-control flex-grow">
-                 <label className="label cursor-pointer">
-                   <span className="label-text font-medium">
-                     Transition Duration
-                   </span>
-                   <output
-                     for="transition_duration_range"
-                     className="label-text-alt text-accent font-bold text-lg px-2 py-1 min-w-[2.5rem] text-center"
-                     x-text="transitionDuration + 's'"
-                   ></output>
-                 </label>
-                 <input
-                   id="transition_duration_range"
-                   type="range"
-                   name="transition_duration"
-                   value="3"
-                   min="1"
-                   max="10"
-                   step="1"
-                   className="range range-accent w-full"
-                   x-model="transitionDuration"
-                 />
-                 <div className="flex justify-between text-xs text-base-content/50 mt-1">
-                   <span>1 sec</span>
-                   <span>10 secs</span>
-                  </div>
+              <div className="form-control flex-grow">
+                <label className="label cursor-pointer">
+                  <span className="label-text font-medium">
+                    Transition Duration
+                  </span>
+                  <output
+                    for="transition_duration_range"
+                    className="label-text-alt text-accent font-bold text-lg px-2 py-1 min-w-[2.5rem] text-center"
+                    x-text="transitionDuration + 's'"
+                  ></output>
+                </label>
+                <input
+                  id="transition_duration_range"
+                  type="range"
+                  name="transition_duration"
+                  value="3"
+                  min="1"
+                  max="10"
+                  step="1"
+                  className="range range-accent w-full"
+                  x-model="transitionDuration"
+                />
+                <div className="flex justify-between text-xs text-base-content/50 mt-1">
+                  <span>1 sec</span>
+                  <span>10 secs</span>
                 </div>
               </div>
+            </div>
 
-              {/* Resolution Dropdown */}
-              <div className="form-control mt-2">
-                <label className="label cursor-pointer">
-                  <span className="label-text font-medium flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="currentColor"
-                      className="w-5 h-5"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
-                      />
-                    </svg>
-                    Resolution
-                  </span>
-                </label>
-                <select
-                  name="resolution"
-                  className="select select-bordered w-full flex-none"
-                >
-                  <option value="480p">480p</option>
-                  <option value="720p">720p</option>
-                </select>
-              </div>
-           </div>
+            {/* Resolution Dropdown */}
+            <div className="form-control mt-2">
+              <label className="label cursor-pointer">
+                <span className="label-text font-medium flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
+                    />
+                  </svg>
+                  Resolution
+                </span>
+              </label>
+              <select
+                name="resolution"
+                className="select select-bordered w-full flex-none"
+              >
+                <option value="480p">480p</option>
+                <option value="720p">720p</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Card 4: Style Presets */}
@@ -389,7 +392,7 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
               </button>
               <button type="submit" id="submit-btn" className="btn btn-primary">
                 Generate Video
-                <span className="loading loading-spinner loading-md ml-2 opacity-0 htmx-indicator"></span>
+                <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
               </button>
             </div>
           </div>

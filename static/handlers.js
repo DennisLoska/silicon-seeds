@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
   form.addEventListener("htmx:error", (event) => {
     submitBtn.disabled = false;
     const spinner = submitBtn.querySelector(".htmx-indicator");
-    if (spinner) spinner.style.display = "none";
+    if (spinner) spinner.classList.add("hidden");
 
     const xhr = event.detail.xhr;
     let errorMessage = "An error occurred while processing your request.";
@@ -48,6 +48,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Clear any existing toast
     clearErrorToast();
+
+    // Show the container
+    toastContainer.classList.remove("hidden");
 
     // Create alert element with daisyUI classes
     const alertElement = document.createElement("div");
