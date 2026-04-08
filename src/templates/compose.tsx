@@ -1,8 +1,8 @@
 export const Compose = () => (
-  <div className="flex flex-col p-6 min-h-screen bg-base-200">
+  <div className="flex flex-col p-6 h-full bg-base-200">
     {/* Kanban-style Card Container */}
     <form
-      className="flex flex-col xl:flex-row gap-4 flex-grow"
+      className="flex flex-col xl:flex-row gap-4 h-full"
       hx-post="/api/jobs/videos/compose"
       hx-encoding="multipart/form-data"
       hx-swap="none"
