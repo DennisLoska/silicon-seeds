@@ -8,13 +8,18 @@ import { VideoGenerator } from "./video/video-generator";
 
 // TODO list:
 //
-// Frontend
+// General
 // - Distinct mode: image generation, audio generation, video generation
 // - Gallery: see assets across all jobs
 // - ability to resume or pause a job
 // - ability to cancel a job
 // - ability to re-generate a specific asset
-// - Make UI reactive with SSE
+// - Make UI reactive with SSE instead of polling
+// - Fix jobs filters
+// - Add script event
+// - Generate a random name for each job
+// - Add new composition event which includes the combined video
+// - Make status updates more pretty
 //
 // Api
 // - parameterize the art style, client id, batch size
