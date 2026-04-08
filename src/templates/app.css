@@ -27,8 +27,3 @@
 .htmx-indicator {
   display: none;
 }
-
-.htmx-request .htmx-indicator,
-button.htmx-request .htmx-indicator {
-  display: inline-block;
-}
