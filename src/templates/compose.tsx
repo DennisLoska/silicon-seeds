@@ -17,7 +17,7 @@ export const Compose = () => (
       `}
     >
       {/* Card 1: Video Script Input - Takes half width and full height */}
-      <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 flex flex-col">
+      <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex flex-col overflow-hidden resize-none 2xl:resize-x 2xl:min-w-[500px]">
         <div className="card-body flex flex-col flex-grow p-4">
           <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
             <svg
@@ -44,8 +44,8 @@ export const Compose = () => (
           <textarea
             name="script"
             id="type-script-tab"
-            className="textarea textarea-bordered w-full flex-grow resize-none mb-4"
-            placeholder="Write your video script here...\n\nDescribe scenes, dialogue, and visual elements that you want to appear in your video. Be as detailed as possible for better results!"
+            className="textarea textarea-bordered w-full flex-grow resize-none mb-4 min-h-[420px]"
+            placeholder="Write your video script here..."
           ></textarea>
 
           {/* Divider */}
