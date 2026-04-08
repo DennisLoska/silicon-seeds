@@ -1,4 +1,9 @@
-export const Compose = () => (
+interface ComposeProps {
+  showProgress?: boolean;
+  jobId?: string;
+}
+
+export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
   <div className="flex flex-col p-6 xl:h-full bg-base-200">
     {/* Kanban-style Card Container */}
     <form
@@ -339,6 +344,44 @@ export const Compose = () => (
           </div>
         </div>
       </div>
+
+      {/* Card 6: Progress - Only shown when showProgress=true */}
+      {showProgress && jobId && (
+        <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex flex-col">
+          <div className="card-body flex flex-col">
+            <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12.75 19.308c-3.048 2.102-7.21 2.102-10.26 0-3.048-2.102-3.048-5.51 0-7.612l10.26-7.612c3.048-2.102 7.21-2.102 10.26 0 3.048 2.102 3.048 5.51 0 7.612l-10.26 7.612Z"
+                />
+              </svg>
+              Job Progress
+            </h2>
+            <p className="text-sm text-base-content/70 mb-4 flex-none">
+              Monitoring job: {jobId.slice(0, 8)}...
+            </p>
+            <div
+              id="events-container"
+              className="flex-grow overflow-y-auto min-h-[300px]"
+              hx-get={`/jobs/events?job_id=${jobId}`}
+              hx-trigger="load, every 2s"
+              hx-swap="innerHTML"
+            >
+              <span className="loading loading-spinner"></span>
+              Loading events...
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   </div>
 );
