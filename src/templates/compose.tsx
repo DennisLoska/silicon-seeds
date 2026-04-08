@@ -37,7 +37,8 @@ export const Compose = () => (
             Video Script
           </h2>
           <p className="text-sm text-base-content/70 mb-4 flex-none">
-            Provide your video script by typing it below or uploading a text file.
+            Provide your video script by typing it below or uploading a text
+            file.
           </p>
 
           {/* Textarea for typing script */}
@@ -64,8 +65,8 @@ export const Compose = () => (
       {/* Container for Cards 2-4 - Stacked vertically, takes half width and full height */}
       <div className="flex flex-col w-full xl:w-1/2 gap-4 flex-grow">
         {/* Card 2: AI Model Selection */}
-        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(25vw)] min-w-0 flex-grow">
-          <div className="card-body">
+        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(25vw)] min-w-0 flex-grow flex flex-col">
+          <div className="card-body flex flex-col flex-grow">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -83,12 +84,13 @@ export const Compose = () => (
               </svg>
               AI Models
             </h2>
-            <p className="text-sm text-base-content/70 mb-4">
-              Select the AI models you want to use for generating images and videos.
+            <p className="text-sm text-base-content/70 mb-4 flex-none">
+              Select the AI models you want to use for generating images and
+              videos.
             </p>
 
             {/* Image Model Selection */}
-            <div className="form-control mb-4">
+            <div className="form-control flex-grow">
               <label className="label cursor-pointer">
                 <span className="label-text font-medium flex items-center gap-2">
                   <svg
@@ -108,19 +110,16 @@ export const Compose = () => (
                   Image Generation Model
                 </span>
               </label>
-              <select name="image_model" className="select select-bordered w-full">
-                <option value="">Select an image model</option>
-                <option value="flux-dev">Flux Dev</option>
-                <option value="flux-pro">Flux Pro</option>
-                <option value="stable-diffusion-xl">Stable Diffusion XL</option>
-                <option value="stable-diffusion-3">Stable Diffusion 3</option>
-                <option value="dall-e-3">DALL-E 3</option>
-                <option value="midjourney-v6">Midjourney v6</option>
+              <select
+                name="image_model"
+                className="select select-bordered w-full"
+              >
+                <option value="z-image-turbo">Z-Image-Turbo</option>
               </select>
             </div>
 
             {/* Video Model Selection */}
-            <div className="form-control">
+            <div className="form-control flex-grow">
               <label className="label cursor-pointer">
                 <span className="label-text font-medium flex items-center gap-2">
                   <svg
@@ -140,15 +139,11 @@ export const Compose = () => (
                   Video Generation Model
                 </span>
               </label>
-              <select name="video_model" className="select select-bordered w-full">
-                <option value="">Select a video model</option>
-                <option value="sora">Sora</option>
-                <option value="runway-gen-3">Runway Gen-3</option>
-                <option value="pika-labs">Pika Labs</option>
-                <option value="stable-video-diffusion">
-                  Stable Video Diffusion
-                </option>
-                <option value="kling">Kling</option>
+              <select
+                name="video_model"
+                className="select select-bordered w-full"
+              >
+                <option value="wan2.2">Wan2.2</option>
               </select>
             </div>
           </div>
@@ -176,15 +171,18 @@ export const Compose = () => (
                   stroke-linejoin="round"
                   d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                 />
-               </svg>
-               Video Settings
-             </h2>
-             <p className="text-sm text-base-content/70 mb-4 flex-none">
+              </svg>
+              Video Settings
+            </h2>
+            <p className="text-sm text-base-content/70 mb-4 flex-none">
               Configure the technical parameters for your video generation.
             </p>
 
-            <div x-data="{ fps: 16, clipDuration: 5, transitionDuration: 3 }" className="flex flex-col flex-grow">
-               {/* FPS Setting */}
+            <div
+              x-data="{ fps: 16, clipDuration: 5, transitionDuration: 3 }"
+              className="flex flex-col flex-grow"
+            >
+              {/* FPS Setting */}
               <div className="form-control flex-grow">
                 <label className="label cursor-pointer">
                   <span className="label-text font-medium">
@@ -241,7 +239,9 @@ export const Compose = () => (
               {/* Transition Duration Setting */}
               <div className="form-control flex-grow">
                 <label className="label cursor-pointer">
-                  <span className="label-text font-medium">Transition Duration</span>
+                  <span className="label-text font-medium">
+                    Transition Duration
+                  </span>
                   <output
                     for="transition_duration_range"
                     className="label-text-alt text-accent font-bold text-lg px-2 py-1 min-w-[2.5rem] text-center"
@@ -268,8 +268,8 @@ export const Compose = () => (
         </div>
 
         {/* Card 4: Style Presets */}
-        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(25vw)] min-w-0 flex-grow">
-          <div className="card-body">
+        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(25vw)] min-w-0 flex-grow flex flex-col">
+          <div className="card-body flex flex-col">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -287,35 +287,51 @@ export const Compose = () => (
               </svg>
               Style Preset
             </h2>
-            <p className="text-sm text-base-content/70 mb-4">
+            <p className="text-sm text-base-content/70 mb-4 flex-none">
               Choose a visual style preset for your video.
             </p>
             <select
               name="style_preset"
-              className="select select-bordered w-full"
+              className="select select-bordered w-full flex-none"
             >
               <option value="system">Default</option>
               <option value="watercolor">Watercolor</option>
               <option value="pencil_watercolor">Pencil Watercolor</option>
-              <option value="cinematic">Cinematic</option>
-              <option value="anime">Anime</option>
-              <option value="realistic">Realistic</option>
-              <option value="cartoon">Cartoon</option>
-              <option value="painting">Painting</option>
-              <option value="3d-model">3D Model</option>
-              <option value="sketch">Sketch</option>
-              <option value="cyberpunk">Cyberpunk</option>
             </select>
+          </div>
+        </div>
 
-            {/* Action Buttons */}
-            <div className="card-actions justify-end flex flex-row gap-2 mt-6">
-              <button type="reset" className="btn btn-ghost">
+        {/* Card 5: Action Buttons */}
+        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(25vw)] min-w-0 flex-grow flex flex-col">
+          <div className="card-body flex flex-col flex-grow">
+            <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+                />
+              </svg>
+              Actions
+            </h2>
+            <p className="text-sm text-base-content/70 mb-4 flex-none">
+              Generate your video or reset the form.
+            </p>
+            <div className="card-actions justify-end flex flex-row gap-2 flex-grow">
+              <button type="reset" className="btn btn-ghost flex-grow">
                 Reset
               </button>
               <button
                 type="submit"
                 id="submit-btn"
-                className="btn btn-primary"
+                className="btn btn-primary flex-grow"
               >
                 Generate Video
                 <span className="loading loading-spinner loading-md htmx-indicator ml-2"></span>
