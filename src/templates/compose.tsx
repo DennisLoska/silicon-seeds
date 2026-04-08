@@ -322,20 +322,16 @@ export const Compose = () => (
                   d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
                 />
               </svg>
-              Actions
+              Action!
             </h2>
             <p className="text-sm text-base-content/70 mb-4 flex-none">
-              Generate your video or reset the form.
+              Schedule the job to generate the video with the selected settings.
             </p>
             <div className="card-actions justify-end flex flex-row gap-2">
               <button type="reset" className="btn btn-ghost">
                 Reset
               </button>
-              <button
-                type="submit"
-                id="submit-btn"
-                className="btn btn-primary"
-              >
+              <button type="submit" id="submit-btn" className="btn btn-primary">
                 Generate Video
                 <span className="loading loading-spinner loading-md ml-2 opacity-0 htmx-indicator"></span>
               </button>
