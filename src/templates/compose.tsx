@@ -1,20 +1,14 @@
 export const Compose = () => (
   <div className="flex flex-col p-6 xl:h-full bg-base-200">
+    {/* Error Toast Container */}
+    <div id="error-toast-container" className="toast toast-bottom toast-end fixed z-50"></div>
+
     {/* Kanban-style Card Container */}
     <form
       className="flex flex-col xl:flex-row gap-4 xl:h-full"
       hx-post="/api/jobs/videos/compose"
       hx-encoding="multipart/form-data"
       hx-swap="none"
-      hx-disable-element="#submit-btn"
-      hx-on={`
-        before-request(this) {
-          this.querySelector('.submit-toggle').checked = true;
-        }
-        after-request(this) {
-          this.querySelector('.submit-toggle').checked = false;
-        }
-      `}
     >
       {/* Card 1: Video Script Input - Takes half width and full height */}
       <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex flex-col overflow-hidden resize-none 2xl:resize-x 2xl:min-w-[500px]">
@@ -382,9 +376,6 @@ export const Compose = () => (
               <button
                 type="submit"
                 id="submit-btn"
-                x-data="{ disabled: false }"
-                x-on:click="disabled = true"
-                x-bind:class="{'opacity-50 pointer-events-none': disabled}"
                 className="btn btn-primary"
               >
                 Generate Video

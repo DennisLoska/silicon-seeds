@@ -22,3 +22,13 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Hide HTMX spinner completely when not loading */
+.htmx-indicator {
+  display: none;
+}
+
+.htmx-request .htmx-indicator,
+button.htmx-request .htmx-indicator {
+  display: inline-block;
+}
