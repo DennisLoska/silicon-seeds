@@ -183,7 +183,7 @@ export const Compose = () => (
               Configure the technical parameters for your video generation.
             </p>
 
-            <div x-data="{ fps: 16, clipDuration: 5, transitionDuration: 3 }" className="flex flex-col flex-grow space-y-4">
+            <div x-data="{ fps: 16, clipDuration: 5, transitionDuration: 3 }" className="flex flex-col flex-grow">
                {/* FPS Setting */}
               <div className="form-control flex-grow">
                 <label className="label cursor-pointer">
