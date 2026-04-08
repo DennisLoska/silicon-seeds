@@ -236,6 +236,15 @@ export class ComfyUIClient {
     // Better to raw dog the exported json workflows
     let api;
 
+    let resolution = { width: 0, height: 0 };
+    if (job.resolution === "480p") {
+      ((resolution.width = 640), (resolution.height = 480));
+    }
+
+    if (job.resolution === "720p") {
+      ((resolution.width = 1280), (resolution.height = 720));
+    }
+
     if (input.kind === "text-to-image") {
       // TODO replace or keep?
       // api = zImageTurboApi;
@@ -246,6 +255,8 @@ export class ComfyUIClient {
 
       api = zImageTurboWithLoraApi;
       api["9"].inputs.filename_prefix = input.id;
+      api["41"].inputs.width = resolution.width;
+      api["41"].inputs.height = resolution.height;
       api["45"].inputs.text = input.prompt;
       api["44"].inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
       api["51"].inputs.strength_model = 0.7;
@@ -258,6 +269,8 @@ export class ComfyUIClient {
     if (input.kind === "image-to-video") {
       api = wan2_2_img2vidApi;
       api["93"].inputs.text = input.prompt;
+      api["98"].inputs.width = resolution.width;
+      api["98"].inputs.height = resolution.height;
       api["98"].inputs.length =
         (job.clip_duration || Metadata.CLIP_DURATION) *
         (job.fps || Metadata.FPS);
@@ -286,6 +299,8 @@ export class ComfyUIClient {
       api = wan2_2_img2transitionApi;
       api["6"].inputs.text = input.prompt;
       api["68"].inputs.image = input.startImage;
+      api["67"].inputs.width = resolution.width;
+      api["67"].inputs.height = resolution.height;
       api["67"].inputs.length =
         (job.transition_duration || Metadata.TRANSITION_DURATION) *
           (job.fps || Metadata.FPS) +
