@@ -10,7 +10,6 @@ import { VideoGenerator } from "./video/video-generator";
 //
 // Frontend
 // - Distinct mode: image generation, audio generation, video generation
-// - Composite mode: compose entire video from a video script (main pipeline)
 // - Gallery: see assets across all jobs
 // - ability to resume or pause a job
 // - ability to cancel a job
