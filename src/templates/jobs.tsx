@@ -86,7 +86,9 @@ export const JobDetails = async ({ jobId, activeTab }: JobDetailsProps) => {
         } else {
           const meta = await DB.Meta.findByEventId(event.id).catch(() => null);
           if (meta) {
-            if (event.mode === "image") {
+            // Check if it's an image by filename extension first
+            const isImageFile = meta.filename?.endsWith(".png");
+            if (event.mode === "image" || isImageFile) {
               mediaData.images.push({
                 filename: meta.filename,
                 subfolder: meta.subfolder,
@@ -391,7 +393,9 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
         } else {
           const meta = await DB.Meta.findByEventId(event.id).catch(() => null);
           if (meta) {
-            if (event.mode === "image") {
+            // Check if it's an image by filename extension first
+            const isImageFile = meta.filename?.endsWith(".png");
+            if (event.mode === "image" || isImageFile) {
               mediaData.images.push({
                 filename: meta.filename,
                 subfolder: meta.subfolder,
