@@ -53,7 +53,7 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
           <textarea
             name="script"
             id="type-script-tab"
-            className="textarea textarea-bordered w-full flex-grow resize-none mb-4 min-h-[420px]"
+            className="textarea textarea-ghost w-full flex-grow resize-none mb-4 min-h-[420px] focus:outline-none"
             placeholder="Write your video script here..."
           ></textarea>
 
@@ -386,7 +386,7 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
             <p className="text-sm text-base-content/70 mb-4 flex-none">
               Schedule the job to generate the video with the selected settings.
             </p>
-            <div className="card-actions justify-end flex flex-row gap-2">
+            <div className="card-actions justify-between flex flex-row gap-2">
               <button type="reset" className="btn btn-ghost">
                 Reset
               </button>
