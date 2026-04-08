@@ -58,7 +58,7 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
           <input
             type="file"
             name="script_file"
-            accept=".txt,.md,.json"
+            accept=".txt,.md"
             className="file-input file-input-bordered w-full flex-none"
           />
         </div>
@@ -385,7 +385,7 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
 
       {/* Card 6: Progress - Only shown when showProgress=true */}
       {showProgress && jobId && (
-        <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex flex-col">
+        <div className="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] scrollbar-hide overflow-y-scroll xl:w-1/2 2xl:w-1/3 flex flex-col">
           <div className="card-body flex flex-col">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
@@ -409,7 +409,7 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
             </p>
             <div
               id="events-container"
-              className="flex-grow overflow-y-auto min-h-[300px]"
+              className="flex-grow min-h-[300px]"
               hx-get={`/jobs/events?job_id=${jobId}`}
               hx-trigger="load, every 2s"
               hx-swap="innerHTML"

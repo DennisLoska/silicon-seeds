@@ -9,6 +9,7 @@ import { PostCompose } from "../schemas";
 export async function compose_video(options: PostCompose) {
   const {
     script,
+    script_file,
     style_preset,
     fps,
     resolution,
@@ -17,6 +18,22 @@ export async function compose_video(options: PostCompose) {
     image_model,
     video_model,
   } = options;
+
+  // Determine the final script: file takes precedence over text input
+  let finalScript = script?.trim();
+  
+  if (script_file) {
+    // Read the uploaded file content
+    const fileContent = await script_file.text();
+    finalScript = fileContent.trim();
+  }
+
+  if (!finalScript || finalScript.length < 3) {
+    return new Response(JSON.stringify({ error: "Script is required" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   const { id: jobId } = await JobOrchestrator.create_job({
     fps,
@@ -33,7 +50,7 @@ export async function compose_video(options: PostCompose) {
   AudioGenerator.schedule_audio({
     id: ttsId,
     jobId,
-    prompt: script,
+    prompt: finalScript,
   });
 
   const ttsRes = (await AudioGenerator.get_audio(ttsId)) as any;
@@ -56,7 +73,7 @@ export async function compose_video(options: PostCompose) {
   void PromptGenerator.image_scene_prompts(
     jobId,
     JobMode.Video,
-    script,
+    finalScript,
     vidStruct.clipCount,
     style_preset,
   );
