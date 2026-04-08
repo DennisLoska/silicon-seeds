@@ -3,6 +3,9 @@ export const Compose = () => (
     {/* Error Toast Container */}
     <div id="error-toast-container" className="toast toast-bottom toast-end fixed z-50"></div>
 
+    {/* Hidden alert to ensure daisyUI compiles the alert-error class */}
+    <div className="alert alert-error hidden"></div>
+
     {/* Kanban-style Card Container */}
     <form
       className="flex flex-col xl:flex-row gap-4 xl:h-full"
