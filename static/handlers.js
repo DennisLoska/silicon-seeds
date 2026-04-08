@@ -11,31 +11,32 @@ document.addEventListener("DOMContentLoaded", function () {
   const toastContainer = document.getElementById("error-toast-container");
 
   // Before request: disable button, clear any existing error toast
-  form.addEventListener("htmx:beforeRequest", function () {
-    if (submitBtn) submitBtn.disabled = true;
+  form.addEventListener("htmx:beforeRequest", () => {
+    submitBtn.disabled = true;
     clearErrorToast();
   });
 
   // After successful request: re-enable button
-  form.addEventListener("htmx:afterRequest", function () {
-    if (submitBtn) submitBtn.disabled = false;
+  form.addEventListener("htmx:afterRequest", () => {
+    submitBtn.disabled = false;
   });
 
-  // On error: re-enable button and show error toast
-  form.addEventListener("htmx:error", function (event) {
-    if (submitBtn) submitBtn.disabled = false;
+  // On error: re-enable button, hide spinner, and show error toast
+  form.addEventListener("htmx:error", (event) => {
+    submitBtn.disabled = false;
+    const spinner = submitBtn.querySelector(".htmx-indicator");
+    if (spinner) spinner.style.display = "none";
 
     const xhr = event.detail.xhr;
     let errorMessage = "An error occurred while processing your request.";
 
-    // Try to extract error message from response
-    if (xhr && xhr.responseText) {
+    if (xhr?.responseText) {
       try {
         const responseJson = JSON.parse(xhr.responseText);
         errorMessage =
           responseJson.error || responseJson.message || errorMessage;
-      } catch (e) {
-        errorMessage = xhr.responseText || errorMessage;
+      } catch {
+        errorMessage = xhr.responseText;
       }
     }
 

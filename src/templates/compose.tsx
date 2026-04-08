@@ -382,7 +382,7 @@ export const Compose = () => (
                 className="btn btn-primary"
               >
                 Generate Video
-                <span className="loading loading-spinner loading-md ml-2 opacity-0 htmx-indicator"></span>
+                <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
               </button>
             </div>
           </div>
