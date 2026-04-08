@@ -11,6 +11,7 @@ export async function compose_video(options: PostCompose) {
     script,
     style_preset,
     fps,
+    resolution,
     clip_duration,
     transition_duration,
     image_model,
@@ -19,6 +20,7 @@ export async function compose_video(options: PostCompose) {
 
   const { id: jobId } = await JobOrchestrator.create_job({
     fps,
+    resolution,
     clip_duration,
     transition_duration,
     image_model,
