@@ -149,3 +149,4 @@ docs/
 
 # UI
 static/
+!static/handlers.js
