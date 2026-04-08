@@ -10,11 +10,18 @@ import { Utils } from "../utils/utils";
 export interface DbSchema {
   jobs: {
     id: string;
-    created_at: Generated<string>;
+    created_at: Generated<string> | string;
+    fps: number;
+    clip_duration: number;
+    transition_duration: number;
+    resolution: string;
+    image_model: string;
+    video_model: string;
+    style_preset: string;
   };
   events: {
     id: string;
-    created_at: Generated<string>;
+    created_at: Generated<string> | string;
     job_id: string;
     mode: JobMode;
     status: JobStatus;
@@ -36,6 +43,14 @@ export interface DbSchema {
   };
 }
 
+export type JobsSchema = Omit<DbSchema["jobs"], "created_at"> & {
+  created_at: string;
+};
+export type EventsSchema = DbSchema["events"];
+export type MetaSchema = DbSchema["meta"];
+
+export type CreateJob = Omit<DbSchema["jobs"], "id" | "created_at">;
+
 export namespace DB {
   export const db = new Kysely<DbSchema>({
     dialect: new BunSqliteDialect({
@@ -44,11 +59,12 @@ export namespace DB {
   });
 
   export namespace Jobs {
-    export async function create_job() {
+    export async function create_job(payload: CreateJob) {
       return await db
         .insertInto("jobs")
         .values({
           id: Metadata.randomId(),
+          ...payload,
         })
         .returningAll()
         .executeTakeFirstOrThrow();
@@ -62,7 +78,7 @@ export namespace DB {
         .execute();
     }
 
-    export async function findById(id: string) {
+    export async function findById(id: string): Promise<JobsSchema> {
       return await DB.db
         .selectFrom("jobs")
         .selectAll()
@@ -231,7 +247,7 @@ export namespace DB {
   }
 
   export namespace Meta {
-    export async function create(payload: Omit<DbSchema["meta"], "id">) {
+    export async function create(payload: Omit<MetaSchema, "id">) {
       return await db
         .insertInto("meta")
         .orFail()

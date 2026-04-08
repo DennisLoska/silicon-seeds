@@ -10,7 +10,7 @@ import { VideoGenerator } from "./video/video-generator";
 //
 // Frontend
 // - Distinct mode: image generation, audio generation, video generation
-// - Composite mode: compose entire video from a video script (main pipeline)
+// - Gallery: see assets across all jobs
 // - ability to resume or pause a job
 // - ability to cancel a job
 // - ability to re-generate a specific asset
@@ -18,6 +18,10 @@ import { VideoGenerator } from "./video/video-generator";
 //
 // Api
 // - parameterize the art style, client id, batch size
+//
+// Performance
+// - scalability issues
+// - race conditions
 //
 // Workflows
 // - LTX workflows

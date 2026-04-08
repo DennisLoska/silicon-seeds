@@ -4,27 +4,36 @@ import { JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
 import { Metadata } from "../../meta/meta";
 import { PromptGenerator } from "../../prompts/prompt-generator";
-import { Presets } from "../../styles/presets";
-import { TextGenerator } from "../../text/text-generator";
+import { PostCompose } from "../schemas";
 
-export async function compose_video() {
-  const { id: jobId } = await JobOrchestrator.create_job();
+export async function compose_video(options: PostCompose) {
+  const {
+    script,
+    style_preset,
+    fps,
+    resolution,
+    clip_duration,
+    transition_duration,
+    image_model,
+    video_model,
+  } = options;
+
+  const { id: jobId } = await JobOrchestrator.create_job({
+    fps,
+    resolution,
+    clip_duration,
+    transition_duration,
+    image_model,
+    video_model,
+    style_preset,
+  });
 
   const ttsId = Metadata.randomId();
-  const prompt = "The seven deadly sins";
-
-  const script = await TextGenerator.create_script(prompt);
-
-  if (!script) {
-    return new Response(JSON.stringify({ message: "Oh no" }), { status: 500 });
-  }
 
   AudioGenerator.schedule_audio({
     id: ttsId,
     jobId,
-    // TODO remove substring dev hack
-    prompt: script.substring(0, 300),
-    // prompt: script,
+    prompt: script,
   });
 
   const ttsRes = (await AudioGenerator.get_audio(ttsId)) as any;
@@ -49,11 +58,18 @@ export async function compose_video() {
     JobMode.Video,
     script,
     vidStruct.clipCount,
-    Presets.WATERCOLOR,
+    style_preset,
   );
 
   return new Response(
     JSON.stringify({ message: "job queued", meta: vidStruct }),
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "HX-Redirect": `/jobs?job_id=${jobId}`,
+      },
+    },
   );
 }
 

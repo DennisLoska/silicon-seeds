@@ -92,9 +92,9 @@ export namespace SocketServer {
       }
 
       // always attempt to queue next items
-      ImageGenerator.generate_image();
-      VideoGenerator.generate_video();
-      AudioGenerator.generate_audio();
+      void ImageGenerator.generate_image();
+      void VideoGenerator.generate_video();
+      void AudioGenerator.generate_audio();
 
       if (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) {
         PromptGenerator.img_to_vid_prompt(promptId);

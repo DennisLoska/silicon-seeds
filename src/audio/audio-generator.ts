@@ -1,15 +1,16 @@
-import { comfyClient } from "../comfyui/comfyui-client";
+import { comfyClient, ModelVariant } from "../comfyui/comfyui-client";
 import { ComfyExecutedEvent, Event, JobMode } from "../events/events";
 import { QueueManager } from "../queue/queue-manager";
 import { Metadata } from "../meta/meta";
 import { JobOrchestrator } from "../jobs/jobs";
 import { Utils } from "../utils/utils";
+import { DB } from "../db/db";
 
 export namespace AudioGenerator {
   export function init() {
     Event.on(Event.NewAudioPrompt, (event) => {
       QueueManager.audioQueue.push(event);
-      generate_audio();
+      void generate_audio();
     });
   }
 
@@ -26,31 +27,36 @@ export namespace AudioGenerator {
     });
   }
 
-  export function generate_audio() {
+  export async function generate_audio() {
     if (QueueManager.isAudioQueueBlocked()) return;
 
     const item = QueueManager.pop("audio");
+    const job = await DB.Jobs.findById(item.jobId);
     Utils.assert(item.type === Event.NewAudioPrompt, "Incorrect event type!");
 
     const { prompt, id, mode, duration } = item;
 
     if (mode === JobMode.Speech) {
       Utils.assert(typeof prompt === "string", "'prompt' is not a string");
-      void comfyClient.generate({
+      const modelVariant: ModelVariant = {
         id,
         kind: "text-to-speech",
         prompt,
-      });
+      };
+
+      void comfyClient.generate(modelVariant, job);
     }
 
     if (mode === JobMode.Instrumental) {
       Utils.assert(duration && duration > 0, "'duration' is not a number");
-      void comfyClient.generate({
+      const modelVariant: ModelVariant = {
         id,
         kind: "text-to-instrumental",
         prompt: prompt ?? null,
         duration,
-      });
+      };
+
+      void comfyClient.generate(modelVariant, job);
     }
   }
 

@@ -1,10 +1,6 @@
 import { Kysely, sql } from "kysely";
 
 export async function up(db: Kysely<unknown>): Promise<void> {
-  await db.schema.dropTable("jobs").ifExists().execute();
-  await db.schema.dropTable("events").ifExists().execute();
-  await db.schema.dropTable("meta").ifExists().execute();
-
   await db.schema
     .createTable("jobs")
     .ifNotExists()

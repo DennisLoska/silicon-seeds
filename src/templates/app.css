@@ -23,8 +23,8 @@
   display: none;
 }
 
-/* Prevent body scrolling */
-body {
-  height: 100vh;
-  overflow: hidden;
+/* Show spinner during HTMX request */
+.htmx-request .htmx-indicator,
+button.htmx-request .htmx-indicator {
+  display: inline-block;
 }

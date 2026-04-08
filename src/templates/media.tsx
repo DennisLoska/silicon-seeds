@@ -40,7 +40,7 @@ const renderMediaItem = (
   return (
     <div
       key={asset.filename}
-      className="bg-base-200 rounded-lg p-4"
+      className="bg-base-200 rounded-lg p-4 hover:scale-105 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
       style={{ width: "fit-content" }}
     >
       {type === "image" ? (

@@ -147,5 +147,7 @@ silicon-seeds.sqlite
 # Opencode
 docs/
 
-# UI
-static/
+# UI (exclude handlers.js which is source code)
+static/alpine.min.js
+static/htmx.min.js
+static/style.css

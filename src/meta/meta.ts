@@ -4,7 +4,7 @@ import { Logger } from "../logger/logger";
 // This is sort of like a utils directory
 export namespace Metadata {
   export const FPS = 16;
-  export const TIMEOUT = 120;
+  export const TIMEOUT = 60;
   export const CLIP_DURATION = 5;
   export const TRANSITION_DURATION = 3;
   export const clientId = Bun.randomUUIDv7();

@@ -13,6 +13,13 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .addColumn("created_at", "text", (col) =>
       col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull(),
     )
+    .addColumn("fps", "integer", (col) => col.defaultTo(null))
+    .addColumn("clip_duration", "integer", (col) => col.defaultTo(null))
+    .addColumn("transition_duration", "integer", (col) => col.defaultTo(null))
+    .addColumn("resolution", "text", (col) => col.defaultTo(null))
+    .addColumn("image_model", "text", (col) => col.defaultTo(null))
+    .addColumn("video_model", "text", (col) => col.defaultTo(null))
+    .addColumn("style_preset", "text", (col) => col.defaultTo(null))
     .execute();
 
   await db.schema

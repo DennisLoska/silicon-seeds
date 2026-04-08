@@ -1,16 +1,17 @@
 import { ComfyExecutedEvent, Event, JobMode } from "../events/events";
-import { comfyClient } from "../comfyui/comfyui-client";
+import { comfyClient, ModelVariant } from "../comfyui/comfyui-client";
 import { QueueManager } from "../queue/queue-manager";
 import { Metadata } from "../meta/meta";
 import { JobOrchestrator } from "../jobs/jobs";
 import { Utils } from "../utils/utils";
 import { Lora } from "../styles/presets";
+import { DB } from "../db/db";
 
 export namespace ImageGenerator {
   export function init() {
     Event.on(Event.NewImagePrompt, (event) => {
       QueueManager.imageQueue.push(event);
-      generate_image();
+      void generate_image();
     });
   }
 
@@ -27,14 +28,21 @@ export namespace ImageGenerator {
     });
   }
 
-  export function generate_image() {
+  export async function generate_image() {
     if (QueueManager.isImageQueueBlocked()) return;
 
     const item = QueueManager.pop("image");
+    const job = await DB.Jobs.findById(item.jobId);
     Utils.assert(item.type === Event.NewImagePrompt, "Incorrect event type!");
 
     const { prompt, id, lora } = item;
-    void comfyClient.generate({ id, kind: "text-to-image", prompt, lora });
+    const modelVariant: ModelVariant = {
+      id,
+      kind: "text-to-image",
+      prompt,
+      lora,
+    };
+    void comfyClient.generate(modelVariant, job);
   }
 
   export async function get_image(id: string): Promise<ComfyExecutedEvent> {
