@@ -1,17 +1,20 @@
 export const Compose = () => (
   <div className="flex flex-col p-6 xl:h-full bg-base-200">
-    {/* Error Toast Container */}
-    <div id="error-toast-container" className="toast toast-bottom toast-end fixed z-50"></div>
-
-    {/* Hidden alert to ensure daisyUI compiles the alert-error class */}
-    <div className="alert alert-error hidden"></div>
-
     {/* Kanban-style Card Container */}
     <form
       className="flex flex-col xl:flex-row gap-4 xl:h-full"
       hx-post="/api/jobs/videos/compose"
       hx-encoding="multipart/form-data"
       hx-swap="none"
+      hx-disable-element="#submit-btn"
+      hx-on={`
+        before-request(this) {
+          this.querySelector('.submit-toggle').checked = true;
+        }
+        after-request(this) {
+          this.querySelector('.submit-toggle').checked = false;
+        }
+      `}
     >
       {/* Card 1: Video Script Input - Takes half width and full height */}
       <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex flex-col overflow-hidden resize-none 2xl:resize-x 2xl:min-w-[500px]">
@@ -62,7 +65,7 @@ export const Compose = () => (
       {/* Container for Cards 2-4 - Stacked vertically, takes half width and full height */}
       <div className="flex flex-col w-full xl:w-1/2 gap-4 flex-grow">
         {/* Card 2: AI Model Selection */}
-        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(25vw)] min-w-0 flex-grow flex flex-col">
+        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
           <div className="card-body flex flex-col flex-grow">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
@@ -147,7 +150,7 @@ export const Compose = () => (
         </div>
 
         {/* Card 3: Video Settings */}
-        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(25vw)] min-w-0 flex-grow flex flex-col">
+        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
           <div className="card-body flex flex-col flex-grow">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
@@ -263,39 +266,12 @@ export const Compose = () => (
                   <span>10 secs</span>
                 </div>
               </div>
-
-              {/* Resolution Setting */}
-              <div className="form-control flex-grow mt-4">
-                <label className="label cursor-pointer">
-                  <span className="label-text font-medium flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="currentColor"
-                      className="w-5 h-5"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
-                      />
-                    </svg>
-                    Resolution
-                  </span>
-                </label>
-                <select name="resolution" className="select select-bordered w-full">
-                  <option value="480p">480p</option>
-                  <option value="720p">720p</option>
-                </select>
-              </div>
             </div>
           </div>
         </div>
 
         {/* Card 4: Style Presets */}
-        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(25vw)] min-w-0 flex-grow flex flex-col">
+        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
           <div className="card-body flex flex-col">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
@@ -317,26 +293,6 @@ export const Compose = () => (
             <p className="text-sm text-base-content/70 mb-4 flex-none">
               Choose a visual style preset for your video.
             </p>
-            <div className="form-control">
-              <label className="label cursor-pointer">
-                <span className="label-text font-medium flex items-center gap-2 mb-1">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42"
-                    />
-                  </svg>
-                  Style Preset
-                </span>
-              </label>
             <select
               name="style_preset"
               className="select select-bordered w-full flex-none"
@@ -346,11 +302,10 @@ export const Compose = () => (
               <option value="pencil_watercolor">Pencil Watercolor</option>
             </select>
           </div>
-          </div>
         </div>
 
         {/* Card 5: Action Buttons */}
-        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(25vw)] min-w-0 flex-grow flex flex-col">
+        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
           <div className="card-body flex flex-col flex-grow">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
               <svg
@@ -376,13 +331,9 @@ export const Compose = () => (
               <button type="reset" className="btn btn-ghost">
                 Reset
               </button>
-              <button
-                type="submit"
-                id="submit-btn"
-                className="btn btn-primary"
-              >
+              <button type="submit" id="submit-btn" className="btn btn-primary">
                 Generate Video
-                <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
+                <span className="loading loading-spinner loading-md ml-2 opacity-0 htmx-indicator"></span>
               </button>
             </div>
           </div>
