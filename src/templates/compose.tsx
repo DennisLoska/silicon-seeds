@@ -44,12 +44,6 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
             </svg>
             Video Script
           </h2>
-          <p className="text-sm text-base-content/70 mb-4 flex-none">
-            Provide your video script by typing it below or uploading a text
-            file.
-          </p>
-
-          {/* Textarea for typing script */}
           <textarea
             name="script"
             id="type-script-tab"
@@ -92,10 +86,6 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
               </svg>
               AI Models
             </h2>
-            <p className="text-sm text-base-content/70 mb-4 flex-none">
-              Select the AI models you want to use for generating images and
-              videos.
-            </p>
 
             {/* Image Model Selection */}
             <div className="form-control flex-grow">
@@ -182,9 +172,6 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
               </svg>
               Video Settings
             </h2>
-            <p className="text-sm text-base-content/70 mb-4 flex-none">
-              Configure the technical parameters for your video generation.
-            </p>
 
             <div
               x-data="{ fps: 16, clipDuration: 5, transitionDuration: 3, resolution: '480p' }"
@@ -328,9 +315,6 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
               </svg>
               Style Preset
             </h2>
-            <p className="text-sm text-base-content/70 mb-4 flex-none">
-              Choose a visual style preset for your video.
-            </p>
             <div className="form-control">
               <label className="label cursor-pointer">
                 <span className="label-text font-medium flex items-center gap-2">
@@ -386,7 +370,7 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
             <p className="text-sm text-base-content/70 mb-4 flex-none">
               Schedule the job to generate the video with the selected settings.
             </p>
-            <div className="card-actions justify-between flex flex-row gap-2">
+            <div className="card-actions justify-between flex flex-row gap-2 mt-auto">
               <button type="reset" className="btn btn-ghost">
                 Reset
               </button>
