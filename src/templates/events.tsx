@@ -5,7 +5,7 @@ export const Events = async (job: Job) => (
     <h2 className="text-3xl font-bold mb-4">Events</h2>
     <div
       id="events-container"
-      className="card-body"
+      className="card-body px-0"
       hx-get={`/jobs/events?job_id=${job.id}`}
       hx-trigger="load"
     >

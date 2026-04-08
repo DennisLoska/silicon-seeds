@@ -1,5 +1,13 @@
-export const Compose = () => (
-  <div className="flex flex-col p-6 xl:h-full bg-base-200">
+import { ErrorToast } from "./toast";
+
+interface ComposeProps {
+  showProgress?: boolean;
+  jobId?: string;
+}
+
+export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
+  <div className="flex flex-col sm:px-6 py-6 xl:h-full bg-base-200">
+    <ErrorToast />
     {/* Kanban-style Card Container */}
     <form
       className="flex flex-col xl:flex-row gap-4 xl:h-full"
@@ -36,16 +44,10 @@ export const Compose = () => (
             </svg>
             Video Script
           </h2>
-          <p className="text-sm text-base-content/70 mb-4 flex-none">
-            Provide your video script by typing it below or uploading a text
-            file.
-          </p>
-
-          {/* Textarea for typing script */}
           <textarea
             name="script"
             id="type-script-tab"
-            className="textarea textarea-bordered w-full flex-grow resize-none mb-4 min-h-[420px]"
+            className="textarea textarea-ghost w-full flex-grow resize-none mb-4 min-h-[420px] focus:outline-none"
             placeholder="Write your video script here..."
           ></textarea>
 
@@ -65,7 +67,7 @@ export const Compose = () => (
       {/* Container for Cards 2-4 - Stacked vertically, takes half width and full height */}
       <div className="flex flex-col w-full xl:w-1/2 gap-4 flex-grow">
         {/* Card 2: AI Model Selection */}
-        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
+        <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
           <div className="card-body flex flex-col flex-grow">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
@@ -84,10 +86,6 @@ export const Compose = () => (
               </svg>
               AI Models
             </h2>
-            <p className="text-sm text-base-content/70 mb-4 flex-none">
-              Select the AI models you want to use for generating images and
-              videos.
-            </p>
 
             {/* Image Model Selection */}
             <div className="form-control flex-grow">
@@ -150,7 +148,7 @@ export const Compose = () => (
         </div>
 
         {/* Card 3: Video Settings */}
-        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
+        <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
           <div className="card-body flex flex-col flex-grow">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
@@ -174,12 +172,9 @@ export const Compose = () => (
               </svg>
               Video Settings
             </h2>
-            <p className="text-sm text-base-content/70 mb-4 flex-none">
-              Configure the technical parameters for your video generation.
-            </p>
 
             <div
-              x-data="{ fps: 16, clipDuration: 5, transitionDuration: 3 }"
+              x-data="{ fps: 16, clipDuration: 5, transitionDuration: 3, resolution: '480p' }"
               className="flex flex-col flex-grow"
             >
               {/* FPS Setting */}
@@ -267,11 +262,41 @@ export const Compose = () => (
                 </div>
               </div>
             </div>
+
+            {/* Resolution Dropdown */}
+            <div className="form-control mt-2">
+              <label className="label cursor-pointer">
+                <span className="label-text font-medium flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
+                    />
+                  </svg>
+                  Resolution
+                </span>
+              </label>
+              <select
+                name="resolution"
+                className="select select-bordered w-full flex-none"
+              >
+                <option value="480p">480p</option>
+                <option value="720p">720p</option>
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Card 4: Style Presets */}
-        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
+        <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
           <div className="card-body flex flex-col">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
@@ -290,22 +315,40 @@ export const Compose = () => (
               </svg>
               Style Preset
             </h2>
-            <p className="text-sm text-base-content/70 mb-4 flex-none">
-              Choose a visual style preset for your video.
-            </p>
-            <select
-              name="style_preset"
-              className="select select-bordered w-full flex-none"
-            >
-              <option value="system">Default</option>
-              <option value="watercolor">Watercolor</option>
-              <option value="pencil_watercolor">Pencil Watercolor</option>
-            </select>
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text font-medium flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42"
+                    />
+                  </svg>
+                  Style Preset
+                </span>
+              </label>
+              <select
+                name="style_preset"
+                className="select select-bordered w-full flex-none"
+              >
+                <option value="system">Default</option>
+                <option value="watercolor">Watercolor</option>
+                <option value="pencil_watercolor">Pencil Watercolor</option>
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Card 5: Action Buttons */}
-        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
+        <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
           <div className="card-body flex flex-col flex-grow">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
               <svg
@@ -327,18 +370,66 @@ export const Compose = () => (
             <p className="text-sm text-base-content/70 mb-4 flex-none">
               Schedule the job to generate the video with the selected settings.
             </p>
-            <div className="card-actions justify-end flex flex-row gap-2">
+            <div className="card-actions justify-between flex flex-row gap-2 mt-auto">
               <button type="reset" className="btn btn-ghost">
                 Reset
               </button>
               <button type="submit" id="submit-btn" className="btn btn-primary">
                 Generate Video
-                <span className="loading loading-spinner loading-md ml-2 opacity-0 htmx-indicator"></span>
+                <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Card 6: Progress - Only shown when showProgress=true */}
+      {showProgress && jobId && (
+        <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex flex-col">
+          <div className="card-body flex flex-col">
+            <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"
+                />
+              </svg>
+              Job Progress
+            </h2>
+            <p className="text-sm text-base-content/70 mb-4 flex-none">
+              Monitoring job: {jobId}
+            </p>
+            <div
+              id="events-container"
+              className="flex-grow overflow-y-auto min-h-[300px]"
+              hx-get={`/jobs/events?job_id=${jobId}`}
+              hx-trigger="load, every 2s"
+              hx-swap="innerHTML"
+            >
+              <span className="loading loading-spinner"></span>
+              Loading events...
+            </div>
+
+            {/* View Job Button Section */}
+            <div className="card-actions justify-end mt-4 flex-none">
+              <a
+                href={`/jobs?job_id=${jobId}&filter=all&tab=status`}
+                className="btn btn-primary"
+              >
+                View Job
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   </div>
 );

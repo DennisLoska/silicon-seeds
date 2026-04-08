@@ -67,7 +67,7 @@ export async function compose_video(options: PostCompose) {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "HX-Redirect": `/jobs?job_id=${jobId}`,
+        "HX-Redirect": `/compose?show_progress=true&job_id=${jobId}`,
       },
     },
   );

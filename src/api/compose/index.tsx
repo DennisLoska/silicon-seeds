@@ -5,11 +5,14 @@ const app = new Hono();
 const { Layout, App, Compose, OobHeader } = Templates;
 
 app.get("/", async (c) => {
+  const showProgress = c.req.query("show_progress") === "true";
+  const jobId = c.req.query("job_id") || "";
+
   // HTMX request - return content fragment + OOB header update
   if (c.req.header("HX-Request")) {
     return c.html(
       <>
-        <Compose />
+        <Compose showProgress={showProgress} jobId={jobId} />
         <OobHeader title="Compose" />
       </>,
     );
@@ -19,7 +22,7 @@ app.get("/", async (c) => {
   return c.html(
     <Layout>
       <App page="compose">
-        <Compose />
+        <Compose showProgress={showProgress} jobId={jobId} />
       </App>
     </Layout>,
   );
