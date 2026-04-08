@@ -6,7 +6,7 @@ interface ComposeProps {
 }
 
 export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
-  <div className="flex flex-col p-6 xl:h-full bg-base-200">
+  <div className="flex flex-col sm:px-6 py-6 xl:h-full bg-base-200">
     <ErrorToast />
     {/* Kanban-style Card Container */}
     <form
