@@ -22,9 +22,3 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
-
-/* Prevent body scrolling */
-body {
-  height: 100vh;
-  overflow: hidden;
-}

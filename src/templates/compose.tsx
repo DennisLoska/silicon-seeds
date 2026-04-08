@@ -1,8 +1,8 @@
 export const Compose = () => (
-  <div className="flex flex-col p-6 h-full bg-base-200">
+  <div className="flex flex-col p-6 xl:h-full bg-base-200">
     {/* Kanban-style Card Container */}
     <form
-      className="flex flex-col xl:flex-row gap-4 h-full"
+      className="flex flex-col xl:flex-row gap-4 xl:h-full"
       hx-post="/api/jobs/videos/compose"
       hx-encoding="multipart/form-data"
       hx-swap="none"
@@ -198,6 +198,7 @@ export const Compose = () => (
                   id="fps_range"
                   type="range"
                   name="fps"
+                  value="16"
                   min="1"
                   max="24"
                   step="1"
@@ -224,6 +225,7 @@ export const Compose = () => (
                   id="clip_duration_range"
                   type="range"
                   name="clip_duration"
+                  value="5"
                   min="1"
                   max="10"
                   step="1"
@@ -252,6 +254,7 @@ export const Compose = () => (
                   id="transition_duration_range"
                   type="range"
                   name="transition_duration"
+                  value="3"
                   min="1"
                   max="10"
                   step="1"
@@ -324,17 +327,17 @@ export const Compose = () => (
             <p className="text-sm text-base-content/70 mb-4 flex-none">
               Generate your video or reset the form.
             </p>
-            <div className="card-actions justify-end flex flex-row gap-2 flex-grow">
-              <button type="reset" className="btn btn-ghost flex-grow">
+            <div className="card-actions justify-end flex flex-row gap-2">
+              <button type="reset" className="btn btn-ghost">
                 Reset
               </button>
               <button
                 type="submit"
                 id="submit-btn"
-                className="btn btn-primary flex-grow"
+                className="btn btn-primary"
               >
                 Generate Video
-                <span className="loading loading-spinner loading-md htmx-indicator ml-2"></span>
+                <span className="loading loading-spinner loading-md ml-2 opacity-0 htmx-indicator"></span>
               </button>
             </div>
           </div>

@@ -431,7 +431,7 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
   return (
     <div
       id="job-details"
-      className="drawer lg:drawer-open min-h-screen bg-base-100"
+      className="drawer lg:drawer-open h-[95vh] overflow-y-hidden bg-base-100"
     >
       <input id="jobs-drawer" type="checkbox" className="drawer-toggle" />
 
