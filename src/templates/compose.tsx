@@ -155,8 +155,8 @@ export const Compose = () => (
         </div>
 
         {/* Card 3: Video Settings */}
-        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(25vw)] min-w-0 flex-grow">
-          <div className="card-body">
+        <div className="card bg-base-100 shadow-xl w-full xl:max-w-[calc(25vw)] min-w-0 flex-grow flex flex-col">
+          <div className="card-body flex flex-col flex-grow">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -176,16 +176,16 @@ export const Compose = () => (
                   stroke-linejoin="round"
                   d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                 />
-              </svg>
-              Video Settings
-            </h2>
-            <p className="text-sm text-base-content/70 mb-4">
+               </svg>
+               Video Settings
+             </h2>
+             <p className="text-sm text-base-content/70 mb-4 flex-none">
               Configure the technical parameters for your video generation.
             </p>
 
-            <div x-data="{ fps: 16, clipDuration: 5, transitionDuration: 3 }" className="space-y-4">
-              {/* FPS Setting */}
-              <div className="form-control">
+            <div x-data="{ fps: 16, clipDuration: 5, transitionDuration: 3 }" className="flex flex-col flex-grow space-y-4">
+               {/* FPS Setting */}
+              <div className="form-control flex-grow">
                 <label className="label cursor-pointer">
                   <span className="label-text font-medium">
                     Frames Per Second (FPS)
@@ -213,7 +213,7 @@ export const Compose = () => (
               </div>
 
               {/* Clip Duration Setting */}
-              <div className="form-control">
+              <div className="form-control flex-grow">
                 <label className="label cursor-pointer">
                   <span className="label-text font-medium">Clip Duration</span>
                   <output
@@ -239,7 +239,7 @@ export const Compose = () => (
               </div>
 
               {/* Transition Duration Setting */}
-              <div className="form-control">
+              <div className="form-control flex-grow">
                 <label className="label cursor-pointer">
                   <span className="label-text font-medium">Transition Duration</span>
                   <output
