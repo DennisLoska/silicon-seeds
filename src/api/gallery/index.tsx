@@ -34,6 +34,8 @@ app.get("/items", async (c) => {
   const typeFilter = c.req.query("type") as string | undefined;
   const limit = parseInt(c.req.query("limit") || "20");
 
+  console.log('[Gallery/items] Request params:', { cursor, typeFilter, limit });
+
   try {
     // Don't fetch if type is 'all' - treat as no filter
     const effectiveTypeFilter =
@@ -41,14 +43,19 @@ app.get("/items", async (c) => {
         ? (typeFilter as "image" | "video")
         : undefined;
 
+    console.log('[Gallery/items] Effective type filter:', effectiveTypeFilter);
+
     const items = await DB.Gallery.listItems({
       cursor: cursor,
       limit: isNaN(limit) ? 20 : limit,
       type: effectiveTypeFilter,
     });
 
+    console.log('[Gallery/items] Items returned:', items.length);
+
     // If no items returned, return "no more items" message
     if (!items || items.length === 0) {
+      console.log('[Gallery/items] No more items to return');
       return c.html(
         <div id="no-more-items" class="text-center p-4 text-base-content/60">
           No more items
