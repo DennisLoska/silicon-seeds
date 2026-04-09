@@ -9,16 +9,12 @@ import { VideoGenerator } from "./video/video-generator";
 // TODO list:
 //
 // General
+// - Add script event
+// - Add new composition event which includes the combined video
+// - ability to re-generate a specific asset
 // - Distinct mode: image generation, audio generation, video generation
 // - Gallery: see assets across all jobs
-// - ability to resume or pause a job
 // - ability to cancel a job
-// - ability to re-generate a specific asset
-// - Make UI reactive with SSE instead of polling
-// - Add script event
-// - Generate a random name for each job
-// - Add new composition event which includes the combined video
-// - Make status updates more pretty
 //
 // Bugs
 // - race condition when queueing multiple jobs at same time (queue block check)
@@ -27,6 +23,12 @@ import { VideoGenerator } from "./video/video-generator";
 // Performance
 // - scalability issues
 // - race conditions
+//
+// Nice to havee
+// - ability to resume or pause a job
+// - Generate a random name for each job
+// - Make status updates more pretty
+// - Make UI reactive with SSE instead of polling
 //
 // Workflows
 // - LTX workflows
