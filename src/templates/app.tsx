@@ -57,6 +57,7 @@ export const App = ({ children, page }: AppProps) => (
             <h1 id="header-title" className="text-xl pl-1 font-bold">
               {page === "dashboard" && "Dashboard"}
               {page === "jobs" && "Jobs"}
+              {page === "gallery" && "Gallery"}
               {page === "settings" && "Settings"}
               {page === "compose" && "Compose"}
               {page === "audio" && "Audio"}
