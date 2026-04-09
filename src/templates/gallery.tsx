@@ -15,51 +15,56 @@ interface GalleryProps {
 }
 
 export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
+  // Parse type filter - can be comma-separated for multiple selections
+  const selectedTypes = typeFilter ? typeFilter.split(",") : [];
+
   return (
-    <div class="flex flex-col">
+    <div class="flex flex-col" id="gallery-content">
       {/* Media Type Filter Controls */}
-      <div class="flex gap-2 mb-4 p-2 bg-base-200 rounded-lg sticky top-0 z-10">
-        <input
-          type="radio"
-          name="gallery-type-filter"
-          value="all"
-          checked={!typeFilter || typeFilter === "all"}
-          class="btn btn-sm btn-outline"
-          hx-get="/gallery"
-          hx-trigger="change"
-          hx-target="body"
-        />
-        <label for="gallery-type-filter-all" class="text-sm">
-          All
-        </label>
+      <div class="p-6 bg-base-100 mb-4 rounded-lg">
+        <div class="flex items-center gap-4">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              name="gallery-type-filter"
+              value="all"
+              checked={selectedTypes.length === 0 || selectedTypes.includes("all")}
+              class="checkbox checkbox-sm"
+              hx-get="/gallery"
+              hx-trigger="change"
+              hx-target="#gallery-content"
+            />
+            <span class="text-sm">All</span>
+          </label>
 
-        <input
-          type="radio"
-          name="gallery-type-filter"
-          value="image"
-          checked={typeFilter === "image"}
-          class="btn btn-sm btn-outline"
-          hx-get="/gallery?type=image"
-          hx-trigger="change"
-          hx-target="body"
-        />
-        <label for="gallery-type-filter-image" class="text-sm">
-          Images
-        </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              name="gallery-type-filter"
+              value="image"
+              checked={selectedTypes.includes("image")}
+              class="checkbox checkbox-sm"
+              hx-get="/gallery?type=image"
+              hx-trigger="change"
+              hx-target="#gallery-content"
+            />
+            <span class="text-sm">Images</span>
+          </label>
 
-        <input
-          type="radio"
-          name="gallery-type-filter"
-          value="video"
-          checked={typeFilter === "video"}
-          class="btn btn-sm btn-outline"
-          hx-get="/gallery?type=video"
-          hx-trigger="change"
-          hx-target="body"
-        />
-        <label for="gallery-type-filter-video" class="text-sm">
-          Videos
-        </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              name="gallery-type-filter"
+              value="video"
+              checked={selectedTypes.includes("video")}
+              class="checkbox checkbox-sm"
+              hx-get="/gallery?type=video"
+              hx-trigger="change"
+              hx-target="#gallery-content"
+            />
+            <span class="text-sm">Videos</span>
+          </label>
+        </div>
       </div>
 
       {/* Masonry Gallery */}
