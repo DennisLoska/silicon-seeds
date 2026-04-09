@@ -276,7 +276,7 @@ export namespace DB {
   }
 
   export namespace Gallery {
-    interface ListItemResult {
+    type ListItemResult = {
       meta_id: string;
       event_id: string;
       filename: string;
@@ -284,13 +284,13 @@ export namespace DB {
       type: "input" | "output" | "temp";
       event_created_at: string;
       job_id: string;
-    }
+    };
 
-    interface ListItemsOptions {
-      cursor?: string;
+    type ListItemsOptions = {
+      cursor?: string; // meta.id (UUID7) for pagination
       type?: "image" | "video";
       limit?: number;
-    }
+    };
 
     function getMediaTypeFromExtension(
       filename: string,
@@ -320,14 +320,15 @@ export namespace DB {
           "meta.subfolder",
           "meta.type as meta_type",
           "events.created_at as event_created_at",
+          "events.status as event_status",
           "events.id as event_id",
           "jobs.id as job_id",
         ])
-        .where("meta.type", "=", "output")
-        .where((eb) => eb.or([eb("events.status", "=", JobStatus.Complete)]));
+        .where("meta.type", "=", "output");
 
       if (cursor) {
-        query = query.where("events.created_at", "<", cursor);
+        // UUID7 is sortable - just use < for pagination
+        query = query.where("meta.id", "<", cursor);
       }
 
       if (type) {
@@ -341,7 +342,7 @@ export namespace DB {
       }
 
       const results = await query
-        .orderBy("events.created_at", "desc")
+        .orderBy("meta.id", "desc") // UUID7 is sortable chronologically!
         .limit(limit)
         .execute();
 
