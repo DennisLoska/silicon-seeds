@@ -138,7 +138,6 @@ const GalleryItemCard = ({ item }: { item: GalleryItem }) => {
         {mediaType === "video" && (
           <video src={assetPath} class="w-full" muted />
         )}
-        {!mediaType && <div class="text-4xl p-8">📁</div>}
       </figure>
     </div>
   );
