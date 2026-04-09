@@ -107,6 +107,12 @@ export namespace DB {
       };
 
       switch (event.type) {
+        case Event.NewTextPrompt:
+          return {
+            ...base,
+            text: event.text,
+          };
+
         case Event.NewImagePrompt:
           return {
             ...base,
@@ -266,6 +272,103 @@ export namespace DB {
         .executeTakeFirstOrThrow();
 
       return res;
+    }
+  }
+
+  export namespace Gallery {
+    interface ListItemResult {
+      meta_id: string;
+      event_id: string;
+      filename: string;
+      subfolder: string;
+      type: "input" | "output" | "temp";
+      event_created_at: string;
+      job_id: string;
+    }
+
+    interface ListItemsOptions {
+      cursor?: string;
+      type?: "image" | "video" | "audio";
+      limit?: number;
+    }
+
+    function getMediaTypeFromExtension(
+      filename: string,
+    ): "image" | "video" | "audio" | null {
+      const ext = filename.split(".").pop()?.toLowerCase();
+      if (!ext) return null;
+
+      const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
+      const videoExts = ["mp4", "mov", "avi", "mkv", "webm"];
+      const audioExts = ["mp3", "wav", "ogg", "flac", "aac"];
+
+      if (imageExts.includes(ext)) return "image";
+      if (videoExts.includes(ext)) return "video";
+      if (audioExts.includes(ext)) return "audio";
+      return null;
+    }
+
+    export async function listItems(options: ListItemsOptions = {}) {
+      const { cursor, type, limit = 20 } = options;
+
+      let query = DB.db
+        .selectFrom("meta")
+        .innerJoin("events", "events.id", "meta.event_id")
+        .innerJoin("jobs", "jobs.id", "events.job_id")
+        .select([
+          "meta.id as meta_id",
+          "meta.event_id",
+          "meta.filename",
+          "meta.subfolder",
+          "meta.type as meta_type",
+          "events.created_at as event_created_at",
+          "events.id as event_id",
+          "jobs.id as job_id",
+        ])
+        .where("meta.type", "=", "output")
+        .where((eb) => eb.or([eb("events.status", "=", JobStatus.Complete)]));
+
+      if (cursor) {
+        query = query.where("events.created_at", "<", cursor);
+      }
+
+      if (type) {
+        const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
+        const videoExts = ["mp4", "mov", "avi", "mkv", "webm"];
+        const audioExts = ["mp3", "wav", "ogg", "flac", "aac"];
+
+        const extList =
+          type === "image"
+            ? imageExts
+            : type === "video"
+              ? videoExts
+              : audioExts;
+        query = query.where((eb) =>
+          eb.or(extList.map((ext) => eb("meta.filename", "like", `%.${ext}`))),
+        );
+      }
+
+      const results = await query
+        .orderBy("events.created_at", "desc")
+        .limit(limit)
+        .execute();
+
+      return results.map((row) => {
+        const mediaType = getMediaTypeFromExtension(row.filename);
+        return {
+          meta_id: row.meta_id,
+          event_id: row.event_id,
+          filename: row.filename,
+          subfolder: row.subfolder,
+          type: row.meta_type,
+          created_at: row.event_created_at,
+          job_id: row.job_id,
+          mediaType: mediaType,
+        } as ListItemResult & {
+          mediaType: "image" | "video" | "audio" | null;
+          created_at: string;
+        };
+      });
     }
   }
 }
