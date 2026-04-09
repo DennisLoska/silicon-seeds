@@ -16,9 +16,9 @@ interface GalleryProps {
 
 export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
   return (
-    <div class="flex flex-col h-full">
+    <div class="flex flex-col">
       {/* Media Type Filter Controls */}
-      <div class="flex gap-2 mb-4 p-2 bg-base-200 rounded-lg">
+      <div class="flex gap-2 mb-4 p-2 bg-base-200 rounded-lg sticky top-0 z-10">
         <input
           type="radio"
           name="gallery-type-filter"
@@ -62,10 +62,10 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
         </label>
       </div>
 
-      {/* Gallery Grid */}
+      {/* Masonry Gallery */}
       <div
         id="gallery-grid"
-        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 flex-grow overflow-y-auto pb-8"
+        class="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-4 space-y-4"
         aria-live="polite"
       >
         {items.map((item) => (
@@ -74,11 +74,11 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
 
         {/* Infinite Scroll Sentinel - last element triggers load */}
         <div
-          class="sentinel py-4 text-center"
+          class="sentinel py-8 text-center break-inside-avoid"
           hx-get="/gallery/items"
           hx-trigger="revealed"
           hx-swap="afterend"
-          hx-vals={`{cursor: "${items[items.length - 1]?.created_at || ''}", type: "${typeFilter || 'all'}"}`}
+          hx-vals={`{cursor: "${items[items.length - 1]?.meta_id || ''}", type: "${typeFilter || 'all'}"}`}
         >
           <span class="loading loading-spinner"></span>
         </div>
@@ -89,7 +89,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
 
 // Static method to render items fragment for HTMX requests
 export async function renderItems(items: GalleryItem[], cursor: string, typeFilter?: string) {
-  const nextCursor = items[items.length - 1]?.created_at || "";
+  const nextCursor = items[items.length - 1]?.meta_id || "";
 
   return (
     <>
@@ -99,7 +99,7 @@ export async function renderItems(items: GalleryItem[], cursor: string, typeFilt
       ))}
       {/* New sentinel for next batch - replaces the old one via afterend swap */}
       <div
-        class="sentinel py-4 text-center"
+        class="sentinel py-8 text-center break-inside-avoid"
         hx-get="/gallery/items"
         hx-trigger="revealed"
         hx-swap="afterend"
@@ -117,22 +117,22 @@ const GalleryItemCard = ({ item }: { item: GalleryItem }) => {
   const mediaType = item.mediaType;
 
   return (
-    <div class="card bg-base-200 hover:scale-105 transition-transform duration-200">
-      <figure class="aspect-square bg-base-300 flex items-center justify-center overflow-hidden">
+    <div class="card bg-base-200 hover:scale-105 transition-transform duration-200 break-inside-avoid">
+      <figure class="bg-base-300 flex items-center justify-center overflow-hidden">
         {mediaType === "image" && (
           <img
             src={assetPath}
             alt={item.filename}
-            class="w-full h-full object-contain"
+            class="w-full"
             onError={() => {
               // Hide broken images gracefully - handled by CSS instead
             }}
           />
         )}
         {mediaType === "video" && (
-          <video src={assetPath} class="w-full h-full object-contain" muted />
+          <video src={assetPath} class="w-full" muted />
         )}
-        {!mediaType && <div class="text-4xl">📁</div>}
+        {!mediaType && <div class="text-4xl p-8">📁</div>}
       </figure>
     </div>
   );
