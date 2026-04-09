@@ -72,7 +72,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
       {/* Masonry Gallery */}
       <div
         id="gallery-grid"
-        className="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 p-6 gap-4 space-y-4"
+        className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 p-6 gap-4 space-y-4"
         aria-live="polite"
       >
         {items.map((item) => (
