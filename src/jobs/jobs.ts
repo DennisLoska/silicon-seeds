@@ -95,6 +95,17 @@ export namespace JobOrchestrator {
     };
 
     switch (event.type) {
+      case Event.NewTextPrompt:
+        const { text } = event;
+        Utils.assert(prompt, "Must provide 'prompt' to define an image task!");
+        Utils.assert(text, "Must provide 'text' to define an image task!");
+        return {
+          ...base,
+          type: Event.NewTextPrompt,
+          prompt,
+          text,
+        };
+
       case Event.NewImagePrompt:
         Utils.assert(prompt, "Must provide 'prompt' to define an image task!");
         return {

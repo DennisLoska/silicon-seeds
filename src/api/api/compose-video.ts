@@ -46,6 +46,8 @@ export async function compose_video(options: PostCompose) {
   });
 
   JobOrchestrator.schedule_task({
+    jobId,
+    mode: JobMode.Text,
     prompt: "n/a",
     type: Event.NewTextPrompt,
     text: finalScript,
