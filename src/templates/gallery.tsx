@@ -136,7 +136,17 @@ const GalleryItemCard = ({ item }: { item: GalleryItem }) => {
           />
         )}
         {mediaType === "video" && (
-          <video src={assetPath} class="w-full" muted />
+          <video
+            src={assetPath}
+            class="w-full"
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            x-data="{ play() { this.$el.play(); }, pause() { this.$el.pause(); this.$el.currentTime = 0; } }"
+            x-on:mouseenter="play()"
+            x-on:mouseleave="pause()"
+          />
         )}
       </figure>
     </div>
