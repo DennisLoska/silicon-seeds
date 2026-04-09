@@ -75,7 +75,9 @@ export namespace JobOrchestrator {
   export function schedule_task(event: Partial<JobEvent>) {
     const task = create_task(event);
     update_schedule(task);
-    event.type && Event.emit(event.type, task);
+
+    Utils.assert(event.type, "Event is type missing.");
+    Event.emit(event.type, task);
   }
 
   // TypeScript sucks

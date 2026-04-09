@@ -32,11 +32,18 @@ export interface JobBaseEvent extends BaseEvent {
 }
 
 export enum Event {
+  NewTextPrompt = "new_text_prompt",
   NewImagePrompt = "new_image_prompt",
   NewVideoPrompt = "new_video_prompt",
   NewTransitionPrompt = "new_transition_prompt",
   NewAudioPrompt = "new_audio_prompt",
   ComfyExecuted = "comfy_executed",
+}
+
+export interface TextPromptEvent extends JobBaseEvent {
+  prompt: string;
+  text: string;
+  type: Event.NewTextPrompt;
 }
 
 export interface ImagePromptEvent extends JobBaseEvent {
@@ -72,6 +79,7 @@ export interface ComfyExecutedEvent extends BaseEvent {
 }
 
 type EventMap = {
+  [Event.NewTextPrompt]: TextPromptEvent;
   [Event.NewImagePrompt]: ImagePromptEvent;
   [Event.NewVideoPrompt]: VideoPromptEvent;
   [Event.NewTransitionPrompt]: TransitionPromptEvent;
@@ -108,11 +116,19 @@ export namespace Event {
     else events.emit(event);
   }
 
+  on(Event.NewTextPrompt, (event) => {
+    logEvent(event);
+  });
+
   on(Event.NewImagePrompt, (event) => {
     logEvent(event);
   });
 
   on(Event.NewVideoPrompt, (event) => {
+    logEvent(event);
+  });
+
+  on(Event.NewTransitionPrompt, (event) => {
     logEvent(event);
   });
 

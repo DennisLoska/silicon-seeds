@@ -1,6 +1,6 @@
 import { AudioGenerator } from "../../audio/audio-generator";
 import { comfyClient } from "../../comfyui/comfyui-client";
-import { JobMode } from "../../events/events";
+import { Event, JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
 import { Metadata } from "../../meta/meta";
 import { PromptGenerator } from "../../prompts/prompt-generator";
@@ -21,7 +21,7 @@ export async function compose_video(options: PostCompose) {
 
   // Determine the final script: file takes precedence over text input
   let finalScript = script?.trim();
-  
+
   if (script_file) {
     // Read the uploaded file content
     const fileContent = await script_file.text();
@@ -43,6 +43,12 @@ export async function compose_video(options: PostCompose) {
     image_model,
     video_model,
     style_preset,
+  });
+
+  JobOrchestrator.schedule_task({
+    prompt: "n/a",
+    type: Event.NewTextPrompt,
+    text: finalScript,
   });
 
   const ttsId = Metadata.randomId();

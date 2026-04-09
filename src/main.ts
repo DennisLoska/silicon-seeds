@@ -11,9 +11,9 @@ import { VideoGenerator } from "./video/video-generator";
 // General
 // - Add script event
 // - Add new composition event which includes the combined video
-// - ability to re-generate a specific asset
 // - Distinct mode: image generation, audio generation, video generation
 // - Gallery: see assets across all jobs
+// - ability to re-generate a specific asset
 // - ability to cancel a job
 //
 // Bugs
