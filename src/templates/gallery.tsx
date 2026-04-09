@@ -31,7 +31,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
               checked={
                 selectedTypes.length === 0 || selectedTypes.includes("all")
               }
-              className="checkbox checkbox-sm"
+              className="checkbox checkbox-sm checkbox-accent"
               hx-get="/gallery"
               hx-trigger="change"
               hx-target="#gallery-content"
@@ -45,7 +45,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
               name="gallery-type-filter"
               value="image"
               checked={selectedTypes.includes("image")}
-              className="checkbox checkbox-sm"
+              className="checkbox checkbox-sm checkbox-accent"
               hx-get="/gallery?type=image"
               hx-trigger="change"
               hx-target="#gallery-content"
@@ -59,7 +59,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
               name="gallery-type-filter"
               value="video"
               checked={selectedTypes.includes("video")}
-              className="checkbox checkbox-sm"
+              className="checkbox checkbox-sm checkbox-accent"
               hx-get="/gallery?type=video"
               hx-trigger="change"
               hx-target="#gallery-content"
