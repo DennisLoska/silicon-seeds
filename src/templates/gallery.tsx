@@ -78,7 +78,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
           hx-get="/gallery/items"
           hx-trigger="revealed"
           hx-swap="afterend"
-          hx-vals={`{cursor: "${items[items.length - 1]?.meta_id || ''}", type: "${typeFilter || 'all'}"}`}
+          hx-vals={`{"cursor": "${items[items.length - 1]?.meta_id || ''}", "type": "${typeFilter || 'all'}"}`}
         >
           <span class="loading loading-spinner"></span>
         </div>
@@ -103,7 +103,7 @@ export async function renderItems(items: GalleryItem[], cursor: string, typeFilt
         hx-get="/gallery/items"
         hx-trigger="revealed"
         hx-swap="afterend"
-        hx-vals={`{cursor: "${nextCursor}", type: "${typeFilter || 'all'}"}`}
+        hx-vals={`{"cursor": "${nextCursor}", "type": "${typeFilter || 'all'}"}`}
       >
         <span class="loading loading-spinner"></span>
       </div>
