@@ -7,6 +7,7 @@ import { NotSelected } from "./not-selected";
 import { Dashboard as dashboardComponent } from "./dashboard";
 import { Compose as composeComponent } from "./compose";
 import { Settings as settingsComponent } from "./settings";
+import { Gallery as galleryComponent } from "./gallery";
 import { Job } from "../events/events";
 import { OobHeader as oobHeaderComponent } from "./oob-header";
 import { EventList } from "./events-list";
@@ -26,5 +27,6 @@ export namespace Templates {
   export const Dashboard = dashboardComponent;
   export const Settings = settingsComponent;
   export const Compose = composeComponent;
+  export const Gallery = galleryComponent;
   export const OobHeader = oobHeaderComponent;
 }

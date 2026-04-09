@@ -9,16 +9,18 @@ import { VideoGenerator } from "./video/video-generator";
 // TODO list:
 //
 // General
-// - Add script event
-// - Add new composition event which includes the combined video
-// - ability to re-generate a specific asset
-// - Distinct mode: image generation, audio generation, video generation
-// - Gallery: see assets across all jobs
 // - ability to cancel a job
+// - Add new composition event which includes the combined video
+// - Distinct mode: image generation, audio generation, video generation
+// - ability to re-generate a specific asset
 //
 // Bugs
 // - race condition when queueing multiple jobs at same time (queue block check)
 // - reconnecting websockets
+// - created_at format is messed up (no ms)
+// - fix active job in job list on transitions
+// - new items in gallery are added vertically ot horizontally
+// - need to sanitize input text otherwise it breaks json parsing
 //
 // Performance
 // - scalability issues

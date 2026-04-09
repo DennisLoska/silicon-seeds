@@ -4,6 +4,7 @@ import { JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
 import { Metadata } from "../../meta/meta";
 import { PromptGenerator } from "../../prompts/prompt-generator";
+import { TextGenerator } from "../../text/text-generator";
 import { PostCompose } from "../schemas";
 
 export async function compose_video(options: PostCompose) {
@@ -21,7 +22,7 @@ export async function compose_video(options: PostCompose) {
 
   // Determine the final script: file takes precedence over text input
   let finalScript = script?.trim();
-  
+
   if (script_file) {
     // Read the uploaded file content
     const fileContent = await script_file.text();
@@ -44,6 +45,8 @@ export async function compose_video(options: PostCompose) {
     video_model,
     style_preset,
   });
+
+  await TextGenerator.create_text_event(jobId, finalScript);
 
   const ttsId = Metadata.randomId();
 

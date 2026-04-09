@@ -75,7 +75,9 @@ export namespace JobOrchestrator {
   export function schedule_task(event: Partial<JobEvent>) {
     const task = create_task(event);
     update_schedule(task);
-    event.type && Event.emit(event.type, task);
+
+    Utils.assert(event.type, "Event is type missing.");
+    Event.emit(event.type, task);
   }
 
   // TypeScript sucks
@@ -93,6 +95,17 @@ export namespace JobOrchestrator {
     };
 
     switch (event.type) {
+      case Event.NewTextPrompt:
+        const { text } = event;
+        Utils.assert(prompt, "Must provide 'prompt' to define an image task!");
+        Utils.assert(text, "Must provide 'text' to define an image task!");
+        return {
+          ...base,
+          type: Event.NewTextPrompt,
+          prompt,
+          text,
+        };
+
       case Event.NewImagePrompt:
         Utils.assert(prompt, "Must provide 'prompt' to define an image task!");
         return {
