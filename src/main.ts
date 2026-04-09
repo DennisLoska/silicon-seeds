@@ -17,6 +17,10 @@ import { VideoGenerator } from "./video/video-generator";
 // Bugs
 // - race condition when queueing multiple jobs at same time (queue block check)
 // - reconnecting websockets
+// - created_at format is messed up (no ms)
+// - fix active job in job list on transitions
+// - new items in gallery are added vertically ot horizontally
+// - need to sanitize input text otherwise it breaks json parsing
 //
 // Performance
 // - scalability issues

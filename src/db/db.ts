@@ -26,6 +26,7 @@ export interface DbSchema {
     mode: JobMode;
     status: JobStatus;
     type: Event;
+    text: string | null;
     prompt: string | null;
     filename: string | null;
     start_img: string | null;
@@ -169,6 +170,13 @@ export namespace DB {
       };
 
       switch (row.type) {
+        case Event.NewTextPrompt:
+          Utils.assert(row.prompt, "'prompt' is not null");
+          return {
+            ...base,
+            text: row.text!,
+            prompt: row.prompt,
+          };
         case Event.NewImagePrompt:
           Utils.assert(row.prompt, "'prompt' is not null");
           return {

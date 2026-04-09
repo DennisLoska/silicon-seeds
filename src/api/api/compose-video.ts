@@ -1,9 +1,10 @@
 import { AudioGenerator } from "../../audio/audio-generator";
 import { comfyClient } from "../../comfyui/comfyui-client";
-import { Event, JobMode } from "../../events/events";
+import { JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
 import { Metadata } from "../../meta/meta";
 import { PromptGenerator } from "../../prompts/prompt-generator";
+import { TextGenerator } from "../../text/text-generator";
 import { PostCompose } from "../schemas";
 
 export async function compose_video(options: PostCompose) {
@@ -45,13 +46,7 @@ export async function compose_video(options: PostCompose) {
     style_preset,
   });
 
-  JobOrchestrator.schedule_task({
-    jobId,
-    mode: JobMode.Text,
-    prompt: "n/a",
-    type: Event.NewTextPrompt,
-    text: finalScript,
-  });
+  await TextGenerator.create_text_event(jobId, finalScript);
 
   const ttsId = Metadata.randomId();
 
