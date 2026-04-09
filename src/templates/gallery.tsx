@@ -74,10 +74,11 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
 
         {/* Infinite Scroll Sentinel - last element triggers load */}
         <div
-          class="sentinel py-8 text-center break-inside-avoid"
+          class="sentinel hidden py-8 text-center break-inside-avoid"
           hx-get="/gallery/items"
           hx-trigger="revealed"
           hx-swap="afterend"
+          hx-on:revealed="this.querySelector('.loading').remove()"
           hx-vals={`{"cursor": "${items[items.length - 1]?.meta_id || ''}", "type": "${typeFilter || 'all'}"}`}
         >
           <span class="loading loading-spinner"></span>
@@ -99,10 +100,11 @@ export async function renderItems(items: GalleryItem[], cursor: string, typeFilt
       ))}
       {/* New sentinel for next batch - replaces the old one via afterend swap */}
       <div
-        class="sentinel py-8 text-center break-inside-avoid"
+        class="sentinel hidden py-8 text-center break-inside-avoid"
         hx-get="/gallery/items"
         hx-trigger="revealed"
         hx-swap="afterend"
+        hx-on:revealed="this.querySelector('.loading').remove()"
         hx-vals={`{"cursor": "${nextCursor}", "type": "${typeFilter || 'all'}"}`}
       >
         <span class="loading loading-spinner"></span>
@@ -117,8 +119,8 @@ const GalleryItemCard = ({ item }: { item: GalleryItem }) => {
   const mediaType = item.mediaType;
 
   return (
-    <div class="card bg-base-200 hover:scale-105 transition-transform duration-200 break-inside-avoid">
-      <figure class="bg-base-300 flex items-center justify-center overflow-hidden">
+    <div class="card bg-base-200 hover:scale-105 transition-transform duration-200 break-inside-avoid rounded-box">
+      <figure class="bg-base-300 flex items-center justify-center overflow-hidden rounded-box">
         {mediaType === "image" && (
           <img
             src={assetPath}
