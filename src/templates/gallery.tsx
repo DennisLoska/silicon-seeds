@@ -65,7 +65,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
       {/* Masonry Gallery */}
       <div
         id="gallery-grid"
-        class="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-4 space-y-4"
+        class="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 p-6 gap-4 space-y-4"
         aria-live="polite"
       >
         {items.map((item) => (
@@ -79,7 +79,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
           hx-trigger="revealed"
           hx-swap="afterend"
           hx-on:revealed="this.querySelector('.loading').remove()"
-          hx-vals={`{"cursor": "${items[items.length - 1]?.meta_id || ''}", "type": "${typeFilter || 'all'}"}`}
+          hx-vals={`{"cursor": "${items[items.length - 1]?.meta_id || ""}", "type": "${typeFilter || "all"}"}`}
         >
           <span class="loading loading-spinner"></span>
         </div>
@@ -89,7 +89,11 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
 };
 
 // Static method to render items fragment for HTMX requests
-export async function renderItems(items: GalleryItem[], cursor: string, typeFilter?: string) {
+export async function renderItems(
+  items: GalleryItem[],
+  cursor: string,
+  typeFilter?: string,
+) {
   const nextCursor = items[items.length - 1]?.meta_id || "";
 
   return (
@@ -105,7 +109,7 @@ export async function renderItems(items: GalleryItem[], cursor: string, typeFilt
         hx-trigger="revealed"
         hx-swap="afterend"
         hx-on:revealed="this.querySelector('.loading').remove()"
-        hx-vals={`{"cursor": "${nextCursor}", "type": "${typeFilter || 'all'}"}`}
+        hx-vals={`{"cursor": "${nextCursor}", "type": "${typeFilter || "all"}"}`}
       >
         <span class="loading loading-spinner"></span>
       </div>
