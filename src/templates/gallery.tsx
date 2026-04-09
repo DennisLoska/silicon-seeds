@@ -21,7 +21,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
   return (
     <div className="flex flex-col" id="gallery-content">
       {/* Media Type Filter Controls */}
-      <div className="p-6 bg-base-100 mb-4 rounded-lg">
+      <div className="sticky top-0 z-10 p-6 bg-base-100 mb-4 rounded-lg shadow-sm">
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -36,7 +36,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
               hx-trigger="change"
               hx-target="#gallery-content"
             />
-            <span className="text-sm">All</span>
+            <span className="text-sm font-semibold">All</span>
           </label>
 
           <label className="flex items-center gap-2 cursor-pointer">
@@ -50,7 +50,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
               hx-trigger="change"
               hx-target="#gallery-content"
             />
-            <span className="text-sm">Images</span>
+            <span className="text-sm font-semibold">Images</span>
           </label>
 
           <label className="flex items-center gap-2 cursor-pointer">
@@ -64,7 +64,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
               hx-trigger="change"
               hx-target="#gallery-content"
             />
-            <span className="text-sm">Videos</span>
+            <span className="text-sm font-semibold">Videos</span>
           </label>
         </div>
       </div>
