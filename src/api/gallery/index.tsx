@@ -17,7 +17,7 @@ app.get("/", async (c) => {
   // Fetch initial items for the gallery
   const initialItems = await DB.Gallery.listItems({
     limit: 20,
-    type: typeFilter ? (typeFilter as "image" | "video" | "audio") : undefined,
+    type: typeFilter ? (typeFilter as "image" | "video") : undefined,
   });
 
   return Api.renderFragment(
@@ -35,12 +35,16 @@ app.get("/items", async (c) => {
   const limit = parseInt(c.req.query("limit") || "20");
 
   try {
+    // Don't fetch if type is 'all' - treat as no filter
+    const effectiveTypeFilter =
+      typeFilter && typeFilter !== "all"
+        ? (typeFilter as "image" | "video")
+        : undefined;
+
     const items = await DB.Gallery.listItems({
       cursor: cursor,
       limit: isNaN(limit) ? 20 : limit,
-      type: typeFilter
-        ? (typeFilter as "image" | "video" | "audio")
-        : undefined,
+      type: effectiveTypeFilter,
     });
 
     // If no items returned, return "no more items" message
@@ -52,8 +56,8 @@ app.get("/items", async (c) => {
       );
     }
 
-    // Return HTML fragment with gallery item cards
-    const fragment = await renderItems(items);
+    // Return HTML fragment with gallery item cards and new sentinel
+    const fragment = await renderItems(items, cursor || "", typeFilter);
 
     return c.html(fragment);
   } catch (error) {

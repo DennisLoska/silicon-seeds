@@ -288,23 +288,21 @@ export namespace DB {
 
     interface ListItemsOptions {
       cursor?: string;
-      type?: "image" | "video" | "audio";
+      type?: "image" | "video";
       limit?: number;
     }
 
     function getMediaTypeFromExtension(
       filename: string,
-    ): "image" | "video" | "audio" | null {
+    ): "image" | "video" | null {
       const ext = filename.split(".").pop()?.toLowerCase();
       if (!ext) return null;
 
       const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
       const videoExts = ["mp4", "mov", "avi", "mkv", "webm"];
-      const audioExts = ["mp3", "wav", "ogg", "flac", "aac"];
 
       if (imageExts.includes(ext)) return "image";
       if (videoExts.includes(ext)) return "video";
-      if (audioExts.includes(ext)) return "audio";
       return null;
     }
 
@@ -335,14 +333,8 @@ export namespace DB {
       if (type) {
         const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
         const videoExts = ["mp4", "mov", "avi", "mkv", "webm"];
-        const audioExts = ["mp3", "wav", "ogg", "flac", "aac"];
 
-        const extList =
-          type === "image"
-            ? imageExts
-            : type === "video"
-              ? videoExts
-              : audioExts;
+        const extList = type === "image" ? imageExts : videoExts;
         query = query.where((eb) =>
           eb.or(extList.map((ext) => eb("meta.filename", "like", `%.${ext}`))),
         );
@@ -365,7 +357,7 @@ export namespace DB {
           job_id: row.job_id,
           mediaType: mediaType,
         } as ListItemResult & {
-          mediaType: "image" | "video" | "audio" | null;
+          mediaType: "image" | "video" | null;
           created_at: string;
         };
       });
