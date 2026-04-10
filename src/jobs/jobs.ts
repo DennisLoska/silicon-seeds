@@ -92,6 +92,7 @@ export namespace JobOrchestrator {
       status: JobStatus.Pending,
       jobId,
       mode,
+      prompt: prompt ?? "n/a",
     };
 
     switch (event.type) {
@@ -162,7 +163,7 @@ export namespace JobOrchestrator {
         return {
           ...base,
           type: Event.NewAudioPrompt,
-          prompt: prompt ?? null,
+          prompt: prompt ?? "n/a",
           duration,
         };
 

@@ -28,6 +28,8 @@ export interface JobBaseEvent extends BaseEvent {
   jobId: string;
   mode: JobMode;
   status: JobStatus;
+  prompt: string;
+  // TODO delete this
   meta?: Record<string, unknown>;
 }
 
@@ -37,6 +39,7 @@ export enum Event {
   NewVideoPrompt = "new_video_prompt",
   NewTransitionPrompt = "new_transition_prompt",
   NewAudioPrompt = "new_audio_prompt",
+  NewVideoComposition = "new_video_composition",
   ComfyExecuted = "comfy_executed",
 }
 
@@ -60,6 +63,11 @@ export interface VideoPromptEvent extends JobBaseEvent {
   index?: number;
 }
 
+export interface VideoCompostionEvent extends JobBaseEvent {
+  type: Event.NewVideoComposition;
+  prompt: string;
+}
+
 export interface TransitionPromptEvent extends JobBaseEvent {
   prompt: string;
   type: Event.NewTransitionPrompt;
@@ -69,7 +77,7 @@ export interface TransitionPromptEvent extends JobBaseEvent {
 }
 
 export interface AudioPromptEvent extends JobBaseEvent {
-  prompt: string | null;
+  prompt: string;
   duration?: number;
   type: Event.NewAudioPrompt;
 }
@@ -84,6 +92,7 @@ type EventMap = {
   [Event.NewVideoPrompt]: VideoPromptEvent;
   [Event.NewTransitionPrompt]: TransitionPromptEvent;
   [Event.NewAudioPrompt]: AudioPromptEvent;
+  [Event.NewVideoComposition]: VideoCompostionEvent;
   [Event.ComfyExecuted]: ComfyExecutedEvent;
 };
 

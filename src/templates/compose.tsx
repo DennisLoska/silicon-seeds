@@ -67,7 +67,7 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
       {/* Container for Cards 2-4 - Stacked vertically, takes half width and full height */}
       <div className="flex flex-col w-full xl:w-1/2 gap-4 flex-grow">
         {/* Card 2: AI Model Selection */}
-        <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
+        <div className="card bg-base-100 shadow-xl w-full 2xl:w-[calc(12.5vw)] 2xl:min-w-80 flex-grow flex flex-col">
           <div className="card-body flex flex-col flex-grow">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
@@ -148,7 +148,7 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
         </div>
 
         {/* Card 3: Video Settings */}
-        <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
+        <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] 2xl:min-w-80 min-w-0 flex-grow flex flex-col">
           <div className="card-body flex flex-col flex-grow">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
@@ -296,7 +296,7 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
         </div>
 
         {/* Card 4: Style Presets */}
-        <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
+        <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] 2xl:min-w-80 min-w-0 flex-grow flex flex-col">
           <div className="card-body flex flex-col">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
@@ -348,7 +348,7 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
         </div>
 
         {/* Card 5: Action Buttons */}
-        <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] min-w-0 flex-grow flex flex-col">
+        <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] 2xl:min-w-80 min-w-0 flex-grow flex flex-col">
           <div className="card-body flex flex-col flex-grow">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
               <svg

@@ -8,15 +8,19 @@ export interface EventListProps {
 }
 
 const EVENT_LABELS = {
+  [Event.NewTextPrompt]: "Text Prompt",
   [Event.NewImagePrompt]: "Image Prompt",
   [Event.NewVideoPrompt]: "Video Prompt",
+  [Event.NewVideoComposition]: "Final Composition",
   [Event.NewTransitionPrompt]: "Transition Prompt",
   [Event.NewAudioPrompt]: "Audio Prompt",
 };
 
 const EVENT_ICONS = {
+  [Event.NewTextPrompt]: "🖊️",
   [Event.NewImagePrompt]: "🖼️",
   [Event.NewVideoPrompt]: "🎬",
+  [Event.NewVideoComposition]: "🏁",
   [Event.NewTransitionPrompt]: "🔄",
   [Event.NewAudioPrompt]: "🎵",
 };
@@ -38,12 +42,20 @@ export const EventList = async ({ jobId }: EventListProps) => {
     const assetMeta = isComplete
       ? await DB.Meta.findByEventId(evt.id).catch(() => null)
       : null;
+
     const promptText = evt.prompt ? escapeHtml(evt.prompt) : "Instrumental";
     const lineClass = isComplete ? "bg-success" : "";
 
     const metadataBadges: JSX.HTMLAttributes[] = [];
 
     switch (evt.type) {
+      case Event.NewTextPrompt:
+        metadataBadges.push(
+          <span key="source" className="badge badge-secondary text-xs">
+            text
+          </span>,
+        );
+        break;
       case Event.NewImagePrompt:
         if (evt.lora) {
           metadataBadges.push(
@@ -66,9 +78,10 @@ export const EventList = async ({ jobId }: EventListProps) => {
         }
         break;
       case Event.NewVideoPrompt:
+      case Event.NewVideoComposition:
         metadataBadges.push(
           <span key="source" className="badge badge-secondary text-xs">
-            Source: {evt.filename}
+            Source: {assetMeta?.filename}
           </span>,
         );
         break;
@@ -96,11 +109,11 @@ export const EventList = async ({ jobId }: EventListProps) => {
     }
 
     const renderAssetSection = () => {
-      if (!assetMeta) return null;
+      if (!assetMeta && evt.type !== Event.NewTextPrompt) return null;
       const downloadBtn = (
         <div className="flex justify-end">
           <a
-            href={`/assets/${assetMeta.filename}`}
+            href={`/assets/${assetMeta?.filename}`}
             download
             className="btn btn-sm btn-primary"
           >
@@ -111,6 +124,29 @@ export const EventList = async ({ jobId }: EventListProps) => {
       );
 
       switch (evt.type) {
+        case Event.NewTextPrompt:
+          return (
+            <div>
+              <p className="text-sm font-medium mb-1 text-base-content/60">
+                Text:
+              </p>
+              <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words">
+                {evt.text}
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onclick={`navigator.clipboard.writeText("${escapeForJsString(
+                    evt.text || "",
+                  )}")`}
+                  className="btn btn-sm btn-secondary mt-2"
+                >
+                  <Icons.CopyIcon />
+                  <span className="ml-1">Copy</span>
+                </button>
+              </div>
+            </div>
+          );
         case Event.NewImagePrompt:
           return (
             <div>
@@ -118,7 +154,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
                 Generated Image:
               </p>
               <img
-                src={`/assets/${assetMeta.filename}`}
+                src={`/assets/${assetMeta?.filename}`}
                 alt="Generated image"
                 className="w-full h-auto rounded-lg border border-base-300 mb-2"
               />
@@ -133,7 +169,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
               </p>
               <audio controls className="w-full mb-2">
                 <source
-                  src={`/assets/${assetMeta.filename}`}
+                  src={`/assets/${assetMeta?.filename}`}
                   type="audio/mpeg"
                 />
                 Your browser does not support the audio element.
@@ -141,6 +177,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
               {downloadBtn}
             </div>
           );
+        case Event.NewVideoComposition:
         case Event.NewVideoPrompt:
           return (
             <div>
@@ -152,7 +189,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
                 className="w-full rounded-lg border border-base-300 mb-2"
               >
                 <source
-                  src={`/assets/${assetMeta.filename}`}
+                  src={`/assets/${assetMeta?.filename}`}
                   type="video/mp4"
                 />
                 Your browser does not support the video tag.
