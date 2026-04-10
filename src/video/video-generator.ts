@@ -5,6 +5,8 @@ import {
   JobMode,
   VideoPromptEvent,
   TransitionPromptEvent,
+  VideoCompostionEvent,
+  JobStatus,
 } from "../events/events";
 import { QueueManager } from "../queue/queue-manager";
 import { JobOrchestrator } from "../jobs/jobs";
@@ -26,6 +28,25 @@ export namespace VideoGenerator {
     Event.on(Event.NewTransitionPrompt, (event) => {
       QueueManager.videoQueue.push(event);
       void generate_video();
+    });
+  }
+
+  async function create_video_composition_event(jobId: string, path: string) {
+    const videoCompEvent: VideoCompostionEvent = {
+      id: Metadata.randomId(),
+      jobId,
+      mode: JobMode.Video,
+      status: JobStatus.Complete,
+      type: Event.NewVideoComposition,
+      prompt: "n/a",
+    };
+
+    await DB.Events.create(videoCompEvent);
+    await DB.Meta.create({
+      event_id: videoCompEvent.id,
+      filename: path,
+      subfolder: "",
+      type: "output",
     });
   }
 
@@ -310,9 +331,9 @@ Your response should only include the newly generated prompt!
     await Bun.write(listFile, fileList);
 
     try {
-      Logger.info(
-        `Executing ffmpeg to create ${OUTPUT_DIR}/output-combined.mp4`,
-      );
+      const name = `composition_${jobId}.mp4`;
+      const out = `${OUTPUT_DIR}/${name}`;
+      Logger.info(`Executing ffmpeg to create ${out}`);
 
       const ffmpegProcess = spawn({
         cmd: [
@@ -326,7 +347,7 @@ Your response should only include the newly generated prompt!
           listFile,
           "-c",
           "copy",
-          `${OUTPUT_DIR}/output-combined.mp4`,
+          `${out}`,
         ],
         stdio: ["ignore", "pipe", "pipe"],
       });
@@ -344,6 +365,7 @@ Your response should only include the newly generated prompt!
         throw new Error(`FFmpeg failed with exit code ${status}`);
       }
 
+      await create_video_composition_event(jobId, name);
       Logger.info(`Video combination completed successfully!`);
     } catch (error: any) {
       Logger.error("Video combination failed:", error.message);

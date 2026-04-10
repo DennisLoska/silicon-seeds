@@ -113,7 +113,6 @@ export namespace DB {
             ...base,
             text: event.text,
           };
-
         case Event.NewImagePrompt:
           return {
             ...base,
@@ -124,7 +123,6 @@ export namespace DB {
             duration: null,
             index: event.index,
           };
-
         case Event.NewVideoPrompt:
           return {
             ...base,
@@ -134,7 +132,10 @@ export namespace DB {
             duration: null,
             index: event.index,
           };
-
+        case Event.NewVideoComposition:
+          return {
+            ...base,
+          };
         case Event.NewTransitionPrompt:
           return {
             ...base,
@@ -144,7 +145,6 @@ export namespace DB {
             duration: null,
             index: event.index,
           };
-
         case Event.NewAudioPrompt:
           return {
             ...base,
@@ -171,14 +171,15 @@ export namespace DB {
 
       switch (row.type) {
         case Event.NewTextPrompt:
-          Utils.assert(row.prompt, "'prompt' is not null");
+          Utils.assert(row.prompt, "'prompt' is null");
           return {
             ...base,
             text: row.text!,
+            type: Event.NewTextPrompt,
             prompt: row.prompt,
           };
         case Event.NewImagePrompt:
-          Utils.assert(row.prompt, "'prompt' is not null");
+          Utils.assert(row.prompt, "'prompt' is null");
           return {
             ...base,
             lora: row.lora ?? undefined,
@@ -187,7 +188,7 @@ export namespace DB {
             prompt: row.prompt,
           };
         case Event.NewVideoPrompt:
-          Utils.assert(row.prompt, "'prompt' is not null");
+          Utils.assert(row.prompt, "'prompt' is null");
           return {
             ...base,
             filename: row.filename!,
@@ -195,8 +196,15 @@ export namespace DB {
             type: Event.NewVideoPrompt,
             prompt: row.prompt,
           };
+        case Event.NewVideoComposition:
+          Utils.assert(row.prompt, "'prompt' is null");
+          return {
+            ...base,
+            type: Event.NewVideoComposition,
+            prompt: row.prompt,
+          };
         case Event.NewTransitionPrompt:
-          Utils.assert(row.prompt, "'prompt' is not null");
+          Utils.assert(row.prompt, "'prompt' is null");
           return {
             ...base,
             startImg: row.start_img!,
@@ -210,7 +218,7 @@ export namespace DB {
             ...base,
             duration: row.duration ?? undefined,
             type: Event.NewAudioPrompt,
-            prompt: row.prompt,
+            prompt: row.prompt ?? "n/a",
           };
         default:
           throw new Error(`Unknown event type`);
