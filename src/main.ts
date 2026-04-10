@@ -9,10 +9,10 @@ import { VideoGenerator } from "./video/video-generator";
 // TODO list:
 //
 // General
+// - Add new video composition event which includes the combined video
 // - ability to cancel a job
-// - Add new composition event which includes the combined video
-// - Distinct mode: image generation, audio generation, video generation
 // - ability to re-generate a specific asset
+// - Distinct mode: image generation, audio generation, video generation
 //
 // Bugs
 // - race condition when queueing multiple jobs at same time (queue block check)
@@ -23,6 +23,9 @@ import { VideoGenerator } from "./video/video-generator";
 // - need to sanitize input text otherwise it breaks json parsing
 //
 // Performance
+// - Retry against model
+// - What if LLM enters death spiral?
+// - Reconnecting websockets
 // - scalability issues
 // - race conditions
 //
