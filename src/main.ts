@@ -23,11 +23,12 @@ import { VideoGenerator } from "./video/video-generator";
 // - need to sanitize input text otherwise it breaks json parsing
 //
 // Performance
+// - create tx helper function in DB namesspace
 // - Retry against model
-// - What if LLM enters death spiral?
-// - Reconnecting websockets
 // - scalability issues
 // - race conditions
+// - What if LLM enters death spiral?
+// - Reconnecting websockets
 //
 // Nice to havee
 // - ability to resume or pause a job
