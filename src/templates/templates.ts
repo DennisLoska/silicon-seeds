@@ -13,6 +13,7 @@ import { Job } from "../events/events";
 import { OobHeader as oobHeaderComponent } from "./oob-header";
 import { EventList } from "./events-list";
 import { JobDetails, Jobs, JobTabs } from "./jobs";
+import { GeneratedImages as generatedImagesComponent } from "./generated-images";
 
 export namespace Templates {
   export const App = appComponent;
@@ -25,6 +26,7 @@ export namespace Templates {
   export const JobTabsFragment = JobTabs;
   export const JobsFragment = Jobs;
   export const EventListFragment = EventList;
+  export const GeneratedImagesFragment = generatedImagesComponent;
   export const Dashboard = dashboardComponent;
   export const Settings = settingsComponent;
   export const Compose = composeComponent;

@@ -5,7 +5,10 @@ interface DistinctImageProps {
   jobId?: string;
 }
 
-export const DistinctImage = ({ showProgress = false, jobId = "" }: DistinctImageProps) => (
+export const DistinctImage = ({
+  showProgress = false,
+  jobId = "",
+}: DistinctImageProps) => (
   <div className="flex flex-col sm:px-6 py-6 xl:h-full bg-base-200">
     <ErrorToast />
     {/* Kanban-style Card Container */}
@@ -56,7 +59,7 @@ export const DistinctImage = ({ showProgress = false, jobId = "" }: DistinctImag
         </div>
       </div>
 
-      {/* Container for Cards 2-4 - Stacked vertically, takes half width and full height */}
+      {/* Container for Cards 2-5 - Stacked vertically, takes half width and full height */}
       <div className="flex flex-col w-full xl:w-1/2 gap-4 flex-grow">
         {/* Card 2: Generation Options */}
         <div className="card bg-base-100 shadow-xl w-full 2xl:w-[calc(12.5vw)] 2xl:min-w-80 flex-grow flex flex-col">
@@ -134,6 +137,9 @@ export const DistinctImage = ({ showProgress = false, jobId = "" }: DistinctImag
                 >
                   <option value="480p">480p</option>
                   <option value="720p">720p</option>
+                  <option value="1080p">1080p</option>
+                  <option value="9_16_SD">9:16 (SD)</option>
+                  <option value="9_16_HD">9:16 (HD)</option>
                 </select>
               </div>
             </div>
@@ -171,7 +177,59 @@ export const DistinctImage = ({ showProgress = false, jobId = "" }: DistinctImag
           </div>
         </div>
 
-        {/* Card 3: Action Buttons */}
+        {/* Card 3: AI Model Selection */}
+        <div className="card bg-base-100 shadow-xl w-full 2xl:w-[calc(12.5vw)] 2xl:min-w-80 flex-grow flex flex-col">
+          <div className="card-body flex flex-col flex-grow">
+            <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"
+                />
+              </svg>
+              AI Model
+            </h2>
+
+            {/* Image Model Selection */}
+            <div className="form-control flex-grow">
+              <label className="label cursor-pointer">
+                <span className="label-text font-medium flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                    />
+                  </svg>
+                  Image Generation Model
+                </span>
+              </label>
+              <select
+                name="image_model"
+                className="select select-bordered w-full flex-none"
+              >
+                <option value="z-image-turbo">Z-Image-Turbo</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Action Buttons */}
         <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] 2xl:min-w-80 min-w-0 flex-grow flex flex-col">
           <div className="card-body flex flex-col flex-grow">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
@@ -206,54 +264,72 @@ export const DistinctImage = ({ showProgress = false, jobId = "" }: DistinctImag
           </div>
         </div>
 
-        {/* Card 4: Progress/Results - Only shown when showProgress=true and jobId is provided */}
+        {/* Card 5: Progress/Results - Only shown when showProgress=true and jobId is provided */}
         {showProgress && jobId ? (
-          <div className="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] scrollbar-hide overflow-y-scroll xl:w-1/2 2xl:w-1/3 flex flex-col">
-            <div className="card-body flex flex-col">
-              <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="w-6 h-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"
-                  />
-                </svg>
-                Job Progress
-              </h2>
-              <p className="text-sm text-base-content/70 mb-4 flex-none">
-                Monitoring job: {jobId}
-              </p>
+          <>
+            <div className="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] scrollbar-hide overflow-y-scroll xl:w-1/2 2xl:w-1/3 flex flex-col">
+              <div className="card-body flex flex-col">
+                <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"
+                    />
+                  </svg>
+                  Job Progress
+                </h2>
+                <p className="text-sm text-base-content/70 mb-4 flex-none">
+                  Monitoring job: {jobId}
+                </p>
 
-              {/* Events polling — HTMX fetches events which include NewImagePrompt with image metadata */}
-              <div
-                id="events-container"
-                className="flex-grow min-h-[300px]"
-                hx-get={`/jobs/events?job_id=${jobId}`}
-                hx-trigger="load, every 2s"
-                hx-swap="innerHTML"
-              >
-                <span className="loading loading-spinner"></span>
-                Loading events...
-              </div>
-
-              {/* View Job Button Section */}
-              <div className="card-actions justify-end mt-4 flex-none">
-                <a
-                  href={`/jobs?job_id=${jobId}&filter=all&tab=status`}
-                  className="btn btn-primary"
+                {/* Events polling — HTMX fetches events which include NewImagePrompt with image metadata */}
+                <div
+                  id="events-container"
+                  className="flex-grow min-h-[300px]"
+                  hx-get={`/jobs/events?job_id=${jobId}`}
+                  hx-trigger="load, every 2s"
+                  hx-swap="innerHTML"
                 >
-                  View Job
-                </a>
+                  <span className="loading loading-spinner"></span>
+                  Loading events...
+                </div>
+
+                {/* View Job Button Section */}
+                <div className="card-actions justify-end mt-4 flex-none">
+                  <a
+                    href={`/jobs?job_id=${jobId}&filter=all&tab=status`}
+                    className="btn btn-primary"
+                  >
+                    View Job
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
+
+            {/* Generated Image Card */}
+            <div
+              id="generated-image-card"
+              className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex-grow flex flex-col"
+              hx-get={`/jobs/generated-images?job_id=${jobId}`}
+              hx-trigger="load, every 2s"
+              hx-swap="innerHTML"
+            >
+              <div className="card-body text-center py-16">
+                <span className="loading loading-spinner loading-lg"></span>
+                <p className="text-sm text-base-content/50 mt-4">
+                  Waiting for generated images...
+                </p>
+              </div>
+            </div>
+          </>
         ) : (
           /* Default placeholder - shown when no job is active */
           <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 flex-grow flex items-center justify-center">
@@ -272,7 +348,9 @@ export const DistinctImage = ({ showProgress = false, jobId = "" }: DistinctImag
                   d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
                 />
               </svg>
-              <h3 className="font-medium text-base-content/60">Enter a prompt and click Generate</h3>
+              <h3 className="font-medium text-base-content/60">
+                Enter a prompt and click Generate
+              </h3>
             </div>
           </div>
         )}
