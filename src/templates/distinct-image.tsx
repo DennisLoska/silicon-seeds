@@ -236,7 +236,7 @@ export const DistinctImage = ({
           <div className="text-center py-16">
             <Icons.PhotoCameraLarge />
             <h3 className="font-medium text-base-content/60">
-              The image(s) will be shown here once they have been generated.
+              The image(s) will show up here when they are generated.
             </h3>
           </div>
         </div>
