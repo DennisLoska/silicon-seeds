@@ -7,6 +7,7 @@ import { ImageGenerator } from "../image/image-generator";
 import { VideoGenerator } from "../video/video-generator";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
+import z from "zod";
 
 export namespace PromptGenerator {
   export async function txt_to_img_prompt(
@@ -140,24 +141,11 @@ start to finish:
 
 ${text}
 `;
-    const res = await LLM.message(list_prompt);
+    const res = await LLM.structured_message(list_prompt, z.array(z.string()));
     if (!res?.content) return null;
 
-    const array_prompt = `Convert this list into a valid JSON array of strings.
-The list should only include the items from the provided list.
-
-Here is the list:
-
-${res?.content}
-
-Make sure to only include the JSON array in your response and nothing more!
-    `;
-
-    const response = await LLM.message(array_prompt);
-    if (!response?.content) return null;
-
-    let scenes = JSON.parse(response.nonReasoningContent);
-    Logger.info("scenes: ", scenes);
+    let scenes = JSON.parse(res.nonReasoningContent);
+    Logger.info("scenes: ", res.nonReasoningContent);
     Logger.info("amount: ", amount);
     Logger.info("actual: ", scenes.length);
 

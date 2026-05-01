@@ -85,7 +85,7 @@ export class ComfyUIClient {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to generate content: ${response.statusText}`);
+      throw new Error(`Failed to generate content: ${response.body}`);
     }
 
     const json = await response.json();
@@ -243,6 +243,18 @@ export class ComfyUIClient {
 
     if (job.resolution === "720p") {
       ((resolution.width = 1280), (resolution.height = 720));
+    }
+
+    if (job.resolution === "1080p") {
+      ((resolution.width = 1920), (resolution.height = 1080));
+    }
+
+    if (job.resolution === "9_16_SD") {
+      ((resolution.width = 720), (resolution.height = 1280));
+    }
+
+    if (job.resolution === "9_16_HD") {
+      ((resolution.width = 1080), (resolution.height = 1920));
     }
 
     if (input.kind === "text-to-image") {

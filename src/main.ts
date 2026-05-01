@@ -8,10 +8,17 @@ import { VideoGenerator } from "./video/video-generator";
 
 // TODO list:
 //
+// Content
+//
+// - better text captions
+// - consistent character
+// - consistent voice
+// - consistent speed
+
 // General
 // - ability to cancel a job
 // - ability to re-generate a specific asset
-// - Distinct mode: image generation, audio generation, video generation
+// - distinct mode: audio generation, video generation
 //
 // Bugs
 // - race condition when queueing multiple jobs at same time (queue block check)
@@ -42,7 +49,6 @@ import { VideoGenerator } from "./video/video-generator";
 // Workflows
 // - LTX workflows
 // - Optimize WAN2.2 workflow
-// - 2K image workflow
 // - Add LoRA support
 //
 // Metadata

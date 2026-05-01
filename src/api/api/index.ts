@@ -10,7 +10,7 @@ import { text_to_speech } from "./text-to-speech";
 import { text_to_instrumental } from "./text-to-instrumental";
 import { delete_job } from "./delete";
 import { zValidator } from "@hono/zod-validator";
-import { PostComposeSchema } from "../schemas";
+import { PostComposeSchema, PostTextToImageSchema } from "../schemas";
 
 const app = new Hono();
 
@@ -22,13 +22,14 @@ app.get("/jobs/text", async (c) => {
   return text_to_text();
 });
 
-app.get("/jobs/images", async (c) => {
-  return text_to_image();
-});
-
-app.post("/jobs/images", async (c) => {
-  return text_to_image();
-});
+app.post(
+  "/jobs/images",
+  zValidator("form", PostTextToImageSchema),
+  async (c) => {
+    const body = c.req.valid("form");
+    return text_to_image(body);
+  },
+);
 
 app.post("/jobs/scenes", async (c) => {
   return script_to_scenes();

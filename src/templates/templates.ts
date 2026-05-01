@@ -8,10 +8,12 @@ import { Dashboard as dashboardComponent } from "./dashboard";
 import { Compose as composeComponent } from "./compose";
 import { Settings as settingsComponent } from "./settings";
 import { Gallery as galleryComponent } from "./gallery";
+import { DistinctImage as distinctImageComponent } from "./distinct-image";
 import { Job } from "../events/events";
 import { OobHeader as oobHeaderComponent } from "./oob-header";
 import { EventList } from "./events-list";
 import { JobDetails, Jobs, JobTabs } from "./jobs";
+import { GeneratedImages as generatedImagesComponent } from "./generated-images";
 
 export namespace Templates {
   export const App = appComponent;
@@ -24,9 +26,11 @@ export namespace Templates {
   export const JobTabsFragment = JobTabs;
   export const JobsFragment = Jobs;
   export const EventListFragment = EventList;
+  export const GeneratedImagesFragment = generatedImagesComponent;
   export const Dashboard = dashboardComponent;
   export const Settings = settingsComponent;
   export const Compose = composeComponent;
   export const Gallery = galleryComponent;
+  export const DistinctImage = distinctImageComponent;
   export const OobHeader = oobHeaderComponent;
 }

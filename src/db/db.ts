@@ -11,13 +11,13 @@ export interface DbSchema {
   jobs: {
     id: string;
     created_at: Generated<string> | string;
-    fps: number;
-    clip_duration: number;
-    transition_duration: number;
-    resolution: string;
-    image_model: string;
-    video_model: string;
-    style_preset: string;
+    fps?: number;
+    clip_duration?: number;
+    transition_duration?: number;
+    resolution?: string;
+    image_model?: string;
+    video_model?: string;
+    style_preset?: string;
   };
   events: {
     id: string;

@@ -1,25 +1,34 @@
 import { JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
 import { PromptGenerator } from "../../prompts/prompt-generator";
-import { Presets } from "../../styles/presets";
+import { PostTextToImage } from "../schemas";
 
-export async function text_to_image() {
-  // TODO get the these from query parameters
-  const prompt =
-    "epic surreal landscape, lightrays, fractals, nature, meaningful, wide, ancient, desert, ocean, mountains, ether, void, spirit, wind, stars, universe, gothic, wonderland, solitude, calm, peace, beautiful, no people";
-  const batchSize = 3;
+export async function text_to_image(options: PostTextToImage): Promise<Response> {
+  const { prompt, resolution, image_model, style_preset, batch_size } = options;
+  if (!prompt || !prompt.trim()) {
+    throw new Error("Prompt is required");
+  }
 
-  const { id: jobId } = await JobOrchestrator.create_job();
+  const { id: jobId } = await JobOrchestrator.create_job({
+    resolution,
+    image_model,
+    style_preset,
+  });
 
+  const batchSize = batch_size;
   void PromptGenerator.txt_to_img_prompt(
     jobId,
     JobMode.Image,
     prompt,
     batchSize,
-    Presets.PENCIL_WATERCOLOR,
+    options.style_preset,
   );
 
-  const response = new Response(JSON.stringify({ message: "job queued" }));
-  response.headers.set("HX-Refresh", "true");
-  return response;
+  return new Response(JSON.stringify({ message: "job queued" }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "HX-Redirect": `/create/image?show_progress=true&job_id=${jobId}`,
+    },
+  });
 }

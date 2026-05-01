@@ -3,7 +3,7 @@ import { Templates } from "../../templates/templates";
 import { DB } from "../../db/db";
 import { Api } from "../api";
 
-const { JobsFragment, JobTabsFragment, JobDetailsFragment, EventListFragment } =
+const { JobsFragment, JobTabsFragment, JobDetailsFragment, EventListFragment, GeneratedImagesFragment } =
   Templates;
 
 const app = new Hono();
@@ -82,6 +82,19 @@ app.get("/events", async (c) => {
   }
 
   return c.html(await (<EventListFragment jobId={jobId} />));
+});
+
+app.get("/generated-images", async (c) => {
+  const jobId = c.req.query("job_id");
+  if (!jobId) {
+    return c.html(
+      <div className="p-6 text-center text-base-content/60">
+        No job selected.
+      </div>,
+    );
+  }
+
+  return c.html(await (<GeneratedImagesFragment jobId={jobId} />));
 });
 
 export default app;

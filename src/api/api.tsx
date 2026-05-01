@@ -12,6 +12,7 @@ import settingsRoutes from "./settings";
 import composeRoutes from "./compose";
 import jobsRoutes from "./jobs/jobs";
 import galleryRoutes from "./gallery";
+import createRoutes from "./create";
 import { Context } from "hono";
 import { JSX } from "hono/jsx/jsx-runtime";
 
@@ -177,4 +178,5 @@ app.route("/dashboard", dashboardRoutes);
 app.route("/compose", composeRoutes);
 app.route("/settings", settingsRoutes);
 app.route("/gallery", galleryRoutes);
+app.route("/create", createRoutes);
 app.route("/api/fragments", fragmentRoutes);
