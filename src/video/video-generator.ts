@@ -41,7 +41,8 @@ export namespace VideoGenerator {
       prompt: "n/a",
     };
 
-    // TODO use transaction instead    await DB.Events.create(videoCompEvent);
+    // TODO use transaction instead
+    await DB.Events.create(videoCompEvent);
     await DB.Meta.create({
       event_id: videoCompEvent.id,
       filename: path,

@@ -156,7 +156,7 @@ Make sure to only include the JSON array in your response and nothing more!
     const response = await LLM.message(array_prompt);
     if (!response?.content) return null;
 
-    let scenes = JSON.parse(response?.content);
+    let scenes = JSON.parse(response.nonReasoningContent);
     Logger.info("scenes: ", scenes);
     Logger.info("amount: ", amount);
     Logger.info("actual: ", scenes.length);
