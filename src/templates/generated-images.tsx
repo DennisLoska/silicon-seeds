@@ -49,7 +49,7 @@ export const GeneratedImages = async ({ jobId }: GeneratedImagesProps) => {
   }
 
   return (
-    <div className="columns-1 sm:columns-2 gap-3">
+    <div className="columns-1 sm:columns-2 gap-3 max-w-full">
       {images.map((img) => {
         const assetPath = img.subfolder
           ? `/assets/${img.subfolder}/${img.filename}`
@@ -64,7 +64,7 @@ export const GeneratedImages = async ({ jobId }: GeneratedImagesProps) => {
               <img
                 src={assetPath}
                 alt={`Generated image ${img.index + 1}`}
-                className="w-full h-auto"
+                className="w-full max-w-full h-auto object-contain"
               />
             </figure>
           </div>
