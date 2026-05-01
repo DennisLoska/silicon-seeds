@@ -9,7 +9,6 @@ import { VideoGenerator } from "./video/video-generator";
 // TODO list:
 //
 // General
-// - Add new video composition event which includes the combined video
 // - ability to cancel a job
 // - ability to re-generate a specific asset
 // - Distinct mode: image generation, audio generation, video generation
@@ -21,6 +20,9 @@ import { VideoGenerator } from "./video/video-generator";
 // - fix active job in job list on transitions
 // - new items in gallery are added vertically ot horizontally
 // - need to sanitize input text otherwise it breaks json parsing
+// - composite mode: generate video button not disabled
+// - composite mode: job progress refresh prevents opening details
+// - media tab in job has zoom in effect on image
 //
 // Performance
 // - create tx helper function in DB namesspace
@@ -35,6 +37,7 @@ import { VideoGenerator } from "./video/video-generator";
 // - Generate a random name for each job
 // - Make status updates more pretty
 // - Make UI reactive with SSE instead of polling
+// - Show content of uploaded file in compose view
 //
 // Workflows
 // - LTX workflows
