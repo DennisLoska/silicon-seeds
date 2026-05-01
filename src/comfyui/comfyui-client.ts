@@ -85,7 +85,7 @@ export class ComfyUIClient {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to generate content: ${response.statusText}`);
+      throw new Error(`Failed to generate content: ${response.body}`);
     }
 
     const json = await response.json();

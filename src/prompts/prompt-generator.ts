@@ -145,7 +145,7 @@ ${text}
     if (!res?.content) return null;
 
     let scenes = JSON.parse(res.nonReasoningContent);
-    Logger.info("scenes: ", scenes);
+    Logger.info("scenes: ", res.nonReasoningContent);
     Logger.info("amount: ", amount);
     Logger.info("actual: ", scenes.length);
 
