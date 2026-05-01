@@ -70,11 +70,11 @@ The backend SHALL persist the job metadata (prompt, resolution, style preset, ba
 
 ### Requirement: Generated images are displayed after completion
 
-The backend SHALL complete `text_to_image()` and return an HTTP response containing the job id, which the frontend uses to fetch and render the generated image(s).
+The backend SHALL complete `text_to_image()` and fire Event.ComfyExecuted on the event stream. HTMX on the page listens via SSE and swaps in a response containing the generated image(s).
 
 #### Scenario: Full flow from submission to rendered result
 - **WHEN** user submits prompt + options via HTMX form POST
-- **THEN** system returns `{job_id}` immediately; after ComfyUI completes, client-side JavaScript polls `/api/jobs/{jobId}`, fetches the generated images, and renders them in-place replacing the placeholder
+- **THEN** `hx-redirect` sends user back to `/create/image?job_id={id}` which has an SSE element connected to the event stream; after ComfyUI completes, Event.ComfyExecuted is delivered and HTMX swaps in generated image(s)
 
 #### Scenario: Only current job's images shown
 - **WHEN** a user has previously completed images and generates new ones via distinct mode

@@ -29,9 +29,9 @@
 ## 5. Template — Results area in `DistinctImage` component
 
 - [ ] 5.1 Right column card (full height): if no job yet, show a placeholder with icon and "Enter a prompt and click Generate" message
-- [ ] 5.2 After form submission, show a "Job queued" status card with the job id — this appears immediately after `hx-post` returns
-- [ ] 5.3 Use a `<script>` tag to poll `/api/jobs/{jobId}` (or check SSE) every few seconds for completion; when the HTTP response indicates images are ready, use vanilla JavaScript to fetch and render them in the card area — no SSE event polling dependency
-- [ ] 5.4 When image(s) appear: render `<img>` tags with `src="/api/jobs/images/{jobId}/{imageId}"` or equivalent path based on how images are served
+- [ ] 5.2 When `showProgress=true` and `jobId` is provided: render an element with `hx-sse="/jobs/events"` to connect to the SSE stream — same pattern as compose's progress card (lines 387-432)
+- [ ] 5.3 The SSE stream delivers Event.ComfyExecuted messages which HTMX automatically processes; when images are ready, they're swapped in-place via `hx-swap` triggered by the event
+- [ ] 5.4 Render generated image(s) as `<img>` tags with appropriate src pointing to the stored image files — use a placeholder div that gets replaced on SSE event delivery
 - [ ] 5.5 Show prompt text and selected options (batch size, resolution, style) as metadata below each generated image — matching spec requirement that "Job metadata is preserved"
 
 ## 6. Registration — Wire the component into the app

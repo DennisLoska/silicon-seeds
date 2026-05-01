@@ -34,7 +34,7 @@ Users want a focused, standalone image generation UI without the complexity of c
 
 3. **Form uses `hx-post="/api/jobs/images"` with multipart/form-data** — consistent with composite mode's form pattern, allowing both text prompt and any future file upload fields in the same submission path. The submit button is disabled during generation via `hx-disable-element`.
 
-4. **Status delivered via HTTP response** — the form posts to `/api/jobs/images`, receives back a JSON `{job_id, message}` immediately indicating the job was queued. When images are ready (detected by client-side polling or an SSE event that the frontend fetches), they're rendered inline. This is simpler than composite mode's full SSE progress card and avoids background listeners for a single-purpose view.
+4. **Status via SSE with HTMX swap** — after form submission, `hx-redirect` sends user back to `/create/image?job_id={id}` which loads a page containing an element with `hx-sse="/jobs/stream"` connected to the event stream. When ComfyUI completes and fires Event.ComfyExecuted, the SSE message triggers HTMX to swap in generated images — no polling, no scripts needed. This is identical to composite mode's progress card pattern but without the full UI complexity.
 
 5. **DaisyUI card layout matching composite mode UX** — the view follows the same visual structure as compose:
    - Left column (full height): prompt textarea + generation options in stacked cards
@@ -42,15 +42,13 @@ Users want a focused, standalone image generation UI without the complexity of c
    - Each section uses `card bg-base-100 shadow-xl` with consistent icon styling
    - On mobile (<xl breakpoint), stacks to single-column layout
 
-6. **HTTP response for job result** — the POST returns `{job_id}` immediately; client-side vanilla JS polls `/api/jobs/{jobId}` periodically (e.g., every 3s) for completion status. This replaces composite mode's SSE polling with a simpler request/response flow, while still keeping UX responsive.
+6. **Resolution presets match ComfyUI-supported sizes** — the backend maps `"480p"` → 640x480 and `"720p"` → 1280x720 (see `comfyui-client.ts` lines 239-245). The dropdown offers only these two options, consistent with composite mode.
 
-7. **Resolution presets match ComfyUI-supported sizes** — the backend maps `"480p"` → 640x480 and `"720p"` → 1280x720 (see `comfyui-client.ts` lines 239-245). The dropdown offers only these two options, consistent with composite mode.
+7. **Style presets match existing enum** (`SYSTEM`, `WATERCOLOR`, `PENCIL_WATERCOLOR`) — reusing the same `Presets` enum ensures consistency with composite mode and avoids duplicating style logic. The `text_to_image()` handler passes the selected preset to `PromptGenerator.txt_to_img_prompt()`.
 
-8. **Style presets match existing enum** (`SYSTEM`, `WATERCOLOR`, `PENCIL_WATERCOLOR`) — reusing the same `Presets` enum ensures consistency with composite mode and avoids duplicating style logic. The `text_to_image()` handler passes the selected preset to `PromptGenerator.txt_to_img_prompt()`.
+8. **Batch size defaults to 1** — users can optionally generate multiple images per prompt by selecting a batch count > 1. Each generated image gets a unique filename prefix within the same job, and all appear together in the result display once complete. Implemented as an Alpine.js range slider similar to composite mode's fps/clip_duration sliders (`<input type="range">` with `x-model`, `<output>` for live value).
 
-9. **Batch size defaults to 1** — users can optionally generate multiple images per prompt by selecting a batch count > 1. Each generated image gets a unique filename prefix within the same job, and all appear together in the result display once complete. Implemented as an Alpine.js range slider similar to composite mode's fps/clip_duration sliders (`<input type="range">` with `x-model`, `<output>` for live value).
-
-10. **Layout structure** — matches compose.tsx pattern:
+9. **Layout structure** — matches compose.tsx pattern:
    ```
    <form> (full viewport height, flex row on xl+)
      └── Left column (xl:w-1/2): Script card + Settings + Action card
@@ -61,7 +59,7 @@ Users want a focused, standalone image generation UI without the complexity of c
 
 [Risk: Prompt parameter conflicts with existing query params] → The current handler ignores query parameters for prompts but uses them elsewhere. Refactoring to read prompt from POST body (not GET) eliminates this conflict.
 
-[Risk: HTMX response handling — user submits form and navigates away before job completes, so they never see the result] → Mitigation: use `hx-redirect` to navigate back to `/create/image?job_id={id}&show_progress=true` on success, then show a "Job queued" status card. When the HTTP response finally arrives (after ComfyUI finishes), it replaces the placeholder with actual images via a client-side fetch + DOM update using vanilla JavaScript.
+[Risk: User navigates away from /create/image while job is processing] → Mitigation: `hx-redirect` on POST success sends user back to `/create/image?job_id={id}` which has an SSE element connected to the event stream. The page persists and HTMX automatically swaps in images when ComfyExecuted events arrive — no polling or scripts needed, same pattern as composite mode's progress card.
 
 [Risk: Large batch sizes cause slow generation or timeouts] → Batch size of 3+ generates multiple images sequentially through ComfyUI, which can take significant time. Mitigation: set a reasonable max (e.g., 5), show clear progress indicator with per-image count ("2/4 completed"), and allow cancel via HTMX abort if supported.
 
