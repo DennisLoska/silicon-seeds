@@ -49,7 +49,6 @@ import { VideoGenerator } from "./video/video-generator";
 // Workflows
 // - LTX workflows
 // - Optimize WAN2.2 workflow
-// - 2K image workflow
 // - Add LoRA support
 //
 // Metadata
