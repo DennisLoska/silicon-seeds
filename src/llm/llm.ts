@@ -22,4 +22,18 @@ export namespace LLM {
       return null;
     }
   }
+
+  export async function structured_message(
+    msg: string,
+    schema: { parse: (input: unknown) => unknown },
+  ) {
+    try {
+      return await llm.respond(msg, {
+        structured: { type: "json", jsonSchema: schema },
+      });
+    } catch (error) {
+      Logger.error("Failed to receive message from LLM", error);
+      return null;
+    }
+  }
 }
