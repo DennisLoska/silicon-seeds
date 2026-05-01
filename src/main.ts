@@ -9,7 +9,6 @@ import { VideoGenerator } from "./video/video-generator";
 // TODO list:
 //
 // General
-// - Add new video composition event which includes the combined video
 // - ability to cancel a job
 // - ability to re-generate a specific asset
 // - Distinct mode: image generation, audio generation, video generation
