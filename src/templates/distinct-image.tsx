@@ -232,8 +232,8 @@ export const DistinctImage = ({
         </div>
       ) : (
         /* Default placeholder - shown when no job is active */
-        <div className="card bg-base-100 shadow-xl w-full xl:flex-1 flex-grow flex items-center justify-center">
-          <div className="card-body text-center py-16">
+        <div className="card bg-base-100 shadow-xl w-full xl:flex-1 flex-grow min-h-[calc(100vh-7rem)] flex items-center justify-center">
+          <div className="text-center py-16">
             <Icons.PhotoCameraLarge />
             <h3 className="font-medium text-base-content/60">
               The image(s) will be shown here once they have been generated.
