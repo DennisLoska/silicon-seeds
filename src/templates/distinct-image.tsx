@@ -264,83 +264,69 @@ export const DistinctImage = ({
           </div>
         </div>
 
-        {/* Card 5: Progress/Results - Only shown when showProgress=true and jobId is provided */}
+        {/* Card 5: Progress - Only shown when showProgress=true and jobId is provided */}
         {showProgress && jobId ? (
-          <>
-            <div className="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] scrollbar-hide overflow-y-scroll xl:w-1/2 2xl:w-1/3 flex flex-col">
-              <div className="card-body flex flex-col">
-                <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-6 h-6"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"
-                    />
-                  </svg>
-                  Job Progress
-                </h2>
-                <p className="text-sm text-base-content/70 mb-4 flex-none">
-                  Monitoring job: {jobId}
-                </p>
-
-                {/* Events polling — HTMX fetches events which include NewImagePrompt with image metadata */}
-                <div
-                  id="events-container"
-                  className="flex-grow min-h-[300px]"
-                  hx-get={`/jobs/events?job_id=${jobId}`}
-                  hx-trigger="load, every 2s"
-                  hx-swap="innerHTML"
+          <div className="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] scrollbar-hide overflow-y-scroll xl:w-1/2 2xl:w-1/3 flex flex-col">
+            <div className="card-body flex flex-col">
+              <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
                 >
-                  <span className="loading loading-spinner"></span>
-                  Loading events...
-                </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"
+                  />
+                </svg>
+                Job Progress
+              </h2>
+              <p className="text-sm text-base-content/70 mb-4 flex-none">
+                Monitoring job: {jobId}
+              </p>
 
-                {/* View Job Button Section */}
-                <div className="card-actions justify-end mt-4 flex-none">
-                  <a
-                    href={`/jobs?job_id=${jobId}&filter=all&tab=status`}
-                    className="btn btn-primary"
-                  >
-                    View Job
-                  </a>
-                </div>
+              {/* Events polling — HTMX fetches events which include NewImagePrompt with image metadata */}
+              <div
+                id="events-container"
+                className="flex-grow min-h-[300px]"
+                hx-get={`/jobs/events?job_id=${jobId}`}
+                hx-trigger="load, every 2s"
+                hx-swap="innerHTML"
+              >
+                <span className="loading loading-spinner"></span>
+                Loading events...
+              </div>
+
+              {/* View Job Button Section */}
+              <div className="card-actions justify-end mt-4 flex-none">
+                <a
+                  href={`/jobs?job_id=${jobId}&filter=all&tab=status`}
+                  className="btn btn-primary"
+                >
+                  View Job
+                </a>
               </div>
             </div>
+          </div>
+        ) : null}
+      </div>
 
-            {/* Generated Image Card */}
-            <div
-              id="generated-image-card"
-              className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex-grow flex flex-col"
-              hx-get={`/jobs/generated-images?job_id=${jobId}`}
-              hx-trigger="load, every 2s"
-              hx-swap="innerHTML"
-            >
-              <div className="card-body text-center py-16">
-                <span className="loading loading-spinner loading-lg"></span>
-                <p className="text-sm text-base-content/50 mt-4">
-                  Waiting for generated images...
-                </p>
-              </div>
-            </div>
-          </>
-        ) : (
-          /* Default placeholder - shown when no job is active */
-          <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 flex-grow flex items-center justify-center">
-            <div className="card-body text-center py-16">
+      {/* Card 6: Generated Image - Dedicated right column */}
+      {showProgress && jobId ? (
+        <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex-grow flex flex-col">
+          <div className="card-body flex flex-col">
+            <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
-                className="w-16 h-16 mx-auto mb-4 text-base-content/30"
+                className="w-6 h-6"
               >
                 <path
                   strokeLinecap="round"
@@ -348,13 +334,46 @@ export const DistinctImage = ({
                   d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
                 />
               </svg>
-              <h3 className="font-medium text-base-content/60">
-                Enter a prompt and click Generate
-              </h3>
+              Generated Image
+            </h2>
+            <div
+              id="generated-image-card"
+              className="flex-grow flex items-center justify-center"
+              hx-get={`/jobs/generated-images?job_id=${jobId}`}
+              hx-trigger="load, every 2s"
+              hx-swap="innerHTML"
+            >
+              <span className="loading loading-spinner loading-lg"></span>
+              <p className="text-sm text-base-content/50 mt-4">
+                Waiting for generated images...
+              </p>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        /* Default placeholder - shown when no job is active */
+        <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex-grow flex items-center justify-center">
+          <div className="card-body text-center py-16">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-16 h-16 mx-auto mb-4 text-base-content/30"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+              />
+            </svg>
+            <h3 className="font-medium text-base-content/60">
+              Enter a prompt and click Generate
+            </h3>
+          </div>
+        </div>
+      )}
     </form>
   </div>
 );
