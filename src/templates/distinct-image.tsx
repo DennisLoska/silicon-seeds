@@ -59,8 +59,8 @@ export const DistinctImage = ({
         </div>
       </div>
 
-      {/* Container for Cards 2-5 - Stacked vertically, takes half width and full height */}
-      <div className="flex flex-col w-full xl:w-1/2 gap-4 flex-grow">
+      {/* Container for Cards 2-4 - Stacked vertically, settings column */}
+      <div className="flex flex-col w-full xl:flex-1 gap-4 flex-grow">
         {/* Card 2: AI Model Selection */}
         <div className="card bg-base-100 shadow-xl w-full 2xl:w-[calc(12.5vw)] 2xl:min-w-80 flex-grow flex flex-col">
           <div className="card-body flex flex-col flex-grow">
@@ -264,62 +264,63 @@ export const DistinctImage = ({
           </div>
         </div>
 
-        {/* Card 5: Progress - Only shown when showProgress=true and jobId is provided */}
-        {showProgress && jobId ? (
-          <div className="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] scrollbar-hide overflow-y-scroll xl:w-1/2 2xl:w-1/3 flex flex-col">
-            <div className="card-body flex flex-col">
-              <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="w-6 h-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"
-                  />
-                </svg>
-                Job Progress
-              </h2>
-              <p className="text-sm text-base-content/70 mb-4 flex-none">
-                Monitoring job: {jobId}
-              </p>
+      </div>
 
-              {/* Events polling — HTMX fetches events which include NewImagePrompt with image metadata */}
-              <div
-                id="events-container"
-                className="flex-grow min-h-[300px]"
-                hx-get={`/jobs/events?job_id=${jobId}`}
-                hx-trigger="load, every 2s"
-                hx-swap="innerHTML"
+      {/* Card 5: Job Progress - Dedicated column between settings and generated image */}
+      {showProgress && jobId ? (
+        <div className="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] scrollbar-hide overflow-y-scroll xl:flex-1 flex flex-col">
+          <div className="card-body flex flex-col">
+            <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-6 h-6"
               >
-                <span className="loading loading-spinner"></span>
-                Loading events...
-              </div>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"
+                />
+              </svg>
+              Job Progress
+            </h2>
+            <p className="text-sm text-base-content/70 mb-4 flex-none">
+              Monitoring job: {jobId}
+            </p>
 
-              {/* View Job Button Section */}
-              <div className="card-actions justify-end mt-4 flex-none">
-                <a
-                  href={`/jobs?job_id=${jobId}&filter=all&tab=status`}
-                  className="btn btn-primary"
-                >
-                  View Job
-                </a>
-              </div>
+            {/* Events polling — HTMX fetches events which include NewImagePrompt with image metadata */}
+            <div
+              id="events-container"
+              className="flex-grow min-h-[300px]"
+              hx-get={`/jobs/events?job_id=${jobId}`}
+              hx-trigger="load, every 2s"
+              hx-swap="innerHTML"
+            >
+              <span className="loading loading-spinner"></span>
+              Loading events...
+            </div>
+
+            {/* View Job Button Section */}
+            <div className="card-actions justify-end mt-4 flex-none">
+              <a
+                href={`/jobs?job_id=${jobId}&filter=all&tab=status`}
+                className="btn btn-primary"
+              >
+                View Job
+              </a>
             </div>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {/* Card 6: Generated Image - Dedicated right column */}
       {showProgress && jobId ? (
-        <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex-grow flex flex-col">
-          <div className="card-body flex flex-col">
-            <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
+        <div className="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] scrollbar-hide overflow-y-scroll xl:flex-1 flex flex-col">
+          <div className="card-body flex flex-col p-4">
+            <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -334,11 +335,11 @@ export const DistinctImage = ({
                   d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
                 />
               </svg>
-              Generated Image
+              Generated Images
             </h2>
             <div
               id="generated-image-card"
-              className="flex-grow flex items-center justify-center"
+              className="flex-grow"
               hx-get={`/jobs/generated-images?job_id=${jobId}`}
               hx-trigger="load, every 2s"
               hx-swap="innerHTML"
@@ -352,7 +353,7 @@ export const DistinctImage = ({
         </div>
       ) : (
         /* Default placeholder - shown when no job is active */
-        <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex-grow flex items-center justify-center">
+        <div className="card bg-base-100 shadow-xl w-full xl:flex-1 flex-grow flex items-center justify-center">
           <div className="card-body text-center py-16">
             <svg
               xmlns="http://www.w3.org/2000/svg"
