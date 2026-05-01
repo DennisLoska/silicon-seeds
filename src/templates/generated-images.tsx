@@ -32,8 +32,9 @@ export const GeneratedImages = async ({ jobId }: GeneratedImagesProps) => {
 
   if (images.length === 0) {
     return (
-      <div className="flex items-center justify-center py-16">
+      <div className="flex flex-col items-center justify-center gap-2 py-16">
         <span className="loading loading-spinner loading-lg"></span>
+        <p className="text-sm text-base-content/50">Generating...</p>
       </div>
     );
   }
