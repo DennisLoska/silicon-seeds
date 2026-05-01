@@ -290,6 +290,9 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
               >
                 <option value="480p">480p</option>
                 <option value="720p">720p</option>
+                <option value="1080p">1080p</option>
+                <option value="9_16_SD">9:16 (SD)</option>
+                <option value="9_16_HD">9:16 (HD)</option>
               </select>
             </div>
           </div>

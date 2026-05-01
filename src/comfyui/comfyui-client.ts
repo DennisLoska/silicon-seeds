@@ -245,6 +245,18 @@ export class ComfyUIClient {
       ((resolution.width = 1280), (resolution.height = 720));
     }
 
+    if (job.resolution === "1080pp") {
+      ((resolution.width = 1920), (resolution.height = 1080));
+    }
+
+    if (job.resolution === "9_16_SD") {
+      ((resolution.width = 720), (resolution.height = 1280));
+    }
+
+    if (job.resolution === "9_16_HD") {
+      ((resolution.width = 1080), (resolution.height = 1920));
+    }
+
     if (input.kind === "text-to-image") {
       // TODO replace or keep?
       // api = zImageTurboApi;
