@@ -218,7 +218,7 @@ export const DistinctImage = ({
             </h2>
             <div
               id="generated-image-card"
-              className="flex-grow"
+              className="flex-grow flex items-center justify-center"
               hx-get={`/jobs/generated-images?job_id=${jobId}`}
               hx-trigger="load, every 2s"
               hx-swap="innerHTML"
