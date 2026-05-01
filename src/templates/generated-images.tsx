@@ -49,7 +49,7 @@ export const GeneratedImages = async ({ jobId }: GeneratedImagesProps) => {
   }
 
   return (
-    <div className="columns-1 sm:columns-2 gap-3 max-w-full">
+    <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 space-y-3 max-w-full">
       {images.map((img) => {
         const assetPath = img.subfolder
           ? `/assets/${img.subfolder}/${img.filename}`
@@ -60,11 +60,11 @@ export const GeneratedImages = async ({ jobId }: GeneratedImagesProps) => {
             key={img.eventId}
             className="card bg-base-200 hover:scale-105 transition-transform duration-200 break-inside-avoid rounded-box mb-3"
           >
-            <figure className="bg-base-300 flex items-center justify-center overflow-hidden rounded-box">
+            <figure className="bg-base-300 overflow-hidden rounded-box">
               <img
                 src={assetPath}
                 alt={`Generated image ${img.index + 1}`}
-                className="w-full max-w-full h-auto object-contain"
+                className="w-full h-auto"
               />
             </figure>
           </div>

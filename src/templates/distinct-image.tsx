@@ -38,9 +38,9 @@ export const DistinctImage = ({
         </div>
 
         {/* Settings + Action Buttons row */}
-        <div className="flex flex-row justify-between gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Card 2: AI Model Selection */}
-          <div className="card bg-base-100 shadow-xl w-auto min-w-[200px] flex-none flex flex-col">
+          <div className="card bg-base-100 shadow-xl w-full lg:w-auto flex-none flex flex-col">
             <div className="card-body flex flex-col p-4">
               <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
                 <Icons.SparkleIcon />
@@ -66,7 +66,7 @@ export const DistinctImage = ({
           </div>
 
           {/* Card 3: Generation Options */}
-          <div className="card bg-base-100 shadow-xl w-auto min-w-[250px] flex-none flex flex-col">
+          <div className="card bg-base-100 shadow-xl w-full lg:w-auto flex-none flex flex-col">
             <div className="card-body flex flex-col p-4">
               <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
                 <Icons.CogSettingsIcon />
@@ -90,14 +90,14 @@ export const DistinctImage = ({
                     name="batch_size"
                     value={1}
                     min={1}
-                    max={5}
+                    max={16}
                     step={1}
                     className="range range-primary w-full"
                     x-model="batchSize"
                   />
                   <div className="flex justify-between text-xs text-base-content/50 mt-1">
                     <span>1 image</span>
-                    <span>5 images</span>
+                    <span>16 images</span>
                   </div>
                 </div>
 
@@ -143,7 +143,7 @@ export const DistinctImage = ({
           </div>
 
           {/* Card 4: Action Buttons */}
-          <div className="card bg-base-100 shadow-xl w-auto min-w-[200px] flex-none flex flex-col">
+          <div className="card bg-base-100 shadow-xl w-full lg:w-auto flex-none flex flex-col">
             <div className="card-body flex flex-col p-4">
               <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
                 <Icons.LightningBoltIcon />
