@@ -245,7 +245,7 @@ export class ComfyUIClient {
       ((resolution.width = 1280), (resolution.height = 720));
     }
 
-    if (job.resolution === "1080pp") {
+    if (job.resolution === "1080p") {
       ((resolution.width = 1920), (resolution.height = 1080));
     }
 

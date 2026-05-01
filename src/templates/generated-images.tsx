@@ -11,7 +11,10 @@ export const GeneratedImages = async ({ jobId }: GeneratedImagesProps) => {
   // Filter for completed image events and fetch their metadata
   const images = [];
   for (const evt of jobEvents) {
-    if (evt.type === Event.NewImagePrompt && evt.status === JobStatus.Complete) {
+    if (
+      evt.type === Event.NewImagePrompt &&
+      evt.status === JobStatus.Complete
+    ) {
       const assetMeta = await DB.Meta.findByEventId(evt.id).catch(() => null);
       if (assetMeta) {
         images.push({
@@ -49,7 +52,7 @@ export const GeneratedImages = async ({ jobId }: GeneratedImagesProps) => {
   }
 
   return (
-    <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 space-y-3 max-w-full">
+    <div className="columns-1 sm:columns-1 lg:columns-2 xl:columns-2 gap-3 space-y-3 max-w-full px-6">
       {images.map((img) => {
         const assetPath = img.subfolder
           ? `/assets/${img.subfolder}/${img.filename}`
