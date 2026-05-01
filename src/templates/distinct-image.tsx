@@ -21,31 +21,19 @@ export const DistinctImage = ({
       hx-disable-element="#submit-btn"
     >
       {/* Left column: Prompt + Settings + Job Progress stacked vertically */}
-      <div className="flex flex-col w-full xl:w-[60%] gap-4">
+      <div className="flex flex-col w-full xl:w-[50%] gap-4">
         {/* Card 1: Prompt Input */}
         <div className="card bg-base-100 shadow-xl w-full flex-none flex flex-col overflow-hidden">
           <div className="card-body flex flex-col p-4">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
-                <Icons.PromptIcon />
+              <Icons.PromptIcon />
               Prompt
             </h2>
             <textarea
               name="prompt"
-              className="textarea textarea-ghost w-full flex-grow resize-none mb-4 min-h-[160px] focus:outline-none"
+              className="textarea textarea-ghost w-full flex-grow resize-none mb-4 min-h-[250px] focus:outline-none"
               placeholder="Describe the image you want to generate..."
             ></textarea>
-
-            {/* Divider */}
-            <div className="divider my-2 flex-none">OR</div>
-
-            {/* File upload input (future feature) */}
-            <input
-              type="file"
-              name="prompt_file"
-              accept=".txt,.md"
-              className="file-input file-input-bordered w-full flex-none opacity-50 cursor-not-allowed"
-              disabled
-            />
           </div>
         </div>
 
@@ -116,8 +104,8 @@ export const DistinctImage = ({
                 {/* Resolution Dropdown */}
                 <div className="form-control mt-2">
                   <label className="label cursor-pointer">
-                <span className="label-text font-medium flex items-center gap-2">
-                    <Icons.SquaresGridIcon />
+                    <span className="label-text font-medium flex items-center gap-2">
+                      <Icons.SquaresGridIcon />
                       Resolution
                     </span>
                   </label>
@@ -162,13 +150,18 @@ export const DistinctImage = ({
                 Generate Image
               </h2>
               <p className="text-sm text-base-content/70 mb-4 flex-none">
-                Submit your prompt to generate images with the selected settings.
+                Submit your prompt to generate images with the selected
+                settings.
               </p>
               <div className="card-actions justify-between flex flex-row gap-2 mt-auto">
                 <button type="reset" className="btn btn-ghost">
                   Reset
                 </button>
-                <button type="submit" id="submit-btn" className="btn btn-primary">
+                <button
+                  type="submit"
+                  id="submit-btn"
+                  className="btn btn-primary"
+                >
                   Generate
                   <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
                 </button>
@@ -220,7 +213,7 @@ export const DistinctImage = ({
         <div className="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] scrollbar-hide overflow-y-scroll xl:flex-1 flex-grow flex flex-col">
           <div className="card-body flex flex-col p-4">
             <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
-                <Icons.PhotoCameraIcon />
+              <Icons.PhotoCameraIcon />
               Generated Images
             </h2>
             <div
@@ -241,9 +234,9 @@ export const DistinctImage = ({
         /* Default placeholder - shown when no job is active */
         <div className="card bg-base-100 shadow-xl w-full xl:flex-1 flex-grow flex items-center justify-center">
           <div className="card-body text-center py-16">
-                <Icons.PhotoCameraLarge />
+            <Icons.PhotoCameraLarge />
             <h3 className="font-medium text-base-content/60">
-              Enter a prompt and click Generate
+              The image(s) will be shown here once they have been generated.
             </h3>
           </div>
         </div>
