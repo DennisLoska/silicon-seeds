@@ -33,8 +33,8 @@ export const GeneratedImages = async ({ jobId }: GeneratedImagesProps) => {
   if (images.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-16">
-        <span className="loading loading-dots loading-lg"></span>
         <p className="text-sm text-base-content/50">Generating</p>
+        <span className="loading loading-dots loading-lg"></span>
       </div>
     );
   }
