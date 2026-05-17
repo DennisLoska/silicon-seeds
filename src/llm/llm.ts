@@ -39,7 +39,7 @@ export namespace LLM {
   ) {
     try {
       return await llm.respond(msg, {
-        structured: { type: "json", jsonSchema: schema },
+        structured: schema,
         maxTokens: MAX_TOKENS,
       });
     } catch (error) {

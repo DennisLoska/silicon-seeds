@@ -7,7 +7,7 @@ import { ImageGenerator } from "../image/image-generator";
 import { VideoGenerator } from "../video/video-generator";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
-import z from "zod";
+import z from "zod/v3";
 
 export namespace PromptGenerator {
   export async function txt_to_img_prompt(
