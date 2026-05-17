@@ -365,14 +365,15 @@ export class ComfyUIClient {
       if (job.video_model === "ltx2.3") {
         api = ltx2_3_img2transitionApi;
         api["139:128"].inputs.text = input.prompt;
-        api["138"].inputs.image = input.startImage;
+        api["137"].inputs.image = input.startImage;
         api["139:113"].inputs.value = resolution.width;
         api["139:98"].inputs.value = resolution.height;
-        api["139:114"].inputs.value =
+        api["139:114"].inputs.value = job.fps || Metadata.FPS;
+        api["139:143"].inputs.value =
           (job.transition_duration || Metadata.TRANSITION_DURATION) *
             (job.fps || Metadata.FPS) +
           1;
-        api["137"].inputs.image = input.endImage;
+        api["138"].inputs.image = input.endImage;
         api["68"].inputs.filename_prefix = input.id;
       }
     }

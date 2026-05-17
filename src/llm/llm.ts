@@ -1,5 +1,6 @@
 import { FileHandle, LMStudioClient } from "@lmstudio/sdk";
 import { Logger } from "../logger/logger";
+import z, { ZodSchema } from "zod/v3";
 
 const llmClient = new LMStudioClient();
 // const llm = await llmClient.llm.model(
@@ -33,13 +34,18 @@ export namespace LLM {
     }
   }
 
-  export async function structured_message(
-    msg: string,
-    schema: { parse: (input: unknown) => unknown },
-  ) {
+  export async function image_prompt_list(msg: string, amount: number) {
+    let mapSchema: any = {};
+    for (let i = 0; i < amount; i++) {
+      if (!mapSchema[i]) mapSchema[i] = z.string();
+    }
+
     try {
+      // Why TypeScript :(
+      const typedSchema = z.object(mapSchema);
+
       return await llm.respond(msg, {
-        structured: schema,
+        structured: typedSchema,
         maxTokens: MAX_TOKENS,
       });
     } catch (error) {
