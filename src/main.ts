@@ -10,12 +10,14 @@ import { VideoGenerator } from "./video/video-generator";
 //
 // Content
 //
-// - better text captions
+// - consistent style and transitions
 // - consistent character
 // - consistent voice
 // - consistent speed
+// - better text captions
 
 // General
+// - ability to resume or pause a job
 // - ability to cancel a job
 // - ability to re-generate a specific asset
 // - distinct mode: audio generation, video generation
@@ -25,10 +27,12 @@ import { VideoGenerator } from "./video/video-generator";
 // - reconnecting websockets
 // - created_at format is messed up (no ms)
 // - fix active job in job list on transitions
+// - fix job status and mark only as done when all events are finished and not all prompts
 // - new items in gallery are added vertically ot horizontally
 // - need to sanitize input text otherwise it breaks json parsing
+// - Make LLMs great again
 // - composite mode: generate video button not disabled
-// - composite mode: job progress refresh prevents opening details
+// - composite mode: job progress refresh prevents opening details -> SSE
 // - media tab in job has zoom in effect on image
 //
 // Performance
@@ -40,7 +44,6 @@ import { VideoGenerator } from "./video/video-generator";
 // - Reconnecting websockets
 //
 // Nice to havee
-// - ability to resume or pause a job
 // - Generate a random name for each job
 // - Make status updates more pretty
 // - Make UI reactive with SSE instead of polling

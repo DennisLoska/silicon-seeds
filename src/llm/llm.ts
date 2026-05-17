@@ -7,8 +7,8 @@ const llmClient = new LMStudioClient();
 // );
 // const llm = await llmClient.llm.model("qwen/qwen3-vl-30b");
 // const llm = await llmClient.llm.model("qwen/qwen3-vl-4b");
-const llm = await llmClient.llm.model("qwen/qwen3-vl-8b");
-// const llm = await llmClient.llm.model("qwen/qwen3.5-35b-a3b");
+// const llm = await llmClient.llm.model("qwen/qwen3-vl-8b");
+const llm = await llmClient.llm.model("qwen3.6-35b-a3b");
 
 export namespace LLM {
   export const client = llmClient;
