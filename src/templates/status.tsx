@@ -62,7 +62,7 @@ function humanizeEventType(type: Event) {
 }
 
 export const Status = async (job: Job) => {
-  const events = await DB.Events.findByJobId(job.id);
+  const events = await DB.Events.findByJobIdChronological(job.id);
   const completedCount = events.filter(
     (e) => e.status === JobStatus.Complete,
   ).length;

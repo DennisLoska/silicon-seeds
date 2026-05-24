@@ -14,9 +14,87 @@ interface GalleryProps {
   typeFilter?: string;
 }
 
+type GalleryColumn = {
+  items: GalleryItem[];
+};
+
+function getAssetPath(subfolder: string, filename: string) {
+  const cleanSubfolder = subfolder.endsWith("/")
+    ? subfolder.slice(0, -1)
+    : subfolder;
+
+  if (!cleanSubfolder || cleanSubfolder.trim() === "") {
+    return `/assets/${filename}`;
+  }
+
+  return `/assets/${cleanSubfolder}/${filename}`;
+}
+
+function splitIntoColumns(items: GalleryItem[], columnCount: number): GalleryColumn[] {
+  const visibleItems = items.filter((item) => item.mediaType);
+  const columns = Array.from({ length: columnCount }, () => ({
+    items: [],
+  })) as GalleryColumn[];
+
+  visibleItems.forEach((item, index) => {
+    columns[index % columnCount].items.push(item);
+  });
+
+  return columns;
+}
+
+function getColumnVisibilityClass(index: number) {
+  switch (index) {
+    case 0:
+      return "block";
+    case 1:
+      return "hidden sm:block";
+    case 2:
+      return "hidden lg:block";
+    case 3:
+      return "hidden xl:block";
+    default:
+      return "hidden 2xl:block";
+  }
+}
+
+function renderSentinel(cursor: string, typeFilter?: string, oob = false) {
+  return (
+    <div
+      id="gallery-sentinel"
+      className="sentinel hidden py-8 text-center"
+      hx-get="/gallery/items"
+      hx-trigger="revealed"
+      hx-swap={oob ? "outerHTML" : "afterend"}
+      hx-swap-oob={oob ? "true" : undefined}
+      hx-on:revealed="this.querySelector('.loading').remove()"
+      hx-vals={`{"cursor": "${cursor}", "type": "${typeFilter || "all"}"}`}
+    >
+      <span className="loading loading-spinner"></span>
+    </div>
+  );
+}
+
+function renderColumnItems(items: GalleryItem[]) {
+  return items.map((item) => <GalleryItemCard key={item.meta_id} item={item} />);
+}
+
+function renderColumnAppendFragments(columns: GalleryColumn[]) {
+  return columns.map((column, index) => {
+    if (column.items.length === 0) return null;
+
+    return (
+      <div key={`gallery-column-append-${index}`} id={`gallery-column-${index}`} hx-swap-oob="beforeend">
+        {renderColumnItems(column.items)}
+      </div>
+    );
+  });
+}
+
 export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
   // Parse type filter - can be comma-separated for multiple selections
   const selectedTypes = typeFilter ? typeFilter.split(",") : [];
+  const columns = splitIntoColumns(items, 5);
 
   return (
     <div className="flex flex-col" id="gallery-content">
@@ -70,26 +148,21 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
       </div>
 
       {/* Masonry Gallery */}
-      <div
-        id="gallery-grid"
-        className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 p-6 gap-4 space-y-4"
-        aria-live="polite"
-      >
-        {items.map((item) => (
-          <GalleryItemCard key={item.meta_id} item={item} />
-        ))}
-
-        {/* Infinite Scroll Sentinel - last element triggers load */}
-        <div
-          className="sentinel hidden py-8 text-center break-inside-avoid"
-          hx-get="/gallery/items"
-          hx-trigger="revealed"
-          hx-swap="afterend"
-          hx-on:revealed="this.querySelector('.loading').remove()"
-          hx-vals={`{"cursor": "${items[items.length - 1]?.meta_id || ""}", "type": "${typeFilter || "all"}"}`}
-        >
-          <span className="loading loading-spinner"></span>
+      <div id="gallery-grid" className="p-6" aria-live="polite">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 items-start">
+          {columns.map((column, index) => (
+            <div
+              key={`gallery-column-${index}`}
+              id={`gallery-column-${index}`}
+              className={`${getColumnVisibilityClass(index)} space-y-4`}
+            >
+              {renderColumnItems(column.items)}
+            </div>
+          ))}
         </div>
+        {items.length > 0
+          ? renderSentinel(items[items.length - 1]?.meta_id || "", typeFilter)
+          : null}
       </div>
     </div>
   );
@@ -98,35 +171,24 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
 // Static method to render items fragment for HTMX requests
 export async function renderItems(
   items: GalleryItem[],
-  cursor: string,
+  _cursor: string,
   typeFilter?: string,
 ) {
-  const nextCursor = items[items.length - 1]?.meta_id || "";
+  const visibleItems = items.filter((item) => item.mediaType);
+  const nextCursor = visibleItems[visibleItems.length - 1]?.meta_id || "";
+  const columns = splitIntoColumns(visibleItems, 5);
 
   return (
     <>
-      {/* Gallery items to append */}
-      {items.map((item) => (
-        <GalleryItemCard key={item.meta_id} item={item} />
-      ))}
-      {/* New sentinel for next batch - replaces the old one via afterend swap */}
-      <div
-        className="sentinel hidden py-8 text-center break-inside-avoid"
-        hx-get="/gallery/items"
-        hx-trigger="revealed"
-        hx-swap="afterend"
-        hx-on:revealed="this.querySelector('.loading').remove()"
-        hx-vals={`{"cursor": "${nextCursor}", "type": "${typeFilter || "all"}"}`}
-      >
-        <span className="loading loading-spinner"></span>
-      </div>
+      {renderColumnAppendFragments(columns)}
+      {nextCursor ? renderSentinel(nextCursor, typeFilter, true) : null}
     </>
   );
 }
 
 // Gallery Item Card Component
 const GalleryItemCard = ({ item }: { item: GalleryItem }) => {
-  const assetPath = `/assets/${item.subfolder || ""}/${item.filename}`;
+  const assetPath = getAssetPath(item.subfolder, item.filename);
   const mediaType = item.mediaType;
 
   return (

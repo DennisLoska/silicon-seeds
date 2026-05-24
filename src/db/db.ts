@@ -267,7 +267,7 @@ export namespace DB {
     }
 
     export async function finalizeCompletedJobs() {
-      const jobsToComplete = await db
+      const settledActiveJobs = await db
         .selectFrom("jobs")
         .innerJoin("events", "events.job_id", "jobs.id")
         .select("jobs.id")
@@ -289,20 +289,21 @@ export namespace DB {
             ),
           ),
         )
-        .where((eb) =>
-          eb.not(
-            eb.exists(
-              eb
-                .selectFrom("events as non_complete_events")
-                .select("non_complete_events.id")
-                .whereRef("non_complete_events.job_id", "=", "jobs.id")
-                .where("non_complete_events.status", "!=", JobStatus.Complete),
-            ),
-          ),
-        )
         .execute();
 
-      for (const job of jobsToComplete) {
+      for (const job of settledActiveJobs) {
+        const failedEvent = await db
+          .selectFrom("events")
+          .select("id")
+          .where("job_id", "=", job.id)
+          .where("status", "=", JobStatus.Failed)
+          .executeTakeFirst();
+
+        if (failedEvent) {
+          await updateStatus(job.id, JobLifecycleStatus.Failed);
+          continue;
+        }
+
         await completeJob(job.id);
       }
     }
@@ -578,7 +579,32 @@ export namespace DB {
         .selectFrom("events")
         .selectAll()
         .where("job_id", "=", jobId)
+        // Compose mode creates image prompts in parallel, so created_at alone does
+        // not preserve scene chronology. Indexed media events must be read by their
+        // explicit sequence first.
+        .orderBy((eb) =>
+          eb
+            .case()
+            .when("index", "is not", null)
+            .then(0)
+            .else(1)
+            .end(),
+        )
+        .orderBy("index", "asc")
         .orderBy("created_at", "asc")
+        .orderBy("id", "asc")
+        .execute();
+
+      return res.map(rowToEvent);
+    }
+
+    export async function findByJobIdChronological(jobId: string) {
+      const res = await db
+        .selectFrom("events")
+        .selectAll()
+        .where("job_id", "=", jobId)
+        .orderBy("created_at", "asc")
+        .orderBy("id", "asc")
         .execute();
 
       return res.map(rowToEvent);
@@ -642,6 +668,17 @@ export namespace DB {
       return null;
     }
 
+    function getOutputAssetPath(subfolder: string, filename: string) {
+      const outputDir = Bun.env.OUTPUT_DIR?.replace(/\/$/, "") ?? "";
+      const cleanSubfolder = subfolder.replace(/^\/+|\/+$/g, "").trim();
+
+      if (!cleanSubfolder) {
+        return `${outputDir}/${filename}`;
+      }
+
+      return `${outputDir}/${cleanSubfolder}/${filename}`;
+    }
+
     export async function listItems(options: ListItemsOptions = {}) {
       const { cursor, type, limit = 20 } = options;
 
@@ -679,25 +716,39 @@ export namespace DB {
 
       const results = await query
         .orderBy("meta.id", "desc") // UUID7 is sortable chronologically!
-        .limit(limit)
+        .limit(limit * 3)
         .execute();
 
-      return results.map((row) => {
-        const mediaType = getMediaTypeFromExtension(row.filename);
-        return {
-          meta_id: row.meta_id,
-          event_id: row.event_id,
-          filename: row.filename,
-          subfolder: row.subfolder,
-          type: row.meta_type,
-          created_at: row.event_created_at,
-          job_id: row.job_id,
-          mediaType: mediaType,
-        } as ListItemResult & {
-          mediaType: "image" | "video" | null;
+      const items = await Promise.all(
+        results.map(async (row) => {
+          const mediaType = getMediaTypeFromExtension(row.filename);
+          if (!mediaType) return null;
+
+          const file = Bun.file(getOutputAssetPath(row.subfolder, row.filename));
+          if (!(await file.exists())) return null;
+
+          return {
+            meta_id: row.meta_id,
+            event_id: row.event_id,
+            filename: row.filename,
+            subfolder: row.subfolder,
+            type: row.meta_type,
+            created_at: row.event_created_at,
+            job_id: row.job_id,
+            mediaType,
+          } as ListItemResult & {
+            mediaType: "image" | "video";
+            created_at: string;
+          };
+        }),
+      );
+
+      return items
+        .filter((row): row is ListItemResult & {
+          mediaType: "image" | "video";
           created_at: string;
-        };
-      });
+        } => row !== null)
+        .slice(0, limit);
     }
   }
 }

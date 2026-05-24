@@ -56,7 +56,7 @@ export namespace JobOrchestrator {
     if (event.status === JobStatus.Pending) {
       return await DB.Events.create({
         ...event,
-        priority: event.priority ?? getPriority(event),
+        priority: event.priority && event.priority > 0 ? event.priority : getPriority(event),
       });
     }
 

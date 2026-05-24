@@ -26,7 +26,7 @@ const EVENT_ICONS = {
 };
 
 export const EventList = async ({ jobId }: EventListProps) => {
-  const jobEvents = await DB.Events.findByJobId(jobId);
+  const jobEvents = await DB.Events.findByJobIdChronological(jobId);
 
   if (jobEvents.length === 0) {
     return (
