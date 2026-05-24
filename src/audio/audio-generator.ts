@@ -20,11 +20,14 @@ export namespace AudioGenerator {
     jobId: string;
     prompt?: string;
     duration?: number;
+    mode?: JobMode.Speech | JobMode.Instrumental;
+    lyrics?: string;
+    audio_settings?: Record<string, unknown>;
   }) {
     return await JobOrchestrator.schedule_task({
       ...event,
       type: Event.NewAudioPrompt,
-      mode: event.prompt ? JobMode.Speech : JobMode.Instrumental,
+      mode: event.mode ?? (event.prompt ? JobMode.Speech : JobMode.Instrumental),
     });
   }
 
@@ -32,7 +35,7 @@ export namespace AudioGenerator {
     const job = await DB.Jobs.findById(item.jobId);
     Utils.assert(item.type === Event.NewAudioPrompt, "Incorrect event type!");
 
-    const { prompt, id, mode, duration } = item;
+    const { prompt, id, mode, duration, lyrics, audio_settings } = item;
 
     if (mode === JobMode.Speech) {
       Utils.assert(typeof prompt === "string", "'prompt' is not a string");
@@ -52,6 +55,8 @@ export namespace AudioGenerator {
         kind: "text-to-instrumental",
         prompt: prompt ?? null,
         duration,
+        lyrics: lyrics ?? null,
+        settings: audio_settings,
       };
 
       await comfyClient.generate(modelVariant, job);

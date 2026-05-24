@@ -8,11 +8,16 @@ import { compose_video } from "./compose-video";
 import { video_transition } from "./video-transition";
 import { text_to_speech } from "./text-to-speech";
 import { text_to_instrumental } from "./text-to-instrumental";
+import { text_to_audio } from "./text-to-audio";
 import { delete_job } from "./delete";
 import { cancel_job } from "./cancel";
 import { regenerate_event } from "./regenerate";
 import { zValidator } from "@hono/zod-validator";
-import { PostComposeSchema, PostTextToImageSchema } from "../schemas";
+import {
+  PostComposeSchema,
+  PostDistinctAudioSchema,
+  PostTextToImageSchema,
+} from "../schemas";
 
 const app = new Hono();
 
@@ -30,6 +35,15 @@ app.post(
   async (c) => {
     const body = c.req.valid("form");
     return text_to_image(body);
+  },
+);
+
+app.post(
+  "/jobs/audio",
+  zValidator("form", PostDistinctAudioSchema),
+  async (c) => {
+    const body = c.req.valid("form");
+    return text_to_audio(body);
   },
 );
 

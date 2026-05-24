@@ -40,6 +40,8 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .addColumn("start_img", "text")
     .addColumn("end_img", "text")
     .addColumn("duration", "integer")
+    .addColumn("lyrics", "text")
+    .addColumn("audio_settings", "text")
     .addColumn("lora", "text")
     .addColumn("index", "integer")
     .addColumn("claimed_at", "text")

@@ -14,6 +14,11 @@ interface DistinctImageProgressProps {
   jobId: string;
 }
 
+interface DistinctImageActionCardProps {
+  showProgress?: boolean;
+  jobId?: string;
+}
+
 function getJobStatusUi(status?: JobLifecycleStatus) {
   switch (status) {
     case JobLifecycleStatus.Complete:
@@ -183,31 +188,12 @@ export const DistinctImage = async ({
           </div>
 
           {/* Card 4: Action Buttons */}
-          <div className="card bg-base-100 shadow-xl w-full lg:w-auto flex-none flex flex-col">
-            <div className="card-body flex flex-col p-4">
-              <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
-                <Icons.LightningBoltIcon />
-                Generate Image
-              </h2>
-              <p className="text-sm text-base-content/70 mb-4 flex-none">
-                Submit your prompt to generate images with the selected
-                settings.
-              </p>
-              <div className="card-actions justify-between flex flex-row gap-2 mt-auto">
-                <button type="reset" className="btn btn-ghost">
-                  Reset
-                </button>
-                <button
-                  type="submit"
-                  id="submit-btn"
-                  className="btn btn-primary"
-                >
-                  Generate
-                  <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
-                </button>
-              </div>
-            </div>
-          </div>
+          {await (
+            <DistinctImageActionCardFragment
+              showProgress={showProgress}
+              jobId={jobId}
+            />
+          )}
         </div>
 
         {/* Card 5: Job Progress - only shown when showProgress=true */}
@@ -281,6 +267,70 @@ export const DistinctImageProgressCard = async ({ jobId }: DistinctImageProgress
           </a>
         </div>
       </div>
+    </div>
+  );
+};
+
+export const DistinctImageActionCard = async ({
+  showProgress = false,
+  jobId = "",
+}: DistinctImageActionCardProps) => {
+  const activeJob = showProgress && jobId
+    ? await DB.Jobs.findById(jobId).catch(() => null)
+    : null;
+  const isJobRunning = activeJob?.status === JobLifecycleStatus.Active;
+
+  return (
+    <div className="card bg-base-100 shadow-xl w-full h-full flex flex-col">
+      <div className="card-body flex flex-col p-4 h-full">
+        <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
+          <Icons.LightningBoltIcon />
+          Generate Image
+        </h2>
+        <p className="text-sm text-base-content/70 mb-4 flex-none">
+          Submit your prompt to generate images with the selected
+          settings.
+        </p>
+        <div className="card-actions justify-between flex flex-row gap-2 mt-auto">
+          <button type="reset" className="btn btn-ghost">
+            Reset
+          </button>
+          <button
+            type="submit"
+            id="submit-btn"
+            className="btn btn-primary"
+            disabled={isJobRunning}
+          >
+            Generate
+            <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const DistinctImageActionCardFragment = async ({
+  showProgress = false,
+  jobId = "",
+}: DistinctImageActionCardProps) => {
+  if (!showProgress || !jobId) {
+    return await (
+      <DistinctImageActionCard showProgress={showProgress} jobId={jobId} />
+    );
+  }
+
+  return (
+    <div
+      id="distinct-image-action-card-fragment"
+      className="w-full lg:w-auto flex-none flex flex-col min-w-0"
+      hx-get={`/jobs/image-action-card?job_id=${jobId}`}
+      hx-trigger="sse:job-update"
+      hx-swap="outerHTML"
+    >
+      {await (
+        <DistinctImageActionCard showProgress={showProgress} jobId={jobId} />
+      )}
     </div>
   );
 };

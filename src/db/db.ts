@@ -43,6 +43,8 @@ export interface DbSchema {
     start_img: string | null;
     end_img: string | null;
     duration: number | null;
+    lyrics: string | null;
+    audio_settings: string | null;
     lora: Lora | null;
     index: number | null;
     claimed_at: string | null;
@@ -342,6 +344,8 @@ export namespace DB {
             ...base,
             filename: null,
             lora: event.lora,
+            lyrics: null,
+            audio_settings: null,
             start_img: null,
             end_img: null,
             duration: null,
@@ -351,6 +355,8 @@ export namespace DB {
           return {
             ...base,
             filename: event.filename,
+            lyrics: null,
+            audio_settings: null,
             start_img: null,
             end_img: null,
             duration: null,
@@ -359,11 +365,15 @@ export namespace DB {
         case Event.NewVideoComposition:
           return {
             ...base,
+            lyrics: null,
+            audio_settings: null,
           };
         case Event.NewTransitionPrompt:
           return {
             ...base,
             filename: null,
+            lyrics: null,
+            audio_settings: null,
             start_img: event.startImg,
             end_img: event.endImg,
             duration: null,
@@ -376,6 +386,10 @@ export namespace DB {
             start_img: null,
             end_img: null,
             duration: event.duration ?? null,
+            lyrics: event.lyrics ?? null,
+            audio_settings: event.audio_settings
+              ? JSON.stringify(event.audio_settings)
+              : null,
           };
       }
     }
@@ -443,6 +457,10 @@ export namespace DB {
           return {
             ...base,
             duration: row.duration ?? undefined,
+            lyrics: row.lyrics ?? undefined,
+            audio_settings: row.audio_settings
+              ? (JSON.parse(row.audio_settings) as Record<string, unknown>)
+              : undefined,
             type: Event.NewAudioPrompt,
             prompt: row.prompt ?? "n/a",
           };

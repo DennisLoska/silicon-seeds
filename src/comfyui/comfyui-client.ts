@@ -42,6 +42,8 @@ type Text2Instrumental = {
   kind: "text-to-instrumental";
   prompt: string | null;
   duration: number;
+  lyrics: string | null;
+  settings?: Record<string, unknown>;
 };
 
 type Img2Transition = {
@@ -391,8 +393,37 @@ export class ComfyUIClient {
       if (input.prompt) {
         api["94"].inputs.tags = input.prompt;
       }
+      if (input.lyrics) {
+        api["94"].inputs.lyrics = input.lyrics;
+      }
+      if (input.settings) {
+        const settings = input.settings;
+
+        if (typeof settings.bpm === "number") {
+          api["94"].inputs.bpm = settings.bpm;
+        }
+        if (typeof settings.cfg_scale === "number") {
+          api["94"].inputs.cfg_scale = settings.cfg_scale;
+        }
+        if (typeof settings.temperature === "number") {
+          api["94"].inputs.temperature = settings.temperature;
+        }
+        if (typeof settings.top_p === "number") {
+          api["94"].inputs.top_p = settings.top_p;
+        }
+        if (typeof settings.keyscale === "string" && settings.keyscale) {
+          api["94"].inputs.keyscale = settings.keyscale;
+        }
+        if (
+          typeof settings.timesignature === "string" &&
+          settings.timesignature
+        ) {
+          api["94"].inputs.timesignature = settings.timesignature;
+        }
+      }
       api["107"].inputs.filename_prefix = input.id;
       api["98"].inputs.seconds = input.duration;
+      api["94"].inputs.duration = input.duration;
     }
 
     if (input.kind === "image-to-transition") {

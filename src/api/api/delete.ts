@@ -19,6 +19,12 @@ async function renderDeleteResponse(c: Context, context: DeleteJobContext) {
     );
   }
 
+  if (context.source === "audio") {
+    return c.html(
+      await Templates.DistinctAudio({ showProgress: false, jobId: "" }),
+    );
+  }
+
   const jobs = await DB.Jobs.list();
   if (jobs.length === 0) {
     return c.html(Templates.NotSelectedFragment());

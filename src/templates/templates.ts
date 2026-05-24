@@ -7,15 +7,23 @@ import { NotSelected } from "./not-selected";
 import { Dashboard as dashboardComponent } from "./dashboard";
 import {
   Compose as composeComponent,
+  ComposeActionCardFragment as composeActionCardFragment,
   ComposeProgressFragment as composeProgressFragment,
 } from "./compose";
 import { Settings as settingsComponent } from "./settings";
 import { Gallery as galleryComponent } from "./gallery";
 import {
   DistinctImage as distinctImageComponent,
+  DistinctImageActionCardFragment as distinctImageActionCardFragment,
   DistinctImageGeneratedImagesFragment as distinctImageGeneratedImagesFragment,
   DistinctImageProgressFragment as distinctImageProgressFragment,
 } from "./distinct-image";
+import {
+  DistinctAudio as distinctAudioComponent,
+  DistinctAudioActionCardFragment as distinctAudioActionCardFragment,
+  DistinctAudioGeneratedAudioFragment as distinctAudioGeneratedAudioFragment,
+  DistinctAudioProgressFragment as distinctAudioProgressFragment,
+} from "./distinct-audio";
 import { Job } from "../events/events";
 import { OobHeader as oobHeaderComponent } from "./oob-header";
 import { EventList } from "./events-list";
@@ -38,11 +46,18 @@ export namespace Templates {
   export const Dashboard = dashboardComponent;
   export const Settings = settingsComponent;
   export const Compose = composeComponent;
+  export const ComposeActionCardFragment = composeActionCardFragment;
   export const ComposeProgressFragment = composeProgressFragment;
   export const Gallery = galleryComponent;
   export const DistinctImage = distinctImageComponent;
+  export const DistinctImageActionCardFragment = distinctImageActionCardFragment;
   export const DistinctImageProgressFragment = distinctImageProgressFragment;
   export const DistinctImageGeneratedImagesFragment =
     distinctImageGeneratedImagesFragment;
+  export const DistinctAudio = distinctAudioComponent;
+  export const DistinctAudioActionCardFragment = distinctAudioActionCardFragment;
+  export const DistinctAudioProgressFragment = distinctAudioProgressFragment;
+  export const DistinctAudioGeneratedAudioFragment =
+    distinctAudioGeneratedAudioFragment;
   export const OobHeader = oobHeaderComponent;
 }
