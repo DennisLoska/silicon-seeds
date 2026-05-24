@@ -1,3 +1,5 @@
+import { DB } from "../db/db";
+import { JobLifecycleStatus } from "../events/events";
 import { Icons } from "./icons";
 import { ErrorToast } from "./toast";
 
@@ -6,10 +8,43 @@ interface DistinctImageProps {
   jobId?: string;
 }
 
-export const DistinctImage = ({
+function getJobStatusUi(status?: JobLifecycleStatus) {
+  switch (status) {
+    case JobLifecycleStatus.Complete:
+      return {
+        label: "Complete",
+        badge: "badge-success",
+        Icon: Icons.StatusComplete,
+      };
+    case JobLifecycleStatus.Failed:
+      return {
+        label: "Failed",
+        badge: "badge-error",
+        Icon: Icons.StatusFailed,
+      };
+    case JobLifecycleStatus.Cancelled:
+      return {
+        label: "Cancelled",
+        badge: "badge-neutral",
+        Icon: Icons.StatusCancelled,
+      };
+    default:
+      return {
+        label: "Active",
+        badge: "badge-warning",
+        Icon: Icons.StatusPending,
+      };
+  }
+}
+
+export const DistinctImage = async ({
   showProgress = false,
   jobId = "",
-}: DistinctImageProps) => (
+}: DistinctImageProps) => {
+  const job = showProgress && jobId ? await DB.Jobs.findById(jobId).catch(() => null) : null;
+  const statusUi = job ? getJobStatusUi(job.status) : null;
+
+  return (
   <div className="flex flex-col sm:px-6 py-6 xl:h-full bg-base-200">
     <ErrorToast />
     {/* Kanban-style Card Container */}
@@ -174,10 +209,18 @@ export const DistinctImage = ({
         {showProgress && jobId ? (
           <div className="card bg-base-100 shadow-xl w-full max-h-[calc(40vh-3rem)] scrollbar-hide overflow-y-scroll flex-none flex flex-col">
             <div className="card-body flex flex-col p-4">
-              <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
-                <Icons.PulseWavesIcon />
-                Job Progress
-              </h2>
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <h2 className="card-title text-lg font-semibold flex items-center gap-2">
+                  <Icons.PulseWavesIcon />
+                  Job Progress
+                </h2>
+                {statusUi ? (
+                  <span className={`badge badge-xl ${statusUi.badge}`}>
+                    <statusUi.Icon />
+                    {statusUi.label}
+                  </span>
+                ) : null}
+              </div>
               <p className="text-sm text-base-content/70 mb-4 flex-none">
                 Monitoring job: {jobId}
               </p>
@@ -195,7 +238,15 @@ export const DistinctImage = ({
               </div>
 
               {/* View Job Button Section */}
-              <div className="card-actions justify-end mt-4 flex-none">
+              <div className="card-actions justify-end mt-4 flex-none gap-2">
+                <button
+                  className="btn btn-error btn-outline"
+                  hx-get={`/api/fragments/job-action-modal?jobId=${jobId}&action=cancel&source=image`}
+                  hx-target="#job-action-modal"
+                  hx-swap="outerHTML"
+                >
+                  Cancel
+                </button>
                 <a
                   href={`/jobs?job_id=${jobId}&filter=all&tab=status`}
                   className="btn btn-primary"
@@ -242,5 +293,7 @@ export const DistinctImage = ({
         </div>
       )}
     </form>
+    <dialog id="job-action-modal" className="modal"></dialog>
   </div>
-);
+  );
+};

@@ -115,6 +115,40 @@ export class ComfyUIClient {
     return response.json();
   }
 
+  async deleteQueuedPrompts(promptIds: string[]): Promise<boolean> {
+    if (promptIds.length === 0) return true;
+
+    const response = await fetch(`${this.baseUrl}/queue`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ delete: promptIds }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete queued prompts: ${response.statusText}`);
+    }
+
+    return true;
+  }
+
+  async interruptPrompt(promptId: string): Promise<boolean> {
+    const response = await fetch(`${this.baseUrl}/interrupt`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt_id: promptId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to interrupt prompt: ${response.statusText}`);
+    }
+
+    return true;
+  }
+
   async getImageOutput(promptId: string): Promise<{
     filename: string;
     subfolder: string;

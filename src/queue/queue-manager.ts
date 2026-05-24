@@ -8,6 +8,15 @@ import { VideoGenerator } from "../video/video-generator";
 export namespace QueueManager {
   export let comfyQueue = 0;
   let pumping = false;
+  let waitingForComfyIdle = false;
+
+  export function holdForComfyIdle() {
+    waitingForComfyIdle = true;
+  }
+
+  export function releaseComfyIdle() {
+    waitingForComfyIdle = false;
+  }
 
   export async function resume() {
     await DB.Events.requeueRunning();
@@ -15,6 +24,7 @@ export namespace QueueManager {
 
   export async function pump() {
     if (pumping) return;
+    if (waitingForComfyIdle) return;
     pumping = true;
 
     try {

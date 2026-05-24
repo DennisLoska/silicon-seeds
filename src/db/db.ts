@@ -71,6 +71,12 @@ export namespace DB {
   });
 
   export namespace Jobs {
+    export type CancelJobResult = {
+      job: JobsSchema;
+      runningPromptId: string | null;
+      pendingPromptIds: string[];
+    };
+
     export async function create_job(payload: CreateJob) {
       return await db
         .insertInto("jobs")
@@ -118,11 +124,17 @@ export namespace DB {
 
     export async function failJob(id: string) {
       await db.transaction().execute(async (trx) => {
-        await trx
+        const updatedJob = await trx
           .updateTable("jobs")
           .set({ status: JobLifecycleStatus.Failed })
           .where("id", "=", id)
-          .execute();
+          .where("status", "=", JobLifecycleStatus.Active)
+          .returning("id")
+          .executeTakeFirst();
+
+        if (!updatedJob) {
+          return;
+        }
 
         await trx
           .updateTable("events")
@@ -142,12 +154,65 @@ export namespace DB {
       });
     }
 
+    export async function cancelJob(id: string): Promise<CancelJobResult> {
+      return await db.transaction().execute(async (trx) => {
+        const job = await trx
+          .selectFrom("jobs")
+          .selectAll()
+          .where("id", "=", id)
+          .executeTakeFirstOrThrow();
+
+        const events = await trx
+          .selectFrom("events")
+          .select(["id", "status"])
+          .where("job_id", "=", id)
+          .execute();
+
+        const runningPromptId =
+          events.find((event) => event.status === JobStatus.Running)?.id ?? null;
+        const pendingPromptIds = events
+          .filter((event) => event.status === JobStatus.Pending)
+          .map((event) => event.id);
+
+        if (job.status === JobLifecycleStatus.Active) {
+          await trx
+            .updateTable("jobs")
+            .set({ status: JobLifecycleStatus.Cancelled })
+            .where("id", "=", id)
+            .execute();
+
+          await trx
+            .updateTable("events")
+            .set({
+              status: JobStatus.Failed,
+              claimed_at: null,
+              error: "job cancelled by user",
+            })
+            .where("job_id", "=", id)
+            .where((eb) =>
+              eb.or([
+                eb("status", "=", JobStatus.Pending),
+                eb("status", "=", JobStatus.Running),
+              ]),
+            )
+            .execute();
+        }
+
+        return {
+          job,
+          runningPromptId,
+          pendingPromptIds,
+        };
+      });
+    }
+
     export async function failBrokenJobs() {
       const brokenJobs = await db
         .selectFrom("jobs")
         .innerJoin("events", "events.job_id", "jobs.id")
         .select("jobs.id")
         .distinct()
+        .where("jobs.status", "=", JobLifecycleStatus.Active)
         .where((eb) =>
           eb.or([
             eb("events.status", "=", JobStatus.Pending),

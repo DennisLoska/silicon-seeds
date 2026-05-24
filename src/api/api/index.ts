@@ -9,6 +9,7 @@ import { video_transition } from "./video-transition";
 import { text_to_speech } from "./text-to-speech";
 import { text_to_instrumental } from "./text-to-instrumental";
 import { delete_job } from "./delete";
+import { cancel_job } from "./cancel";
 import { zValidator } from "@hono/zod-validator";
 import { PostComposeSchema, PostTextToImageSchema } from "../schemas";
 
@@ -64,7 +65,20 @@ app.post("/jobs/instrumental", async (c) => {
 // Delete job endpoint - RESTful: DELETE /api/jobs/:job_id
 app.delete("/jobs/:job_id", async (c) => {
   const jobId = c.req.param("job_id");
-  return delete_job(jobId);
+  return delete_job(c, jobId, {
+    source: c.req.query("source") ?? undefined,
+    filter: c.req.query("filter") ?? undefined,
+    tab: c.req.query("tab") ?? undefined,
+  });
+});
+
+app.post("/jobs/:job_id/cancel", async (c) => {
+  const jobId = c.req.param("job_id");
+  return cancel_job(c, jobId, {
+    source: c.req.query("source") ?? undefined,
+    filter: c.req.query("filter") ?? undefined,
+    tab: c.req.query("tab") ?? undefined,
+  });
 });
 
 export default app;

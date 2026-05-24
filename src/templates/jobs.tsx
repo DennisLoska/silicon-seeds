@@ -322,15 +322,15 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
                   <span className="text-xs opacity-60">{date}</span>
                 </div>
               </div>
-              <button
-                className="btn btn-ghost btn-sm mr-4"
-                hx-get={`/api/fragments/delete-modal?jobId=${jobItem.id}`}
-                hx-target="#delete-confirm-modal"
-                hx-swap="outerHTML"
-                title="Delete job"
-              >
-                <Icons.DeleteIcon />
-              </button>
+                <button
+                  className="btn btn-ghost btn-sm mr-4"
+                  hx-get={`/api/fragments/job-action-modal?jobId=${jobItem.id}&action=delete&source=jobs&filter=${filter}&tab=${tab}`}
+                  hx-target="#job-action-modal"
+                  hx-swap="outerHTML"
+                  title="Delete job"
+                >
+                  <Icons.DeleteIcon />
+                </button>
             </li>
           );
         })}
@@ -501,7 +501,7 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
       </div>
 
       {/* Delete Confirmation Modal */}
-      <dialog id="delete-confirm-modal" className="modal"></dialog>
+      <dialog id="job-action-modal" className="modal"></dialog>
 
       {/* Floating Action Button for Job List (mobile only) */}
       <label

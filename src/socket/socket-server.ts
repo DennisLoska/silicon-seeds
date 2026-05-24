@@ -5,6 +5,7 @@ import { QueueManager } from "../queue/queue-manager";
 import { VideoGenerator } from "../video/video-generator";
 import { comfyClient } from "../comfyui/comfyui-client";
 import { Event, JobMode, JobStatus } from "../events/events";
+import { JobLifecycleStatus } from "../events/events";
 import { AudioGenerator } from "../audio/audio-generator";
 import { JobOrchestrator } from "../jobs/jobs";
 import { Logger } from "../logger/logger";
@@ -69,13 +70,25 @@ export namespace SocketServer {
       const event = await DB.Events.findById(promptId);
       Utils.assert(event, "Event is missing");
 
+      const job = await DB.Jobs.findById(event.jobId);
+
+      await comfyClient.free_memory(true, true);
+      QueueManager.releaseComfyIdle();
+
+      if (
+        event.status !== JobStatus.Running ||
+        job.status !== JobLifecycleStatus.Active
+      ) {
+        await DB.Jobs.finalizeCompletedJobs();
+        void QueueManager.pump();
+        return;
+      }
+
       // update status to complete
       await JobOrchestrator.update_schedule({
         ...event,
         status: JobStatus.Complete,
       });
-
-      await comfyClient.free_memory(true, true);
 
       if (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) {
         await PromptGenerator.img_to_vid_prompt(promptId);
@@ -157,6 +170,61 @@ export namespace SocketServer {
 
       await DB.Jobs.finalizeCompletedJobs();
 
+      void QueueManager.pump();
+    }
+
+    if (msg.type === "execution_interrupted") {
+      Logger.warn("===execution_interrupted===", msg.data);
+
+      const { prompt_id: promptId } = msg.data;
+
+      if (promptId) {
+        const event = await DB.Events.findById(promptId).catch(() => null);
+
+        if (event) {
+          const job = await DB.Jobs.findById(event.jobId).catch(() => null);
+
+          if (
+            job?.status === JobLifecycleStatus.Active &&
+            event.status === JobStatus.Running
+          ) {
+            await DB.Events.markFailed(promptId, "execution interrupted");
+            await DB.Jobs.failJob(event.jobId);
+          }
+        }
+      }
+
+      await comfyClient.free_memory(true, true);
+      QueueManager.releaseComfyIdle();
+      void QueueManager.pump();
+    }
+
+    if (msg.type === "execution_error") {
+      Logger.error("===execution_error===", msg.data);
+
+      const { prompt_id: promptId, exception_message: exceptionMessage } = msg.data;
+
+      if (promptId) {
+        const event = await DB.Events.findById(promptId).catch(() => null);
+
+        if (event) {
+          const job = await DB.Jobs.findById(event.jobId).catch(() => null);
+
+          if (
+            job?.status === JobLifecycleStatus.Active &&
+            event.status === JobStatus.Running
+          ) {
+            await DB.Events.markFailed(
+              promptId,
+              exceptionMessage ?? "execution error",
+            );
+            await DB.Jobs.failJob(event.jobId);
+          }
+        }
+      }
+
+      await comfyClient.free_memory(true, true);
+      QueueManager.releaseComfyIdle();
       void QueueManager.pump();
     }
   }
