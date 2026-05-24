@@ -6,15 +6,32 @@ import {
 import { getLogger } from "@logtape/logtape";
 import { prettyFormatter } from "@logtape/pretty";
 
+const LOG_LEVELS = ["debug", "info", "warning", "error"] as const;
+type ConfiguredLogLevel = (typeof LOG_LEVELS)[number];
+
+function parse_log_level(): ConfiguredLogLevel {
+  const level = Bun.env.LOG_LEVEL?.trim().toLowerCase();
+  if (!level) return "info";
+
+  if (level === "warn") return "warning";
+  if (LOG_LEVELS.includes(level as ConfiguredLogLevel)) {
+    return level as ConfiguredLogLevel;
+  }
+
+  return "info";
+}
+
 export namespace Logger {
   let logger: LoggerType;
 
   export async function init() {
+    const lowestLevel = parse_log_level();
+
     await configure({
       sinks: { console: getConsoleSink({ formatter: prettyFormatter }) },
       loggers: [
         { category: ["logtape", "meta"], sinks: [] },
-        { category: "app", lowestLevel: "debug", sinks: ["console"] },
+        { category: "app", lowestLevel, sinks: ["console"] },
       ],
     });
     logger = getLogger("app");

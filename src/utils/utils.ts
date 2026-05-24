@@ -1,7 +1,10 @@
 import nodeAssert from "node:assert";
 
+const IS_PRODUCTION = Bun.env.NODE_ENV === "production";
+
 export namespace Utils {
   export function assert(value: unknown, message: string): asserts value {
+    if (IS_PRODUCTION) return;
     nodeAssert(value, message);
   }
 
