@@ -103,10 +103,13 @@ export namespace DB {
     };
 
     export async function create_job(payload: InsertJob) {
+      const createdAt = new Date().toISOString();
+
       const job = await db
         .insertInto("jobs")
         .values({
           id: Metadata.randomId(),
+          created_at: createdAt,
           status: JobLifecycleStatus.Active,
           ...payload,
         })
@@ -447,9 +450,14 @@ export namespace DB {
     }
 
     export async function create(payload: JobEvent) {
+      const createdAt = payload.created_at ?? new Date().toISOString();
+
       const res = await db
         .insertInto("events")
-        .values(eventToRow(payload))
+        .values({
+          ...eventToRow(payload),
+          created_at: createdAt,
+        })
         .returningAll()
         .executeTakeFirstOrThrow();
 
