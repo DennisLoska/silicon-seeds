@@ -596,6 +596,18 @@ export namespace DB {
 
       return res.map(rowToEvent);
     }
+
+    export async function findByJobIdChronological(jobId: string) {
+      const res = await db
+        .selectFrom("events")
+        .selectAll()
+        .where("job_id", "=", jobId)
+        .orderBy("created_at", "asc")
+        .orderBy("id", "asc")
+        .execute();
+
+      return res.map(rowToEvent);
+    }
   }
 
   export namespace Meta {

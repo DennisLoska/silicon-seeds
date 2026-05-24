@@ -24,16 +24,12 @@ import { VideoGenerator } from "./video/video-generator";
 // - distinct mode: audio generation, video generation
 //
 // Bugs
-// - race condition when queueing multiple jobs at same time (queue block check)
-// - reconnecting websockets
-// - created_at format is messed up (no ms)
-// - fix active job in job list on transitions
-// - fix job status and mark only as done when all events are finished and not all prompts
-// - new items in gallery are added vertically ot horizontally
-// - need to sanitize input text otherwise it breaks json parsing
-// - composite mode: generate video button not disabled
-// - composite mode: job progress refresh prevents opening details -> SSE
+// - job is not marked as done when all events have finished
+// - new items in gallery are added vertically and not horizontally
+// - need to sanitize input text in input fields in UI otherwise it breaks json parsing
+// - composite mode: generate video button is not disabled, but it should be whilst the job is running
 // - media tab in job has zoom in effect on image
+// - created_at format is messed up (no ms)
 //
 // Performance
 // - create tx helper function in DB namesspace
@@ -44,13 +40,10 @@ import { VideoGenerator } from "./video/video-generator";
 // - Reconnecting websockets
 //
 // Nice to havee
-// - Generate a random name for each job
-// - Make status updates more pretty
-// - Make UI reactive with SSE instead of polling
 // - Show content of uploaded file in compose view
+// - reconnecting websockets
 //
 // Workflows
-// - LTX workflows
 // - Optimize WAN2.2 workflow
 // - Add LoRA support
 //
