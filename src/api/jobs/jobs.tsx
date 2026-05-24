@@ -100,6 +100,20 @@ app.get("/compose-progress", async (c) => {
   return c.html(await Templates.ComposeProgressFragment({ jobId }));
 });
 
+app.get("/compose-action-card", async (c) => {
+  const jobId = c.req.query("job_id");
+  if (!jobId) {
+    return c.text("job_id is required", 400);
+  }
+
+  return c.html(
+    await Templates.ComposeActionCardFragment({
+      showProgress: true,
+      jobId,
+    }),
+  );
+});
+
 app.get("/image-progress", async (c) => {
   const jobId = c.req.query("job_id");
   if (!jobId) {
@@ -116,6 +130,20 @@ app.get("/audio-progress", async (c) => {
   }
 
   return c.html(await Templates.DistinctAudioProgressFragment({ jobId }));
+});
+
+app.get("/audio-action-card", async (c) => {
+  const jobId = c.req.query("job_id");
+  if (!jobId) {
+    return c.text("job_id is required", 400);
+  }
+
+  return c.html(
+    await Templates.DistinctAudioActionCardFragment({
+      showProgress: true,
+      jobId,
+    }),
+  );
 });
 
 app.get("/generated-images", async (c) => {

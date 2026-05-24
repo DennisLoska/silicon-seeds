@@ -13,6 +13,39 @@ interface ComposeProgressProps {
   jobId: string;
 }
 
+interface ComposeActionCardProps {
+  showProgress?: boolean;
+  jobId?: string;
+}
+
+function ComposeActionCardBody({ isJobRunning }: { isJobRunning: boolean }) {
+  return (
+    <div className="card-body flex flex-col h-full">
+      <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
+        <Icons.LightningBoltIcon />
+        Action!
+      </h2>
+      <p className="text-sm text-base-content/70 mb-4 flex-none">
+        Schedule the job to generate the video with the selected settings.
+      </p>
+      <div className="card-actions justify-between flex flex-row gap-2 mt-auto">
+        <button type="reset" className="btn btn-ghost">
+          Reset
+        </button>
+        <button
+          type="submit"
+          id="submit-btn"
+          className="btn btn-primary"
+          disabled={isJobRunning}
+        >
+          Generate Video
+          <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function getJobStatusUi(status?: JobLifecycleStatus) {
   switch (status) {
     case JobLifecycleStatus.Complete:
@@ -43,9 +76,6 @@ function getJobStatusUi(status?: JobLifecycleStatus) {
 }
 
 export const Compose = async ({ showProgress = false, jobId = "" }: ComposeProps) => {
-  const activeJob = showProgress && jobId ? await DB.Jobs.findById(jobId).catch(() => null) : null;
-  const isJobRunning = activeJob?.status === JobLifecycleStatus.Active;
-
   return (
   <div className="flex flex-col sm:px-6 py-6 xl:h-full bg-base-200">
     <ErrorToast />
@@ -286,31 +316,12 @@ export const Compose = async ({ showProgress = false, jobId = "" }: ComposeProps
         </div>
 
         {/* Card 5: Action Buttons */}
-        <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] 2xl:min-w-80 min-w-0 flex-grow flex flex-col">
-          <div className="card-body flex flex-col flex-grow">
-            <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
-              <Icons.LightningBoltIcon />
-              Action!
-            </h2>
-            <p className="text-sm text-base-content/70 mb-4 flex-none">
-              Schedule the job to generate the video with the selected settings.
-            </p>
-            <div className="card-actions justify-between flex flex-row gap-2 mt-auto">
-              <button type="reset" className="btn btn-ghost">
-                Reset
-              </button>
-              <button
-                type="submit"
-                id="submit-btn"
-                className="btn btn-primary"
-                disabled={isJobRunning}
-              >
-                Generate Video
-                <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
-              </button>
-            </div>
-          </div>
-        </div>
+        {await (
+          <ComposeActionCardFragment
+            showProgress={showProgress}
+            jobId={jobId}
+          />
+        )}
       </div>
 
       {/* Card 6: Progress - Only shown when showProgress=true */}
@@ -367,6 +378,48 @@ export const ComposeProgressCard = async ({ jobId }: ComposeProgressProps) => {
           </a>
         </div>
       </div>
+    </div>
+  );
+};
+
+export const ComposeActionCard = async ({
+  showProgress = false,
+  jobId = "",
+}: ComposeActionCardProps) => {
+  const activeJob = showProgress && jobId
+    ? await DB.Jobs.findById(jobId).catch(() => null)
+    : null;
+  const isJobRunning = activeJob?.status === JobLifecycleStatus.Active;
+
+  return (
+    <div className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] 2xl:min-w-80 min-w-0 flex-grow flex flex-col">
+      <ComposeActionCardBody isJobRunning={isJobRunning} />
+    </div>
+  );
+};
+
+export const ComposeActionCardFragment = async ({
+  showProgress = false,
+  jobId = "",
+}: ComposeActionCardProps) => {
+  const activeJob = showProgress && jobId
+    ? await DB.Jobs.findById(jobId).catch(() => null)
+    : null;
+  const isJobRunning = activeJob?.status === JobLifecycleStatus.Active;
+
+  if (!showProgress || !jobId) {
+    return await <ComposeActionCard showProgress={showProgress} jobId={jobId} />;
+  }
+
+  return (
+    <div
+      id="compose-action-card-fragment"
+      className="card bg-base-100 shadow-xl w-full 2xl:max-w-[calc(12.5vw)] 2xl:min-w-80 min-w-0 flex-grow flex flex-col"
+      hx-get={`/jobs/compose-action-card?job_id=${jobId}`}
+      hx-trigger="sse:job-update"
+      hx-swap="outerHTML"
+    >
+      <ComposeActionCardBody isJobRunning={isJobRunning} />
     </div>
   );
 };

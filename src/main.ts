@@ -10,40 +10,30 @@ import { VideoGenerator } from "./video/video-generator";
 
 // TODO list:
 //
+// Critical
+// - Vid-to-vid workflow
+// - Social Media integration
+// - Metadata for existing files
+
 // Content
-//
 // - consistent style and transitions
 // - consistent character
 // - consistent voice
 // - consistent speed
 // - better text captions
-
+//
 // General
 // - ability to resume or pause a job
-// - ability to re-generate a specific asset
-// - distinct mode: audio generation, video generation
+// - distinct mode: video generation
 //
 // Bugs
-// - media tab in job has zoom in effect on image
-// - active jobs with zero events can remain active forever
-// - gallery filter UI uses independent checkboxes but behaves like a single-select switcher
 // - user-facing API errors are inconsistent between JSON and HTML fragment flows
-// - compose action lock only disables submit when viewing a running job, not globally across tabs/routes
 // - image/video asset path generation is duplicated across templates and can drift
 //
-// Performance
-// - create tx helper function in DB namesspace
-// - Retry against model
-// - scalability issues
-// - race conditions
-// - What if LLM enters death spiral?
-// - Reconnecting websockets
-//
-// Nice to havee
-// - Show content of uploaded file in compose view
-// - reconnecting websockets
-//
 // Workflows
+// - Video -> extract audio -> transcription -> TransVidMap
+//                                           -> images -> ai video
+//                                                     -> ai video, TransVidMap, Video -> final cut
 // - Optimize WAN2.2 workflow
 // - Add LoRA support
 //
