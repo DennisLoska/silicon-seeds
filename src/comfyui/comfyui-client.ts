@@ -279,7 +279,6 @@ export class ComfyUIClient {
       ((resolution.width = 1080), (resolution.height = 1920));
     }
 
-    job.video_model;
     if (input.kind === "text-to-image") {
       // TODO replace or keep?
       // api = zImageTurboApi;
@@ -311,7 +310,8 @@ export class ComfyUIClient {
         api["98"].inputs.height = resolution.height;
         api["98"].inputs.length =
           (job.clip_duration || Metadata.CLIP_DURATION) *
-          (job.fps || Metadata.FPS);
+            (job.fps || Metadata.FPS) +
+          1;
         api["108"].inputs.filename_prefix = input.id;
         api["97"].inputs.image = input.imagePath;
       }
@@ -322,7 +322,7 @@ export class ComfyUIClient {
         api["267:257"].inputs.value = resolution.width;
         api["267:258"].inputs.value = resolution.height;
         api["267:225"].inputs.value =
-          (job.transition_duration || Metadata.TRANSITION_DURATION) *
+          (job.clip_duration || Metadata.CLIP_DURATION) *
             (job.fps || Metadata.FPS) +
           1;
         api["75"].inputs.filename_prefix = input.id;
@@ -370,9 +370,7 @@ export class ComfyUIClient {
         api["139:98"].inputs.value = resolution.height;
         api["139:114"].inputs.value = job.fps || Metadata.FPS;
         api["139:143"].inputs.value =
-          (job.transition_duration || Metadata.TRANSITION_DURATION) *
-            (job.fps || Metadata.FPS) +
-          1;
+          job.transition_duration || Metadata.TRANSITION_DURATION;
         api["138"].inputs.image = input.endImage;
         api["68"].inputs.filename_prefix = input.id;
       }

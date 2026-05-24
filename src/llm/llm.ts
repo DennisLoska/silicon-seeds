@@ -1,6 +1,6 @@
 import { FileHandle, LMStudioClient } from "@lmstudio/sdk";
 import { Logger } from "../logger/logger";
-import z, { ZodSchema } from "zod/v3";
+import z from "zod/v3";
 
 const llmClient = new LMStudioClient();
 // const llm = await llmClient.llm.model(

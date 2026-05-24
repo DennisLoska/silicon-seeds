@@ -33,7 +33,16 @@ export namespace SocketServer {
   }
 
   async function message(event: MessageEvent) {
-    const msg = JSON.parse(event.data);
+    let msg;
+    if (typeof event.data === "string") {
+      msg = JSON.parse(event.data);
+    } else {
+      // Utils.assert(
+      //   typeof event.data === "string",
+      //   "We ain't buffin' around here!",
+      // );
+      Logger.warn("Received buffer, not string", event.data.toString("utf-8"));
+    }
 
     if (msg.type === "progress") {
       Logger.info(`Progress: ${msg.data.value}/${msg.data.max}`);
@@ -123,6 +132,7 @@ export namespace SocketServer {
 
       if (event.type === Event.NewVideoPrompt && event.mode === JobMode.Video) {
         const transitions = await VideoGenerator.prepare_transitions(event);
+
         if (transitions) {
           for (const transition of transitions) {
             VideoGenerator.schedule_transition({
