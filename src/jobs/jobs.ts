@@ -2,6 +2,7 @@ import { CreateJob, DB } from "../db/db";
 import { Event, JobBaseEvent, JobEvent, JobStatus } from "../events/events";
 import { Logger } from "../logger/logger";
 import { Metadata } from "../meta/meta";
+import { PromptGenerator } from "../prompts/prompt-generator";
 import { Utils } from "../utils/utils";
 
 export namespace JobOrchestrator {
@@ -39,7 +40,12 @@ export namespace JobOrchestrator {
   }
 
   export async function create_job(payload: CreateJob) {
-    return await DB.Jobs.create_job(payload);
+    const name = await PromptGenerator.job_name();
+
+    return await DB.Jobs.create_job({
+      ...payload,
+      name,
+    });
   }
 
   export async function job_events(id: string) {

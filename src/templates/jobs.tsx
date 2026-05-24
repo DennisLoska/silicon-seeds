@@ -303,8 +303,11 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
                   <statusUi.Icon />
                 </span>
                 <div className="flex flex-col items-start">
+                  <span className="font-semibold text-sm leading-tight">
+                    {jobItem.name}
+                  </span>
                   <span
-                    className="font-bold text-sm lg:hidden"
+                    className="font-bold text-xs lg:hidden"
                     style={{
                       maxWidth: "8ch",
                       overflow: "hidden",
@@ -313,7 +316,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
                   >
                     {truncateJobId(jobItem.id)}
                   </span>
-                  <span className="font-bold text-sm hidden lg:inline">
+                  <span className="font-bold text-xs hidden lg:inline">
                     {jobItem.id}
                   </span>
                   <span className="text-xs font-medium opacity-80">

@@ -317,9 +317,12 @@ export const Compose = async ({ showProgress = false, jobId = "" }: ComposeProps
                 </span>
               ) : null}
             </div>
-            <p className="text-sm text-base-content/70 mb-4 flex-none">
-              Monitoring job: {jobId}
-            </p>
+            <div className="mb-4 flex-none space-y-1">
+              <p className="text-base font-semibold text-base-content">
+                {job?.name}
+              </p>
+              <p className="text-sm text-base-content/70">Monitoring job: {jobId}</p>
+            </div>
             <div
               id="events-container"
               className="flex-grow min-h-[300px]"
