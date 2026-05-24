@@ -578,7 +578,20 @@ export namespace DB {
         .selectFrom("events")
         .selectAll()
         .where("job_id", "=", jobId)
+        // Compose mode creates image prompts in parallel, so created_at alone does
+        // not preserve scene chronology. Indexed media events must be read by their
+        // explicit sequence first.
+        .orderBy((eb) =>
+          eb
+            .case()
+            .when("index", "is not", null)
+            .then(0)
+            .else(1)
+            .end(),
+        )
+        .orderBy("index", "asc")
         .orderBy("created_at", "asc")
+        .orderBy("id", "asc")
         .execute();
 
       return res.map(rowToEvent);
