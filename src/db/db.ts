@@ -708,22 +708,29 @@ export namespace DB {
         .limit(limit)
         .execute();
 
-      return results.map((row) => {
-        const mediaType = getMediaTypeFromExtension(row.filename);
-        return {
-          meta_id: row.meta_id,
-          event_id: row.event_id,
-          filename: row.filename,
-          subfolder: row.subfolder,
-          type: row.meta_type,
-          created_at: row.event_created_at,
-          job_id: row.job_id,
-          mediaType: mediaType,
-        } as ListItemResult & {
-          mediaType: "image" | "video" | null;
+      return results
+        .map((row) => {
+          const mediaType = getMediaTypeFromExtension(row.filename);
+          if (!mediaType) return null;
+
+          return {
+            meta_id: row.meta_id,
+            event_id: row.event_id,
+            filename: row.filename,
+            subfolder: row.subfolder,
+            type: row.meta_type,
+            created_at: row.event_created_at,
+            job_id: row.job_id,
+            mediaType,
+          } as ListItemResult & {
+            mediaType: "image" | "video";
+            created_at: string;
+          };
+        })
+        .filter((row): row is ListItemResult & {
+          mediaType: "image" | "video";
           created_at: string;
-        };
-      });
+        } => row !== null);
     }
   }
 }

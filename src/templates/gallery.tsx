@@ -14,6 +14,18 @@ interface GalleryProps {
   typeFilter?: string;
 }
 
+function getAssetPath(subfolder: string, filename: string) {
+  const cleanSubfolder = subfolder.endsWith("/")
+    ? subfolder.slice(0, -1)
+    : subfolder;
+
+  if (!cleanSubfolder || cleanSubfolder.trim() === "") {
+    return `/assets/${filename}`;
+  }
+
+  return `/assets/${cleanSubfolder}/${filename}`;
+}
+
 export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
   // Parse type filter - can be comma-separated for multiple selections
   const selectedTypes = typeFilter ? typeFilter.split(",") : [];
@@ -75,9 +87,10 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
         className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 p-6 gap-4 space-y-4"
         aria-live="polite"
       >
-        {items.map((item) => (
-          <GalleryItemCard key={item.meta_id} item={item} />
-        ))}
+        {items.map((item) => {
+          if (!item.mediaType) return null;
+          return <GalleryItemCard key={item.meta_id} item={item} />;
+        })}
 
         {/* Infinite Scroll Sentinel - last element triggers load */}
         <div
@@ -106,9 +119,10 @@ export async function renderItems(
   return (
     <>
       {/* Gallery items to append */}
-      {items.map((item) => (
-        <GalleryItemCard key={item.meta_id} item={item} />
-      ))}
+      {items.map((item) => {
+        if (!item.mediaType) return null;
+        return <GalleryItemCard key={item.meta_id} item={item} />;
+      })}
       {/* New sentinel for next batch - replaces the old one via afterend swap */}
       <div
         className="sentinel hidden py-8 text-center break-inside-avoid"
@@ -126,7 +140,7 @@ export async function renderItems(
 
 // Gallery Item Card Component
 const GalleryItemCard = ({ item }: { item: GalleryItem }) => {
-  const assetPath = `/assets/${item.subfolder || ""}/${item.filename}`;
+  const assetPath = getAssetPath(item.subfolder, item.filename);
   const mediaType = item.mediaType;
 
   return (
