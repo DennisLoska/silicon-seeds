@@ -30,7 +30,6 @@ import { VideoGenerator } from "./video/video-generator";
 // - fix job status and mark only as done when all events are finished and not all prompts
 // - new items in gallery are added vertically ot horizontally
 // - need to sanitize input text otherwise it breaks json parsing
-// - Make LLMs great again
 // - composite mode: generate video button not disabled
 // - composite mode: job progress refresh prevents opening details -> SSE
 // - media tab in job has zoom in effect on image

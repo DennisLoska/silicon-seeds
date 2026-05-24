@@ -7,7 +7,7 @@ import { ImageGenerator } from "../image/image-generator";
 import { VideoGenerator } from "../video/video-generator";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
-import z from "zod";
+import z from "zod/v3";
 
 export namespace PromptGenerator {
   export async function txt_to_img_prompt(
@@ -141,11 +141,11 @@ start to finish:
 
 ${text}
 `;
-    const res = await LLM.structured_message(list_prompt, z.array(z.string()));
-    if (!res?.content) return null;
+    const res = await LLM.image_prompt_list(list_prompt, amount);
+    if (!res?.parsed) return null;
 
-    let scenes = JSON.parse(res.nonReasoningContent);
-    Logger.info("scenes: ", res.nonReasoningContent);
+    let scenes = Object.values(res.parsed);
+    Logger.info("scenes: ", res.parsed);
     Logger.info("amount: ", amount);
     Logger.info("actual: ", scenes.length);
 

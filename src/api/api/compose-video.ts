@@ -71,7 +71,11 @@ export async function compose_video(options: PostCompose) {
     duration,
   });
 
-  const vidStruct = derive_video_structure(duration);
+  const vidStruct = derive_video_structure(
+    duration,
+    clip_duration,
+    transition_duration,
+  );
 
   void PromptGenerator.image_scene_prompts(
     jobId,
@@ -93,18 +97,20 @@ export async function compose_video(options: PostCompose) {
   );
 }
 
-function derive_video_structure(duration: number) {
-  const { CLIP_DURATION, TRANSITION_DURATION } = Metadata;
-
+function derive_video_structure(
+  duration: number,
+  clip_duration: number,
+  transition_duration: number,
+) {
   // Base equation: duration = (Metadata.CLIP_DURATION * x) + (Metadata.TRANSITION_DURATION * (x - 1))
   const clipCount = Math.ceil(
-    (duration + TRANSITION_DURATION) / (CLIP_DURATION + TRANSITION_DURATION),
+    (duration + transition_duration) / (clip_duration + transition_duration),
   );
 
   return {
     audioDuration: duration,
     totalDuration:
-      clipCount * CLIP_DURATION + (clipCount - 1) * TRANSITION_DURATION,
+      clipCount * clip_duration + (clipCount - 1) * transition_duration,
     clipCount,
   };
 }
