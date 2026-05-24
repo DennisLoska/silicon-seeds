@@ -4,7 +4,7 @@ import { DB } from "../../db/db";
 import { Api } from "../api";
 import { JobUpdates } from "../../sse/job-updates";
 
-const { JobsFragment, JobTabsFragment, JobDetailsFragment, EventListFragment, GeneratedImagesFragment } =
+const { JobsFragment, JobTabsFragment, JobContentAreaFragment, EventListFragment, GeneratedImagesFragment } =
   Templates;
 
 const app = new Hono();
@@ -50,9 +50,15 @@ app.get("/details/:jobId", async (c) => {
     return c.html(
       <>
         <div id="job-tabs-container">
-          <JobTabsFragment jobId={jobId} filter={filter} tab={tab} />
-          <div id="job-content-area" className="min-h-[500px] py-4">
-            {await (<JobDetailsFragment jobId={jobId} activeTab={tab} />)}
+          <div
+            id="job-tabs-container"
+            data-job-id={jobId}
+            hx-get={`/jobs/details/${jobId}?tab=${tab}&filter=${filter}`}
+            hx-trigger={tab === "media" || tab === "events" ? "sse:job-update" : undefined}
+            hx-swap="outerHTML"
+          >
+            <JobTabsFragment jobId={jobId} filter={filter} tab={tab} />
+          {await (<JobContentAreaFragment jobId={jobId} activeTab={tab} />)}
           </div>
         </div>
         <div id="header-title" hx-swap-oob="true">

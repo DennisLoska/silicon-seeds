@@ -20,6 +20,7 @@ export interface DbSchema {
     created_at: Generated<string> | string;
     status: JobLifecycleStatus;
     name: string;
+    original_prompt?: string | null;
     fps?: number;
     clip_duration?: number;
     transition_duration?: number;
@@ -62,6 +63,9 @@ export type JobsSchema = Omit<DbSchema["jobs"], "created_at"> & {
 };
 export type EventsSchema = DbSchema["events"];
 export type MetaSchema = DbSchema["meta"];
+export type EventRow = Omit<DbSchema["events"], "created_at"> & {
+  created_at: string;
+};
 
 export type CreateJob = Omit<
   DbSchema["jobs"],
@@ -376,9 +380,7 @@ export namespace DB {
       }
     }
 
-    function rowToEvent(
-      row: Omit<DbSchema["events"], "created_at"> & { created_at: string },
-    ): JobEvent {
+    function rowToEvent(row: EventRow): JobEvent {
       const base = {
         id: row.id,
         jobId: row.job_id,
@@ -483,6 +485,23 @@ export namespace DB {
           status,
           claimed_at: status === JobStatus.Running ? new Date().toISOString() : null,
           error: status === JobStatus.Failed ? "unknown" : null,
+        })
+        .where("id", "=", id)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+
+      const event = rowToEvent(res);
+      notifyJob(event.jobId);
+      return event;
+    }
+
+    export async function resetForRetry(id: string) {
+      const res = await db
+        .updateTable("events")
+        .set({
+          status: JobStatus.Pending,
+          claimed_at: null,
+          error: null,
         })
         .where("id", "=", id)
         .returningAll()
@@ -617,6 +636,22 @@ export namespace DB {
 
       return res.map(rowToEvent);
     }
+
+    export async function deleteByIds(ids: string[]) {
+      if (ids.length === 0) return;
+
+      const rows = await db
+        .selectFrom("events")
+        .select(["id", "job_id"])
+        .where("id", "in", ids)
+        .execute();
+
+      await db.deleteFrom("events").where("id", "in", ids).execute();
+
+      for (const row of rows) {
+        notifyJob(row.job_id);
+      }
+    }
   }
 
   export namespace Meta {
@@ -642,6 +677,26 @@ export namespace DB {
         .executeTakeFirstOrThrow();
 
       return res;
+    }
+
+    export async function findManyByEventIds(eventIds: string[]) {
+      if (eventIds.length === 0) return [];
+
+      return await db
+        .selectFrom("meta")
+        .selectAll()
+        .where("event_id", "in", eventIds)
+        .execute();
+    }
+
+    export async function deleteByEventIds(eventIds: string[]) {
+      if (eventIds.length === 0) return;
+
+      await db.deleteFrom("meta").where("event_id", "in", eventIds).execute();
+
+      for (const eventId of eventIds) {
+        await notifyJobForEvent(eventId);
+      }
     }
   }
 

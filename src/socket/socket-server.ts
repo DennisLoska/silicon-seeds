@@ -1,4 +1,3 @@
-import { ImageGenerator } from "../image/image-generator";
 import { Metadata } from "../meta/meta";
 import { PromptGenerator } from "../prompts/prompt-generator";
 import { QueueManager } from "../queue/queue-manager";
@@ -145,6 +144,7 @@ export namespace SocketServer {
         )
       ) {
         Logger.info("Not a video or transition event");
+        await DB.Jobs.finalizeCompletedJobs();
         void QueueManager.pump();
         return;
       }

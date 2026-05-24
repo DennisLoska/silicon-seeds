@@ -1,5 +1,6 @@
 import { DB } from "../db/db";
 import { Event, JobStatus } from "../events/events";
+import { getAssetPath } from "./utils";
 
 export interface GeneratedImagesProps {
   jobId: string;
@@ -44,10 +45,6 @@ export const GeneratedImages = async ({ jobId }: GeneratedImagesProps) => {
   return (
     <div className="columns-1 sm:columns-1 lg:columns-2 xl:columns-2 gap-3 space-y-3 max-w-full px-6">
       {images.map((img) => {
-        const assetPath = img.subfolder
-          ? `/assets/${img.subfolder}/${img.filename}`
-          : `/assets/${img.filename}`;
-
         return (
           <div
             key={img.eventId}
@@ -55,7 +52,7 @@ export const GeneratedImages = async ({ jobId }: GeneratedImagesProps) => {
           >
             <figure className="bg-base-300 overflow-hidden rounded-box">
               <img
-                src={assetPath}
+                src={getAssetPath(img.subfolder, img.filename)}
                 alt={`Generated image ${img.index + 1}`}
                 className="w-full h-auto"
               />

@@ -1,7 +1,5 @@
 import { AudioGenerator } from "../../audio/audio-generator";
-import { JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
-import { PromptGenerator } from "../../prompts/prompt-generator";
 import { TextGenerator } from "../../text/text-generator";
 import { Utils } from "../../utils/utils";
 import { PostCompose } from "../schemas";
@@ -36,6 +34,7 @@ export async function compose_video(options: PostCompose) {
   }
 
   const { id: jobId } = await JobOrchestrator.create_job({
+    original_prompt: finalScript,
     fps,
     resolution,
     clip_duration,

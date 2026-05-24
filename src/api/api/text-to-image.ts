@@ -13,6 +13,7 @@ export async function text_to_image(options: PostTextToImage): Promise<Response>
   }
 
   const { id: jobId } = await JobOrchestrator.create_job({
+    original_prompt: prompt,
     resolution,
     image_model,
     style_preset,
