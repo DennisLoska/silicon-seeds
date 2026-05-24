@@ -20,7 +20,6 @@ import { VideoGenerator } from "./video/video-generator";
 
 // General
 // - ability to resume or pause a job
-// - ability to cancel a job
 // - ability to re-generate a specific asset
 // - distinct mode: audio generation, video generation
 //
