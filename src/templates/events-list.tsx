@@ -45,7 +45,7 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
       ? await DB.Meta.findByEventId(evt.id).catch(() => null)
       : null;
 
-    const promptText = evt.prompt ? escapeHtml(evt.prompt) : "Instrumental";
+    const promptText = evt.prompt || "Instrumental";
     const lineClass = isComplete ? "bg-success" : "";
 
     const metadataBadges: JSX.HTMLAttributes[] = [];
@@ -173,7 +173,7 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
               <p className="text-sm font-medium mb-1 text-base-content/60">
                 Text:
               </p>
-              <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words">
+              <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words whitespace-pre-wrap">
                 {evt.text}
               </div>
               <div className="flex justify-end">
@@ -283,7 +283,7 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
               {evt.type === Event.NewAudioPrompt ? (
                 <>
                   {(() => {
-                    const lyricPromptText = evt.lyrics ? escapeHtml(evt.lyrics) : "";
+                    const lyricPromptText = evt.lyrics || "";
 
                     return (
                       <>
@@ -291,7 +291,7 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
                     <p className="text-sm font-medium mb-1 text-base-content/60">
                       Instrumental Prompt:
                     </p>
-                    <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words">
+                    <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words whitespace-pre-wrap">
                       {promptText}
                     </div>
                     <div className="flex justify-end">
@@ -313,7 +313,7 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
                       <p className="text-sm font-medium mb-1 text-base-content/60">
                         Lyric Prompt:
                       </p>
-                      <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words">
+                      <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words whitespace-pre-wrap">
                         {lyricPromptText}
                       </div>
                       <div className="flex justify-end">
@@ -339,7 +339,7 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
                   <p className="text-sm font-medium mb-1 text-base-content/60">
                     Prompt:
                   </p>
-                  <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words">
+                  <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words whitespace-pre-wrap">
                     {promptText}
                   </div>
                   <div className="flex justify-end">
@@ -381,17 +381,6 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
     </ul>
   );
 };
-
-function escapeHtml(text: string): string {
-  const htmlEscapes: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#x27;",
-  };
-  return text.replace(/[&<>"']/g, (char) => htmlEscapes[char]);
-}
 
 function escapeForJsString(text: string): string {
   return text
