@@ -19,6 +19,85 @@ import { DB } from "../db/db";
 
 const OUTPUT_DIR = Bun.env.OUTPUT_DIR;
 
+type OrderedMediaEvent = VideoPromptEvent | TransitionPromptEvent;
+
+function compareByIndex(
+  a: { index?: number; created_at?: string; id: string },
+  b: { index?: number; created_at?: string; id: string },
+) {
+  const aIndex = a.index ?? Number.MAX_SAFE_INTEGER;
+  const bIndex = b.index ?? Number.MAX_SAFE_INTEGER;
+
+  if (aIndex !== bIndex) return aIndex - bIndex;
+
+  const aCreatedAt = a.created_at ?? "";
+  const bCreatedAt = b.created_at ?? "";
+  if (aCreatedAt !== bCreatedAt) return aCreatedAt.localeCompare(bCreatedAt);
+
+  return a.id.localeCompare(b.id);
+}
+
+function orderedOutputEvents(events: JobEvent[]): OrderedMediaEvent[] {
+  const videoEvents = events.filter(
+    (e): e is VideoPromptEvent =>
+      e.status === JobStatus.Complete && e.type === Event.NewVideoPrompt,
+  );
+
+  const transitionEvents = events.filter(
+    (e): e is TransitionPromptEvent =>
+      e.status === JobStatus.Complete && e.type === Event.NewTransitionPrompt,
+  );
+
+  videoEvents.sort(compareByIndex);
+  transitionEvents.sort(compareByIndex);
+
+  const outputEvents: OrderedMediaEvent[] = [];
+  for (let i = 0; i < videoEvents.length; i++) {
+    outputEvents.push(videoEvents[i]);
+
+    if (i < transitionEvents.length) {
+      outputEvents.push(transitionEvents[i]);
+    }
+  }
+
+  return outputEvents;
+}
+
+function resolutionForJob(job: { resolution?: string }) {
+  switch (job.resolution) {
+    case "720p":
+      return { width: 1280, height: 720 };
+    case "1080p":
+      return { width: 1920, height: 1080 };
+    case "9_16_SD":
+      return { width: 720, height: 1280 };
+    case "9_16_HD":
+      return { width: 1080, height: 1920 };
+    case "480p":
+    default:
+      return { width: 640, height: 480 };
+  }
+}
+
+async function runProcess(cmd: string[], context: string) {
+  const process = spawn({
+    cmd,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  const decoder = new TextDecoder();
+  let stderr = "";
+
+  for await (const chunk of process.stderr) {
+    stderr += typeof chunk === "string" ? chunk : decoder.decode(chunk);
+  }
+
+  const status = await process.exited;
+  if (status !== 0) {
+    throw new Error(`${context} failed with exit code ${status}: ${stderr.trim()}`);
+  }
+}
+
 export namespace VideoGenerator {
   export function init() {
     Event.on(Event.NewVideoPrompt, (event) => {
@@ -276,67 +355,78 @@ Your response should only include the newly generated prompt!
   export async function combine_outputs(jobId: string): Promise<void> {
     Logger.info(`Starting video combination for job ${jobId}`);
 
+    const job = await DB.Jobs.findById(jobId);
     const events = await DB.Events.findByJobId(jobId);
     Logger.info(`Found ${events.length} total events for job ${jobId}`);
 
-    // Separate videos and transitions
-    const videoEvents = events.filter(
-      (e) => e.status === JobStatus.Complete && e.type === Event.NewVideoPrompt,
-    );
-
-    const transitionEvents = events.filter(
-      (e) =>
-        e.status === JobStatus.Complete && e.type === Event.NewTransitionPrompt,
-    );
-
-    Logger.info(`Found ${videoEvents.length} video events`);
-    Logger.info(`Found ${transitionEvents.length} transition events`);
-
-    // Sort videos by their explicit index
-    videoEvents.sort((a, b) => {
-      const aIndex = (a as VideoPromptEvent).index ?? Number.MAX_SAFE_INTEGER;
-      const bIndex = (b as VideoPromptEvent).index ?? Number.MAX_SAFE_INTEGER;
-      return aIndex - bIndex;
-    });
-
-    transitionEvents.sort((a, b) => {
-      const aIndex = (a as TransitionPromptEvent).index ?? Number.MAX_SAFE_INTEGER;
-      const bIndex = (b as TransitionPromptEvent).index ?? Number.MAX_SAFE_INTEGER;
-      return aIndex - bIndex;
-    });
+    const outputEvents = orderedOutputEvents(events);
 
     Logger.info(
-      `Sorted video events by index:`,
-      videoEvents.map((e) => ({
+      `Ordered media events for concat:`,
+      outputEvents.map((e) => ({
         type: e.type,
-        index: (e as VideoPromptEvent).index,
+        index: e.index,
       })),
     );
 
-    // Combine videos and transitions in order
-    const outputEvents = [];
-    for (let i = 0; i < videoEvents.length; i++) {
-      if (i < videoEvents.length) outputEvents.push(videoEvents[i]);
-      if (i < transitionEvents.length) outputEvents.push(transitionEvents[i]);
+    if (outputEvents.length === 0) {
+      Logger.warn(`No complete media events found for job ${jobId}`);
+      return;
     }
+
+    const fps = job.fps || Metadata.FPS;
+    const { width, height } = resolutionForJob(job);
 
     Logger.info(
       `Final combined event order:`,
       outputEvents.map((e) => ({
         type: e.type,
-        index: (e as VideoPromptEvent | TransitionPromptEvent).index,
+        index: e.index,
       })),
     );
 
     const files: string[] = [];
-    for (const e of outputEvents) {
-      const filename = `/tmp/${jobId}_${e.id}.mp4`;
+    for (let i = 0; i < outputEvents.length; i++) {
+      const e = outputEvents[i];
+      const sourceFile = `/tmp/${jobId}_${e.id}.mp4`;
+      const normalizedFile = `/tmp/${jobId}_${String(i).padStart(3, "0")}_normalized.mp4`;
 
       Logger.info(
-        `Adding file to combine: ${filename} (index: ${(e as any).index})`,
+        `Normalizing file for concat: ${sourceFile} -> ${normalizedFile} (index: ${e.index})`,
       );
 
-      files.push(filename);
+      await runProcess(
+        [
+          "ffmpeg",
+          "-y",
+          "-i",
+          sourceFile,
+          "-vf",
+          `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:black,fps=${fps},format=yuv420p`,
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "18",
+          "-c:a",
+          "aac",
+          "-ar",
+          "48000",
+          "-ac",
+          "2",
+          "-movflags",
+          "+faststart",
+          normalizedFile,
+        ],
+        `Segment normalization for ${sourceFile}`,
+      );
+
+      Logger.info(
+        `Adding file to combine: ${normalizedFile} (index: ${e.index})`,
+      );
+
+      files.push(normalizedFile);
     }
 
     const fileList = files.map((f) => `file '${f}'`).join("\n") + "\n";
