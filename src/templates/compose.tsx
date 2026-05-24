@@ -347,7 +347,7 @@ export const ComposeProgressCard = async ({ jobId }: ComposeProgressProps) => {
           <p className="text-sm text-base-content/70">Monitoring job: {jobId}</p>
         </div>
         <div id="events-container" className="flex-grow min-h-[300px]">
-          {await (<EventList jobId={jobId} />)}
+          {await (<EventList jobId={jobId} source="compose-progress" />)}
         </div>
 
         <div className="card-actions justify-end mt-4 flex-none gap-2">

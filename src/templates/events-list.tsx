@@ -2,9 +2,11 @@ import { JSX } from "hono/jsx";
 import { DB } from "../db/db";
 import { Event, JobStatus } from "../events/events";
 import { Icons } from "./icons";
+import { getAssetPath } from "./utils";
 
 export interface EventListProps {
   jobId: string;
+  source?: "jobs-events" | "compose-progress" | "image-progress";
 }
 
 const EVENT_LABELS = {
@@ -25,7 +27,7 @@ const EVENT_ICONS = {
   [Event.NewAudioPrompt]: "🎵",
 };
 
-export const EventList = async ({ jobId }: EventListProps) => {
+export const EventList = async ({ jobId, source = "jobs-events" }: EventListProps) => {
   const jobEvents = await DB.Events.findByJobIdChronological(jobId);
 
   if (jobEvents.length === 0) {
@@ -110,16 +112,46 @@ export const EventList = async ({ jobId }: EventListProps) => {
 
     const renderAssetSection = () => {
       if (!assetMeta && evt.type !== Event.NewTextPrompt) return null;
+      const assetPath = assetMeta
+        ? getAssetPath(assetMeta.subfolder, assetMeta.filename)
+        : null;
+      const canRegenerate =
+        evt.type === Event.NewImagePrompt ||
+        evt.type === Event.NewVideoPrompt ||
+        evt.type === Event.NewTransitionPrompt;
+      const targetSelector =
+        source === "compose-progress"
+          ? "#compose-progress-fragment"
+          : source === "image-progress"
+            ? "#distinct-image-progress-fragment"
+            : "#job-content-area";
+      const sourceQuery =
+        source === "compose-progress"
+          ? "compose-progress"
+          : source === "image-progress"
+            ? "image-progress"
+            : "jobs-events";
+      const tabQuery = source === "jobs-events" ? "&tab=events" : "";
       const downloadBtn = (
-        <div className="flex justify-end">
-          <a
-            href={`/assets/${assetMeta?.filename}`}
-            download
-            className="btn btn-sm btn-primary"
-          >
-            <Icons.DownloadIconSmall />
-            Download
-          </a>
+        <div className="flex justify-end gap-2">
+          {canRegenerate && (
+            <button
+              type="button"
+              className="btn btn-sm btn-secondary"
+              hx-post={`/api/jobs/${evt.jobId}/events/${evt.id}/regenerate?source=${sourceQuery}${tabQuery}`}
+              hx-target={targetSelector}
+              hx-swap="outerHTML"
+            >
+              <Icons.RegenerateIconSmall />
+              Regenerate
+            </button>
+          )}
+          {assetPath && (
+            <a href={assetPath} download className="btn btn-sm btn-primary">
+              <Icons.DownloadIconSmall />
+              Download
+            </a>
+          )}
         </div>
       );
 
@@ -154,7 +186,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
                 Generated Image:
               </p>
               <img
-                src={`/assets/${assetMeta?.filename}`}
+                src={assetPath!}
                 alt="Generated image"
                 className="w-full h-auto rounded-lg border border-base-300 mb-2"
               />
@@ -169,7 +201,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
               </p>
               <audio controls className="w-full mb-2">
                 <source
-                  src={`/assets/${assetMeta?.filename}`}
+                  src={assetPath!}
                   type="audio/mpeg"
                 />
                 Your browser does not support the audio element.
@@ -189,7 +221,7 @@ export const EventList = async ({ jobId }: EventListProps) => {
                 className="w-full rounded-lg border border-base-300 mb-2"
               >
                 <source
-                  src={`/assets/${assetMeta?.filename}`}
+                  src={assetPath!}
                   type="video/mp4"
                 />
                 Your browser does not support the video tag.

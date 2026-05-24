@@ -1,6 +1,6 @@
 import { Templates } from "./templates";
 import { DB } from "../db/db";
-import { Job, JobLifecycleStatus } from "../events/events";
+import { Event, Job, JobLifecycleStatus } from "../events/events";
 import { truncateJobId } from "./utils";
 import { Icons } from "./icons";
 
@@ -20,6 +20,30 @@ export interface JobDetailsProps {
   jobId: string;
   activeTab?: string;
 }
+
+type MediaAsset = {
+  eventId: string;
+  jobId: string;
+  eventType: Event;
+  filename: string;
+  subfolder: string;
+  type: string;
+  status: string;
+};
+
+type MediaData = {
+  images: MediaAsset[];
+  videos: MediaAsset[];
+  audio: MediaAsset[];
+  pending: Array<{
+    eventId: string;
+    jobId: string;
+    eventType: Event;
+    mode: string;
+    filename: string | null;
+    status: string;
+  }>;
+};
 
 const filterMap = {
   all: "All",
@@ -59,6 +83,62 @@ function getJobStatusUi(status: JobLifecycleStatus | undefined) {
   }
 }
 
+async function buildMediaData(jobId: string): Promise<MediaData> {
+  const events = await DB.Events.findByJobId(jobId);
+  const mediaData: MediaData = {
+    images: [],
+    videos: [],
+    audio: [],
+    pending: [],
+  };
+
+  for (const event of events) {
+    if (event.status === "pending") {
+      mediaData.pending.push({
+        eventId: event.id,
+        jobId: event.jobId,
+        eventType: event.type,
+        mode: event.mode,
+        filename: "filename" in event ? event.filename ?? null : null,
+        status: event.status,
+      });
+      continue;
+    }
+
+    const meta = await DB.Meta.findByEventId(event.id).catch(() => null);
+    if (!meta) continue;
+
+    const asset: MediaAsset = {
+      eventId: event.id,
+      jobId: event.jobId,
+      eventType: event.type,
+      filename: meta.filename,
+      subfolder: meta.subfolder,
+      type: meta.type,
+      status: event.status,
+    };
+
+    const isImageFile = meta.filename?.endsWith(".png");
+    if (event.mode === "image" || isImageFile) {
+      mediaData.images.push(asset);
+    } else if (event.mode === "video") {
+      mediaData.videos.push(asset);
+    } else if (event.mode === "speech" || event.mode === "instrumental") {
+      mediaData.audio.push(asset);
+    }
+  }
+
+  return mediaData;
+}
+
+export async function JobContentArea({ jobId, activeTab }: JobDetailsProps) {
+  return (
+    <div id="job-content-area" className="min-h-[500px] py-4">
+      {await JobDetails({ jobId, activeTab })}
+    </div>
+  );
+}
+
 export const JobDetails = async ({ jobId, activeTab }: JobDetailsProps) => {
   const job: Job = await DB.Jobs.findById(jobId);
 
@@ -74,80 +154,7 @@ export const JobDetails = async ({ jobId, activeTab }: JobDetailsProps) => {
       contentFragment = Templates.StatusFragment(job);
       break;
     case "media":
-      // Fetch media data and pass to template
-      const events = await DB.Events.findByJobId(jobId);
-      const mediaData: {
-        images: Array<{
-          filename: string;
-          subfolder: string;
-          type: string;
-          status: string;
-        }>;
-        videos: Array<{
-          filename: string;
-          subfolder: string;
-          type: string;
-          status: string;
-        }>;
-        audio: Array<{
-          filename: string;
-          subfolder: string;
-          type: string;
-          status: string;
-        }>;
-        pending: Array<{
-          mode: string;
-          filename: string | null;
-          status: string;
-        }>;
-      } = {
-        images: [],
-        videos: [],
-        audio: [],
-        pending: [],
-      };
-
-      for (const event of events) {
-        if (event.status === "pending") {
-          mediaData.pending.push({
-            mode: event.mode,
-            filename: (event as any).filename ?? null,
-            status: event.status,
-          });
-        } else {
-          const meta = await DB.Meta.findByEventId(event.id).catch(() => null);
-          if (meta) {
-            // Check if it's an image by filename extension first
-            const isImageFile = meta.filename?.endsWith(".png");
-            if (event.mode === "image" || isImageFile) {
-              mediaData.images.push({
-                filename: meta.filename,
-                subfolder: meta.subfolder,
-                type: meta.type,
-                status: event.status,
-              });
-            } else if (event.mode === "video") {
-              mediaData.videos.push({
-                filename: meta.filename,
-                subfolder: meta.subfolder,
-                type: meta.type,
-                status: event.status,
-              });
-            } else if (
-              event.mode === "speech" ||
-              event.mode === "instrumental"
-            ) {
-              mediaData.audio.push({
-                filename: meta.filename,
-                subfolder: meta.subfolder,
-                type: meta.type,
-                status: event.status,
-              });
-            }
-          }
-        }
-      }
-      contentFragment = Templates.MediaFragment(mediaData);
+      contentFragment = Templates.MediaFragment(await buildMediaData(jobId));
       break;
     case "events":
       contentFragment = Templates.EventsFragment(job);
@@ -384,80 +391,7 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
       tabFragment = Templates.StatusFragment(job);
       break;
     case "media":
-      // Fetch media data and pass to template
-      const events = await DB.Events.findByJobId(jobId);
-      const mediaData: {
-        images: Array<{
-          filename: string;
-          subfolder: string;
-          type: string;
-          status: string;
-        }>;
-        videos: Array<{
-          filename: string;
-          subfolder: string;
-          type: string;
-          status: string;
-        }>;
-        audio: Array<{
-          filename: string;
-          subfolder: string;
-          type: string;
-          status: string;
-        }>;
-        pending: Array<{
-          mode: string;
-          filename: string | null;
-          status: string;
-        }>;
-      } = {
-        images: [],
-        videos: [],
-        audio: [],
-        pending: [],
-      };
-
-      for (const event of events) {
-        if (event.status === "pending") {
-          mediaData.pending.push({
-            mode: event.mode,
-            filename: (event as any).filename ?? null,
-            status: event.status,
-          });
-        } else {
-          const meta = await DB.Meta.findByEventId(event.id).catch(() => null);
-          if (meta) {
-            // Check if it's an image by filename extension first
-            const isImageFile = meta.filename?.endsWith(".png");
-            if (event.mode === "image" || isImageFile) {
-              mediaData.images.push({
-                filename: meta.filename,
-                subfolder: meta.subfolder,
-                type: meta.type,
-                status: event.status,
-              });
-            } else if (event.mode === "video") {
-              mediaData.videos.push({
-                filename: meta.filename,
-                subfolder: meta.subfolder,
-                type: meta.type,
-                status: event.status,
-              });
-            } else if (
-              event.mode === "speech" ||
-              event.mode === "instrumental"
-            ) {
-              mediaData.audio.push({
-                filename: meta.filename,
-                subfolder: meta.subfolder,
-                type: meta.type,
-                status: event.status,
-              });
-            }
-          }
-        }
-      }
-      tabFragment = Templates.MediaFragment(mediaData);
+      tabFragment = Templates.MediaFragment(await buildMediaData(jobId));
       break;
     case "events":
       tabFragment = Templates.EventsFragment(job);
@@ -470,6 +404,8 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
     <div
       id="job-details"
       className="drawer lg:drawer-open h-[95vh] overflow-y-hidden bg-base-100"
+      hx-ext="sse"
+      sse-connect={`/jobs/stream?job_id=${jobId}`}
     >
       <input id="jobs-drawer" type="checkbox" className="drawer-toggle" />
 
@@ -492,7 +428,13 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
           className="p-6 flex-1 overflow-y-auto"
           style={{ maxHeight: "calc(100vh - 4rem)" }}
         >
-          <div id="job-tabs-container" data-job-id={jobId}>
+          <div
+            id="job-tabs-container"
+            data-job-id={jobId}
+            hx-get={`/jobs/details/${jobId}?tab=${tab}&filter=${filter}`}
+            hx-trigger={tab === "media" || tab === "events" ? "sse:job-update" : undefined}
+            hx-swap="outerHTML"
+          >
             {/* Tabs Section - Dedicated section with background and border, snaps to header/sidebar */}
             <JobTabs jobId={jobId} filter={filter} tab={tab} />
             {/* Content Area */}

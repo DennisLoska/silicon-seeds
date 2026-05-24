@@ -2,6 +2,8 @@ import { DB } from "../db/db";
 import { Event, Job, JobLifecycleStatus, JobStatus } from "../events/events";
 import { Icons } from "./icons";
 
+type TimedEvent = { created_at?: string };
+
 const EmptyState = () => (
   <div className="card bg-base-200 shadow-sm">
     <div className="card-body">
@@ -12,7 +14,7 @@ const EmptyState = () => (
   </div>
 );
 
-function calculateJobDuration(job: Job, events: any[]): string {
+function calculateJobDuration(job: Job, events: TimedEvent[]): string {
   if (events.length === 0) return "0h 0m 0s";
 
   const lastEvent = [...events].sort(
@@ -145,6 +147,16 @@ export const Status = async (job: Job) => {
           <p className="text-sm text-base-content/70">
             {completedCount} of {events.length} events complete.
           </p>
+        </div>
+      </div>
+      <div className="card bg-base-200 shadow-sm">
+        <div className="card-body gap-3">
+          <h3 className="card-title text-base-content/70 text-sm uppercase tracking-widest font-bold">
+            Original Prompt
+          </h3>
+          <div className="text-sm leading-6 whitespace-pre-wrap break-words text-base-content/90">
+            {job.original_prompt?.trim() ? job.original_prompt : "Not set"}
+          </div>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">

@@ -261,7 +261,7 @@ export const DistinctImageProgressCard = async ({ jobId }: DistinctImageProgress
         </div>
 
         <div id="events-container" className="flex-grow">
-          {await (<EventList jobId={jobId} />)}
+          {await (<EventList jobId={jobId} source="image-progress" />)}
         </div>
 
         <div className="card-actions justify-end mt-4 flex-none gap-2">

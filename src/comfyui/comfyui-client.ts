@@ -6,6 +6,7 @@ import wan2_2_img2transitionApi from "./api/video_wan2_2_14B_transitions.json";
 import ltx2_3_img2vidApi from "./api/video_ltx2_3_i2v.json";
 import ltx2_3_img2transitionApi from "./api/video_ltx2_3_style_transition.json";
 import ace_step_1_0_api from "./api/audio_ace_step_1_0_instrumental.json";
+import ace_step_1_5_api from "./api/audio_ace_step1_5_xl_base_instrumental.json";
 import kokoro_tts_api from "./api/kokoro-tts.json";
 import wan2_2_img2vidWorkflow from "./workflows/video_wan2_2_14B_i2v_720p_5s.json";
 import wan2_2_img2transWorkflow from "./workflows/video_wan2_2_14B_transitions.json";
@@ -127,7 +128,9 @@ export class ComfyUIClient {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to delete queued prompts: ${response.statusText}`);
+      throw new Error(
+        `Failed to delete queued prompts: ${response.statusText}`,
+      );
     }
 
     return true;
@@ -372,13 +375,24 @@ export class ComfyUIClient {
     }
 
     if (input.kind === "text-to-instrumental") {
-      api = ace_step_1_0_api;
+      // TODO remove if the other is better
+      // ace 1.0
+      // api = ace_step_1_0_api;
+      //
+      // if (input.prompt) {
+      //   api["14"].inputs.tags = input.prompt;
+      // }
+      // api["59"].inputs.filename_prefix = input.id;
+      // api["17"].inputs.seconds = input.duration;
+
+      // ace 1.5
+      api = ace_step_1_5_api;
 
       if (input.prompt) {
-        api["14"].inputs.tags = input.prompt;
+        api["94"].inputs.tags = input.prompt;
       }
-      api["59"].inputs.filename_prefix = input.id;
-      api["17"].inputs.seconds = input.duration;
+      api["107"].inputs.filename_prefix = input.id;
+      api["98"].inputs.seconds = input.duration;
     }
 
     if (input.kind === "image-to-transition") {

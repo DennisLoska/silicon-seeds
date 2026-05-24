@@ -185,6 +185,23 @@ export namespace Icons {
     </svg>
   );
 
+  export const RegenerateIconSmall = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className="w-4 h-4"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M16.023 9.348h4.992V4.356m0 0-2.66 2.66A8.97 8.97 0 0 0 12 4.5a8.97 8.97 0 0 0-6.364 2.636M7.977 14.652H2.985v4.992m0 0 2.66-2.66A8.97 8.97 0 0 0 12 19.5a8.97 8.97 0 0 0 6.364-2.636"
+      />
+    </svg>
+  );
+
   export const NewJobIcon = () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
