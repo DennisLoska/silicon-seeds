@@ -1,36 +1,34 @@
 import { comfyClient, ModelVariant } from "../comfyui/comfyui-client";
-import { ComfyExecutedEvent, Event, JobMode } from "../events/events";
-import { QueueManager } from "../queue/queue-manager";
+import { AudioPromptEvent, Event, JobMode } from "../events/events";
 import { Metadata } from "../meta/meta";
+import { PromptGenerator } from "../prompts/prompt-generator";
+import { QueueManager } from "../queue/queue-manager";
 import { JobOrchestrator } from "../jobs/jobs";
+import { Presets } from "../styles/presets";
 import { Utils } from "../utils/utils";
 import { DB } from "../db/db";
 
 export namespace AudioGenerator {
   export function init() {
     Event.on(Event.NewAudioPrompt, (event) => {
-      QueueManager.audioQueue.push(event);
-      void generate_audio();
+      void QueueManager.pump();
     });
   }
 
-  export function schedule_audio(event: {
+  export async function schedule_audio(event: {
     id?: string;
     jobId: string;
     prompt?: string;
     duration?: number;
   }) {
-    JobOrchestrator.schedule_task({
+    return await JobOrchestrator.schedule_task({
       ...event,
       type: Event.NewAudioPrompt,
       mode: event.prompt ? JobMode.Speech : JobMode.Instrumental,
     });
   }
 
-  export async function generate_audio() {
-    if (QueueManager.isAudioQueueBlocked()) return;
-
-    const item = QueueManager.pop("audio");
+  export async function generate_audio(item: AudioPromptEvent) {
     const job = await DB.Jobs.findById(item.jobId);
     Utils.assert(item.type === Event.NewAudioPrompt, "Incorrect event type!");
 
@@ -44,7 +42,7 @@ export namespace AudioGenerator {
         prompt,
       };
 
-      void comfyClient.generate(modelVariant, job);
+      await comfyClient.generate(modelVariant, job);
     }
 
     if (mode === JobMode.Instrumental) {
@@ -56,19 +54,50 @@ export namespace AudioGenerator {
         duration,
       };
 
-      void comfyClient.generate(modelVariant, job);
+      await comfyClient.generate(modelVariant, job);
     }
   }
 
-  export async function get_audio(id: string): Promise<ComfyExecutedEvent> {
-    return await new Promise((res, rej) => {
-      Event.on(Event.ComfyExecuted, (event) => {
-        if (event.id === id) res(event);
-      });
+  export async function handle_speech_complete(event: AudioPromptEvent) {
+    Utils.assert(
+      event.mode === JobMode.Speech,
+      "Speech completion handler requires a speech event",
+    );
 
-      setTimeout(() => {
-        rej("Event timeout exceeded");
-      }, Metadata.TIMEOUT * 1000);
+    const metadata = await DB.Meta.findByEventId(event.id);
+    const audioBlob = await comfyClient.getAsset(
+      metadata.filename,
+      metadata.subfolder,
+      metadata.type,
+    );
+
+    const duration = await Metadata.getAudioDuration(audioBlob);
+    const job = await DB.Jobs.findById(event.jobId);
+    await schedule_audio({
+      jobId: event.jobId,
+      duration,
     });
+
+    const clipDuration = job.clip_duration || Metadata.CLIP_DURATION;
+    const transitionDuration =
+      job.transition_duration || Metadata.TRANSITION_DURATION;
+    const clipCount = Math.ceil(
+      (duration + transitionDuration) / (clipDuration + transitionDuration),
+    );
+
+    const textEvents = (await DB.Events.findByJobId(event.jobId)).filter(
+      (item) => item.type === Event.NewTextPrompt,
+    );
+    const scriptEvent = textEvents[0];
+
+    if (scriptEvent?.type === Event.NewTextPrompt) {
+      await PromptGenerator.image_scene_prompts(
+        event.jobId,
+        JobMode.Video,
+        scriptEvent.text,
+        clipCount,
+        job.style_preset as Presets | undefined,
+      );
+    }
   }
 }

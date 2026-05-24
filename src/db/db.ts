@@ -3,7 +3,13 @@ import { BunSqliteDialect } from "kysely-bun-sqlite";
 import { Database } from "bun:sqlite";
 import { Generated } from "kysely";
 import { Metadata } from "../meta/meta";
-import { Event, JobEvent, JobMode, JobStatus } from "../events/events";
+import {
+  Event,
+  JobEvent,
+  JobLifecycleStatus,
+  JobMode,
+  JobStatus,
+} from "../events/events";
 import { Lora } from "../styles/presets";
 import { Utils } from "../utils/utils";
 
@@ -11,6 +17,7 @@ export interface DbSchema {
   jobs: {
     id: string;
     created_at: Generated<string> | string;
+    status: JobLifecycleStatus;
     fps?: number;
     clip_duration?: number;
     transition_duration?: number;
@@ -25,6 +32,7 @@ export interface DbSchema {
     job_id: string;
     mode: JobMode;
     status: JobStatus;
+    priority: number;
     type: Event;
     text: string | null;
     prompt: string | null;
@@ -34,6 +42,9 @@ export interface DbSchema {
     duration: number | null;
     lora: Lora | null;
     index: number | null;
+    claimed_at: string | null;
+    attempt_count: number;
+    error: string | null;
   };
   meta: {
     id: string;
@@ -50,7 +61,7 @@ export type JobsSchema = Omit<DbSchema["jobs"], "created_at"> & {
 export type EventsSchema = DbSchema["events"];
 export type MetaSchema = DbSchema["meta"];
 
-export type CreateJob = Omit<DbSchema["jobs"], "id" | "created_at">;
+export type CreateJob = Omit<DbSchema["jobs"], "id" | "created_at" | "status">;
 
 export namespace DB {
   export const db = new Kysely<DbSchema>({
@@ -65,6 +76,7 @@ export namespace DB {
         .insertInto("jobs")
         .values({
           id: Metadata.randomId(),
+          status: JobLifecycleStatus.Active,
           ...payload,
         })
         .returningAll()
@@ -94,6 +106,105 @@ export namespace DB {
       // Then delete the job
       await db.deleteFrom("jobs").where("id", "=", id).execute();
     }
+
+    export async function updateStatus(id: string, status: JobLifecycleStatus) {
+      return await db
+        .updateTable("jobs")
+        .set({ status })
+        .where("id", "=", id)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+    }
+
+    export async function failJob(id: string) {
+      await db.transaction().execute(async (trx) => {
+        await trx
+          .updateTable("jobs")
+          .set({ status: JobLifecycleStatus.Failed })
+          .where("id", "=", id)
+          .execute();
+
+        await trx
+          .updateTable("events")
+          .set({
+            status: JobStatus.Failed,
+            claimed_at: null,
+            error: "job failed",
+          })
+          .where("job_id", "=", id)
+          .where((eb) =>
+            eb.or([
+              eb("status", "=", JobStatus.Pending),
+              eb("status", "=", JobStatus.Running),
+            ]),
+          )
+          .execute();
+      });
+    }
+
+    export async function failBrokenJobs() {
+      const brokenJobs = await db
+        .selectFrom("jobs")
+        .innerJoin("events", "events.job_id", "jobs.id")
+        .select("jobs.id")
+        .distinct()
+        .where((eb) =>
+          eb.or([
+            eb("events.status", "=", JobStatus.Pending),
+            eb("events.status", "=", JobStatus.Running),
+          ]),
+        )
+        .execute();
+
+      for (const job of brokenJobs) {
+        await failJob(job.id);
+      }
+    }
+
+    export async function completeJob(id: string) {
+      return await updateStatus(id, JobLifecycleStatus.Complete);
+    }
+
+    export async function finalizeCompletedJobs() {
+      const jobsToComplete = await db
+        .selectFrom("jobs")
+        .innerJoin("events", "events.job_id", "jobs.id")
+        .select("jobs.id")
+        .distinct()
+        .where("jobs.status", "=", JobLifecycleStatus.Active)
+        .where((eb) =>
+          eb.not(
+            eb.exists(
+              eb
+                .selectFrom("events as blocking_events")
+                .select("blocking_events.id")
+                .whereRef("blocking_events.job_id", "=", "jobs.id")
+                .where((innerEb) =>
+                  innerEb.or([
+                    innerEb("blocking_events.status", "=", JobStatus.Pending),
+                    innerEb("blocking_events.status", "=", JobStatus.Running),
+                  ]),
+                ),
+            ),
+          ),
+        )
+        .where((eb) =>
+          eb.not(
+            eb.exists(
+              eb
+                .selectFrom("events as non_complete_events")
+                .select("non_complete_events.id")
+                .whereRef("non_complete_events.job_id", "=", "jobs.id")
+                .where("non_complete_events.status", "!=", JobStatus.Complete),
+            ),
+          ),
+        )
+        .execute();
+
+      for (const job of jobsToComplete) {
+        await completeJob(job.id);
+      }
+    }
   }
 
   export namespace Events {
@@ -103,8 +214,12 @@ export namespace DB {
         job_id: event.jobId,
         mode: event.mode,
         status: event.status,
+        priority: event.priority ?? 0,
         type: event.type,
         prompt: event.prompt,
+        claimed_at: event.claimed_at ?? null,
+        attempt_count: event.attempt_count ?? 0,
+        error: event.error ?? null,
       };
 
       switch (event.type) {
@@ -164,9 +279,13 @@ export namespace DB {
         jobId: row.job_id,
         mode: row.mode,
         status: row.status,
+        priority: row.priority,
         type: row.type,
         created_at: row.created_at,
         prompt: row.prompt,
+        claimed_at: row.claimed_at ?? undefined,
+        attempt_count: row.attempt_count,
+        error: row.error,
       };
 
       switch (row.type) {
@@ -248,12 +367,97 @@ export namespace DB {
     export async function updateStatus(id: string, status: JobStatus) {
       const res = await db
         .updateTable("events")
-        .set("status", status)
+        .set({
+          status,
+          claimed_at: status === JobStatus.Running ? new Date().toISOString() : null,
+          error: status === JobStatus.Failed ? "unknown" : null,
+        })
         .where("id", "=", id)
         .returningAll()
         .executeTakeFirstOrThrow();
 
       return rowToEvent(res);
+    }
+
+    export async function markComplete(id: string) {
+      const res = await db
+        .updateTable("events")
+        .set({
+          status: JobStatus.Complete,
+          claimed_at: null,
+          error: null,
+        })
+        .where("id", "=", id)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+
+      return rowToEvent(res);
+    }
+
+    export async function markFailed(id: string, error: string) {
+      const res = await db
+        .updateTable("events")
+        .set({
+          status: JobStatus.Failed,
+          claimed_at: null,
+          error,
+        })
+        .where("id", "=", id)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+
+      return rowToEvent(res);
+    }
+
+    export async function requeueRunning() {
+      await db
+        .updateTable("events")
+        .set({
+          status: JobStatus.Pending,
+          claimed_at: null,
+        })
+        .where("status", "=", JobStatus.Running)
+        .execute();
+    }
+
+    export async function hasRunning() {
+      const res = await db
+        .selectFrom("events")
+        .select("id")
+        .where("status", "=", JobStatus.Running)
+        .executeTakeFirst();
+
+      return Boolean(res);
+    }
+
+    export async function claimNextRunnable() {
+      const candidate = await db
+        .selectFrom("events")
+        .innerJoin("jobs", "jobs.id", "events.job_id")
+        .select("events.id")
+        .where("events.status", "=", JobStatus.Pending)
+        .where("jobs.status", "=", JobLifecycleStatus.Active)
+        .orderBy("events.priority", "desc")
+        .orderBy("events.index", "asc")
+        .orderBy("events.created_at", "asc")
+        .executeTakeFirst();
+
+      if (!candidate) return null;
+
+      const res = await db
+        .updateTable("events")
+        .set({
+          status: JobStatus.Running,
+          claimed_at: new Date().toISOString(),
+          attempt_count: (eb) => eb("attempt_count", "+", 1),
+          error: null,
+        })
+        .where("id", "=", candidate.id)
+        .where("status", "=", JobStatus.Pending)
+        .returningAll()
+        .executeTakeFirst();
+
+      return res ? rowToEvent(res) : null;
     }
 
     export async function findByJobId(jobId: string) {

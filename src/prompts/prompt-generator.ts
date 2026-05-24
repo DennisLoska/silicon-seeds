@@ -2,11 +2,11 @@ import { Event, JobMode } from "../events/events";
 import { LLM } from "../llm/llm";
 import { comfyClient } from "../comfyui/comfyui-client";
 import { Presets, StylePresets } from "../styles/presets";
-import { QueueManager } from "../queue/queue-manager";
 import { ImageGenerator } from "../image/image-generator";
 import { VideoGenerator } from "../video/video-generator";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
+import { DB } from "../db/db";
 import z from "zod/v3";
 
 export namespace PromptGenerator {
@@ -41,12 +41,18 @@ Make sure to only include the actual image prompt in your response and nothing m
       }
       const prompt = res.content.trim();
 
-      ImageGenerator.schedule_image({ jobId, mode, prompt, lora, index });
+      await ImageGenerator.schedule_image({
+        jobId,
+        mode,
+        prompt,
+        lora,
+        index,
+      });
     }
   }
 
   export async function img_to_vid_prompt(promptId: string) {
-    const event = QueueManager.findEventById(promptId);
+    const event = await DB.Events.findById(promptId);
     Utils.assert(
       event,
       "Unable to find associated event with image for image-to-video prompt.",
@@ -168,13 +174,10 @@ ${text}
       scenes = scenes.slice(0, amount);
     }
 
-    for (const scene of scenes) {
-      const index = scenes.indexOf(scene);
-      if (preset) {
-        txt_to_img_prompt(jobId, mode, scene, 1, preset, index);
-      } else {
-        txt_to_img_prompt(jobId, mode, scene, 1, undefined, index);
-      }
-    }
+    await Promise.all(
+      scenes.map((scene, index) =>
+        txt_to_img_prompt(jobId, mode, scene, 1, preset, index),
+      ),
+    );
   }
 }

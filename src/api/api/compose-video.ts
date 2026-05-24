@@ -1,8 +1,6 @@
 import { AudioGenerator } from "../../audio/audio-generator";
-import { comfyClient } from "../../comfyui/comfyui-client";
 import { JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
-import { Metadata } from "../../meta/meta";
 import { PromptGenerator } from "../../prompts/prompt-generator";
 import { TextGenerator } from "../../text/text-generator";
 import { PostCompose } from "../schemas";
@@ -48,45 +46,13 @@ export async function compose_video(options: PostCompose) {
 
   await TextGenerator.create_text_event(jobId, finalScript);
 
-  const ttsId = Metadata.randomId();
-
-  AudioGenerator.schedule_audio({
-    id: ttsId,
+  await AudioGenerator.schedule_audio({
     jobId,
     prompt: finalScript,
   });
 
-  const ttsRes = (await AudioGenerator.get_audio(ttsId)) as any;
-  const ttsMeta = ttsRes?.data?.audio?.[0];
-  const tts = await comfyClient.getAsset(
-    ttsMeta.filename,
-    ttsMeta.subfolder,
-    ttsMeta.type,
-  );
-
-  const duration = await Metadata.getAudioDuration(tts);
-
-  AudioGenerator.schedule_audio({
-    jobId,
-    duration,
-  });
-
-  const vidStruct = derive_video_structure(
-    duration,
-    clip_duration,
-    transition_duration,
-  );
-
-  void PromptGenerator.image_scene_prompts(
-    jobId,
-    JobMode.Video,
-    finalScript,
-    vidStruct.clipCount,
-    style_preset,
-  );
-
   return new Response(
-    JSON.stringify({ message: "job queued", meta: vidStruct }),
+    JSON.stringify({ message: "job queued" }),
     {
       status: 200,
       headers: {
@@ -95,22 +61,4 @@ export async function compose_video(options: PostCompose) {
       },
     },
   );
-}
-
-function derive_video_structure(
-  duration: number,
-  clip_duration: number,
-  transition_duration: number,
-) {
-  // Base equation: duration = (Metadata.CLIP_DURATION * x) + (Metadata.TRANSITION_DURATION * (x - 1))
-  const clipCount = Math.ceil(
-    (duration + transition_duration) / (clip_duration + transition_duration),
-  );
-
-  return {
-    audioDuration: duration,
-    totalDuration:
-      clipCount * clip_duration + (clipCount - 1) * transition_duration,
-    clipCount,
-  };
 }

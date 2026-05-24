@@ -114,7 +114,7 @@ app.use("/assets/*", async (c) => {
         const contentLength = end - start + 1;
 
         // Read partial content
-        const buffer = await file.bytes(start, end + 1);
+        const buffer = (await file.arrayBuffer()).slice(start, end + 1);
 
         return new Response(buffer, {
           status: 206,

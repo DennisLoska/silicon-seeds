@@ -1,5 +1,5 @@
 import { DB } from "../db/db";
-import { Job } from "../events/events";
+import { Job, JobLifecycleStatus, JobStatus } from "../events/events";
 import { Icons } from "./icons";
 
 const EmptyState = () => (
@@ -37,21 +37,51 @@ function calculateJobDuration(job: Job, events: any[]): string {
 
 export const Status = async (job: Job) => {
   const events = await DB.Events.findByJobId(job.id);
-  const isCompleted = events.some((e) => e.status === "complete");
-  const completedCount = events.filter((e) => e.status === "complete").length;
+  const completedCount = events.filter(
+    (e) => e.status === JobStatus.Complete,
+  ).length;
+  const runningCount = events.filter((e) => e.status === JobStatus.Running).length;
+  const pendingCount = events.filter((e) => e.status === JobStatus.Pending).length;
+  const failedCount = events.filter((e) => e.status === JobStatus.Failed).length;
   const durationStr = calculateJobDuration(job, events);
+
+  const statusUi = (() => {
+    switch (job.status) {
+      case JobLifecycleStatus.Complete:
+        return {
+          label: "Complete",
+          badge: "badge-success",
+          Icon: Icons.StatusComplete,
+        };
+      case JobLifecycleStatus.Failed:
+        return {
+          label: "Failed",
+          badge: "badge-error",
+          Icon: Icons.StatusFailed,
+        };
+      case JobLifecycleStatus.Cancelled:
+        return {
+          label: "Cancelled",
+          badge: "badge-neutral",
+          Icon: Icons.StatusCancelled,
+        };
+      default:
+        return {
+          label: "Active",
+          badge: "badge-warning",
+          Icon: Icons.StatusPending,
+        };
+    }
+  })();
 
   return (
     <div className="space-y-8">
       <header>
         <h2 className="text-3xl font-extrabold tracking-tight text-base-content">
           Status{" "}
-          <span
-            className={`badge badge-xl ${
-              isCompleted ? "badge-success" : "badge-warning"
-            }`}
-          >
-            {isCompleted ? <Icons.StatusComplete /> : <Icons.StatusPending />}
+          <span className={`badge badge-xl ${statusUi.badge}`}>
+            <statusUi.Icon />
+            {statusUi.label}
           </span>
         </h2>
         <p className="text-base-content/60 mt-1">
@@ -80,6 +110,14 @@ export const Status = async (job: Job) => {
         <div className="stats shadow bg-base-200">
           <div className="stat">
             <div className="stat-title text-xs uppercase opacity-60 font-bold tracking-widest">
+              Job Status
+            </div>
+            <div className="stat-value text-lg">{statusUi.label}</div>
+          </div>
+        </div>
+        <div className="stats shadow bg-base-200">
+          <div className="stat">
+            <div className="stat-title text-xs uppercase opacity-60 font-bold tracking-widest">
               Events
             </div>
             <div className="stat-value text-lg">
@@ -103,7 +141,7 @@ export const Status = async (job: Job) => {
               Summary
             </h2>
             <p className="text-base-content mt-2 italic opacity-80 text-lg">
-              Job has {events.length} event(s).
+              Job has {events.length} event(s): {completedCount} complete, {runningCount} running, {pendingCount} pending, {failedCount} failed.
             </p>
           </div>
         </div>

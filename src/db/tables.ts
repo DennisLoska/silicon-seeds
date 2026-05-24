@@ -13,6 +13,7 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .addColumn("created_at", "text", (col) =>
       col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull(),
     )
+    .addColumn("status", "text", (col) => col.notNull().defaultTo("active"))
     .addColumn("fps", "integer", (col) => col.defaultTo(null))
     .addColumn("clip_duration", "integer", (col) => col.defaultTo(null))
     .addColumn("transition_duration", "integer", (col) => col.defaultTo(null))
@@ -30,6 +31,7 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .addColumn("type", "text", (col) => col.notNull())
     .addColumn("mode", "text", (col) => col.notNull())
     .addColumn("status", "text", (col) => col.notNull().defaultTo("pending"))
+    .addColumn("priority", "integer", (col) => col.notNull().defaultTo(0))
     .addColumn("prompt", "text", (col) => col.defaultTo(null))
     .addColumn("text", "text")
     .addColumn("filename", "text")
@@ -38,6 +40,9 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .addColumn("duration", "integer")
     .addColumn("lora", "text")
     .addColumn("index", "integer")
+    .addColumn("claimed_at", "text")
+    .addColumn("attempt_count", "integer", (col) => col.notNull().defaultTo(0))
+    .addColumn("error", "text")
     .addColumn("created_at", "text", (col) =>
       col.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
     )
@@ -59,6 +64,13 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .createIndex("idx_events_job_id")
     .on("events")
     .column("job_id")
+    .ifNotExists()
+    .execute();
+
+  await db.schema
+    .createIndex("idx_events_queue")
+    .on("events")
+    .columns(["status", "priority", "created_at"])
     .ifNotExists()
     .execute();
 }

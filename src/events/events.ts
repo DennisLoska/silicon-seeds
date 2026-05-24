@@ -10,9 +10,18 @@ export enum JobMode {
   Instrumental = "instrumental",
 }
 
+export enum JobLifecycleStatus {
+  Active = "active",
+  Complete = "complete",
+  Failed = "failed",
+  Cancelled = "cancelled",
+}
+
 export enum JobStatus {
   Pending = "pending",
+  Running = "running",
   Complete = "complete",
+  Failed = "failed",
 }
 
 interface BaseEvent {
@@ -22,6 +31,7 @@ interface BaseEvent {
 
 export interface Job extends BaseEvent {
   created_at: string;
+  status?: JobLifecycleStatus;
 }
 
 export interface JobBaseEvent extends BaseEvent {
@@ -29,6 +39,10 @@ export interface JobBaseEvent extends BaseEvent {
   mode: JobMode;
   status: JobStatus;
   prompt: string;
+  priority?: number;
+  claimed_at?: string;
+  attempt_count?: number;
+  error?: string | null;
   // TODO delete this
   meta?: Record<string, unknown>;
 }

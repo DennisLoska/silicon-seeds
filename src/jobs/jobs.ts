@@ -4,25 +4,24 @@ import { Logger } from "../logger/logger";
 import { Metadata } from "../meta/meta";
 import { Utils } from "../utils/utils";
 
-type Job = {
-  id: string;
-  created_at: string;
-  events: Record<string, JobEvent>;
-  meta: Record<string, unknown>;
-};
-
 export namespace JobOrchestrator {
-  export const jobs: Record<string, Job> = {};
+  function getPriority(event: Pick<JobEvent, "mode" | "type">) {
+    if (event.type === Event.NewAudioPrompt) return 300;
+    if (event.type === Event.NewImagePrompt) return 200;
+    return 100;
+  }
 
   export function init() {
     Event.on(Event.ComfyExecuted, (event) => {
-      let data: { filename: string; subfolder: string; type: string }[];
+      const output = event.data as Record<string, unknown>;
+      const keys = ["audio", "images", "gifs", "videos"];
+      const data = keys
+        .map((key) => output[key])
+        .find((value) => Array.isArray(value)) as
+        | { filename: string; subfolder: string; type: string }[]
+        | undefined;
 
-      if (event.data.audio) {
-        data = event.data.audio as any;
-      } else if (event.data.images) {
-        data = event.data.images as any;
-      } else {
+      if (!data || data.length === 0) {
         Logger.error("Unknown event data encountered", { data: event.data });
         return;
       }
@@ -40,44 +39,44 @@ export namespace JobOrchestrator {
   }
 
   export async function create_job(payload: CreateJob) {
-    const job = await DB.Jobs.create_job(payload);
-
-    jobs[job.id] = {
-      ...job,
-      events: {},
-      meta: {},
-    };
-
-    return job;
+    return await DB.Jobs.create_job(payload);
   }
 
-  export function job_events(id: string) {
-    return Object.values(jobs[id].events);
+  export async function job_events(id: string) {
+    return await DB.Events.findByJobId(id);
   }
 
-  export function update_schedule(event: JobEvent) {
-    const { jobId, id } = event;
-
+  export async function update_schedule(event: JobEvent) {
     if (event.status === JobStatus.Pending) {
-      if (!jobs[jobId].events[id]) {
-        jobs[jobId].events[id] = event;
-      }
-
-      void DB.Events.create(event);
+      return await DB.Events.create({
+        ...event,
+        priority: event.priority ?? getPriority(event),
+      });
     }
 
-    if (event.status !== JobStatus.Complete) return;
-    jobs[jobId].events[id].status = event.status;
+    if (event.status === JobStatus.Complete) {
+      return await DB.Events.markComplete(event.id);
+    }
 
-    void DB.Events.updateStatus(event.id, event.status);
+    if (event.status === JobStatus.Failed) {
+      return await DB.Events.markFailed(event.id, event.error ?? "unknown");
+    }
+
+    if (event.status === JobStatus.Running) {
+      return await DB.Events.updateStatus(event.id, event.status);
+    }
+
+    return event;
   }
 
-  export function schedule_task(event: Partial<JobEvent>) {
+  export async function schedule_task(event: Partial<JobEvent>) {
     const task = create_task(event);
-    update_schedule(task);
+    await update_schedule(task);
 
     Utils.assert(event.type, "Event is type missing.");
     Event.emit(event.type, task);
+
+    return task;
   }
 
   // TypeScript sucks
@@ -93,6 +92,9 @@ export namespace JobOrchestrator {
       jobId,
       mode,
       prompt: prompt ?? "n/a",
+      priority: 0,
+      attempt_count: 0,
+      error: null,
     };
 
     switch (event.type) {

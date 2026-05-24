@@ -1,8 +1,5 @@
 import { AudioGenerator } from "../../audio/audio-generator";
-import { comfyClient } from "../../comfyui/comfyui-client";
 import { JobOrchestrator } from "../../jobs/jobs";
-import { Logger } from "../../logger/logger";
-import { Metadata } from "../../meta/meta";
 
 export async function text_to_speech() {
   // TODO get these from query parameters
@@ -20,33 +17,13 @@ export async function text_to_speech() {
   ];
 
   const prompt = messages[Math.floor(Math.random() * messages.length)];
-  const { id: jobId } = await JobOrchestrator.create_job();
-  const id = Metadata.randomId();
-
-  AudioGenerator.schedule_audio({
-    id,
+  const { id: jobId } = await JobOrchestrator.create_job({});
+  await AudioGenerator.schedule_audio({
     jobId,
     prompt,
   });
 
-  try {
-    const res = (await AudioGenerator.get_audio(id)) as any;
-
-    const metadata = res?.data?.audio?.[0];
-    let audio: Blob | null = await comfyClient.getAsset(
-      metadata.filename,
-      metadata.subfolder,
-      metadata.type,
-    );
-
-    const duration = await Metadata.getAudioDuration(audio);
-    audio = null;
-
-    return new Response(JSON.stringify({ message: { ...metadata, duration } }));
-  } catch (error) {
-    Logger.error("error", error);
-    return new Response(JSON.stringify({ message: "Computer says no" }), {
-      status: 500,
-    });
-  }
+  return new Response(JSON.stringify({ message: "job queued", jobId }), {
+    status: 202,
+  });
 }

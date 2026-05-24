@@ -1,8 +1,10 @@
 import { ApiServer } from "./api/api";
 import { AudioGenerator } from "./audio/audio-generator";
+import { DB } from "./db/db";
 import { ImageGenerator } from "./image/image-generator";
 import { JobOrchestrator } from "./jobs/jobs";
 import { Logger } from "./logger/logger";
+import { QueueManager } from "./queue/queue-manager";
 import { SocketServer } from "./socket/socket-server";
 import { VideoGenerator } from "./video/video-generator";
 
@@ -84,6 +86,9 @@ import { VideoGenerator } from "./video/video-generator";
 async function main() {
   await Logger.init();
 
+  await DB.Jobs.failBrokenJobs();
+  await DB.Jobs.finalizeCompletedJobs();
+  await QueueManager.resume();
   JobOrchestrator.init();
   ImageGenerator.init();
   VideoGenerator.init();
@@ -91,6 +96,7 @@ async function main() {
 
   ApiServer.start();
   await SocketServer.start();
+  await QueueManager.pump();
 
   process.on("SIGINT", () => {
     SocketServer.stop();
