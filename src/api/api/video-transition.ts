@@ -3,7 +3,7 @@ import { ImageGenerator } from "../../image/image-generator";
 import { JobOrchestrator } from "../../jobs/jobs";
 
 export async function video_transition() {
-  const { id: jobId } = await JobOrchestrator.create_job();
+  const { id: jobId } = await JobOrchestrator.create_job({});
 
   ImageGenerator.schedule_image({
     jobId,

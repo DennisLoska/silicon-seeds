@@ -8,7 +8,7 @@ export async function script_to_scenes() {
   // TODO get these from query parameters
   // const script = "A sermon about the parable of the Sower.";
 
-  const { id: jobId } = await JobOrchestrator.create_job();
+  const { id: jobId } = await JobOrchestrator.create_job({});
 
   const list = [
     "The Power of Faith: Trusting God in Uncertain Times",

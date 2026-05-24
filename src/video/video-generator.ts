@@ -22,12 +22,10 @@ const OUTPUT_DIR = Bun.env.OUTPUT_DIR;
 export namespace VideoGenerator {
   export function init() {
     Event.on(Event.NewVideoPrompt, (event) => {
-      QueueManager.videoQueue.push(event);
-      void generate_video();
+      void QueueManager.pump();
     });
     Event.on(Event.NewTransitionPrompt, (event) => {
-      QueueManager.videoQueue.push(event);
-      void generate_video();
+      void QueueManager.pump();
     });
   }
 
@@ -51,38 +49,36 @@ export namespace VideoGenerator {
     });
   }
 
-  export function schedule_video(event: {
+  export async function schedule_video(event: {
     jobId: string;
     prompt: string;
     filename: string;
     index?: number;
   }) {
-    JobOrchestrator.schedule_task({
+    return await JobOrchestrator.schedule_task({
       ...event,
       type: Event.NewVideoPrompt,
       mode: JobMode.Video,
     });
   }
 
-  export function schedule_transition(event: {
+  export async function schedule_transition(event: {
     jobId: string;
     prompt: string;
     startImg: string;
     endImg: string;
     index?: number;
   }) {
-    JobOrchestrator.schedule_task({
+    return await JobOrchestrator.schedule_task({
       ...event,
       type: Event.NewTransitionPrompt,
       mode: JobMode.Video,
     });
   }
 
-  export async function generate_video() {
-    // TODO fix potential race condition
-    if (QueueManager.isVideoQueueBlocked()) return;
-
-    const item = QueueManager.pop("video");
+  export async function generate_video(
+    item: VideoPromptEvent | TransitionPromptEvent,
+  ) {
     const job = await DB.Jobs.findById(item.jobId);
 
     Utils.assert(
@@ -102,7 +98,7 @@ export namespace VideoGenerator {
         endImage: item.endImg,
       };
 
-      void comfyClient.generate(modelVariant, job);
+      await comfyClient.generate(modelVariant, job);
     }
 
     if (item.type === Event.NewVideoPrompt) {
@@ -113,23 +109,26 @@ export namespace VideoGenerator {
         imagePath: item.filename,
       };
 
-      void comfyClient.generate(modelVariant, job);
+      await comfyClient.generate(modelVariant, job);
     }
   }
 
   export async function prepare_transitions(event: JobEvent) {
-    const completed = QueueManager.findEventById(event.id);
-    if (!completed?.jobId) return null;
-
-    const job = JobOrchestrator.jobs[completed?.jobId];
-
-    const pendingClips = JobOrchestrator.job_events(job.id).filter(
-      (e) => e.type === Event.NewVideoPrompt && e.status === "pending",
+    const events = await DB.Events.findByJobId(event.jobId);
+    const incompleteClips = events.filter(
+      (e) =>
+        e.type === Event.NewVideoPrompt &&
+        (e.status === JobStatus.Pending || e.status === JobStatus.Running),
     );
-    if (pendingClips.length !== 0) return null;
+    if (incompleteClips.length !== 0) return null;
 
-    const completedClips = JobOrchestrator.job_events(job.id).filter(
-      (e) => e.type === Event.NewVideoPrompt && e.status === "complete",
+    const existingTransitions = events.filter(
+      (e) => e.type === Event.NewTransitionPrompt,
+    );
+    if (existingTransitions.length > 0) return null;
+
+    const completedClips = events.filter(
+      (e) => e.type === Event.NewVideoPrompt && e.status === JobStatus.Complete,
     ) as VideoPromptEvent[];
 
     // Sort by index to ensure correct order regardless of generation completion time
@@ -150,7 +149,12 @@ export namespace VideoGenerator {
       prompts.push(clip.prompt);
     }
 
-    const transitions: { first: string; last: string; prompt: string }[] = [];
+    const transitions: {
+      first: string;
+      last: string;
+      prompt: string;
+      index: number;
+    }[] = [];
     for (let i = 0; i < frames.length; i++) {
       const current = frames[i];
       const next = frames[i + 1];
@@ -171,6 +175,7 @@ export namespace VideoGenerator {
         first: current.last,
         last: next.first,
         prompt,
+        index: i,
       });
 
       Logger.info(
@@ -271,16 +276,17 @@ Your response should only include the newly generated prompt!
   export async function combine_outputs(jobId: string): Promise<void> {
     Logger.info(`Starting video combination for job ${jobId}`);
 
-    const events = JobOrchestrator.job_events(jobId);
+    const events = await DB.Events.findByJobId(jobId);
     Logger.info(`Found ${events.length} total events for job ${jobId}`);
 
     // Separate videos and transitions
     const videoEvents = events.filter(
-      (e) => e.status === "complete" && e.type === Event.NewVideoPrompt,
+      (e) => e.status === JobStatus.Complete && e.type === Event.NewVideoPrompt,
     );
 
     const transitionEvents = events.filter(
-      (e) => e.status === "complete" && e.type === Event.NewTransitionPrompt,
+      (e) =>
+        e.status === JobStatus.Complete && e.type === Event.NewTransitionPrompt,
     );
 
     Logger.info(`Found ${videoEvents.length} video events`);
@@ -290,6 +296,12 @@ Your response should only include the newly generated prompt!
     videoEvents.sort((a, b) => {
       const aIndex = (a as VideoPromptEvent).index ?? Number.MAX_SAFE_INTEGER;
       const bIndex = (b as VideoPromptEvent).index ?? Number.MAX_SAFE_INTEGER;
+      return aIndex - bIndex;
+    });
+
+    transitionEvents.sort((a, b) => {
+      const aIndex = (a as TransitionPromptEvent).index ?? Number.MAX_SAFE_INTEGER;
+      const bIndex = (b as TransitionPromptEvent).index ?? Number.MAX_SAFE_INTEGER;
       return aIndex - bIndex;
     });
 

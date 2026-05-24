@@ -4,7 +4,7 @@ import { PromptGenerator } from "../prompts/prompt-generator";
 import { QueueManager } from "../queue/queue-manager";
 import { VideoGenerator } from "../video/video-generator";
 import { comfyClient } from "../comfyui/comfyui-client";
-import { Event, JobEvent, JobMode, JobStatus } from "../events/events";
+import { Event, JobMode, JobStatus } from "../events/events";
 import { AudioGenerator } from "../audio/audio-generator";
 import { JobOrchestrator } from "../jobs/jobs";
 import { Logger } from "../logger/logger";
@@ -13,7 +13,6 @@ import { DB } from "../db/db";
 
 export namespace SocketServer {
   let ws: WebSocket;
-  let currentEvent: JobEvent;
 
   export async function start() {
     ws = new WebSocket(
@@ -35,6 +34,7 @@ export namespace SocketServer {
   async function message(event: MessageEvent) {
     let msg;
     if (typeof event.data === "string") {
+      Logger.debug("MESSAGE", event.data);
       msg = JSON.parse(event.data);
     } else {
       // Utils.assert(
@@ -51,15 +51,6 @@ export namespace SocketServer {
     if (msg.type === "status") {
       QueueManager.comfyQueue = msg.data?.status?.exec_info?.queue_remaining;
       Logger.info(`Jobs in ComfyUI queue: ${QueueManager.comfyQueue}`);
-      Logger.info(`Image queue: ${QueueManager.imageQueue.length}`);
-      Logger.info(`Video queue: ${QueueManager.videoQueue.length}`);
-      Logger.info(`Audio queue: ${QueueManager.audioQueue.length}`);
-    }
-
-    if (msg.type === "execution_start") {
-      const { prompt_id: promptId } = msg.data;
-      const current = QueueManager.findEventById(promptId);
-      if (current) currentEvent = current;
     }
 
     if (msg.type === "executed") {
@@ -78,35 +69,60 @@ export namespace SocketServer {
       Logger.info("===execution_success===");
       const { prompt_id: promptId } = msg.data;
 
-      QueueManager.comfyQueue--;
-
       const event = await DB.Events.findById(promptId);
       Utils.assert(event, "Event is missing");
 
       // update status to complete
-      JobOrchestrator.update_schedule({ ...event, status: JobStatus.Complete });
-      const currentJob = JobOrchestrator.jobs[event.jobId];
-      Logger.info("current job: ", currentJob);
+      await JobOrchestrator.update_schedule({
+        ...event,
+        status: JobStatus.Complete,
+      });
 
-      // better memory management
-      if (
-        (QueueManager.imageQueue.length === 0 &&
-          currentEvent.mode === JobMode.Image) ||
-        (QueueManager.videoQueue.length === 0 &&
-          currentEvent.mode === JobMode.Video) ||
-        (QueueManager.audioQueue.length === 0 &&
-          currentEvent.mode === JobMode.Instrumental)
-      ) {
-        await comfyClient.free_memory(true, true);
-      }
-
-      // always attempt to queue next items
-      void ImageGenerator.generate_image();
-      void VideoGenerator.generate_video();
-      void AudioGenerator.generate_audio();
+      await comfyClient.free_memory(true, true);
 
       if (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) {
-        PromptGenerator.img_to_vid_prompt(promptId);
+        await PromptGenerator.img_to_vid_prompt(promptId);
+      }
+
+      if (
+        event.type === Event.NewAudioPrompt &&
+        event.mode === JobMode.Speech
+      ) {
+        const metadata = await DB.Meta.findByEventId(event.id);
+        const audioBlob = await comfyClient.getAsset(
+          metadata.filename,
+          metadata.subfolder,
+          metadata.type,
+        );
+
+        const duration = await Metadata.getAudioDuration(audioBlob);
+        const job = await DB.Jobs.findById(event.jobId);
+        await AudioGenerator.schedule_audio({
+          jobId: event.jobId,
+          duration,
+        });
+
+        const clipDuration = job.clip_duration || Metadata.CLIP_DURATION;
+        const transitionDuration =
+          job.transition_duration || Metadata.TRANSITION_DURATION;
+        const clipCount = Math.ceil(
+          (duration + transitionDuration) / (clipDuration + transitionDuration),
+        );
+
+        const textEvents = (await DB.Events.findByJobId(event.jobId)).filter(
+          (item) => item.type === Event.NewTextPrompt,
+        );
+        const scriptEvent = textEvents[0];
+
+        if (scriptEvent?.type === Event.NewTextPrompt) {
+          await PromptGenerator.image_scene_prompts(
+            event.jobId,
+            JobMode.Video,
+            scriptEvent.text,
+            clipCount,
+            job.style_preset as any,
+          );
+        }
       }
 
       if (
@@ -135,11 +151,12 @@ export namespace SocketServer {
 
         if (transitions) {
           for (const transition of transitions) {
-            VideoGenerator.schedule_transition({
+            await VideoGenerator.schedule_transition({
               jobId: event.jobId,
               prompt: transition.prompt,
               startImg: transition.first,
               endImg: transition.last,
+              index: transition.index,
             });
           }
         }
@@ -152,10 +169,11 @@ export namespace SocketServer {
         )
       ) {
         Logger.info("Not a video or transition event");
+        void QueueManager.pump();
         return;
       }
 
-      const events = JobOrchestrator.job_events(event.jobId);
+      const events = await JobOrchestrator.job_events(event.jobId);
       const allComplete = events
         .filter(
           (e) =>
@@ -163,16 +181,20 @@ export namespace SocketServer {
             e.type === Event.NewVideoPrompt ||
             e.type === Event.NewTransitionPrompt,
         )
-        .every((e) => e.status === "complete");
+        .every((e) => e.status === JobStatus.Complete);
 
       Logger.info("Job complete?", {
         allComplete,
       });
 
       if (allComplete) {
-        Logger.info(`Triggering video combiner for job ${currentJob.id}`);
-        void VideoGenerator.combine_outputs(currentJob.id);
+        Logger.info(`Triggering video combiner for job ${event.jobId}`);
+        void VideoGenerator.combine_outputs(event.jobId);
       }
+
+      await DB.Jobs.finalizeCompletedJobs();
+
+      void QueueManager.pump();
     }
   }
 

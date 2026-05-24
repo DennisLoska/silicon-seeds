@@ -2,11 +2,11 @@ import { Event, JobMode } from "../events/events";
 import { LLM } from "../llm/llm";
 import { comfyClient } from "../comfyui/comfyui-client";
 import { Presets, StylePresets } from "../styles/presets";
-import { QueueManager } from "../queue/queue-manager";
 import { ImageGenerator } from "../image/image-generator";
 import { VideoGenerator } from "../video/video-generator";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
+import { DB } from "../db/db";
 import z from "zod/v3";
 
 export namespace PromptGenerator {
@@ -46,7 +46,7 @@ Make sure to only include the actual image prompt in your response and nothing m
   }
 
   export async function img_to_vid_prompt(promptId: string) {
-    const event = QueueManager.findEventById(promptId);
+    const event = await DB.Events.findById(promptId);
     Utils.assert(
       event,
       "Unable to find associated event with image for image-to-video prompt.",

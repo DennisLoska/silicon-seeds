@@ -1,6 +1,6 @@
 import { Templates } from "./templates";
 import { DB } from "../db/db";
-import { Job } from "../events/events";
+import { Job, JobLifecycleStatus } from "../events/events";
 import { truncateJobId } from "./utils";
 import { Icons } from "./icons";
 
@@ -24,9 +24,40 @@ export interface JobDetailsProps {
 const filterMap = {
   all: "All",
   recent: "Recent",
-  pending: "Pending",
-  completed: "Completed",
+  active: "Active",
+  complete: "Complete",
+  failed: "Failed",
+  cancelled: "Cancelled",
 } as const;
+
+function getJobStatusUi(status: JobLifecycleStatus | undefined) {
+  switch (status) {
+    case JobLifecycleStatus.Complete:
+      return {
+        label: "Complete",
+        badge: "badge-success",
+        Icon: Icons.StatusCompleteSmall,
+      };
+    case JobLifecycleStatus.Failed:
+      return {
+        label: "Failed",
+        badge: "badge-error",
+        Icon: Icons.StatusFailedSmall,
+      };
+    case JobLifecycleStatus.Cancelled:
+      return {
+        label: "Cancelled",
+        badge: "badge-neutral",
+        Icon: Icons.StatusCancelledSmall,
+      };
+    default:
+      return {
+        label: "Active",
+        badge: "badge-warning",
+        Icon: Icons.StatusPendingSmall,
+      };
+  }
+}
 
 export const JobDetails = async ({ jobId, activeTab }: JobDetailsProps) => {
   const job: Job = await DB.Jobs.findById(jobId);
@@ -140,31 +171,14 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       )
       .slice(0, 5);
-  } else if (filter === "completed") {
-    const completedJobIds = new Set<string>();
-    for (const jobItem of jobs) {
-      const jobEvents = await DB.Events.findByJobId(jobItem.id);
-      const hasCompleteEvent = jobEvents.some((e) => e.status === "complete");
-      if (hasCompleteEvent) completedJobIds.add(jobItem.id);
-    }
-    jobs = jobs.filter((j) => completedJobIds.has(j.id));
-  } else if (filter === "pending") {
-    const pendingJobIds = new Set<string>();
-    for (const jobItem of jobs) {
-      const jobEvents = await DB.Events.findByJobId(jobItem.id);
-      const hasCompleteEvent = jobEvents.some((e) => e.status === "complete");
-      if (!hasCompleteEvent) pendingJobIds.add(jobItem.id);
-    }
-    jobs = jobs.filter((j) => pendingJobIds.has(j.id));
-  }
-
-  // Pre-fetch all job events for status badges
-  const jobStatusMap = new Map<string, { isCompleted: boolean }>();
-  for (const jobItem of jobs) {
-    const jobEvents = await DB.Events.findByJobId(jobItem.id);
-    jobStatusMap.set(jobItem.id, {
-      isCompleted: jobEvents.some((e) => e.status === "complete"),
-    });
+  } else if (filter === "complete") {
+    jobs = jobs.filter((job) => job.status === JobLifecycleStatus.Complete);
+  } else if (filter === "active") {
+    jobs = jobs.filter((job) => job.status === JobLifecycleStatus.Active);
+  } else if (filter === "failed") {
+    jobs = jobs.filter((job) => job.status === JobLifecycleStatus.Failed);
+  } else if (filter === "cancelled") {
+    jobs = jobs.filter((job) => job.status === JobLifecycleStatus.Cancelled);
   }
 
   if (jobs.length === 0) {
@@ -217,25 +231,45 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
               </a>
             </li>
             <li>
-              <a
-                hx-get="/jobs?filter=pending"
-                hx-target="#job-details"
-                hx-swap="outerHTML"
-                hx-push-url="/jobs?filter=pending"
-              >
-                Pending
-              </a>
-            </li>
-            <li>
-              <a
-                hx-get="/jobs?filter=completed"
-                hx-target="#job-details"
-                hx-swap="outerHTML"
-                hx-push-url="/jobs?filter=completed"
-              >
-                Completed
-              </a>
-            </li>
+                <a
+                  hx-get="/jobs?filter=active"
+                  hx-target="#job-details"
+                  hx-swap="outerHTML"
+                  hx-push-url="/jobs?filter=active"
+                >
+                  Active
+                </a>
+              </li>
+              <li>
+                <a
+                  hx-get="/jobs?filter=complete"
+                  hx-target="#job-details"
+                  hx-swap="outerHTML"
+                  hx-push-url="/jobs?filter=complete"
+                >
+                  Complete
+                </a>
+              </li>
+              <li>
+                <a
+                  hx-get="/jobs?filter=failed"
+                  hx-target="#job-details"
+                  hx-swap="outerHTML"
+                  hx-push-url="/jobs?filter=failed"
+                >
+                  Failed
+                </a>
+              </li>
+              <li>
+                <a
+                  hx-get="/jobs?filter=cancelled"
+                  hx-target="#job-details"
+                  hx-swap="outerHTML"
+                  hx-push-url="/jobs?filter=cancelled"
+                >
+                  Cancelled
+                </a>
+              </li>
           </ul>
         </details>
       </div>
@@ -244,8 +278,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
         {jobs.map((jobItem) => {
           const date = new Date(jobItem.created_at).toLocaleString();
           const isActive = activeJobId === jobItem.id;
-          const statusInfo = jobStatusMap.get(jobItem.id);
-          const isCompleted = statusInfo?.isCompleted ?? false;
+          const statusUi = getJobStatusUi(jobItem.status);
 
           return (
             <li
@@ -264,15 +297,10 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
                 hx-push-url={`/jobs?job_id=${jobItem.id}&filter=${filter}&tab=${tab}`}
               >
                 <span
-                  className={`badge ${
-                    isCompleted ? "badge-success" : "badge-warning"
-                  }`}
+                  className={`badge ${statusUi.badge}`}
+                  title={statusUi.label}
                 >
-                  {isCompleted ? (
-                    <Icons.StatusCompleteSmall />
-                  ) : (
-                    <Icons.StatusPendingSmall />
-                  )}
+                  <statusUi.Icon />
                 </span>
                 <div className="flex flex-col items-start">
                   <span
@@ -287,6 +315,9 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
                   </span>
                   <span className="font-bold text-sm hidden lg:inline">
                     {jobItem.id}
+                  </span>
+                  <span className="text-xs font-medium opacity-80">
+                    {statusUi.label}
                   </span>
                   <span className="text-xs opacity-60">{date}</span>
                 </div>

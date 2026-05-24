@@ -1,62 +1,67 @@
-import {
-  AudioPromptEvent,
-  ImagePromptEvent,
-  JobEvents,
-  TransitionPromptEvent,
-  VideoPromptEvent,
-} from "../events/events";
-import { Utils } from "../utils/utils";
+import { AudioGenerator } from "../audio/audio-generator";
+import { DB } from "../db/db";
+import { Event, JobEvent } from "../events/events";
+import { ImageGenerator } from "../image/image-generator";
+import { Logger } from "../logger/logger";
+import { VideoGenerator } from "../video/video-generator";
 
 export namespace QueueManager {
   export let comfyQueue = 0;
+  let pumping = false;
 
-  // TODO replace with actual db and events from JobOrchestrator
-  export const completed: JobEvents = [];
+  export async function resume() {
+    await DB.Events.requeueRunning();
+  }
 
-  // For now in memory queue only
-  export const imageQueue: ImagePromptEvent[] = [];
-  export const videoQueue: (VideoPromptEvent | TransitionPromptEvent)[] = [];
-  export const audioQueue: AudioPromptEvent[] = [];
+  export async function pump() {
+    if (pumping) return;
+    pumping = true;
 
-  export function pop(type: "image" | "video" | "audio") {
-    let item:
-      | ImagePromptEvent
-      | VideoPromptEvent
-      | TransitionPromptEvent
-      | AudioPromptEvent
-      | undefined;
+    try {
+      if (await DB.Events.hasRunning()) return;
 
-    if (type === "image") {
-      item = imageQueue.shift();
+      const event = await DB.Events.claimNextRunnable();
+      if (!event) return;
+
+      await dispatch(event);
+    } finally {
+      pumping = false;
     }
+  }
 
-    if (type === "audio") {
-      item = audioQueue.shift();
+  async function dispatch(event: JobEvent) {
+    Logger.info("Dispatching queued event", {
+      id: event.id,
+      type: event.type,
+      mode: event.mode,
+      priority: event.priority,
+    });
+
+    try {
+      if (event.type === Event.NewAudioPrompt) {
+        await AudioGenerator.generate_audio(event);
+        return;
+      }
+
+      if (event.type === Event.NewImagePrompt) {
+        await ImageGenerator.generate_image(event);
+        return;
+      }
+
+      if (
+        event.type === Event.NewVideoPrompt ||
+        event.type === Event.NewTransitionPrompt
+      ) {
+        await VideoGenerator.generate_video(event);
+        return;
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      Logger.error("Failed to dispatch queued event", { id: event.id, message });
+      await DB.Jobs.failJob(event.jobId);
+      queueMicrotask(() => {
+        void pump();
+      });
     }
-
-    if (type === "video") {
-      item = videoQueue.shift();
-    }
-
-    Utils.assert(item, "Attempted to take item from empty or invalid queue");
-    completed.push(item);
-
-    return item;
-  }
-
-  export function findEventById(id: string) {
-    return completed.find((e) => e.id === id) ?? null;
-  }
-
-  export function isImageQueueBlocked() {
-    return imageQueue.length <= 0 || comfyQueue > 0;
-  }
-
-  export function isAudioQueueBlocked() {
-    return audioQueue.length <= 0 || comfyQueue > 3;
-  }
-
-  export function isVideoQueueBlocked() {
-    return videoQueue.length <= 0 || imageQueue.length > 0 || comfyQueue > 0;
   }
 }
