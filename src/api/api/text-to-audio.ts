@@ -6,10 +6,14 @@ import { PostDistinctAudio } from "../schemas";
 
 export async function text_to_audio(options: PostDistinctAudio): Promise<Response> {
   const instrumentalPrompt = Utils.sanitizeInputText(options.instrumental_prompt);
-  const lyricPrompt = Utils.sanitizeInputText(options.lyric_prompt ?? "") || undefined;
+  const lyricPrompt = Utils.sanitizeInputText(options.lyric_prompt);
 
   if (!instrumentalPrompt) {
     throw new Error("Instrumental prompt is required");
+  }
+
+  if (!lyricPrompt) {
+    throw new Error("Lyric prompt is required");
   }
 
   const { id: jobId } = await JobOrchestrator.create_job({

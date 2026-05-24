@@ -272,16 +272,15 @@ export const DistinctAudio = async ({
                 </select>
               </fieldset>
 
-              <fieldset className="fieldset">
-                <legend className="fieldset-legend">Time Signature</legend>
-                <div className="join w-full">
-                  <input className="btn join-item flex-1" type="radio" name="timesignature" aria-label="3/4" value="3" />
-                  <input className="btn join-item flex-1" type="radio" name="timesignature" aria-label="4/4" value="4" checked />
-                  <input className="btn join-item flex-1" type="radio" name="timesignature" aria-label="5/4" value="5" />
-                  <input className="btn join-item flex-1" type="radio" name="timesignature" aria-label="6/8" value="6" />
-                  <input className="btn join-item flex-1" type="radio" name="timesignature" aria-label="7/8" value="7" />
-                </div>
-              </fieldset>
+                <fieldset className="fieldset">
+                  <legend className="fieldset-legend">Time Signature</legend>
+                  <div className="join w-full">
+                    <input className="btn join-item flex-1" type="radio" name="timesignature" aria-label="2/4" value="2" />
+                    <input className="btn join-item flex-1" type="radio" name="timesignature" aria-label="3/4" value="3" />
+                    <input className="btn join-item flex-1" type="radio" name="timesignature" aria-label="4/4" value="4" checked />
+                    <input className="btn join-item flex-1" type="radio" name="timesignature" aria-label="6/8" value="6" />
+                  </div>
+                </fieldset>
             </div>
           </div>
 

@@ -40,7 +40,7 @@ export namespace JobOrchestrator {
   }
 
   export async function create_job(payload: CreateJob) {
-    const name = await PromptGenerator.job_name();
+    const name = await PromptGenerator.job_name(payload.original_prompt);
 
     return await DB.Jobs.create_job({
       ...payload,
