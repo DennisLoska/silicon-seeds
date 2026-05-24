@@ -48,7 +48,13 @@ export namespace Metadata {
 
       try {
         const json = JSON.parse(output);
-        return parseInt(json.format.duration);
+        const duration = Number(json.format.duration);
+
+        if (!Number.isFinite(duration) || duration <= 0) {
+          throw new Error("Invalid audio duration");
+        }
+
+        return Math.max(1, Math.ceil(duration));
       } catch (error) {
         Logger.error("Failed to parse audio metadata", { error });
         throw new Error("Failed to parse audio metadata");
