@@ -140,6 +140,20 @@ app.get("/generated-images-card", async (c) => {
   return c.html(await Templates.DistinctImageGeneratedImagesFragment({ jobId }));
 });
 
+app.get("/image-action-card", async (c) => {
+  const jobId = c.req.query("job_id");
+  if (!jobId) {
+    return c.text("job_id is required", 400);
+  }
+
+  return c.html(
+    await Templates.DistinctImageActionCardFragment({
+      showProgress: true,
+      jobId,
+    }),
+  );
+});
+
 app.get("/generated-audio-card", async (c) => {
   const jobId = c.req.query("job_id");
   if (!jobId) {

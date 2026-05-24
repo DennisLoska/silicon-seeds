@@ -13,6 +13,7 @@ import { Settings as settingsComponent } from "./settings";
 import { Gallery as galleryComponent } from "./gallery";
 import {
   DistinctImage as distinctImageComponent,
+  DistinctImageActionCardFragment as distinctImageActionCardFragment,
   DistinctImageGeneratedImagesFragment as distinctImageGeneratedImagesFragment,
   DistinctImageProgressFragment as distinctImageProgressFragment,
 } from "./distinct-image";
@@ -46,6 +47,7 @@ export namespace Templates {
   export const ComposeProgressFragment = composeProgressFragment;
   export const Gallery = galleryComponent;
   export const DistinctImage = distinctImageComponent;
+  export const DistinctImageActionCardFragment = distinctImageActionCardFragment;
   export const DistinctImageProgressFragment = distinctImageProgressFragment;
   export const DistinctImageGeneratedImagesFragment =
     distinctImageGeneratedImagesFragment;
