@@ -19,4 +19,13 @@ export namespace Utils {
     if (path.endsWith(".json")) return "application/json";
     return "application/octet-stream";
   }
+
+  export function sanitizeInputText(text: string): string {
+    return text
+      .replace(/\u0000/g, "")
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n")
+      .replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+      .trim();
+  }
 }
