@@ -41,7 +41,13 @@ Make sure to only include the actual image prompt in your response and nothing m
       }
       const prompt = res.content.trim();
 
-      ImageGenerator.schedule_image({ jobId, mode, prompt, lora, index });
+      await ImageGenerator.schedule_image({
+        jobId,
+        mode,
+        prompt,
+        lora,
+        index,
+      });
     }
   }
 
@@ -168,13 +174,10 @@ ${text}
       scenes = scenes.slice(0, amount);
     }
 
-    for (const scene of scenes) {
-      const index = scenes.indexOf(scene);
-      if (preset) {
-        txt_to_img_prompt(jobId, mode, scene, 1, preset, index);
-      } else {
-        txt_to_img_prompt(jobId, mode, scene, 1, undefined, index);
-      }
-    }
+    await Promise.all(
+      scenes.map((scene, index) =>
+        txt_to_img_prompt(jobId, mode, scene, 1, preset, index),
+      ),
+    );
   }
 }
