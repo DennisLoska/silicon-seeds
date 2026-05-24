@@ -221,9 +221,14 @@ export const DistinctImage = async ({
                   </span>
                 ) : null}
               </div>
-              <p className="text-sm text-base-content/70 mb-4 flex-none">
-                Monitoring job: {jobId}
-              </p>
+              <div className="mb-4 flex-none space-y-1">
+                <p className="text-base font-semibold text-base-content">
+                  {job?.name}
+                </p>
+                <p className="text-sm text-base-content/70">
+                  Monitoring job: {jobId}
+                </p>
+              </div>
 
               {/* Events polling — HTMX fetches events which include NewImagePrompt with image metadata */}
               <div

@@ -18,6 +18,7 @@ export interface DbSchema {
     id: string;
     created_at: Generated<string> | string;
     status: JobLifecycleStatus;
+    name: string;
     fps?: number;
     clip_duration?: number;
     transition_duration?: number;
@@ -61,7 +62,14 @@ export type JobsSchema = Omit<DbSchema["jobs"], "created_at"> & {
 export type EventsSchema = DbSchema["events"];
 export type MetaSchema = DbSchema["meta"];
 
-export type CreateJob = Omit<DbSchema["jobs"], "id" | "created_at" | "status">;
+export type CreateJob = Omit<
+  DbSchema["jobs"],
+  "id" | "created_at" | "status" | "name"
+>;
+
+type InsertJob = CreateJob & {
+  name: string;
+};
 
 export namespace DB {
   export const db = new Kysely<DbSchema>({
@@ -77,7 +85,7 @@ export namespace DB {
       pendingPromptIds: string[];
     };
 
-    export async function create_job(payload: CreateJob) {
+    export async function create_job(payload: InsertJob) {
       return await db
         .insertInto("jobs")
         .values({

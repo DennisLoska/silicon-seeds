@@ -10,6 +10,35 @@ import { DB } from "../db/db";
 import z from "zod/v3";
 
 export namespace PromptGenerator {
+  const JobNameSchema = z.object({
+    words: z.array(z.string().trim().min(2).max(20)).min(3).max(4),
+  });
+
+  export async function job_name() {
+    const res = await LLM.structured(
+      `Generate a fun, memorable title for a generative media job.
+
+Requirements:
+- return exactly 3 or 4 words
+- each word must be vivid and concise
+- use title-friendly words only
+- no punctuation
+- no numbers
+- no generic filler words like "the", "and", "for", "with"
+- the full title should feel playful, creative, and slightly poetic
+
+Return structured data only.
+`,
+      JobNameSchema,
+    );
+
+    if (!res?.parsed) {
+      return "Velvet Ember Bloom";
+    }
+
+    return res.parsed.words.join(" ");
+  }
+
   export async function txt_to_img_prompt(
     jobId: string,
     mode: JobMode = JobMode.Image,

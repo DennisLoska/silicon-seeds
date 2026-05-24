@@ -32,6 +32,7 @@ interface BaseEvent {
 export interface Job extends BaseEvent {
   created_at: string;
   status?: JobLifecycleStatus;
+  name?: string;
   fps?: number;
   clip_duration?: number;
   transition_duration?: number;
