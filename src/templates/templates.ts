@@ -16,6 +16,11 @@ import {
   DistinctImageGeneratedImagesFragment as distinctImageGeneratedImagesFragment,
   DistinctImageProgressFragment as distinctImageProgressFragment,
 } from "./distinct-image";
+import {
+  DistinctAudio as distinctAudioComponent,
+  DistinctAudioGeneratedAudioFragment as distinctAudioGeneratedAudioFragment,
+  DistinctAudioProgressFragment as distinctAudioProgressFragment,
+} from "./distinct-audio";
 import { Job } from "../events/events";
 import { OobHeader as oobHeaderComponent } from "./oob-header";
 import { EventList } from "./events-list";
@@ -44,5 +49,9 @@ export namespace Templates {
   export const DistinctImageProgressFragment = distinctImageProgressFragment;
   export const DistinctImageGeneratedImagesFragment =
     distinctImageGeneratedImagesFragment;
+  export const DistinctAudio = distinctAudioComponent;
+  export const DistinctAudioProgressFragment = distinctAudioProgressFragment;
+  export const DistinctAudioGeneratedAudioFragment =
+    distinctAudioGeneratedAudioFragment;
   export const OobHeader = oobHeaderComponent;
 }

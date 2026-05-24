@@ -16,6 +16,10 @@ async function renderRegenerateResponse(
     return c.html(await Templates.DistinctImageProgressFragment({ jobId }));
   }
 
+  if (source === "audio-progress") {
+    return c.html(await Templates.DistinctAudioProgressFragment({ jobId }));
+  }
+
   return c.html(await Templates.JobContentAreaFragment({ jobId, activeTab }));
 }
 

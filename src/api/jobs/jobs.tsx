@@ -109,6 +109,15 @@ app.get("/image-progress", async (c) => {
   return c.html(await Templates.DistinctImageProgressFragment({ jobId }));
 });
 
+app.get("/audio-progress", async (c) => {
+  const jobId = c.req.query("job_id");
+  if (!jobId) {
+    return c.text("job_id is required", 400);
+  }
+
+  return c.html(await Templates.DistinctAudioProgressFragment({ jobId }));
+});
+
 app.get("/generated-images", async (c) => {
   const jobId = c.req.query("job_id");
   if (!jobId) {
@@ -129,6 +138,15 @@ app.get("/generated-images-card", async (c) => {
   }
 
   return c.html(await Templates.DistinctImageGeneratedImagesFragment({ jobId }));
+});
+
+app.get("/generated-audio-card", async (c) => {
+  const jobId = c.req.query("job_id");
+  if (!jobId) {
+    return c.text("job_id is required", 400);
+  }
+
+  return c.html(await Templates.DistinctAudioGeneratedAudioFragment({ jobId }));
 });
 
 app.get("/stream", (c) => {

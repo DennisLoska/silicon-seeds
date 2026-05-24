@@ -6,7 +6,7 @@ import { getAssetPath } from "./utils";
 
 export interface EventListProps {
   jobId: string;
-  source?: "jobs-events" | "compose-progress" | "image-progress";
+  source?: "jobs-events" | "compose-progress" | "image-progress" | "audio-progress";
 }
 
 const EVENT_LABELS = {
@@ -107,6 +107,13 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
             </span>,
           );
         }
+        if (evt.lyrics) {
+          metadataBadges.push(
+            <span key="lyrics" className="badge badge-secondary text-xs">
+              lyrics
+            </span>,
+          );
+        }
         break;
     }
 
@@ -124,12 +131,16 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
           ? "#compose-progress-fragment"
           : source === "image-progress"
             ? "#distinct-image-progress-fragment"
+            : source === "audio-progress"
+              ? "#distinct-audio-progress-fragment"
             : "#job-content-area";
       const sourceQuery =
         source === "compose-progress"
           ? "compose-progress"
           : source === "image-progress"
             ? "image-progress"
+            : source === "audio-progress"
+              ? "audio-progress"
             : "jobs-events";
       const tabQuery = source === "jobs-events" ? "&tab=events" : "";
       const downloadBtn = (

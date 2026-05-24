@@ -35,3 +35,17 @@ export const PostComposeSchema = z
   );
 
 export type PostCompose = z.infer<typeof PostComposeSchema>;
+
+export const PostDistinctAudioSchema = z.object({
+  instrumental_prompt: z.string().min(1, "Instrumental prompt is required"),
+  lyric_prompt: z.string().optional(),
+  duration: z.coerce.number().int().min(10).max(180),
+  bpm: z.coerce.number().int().min(40).max(240),
+  cfg_scale: z.coerce.number().min(0).max(10),
+  temperature: z.coerce.number().min(0).max(2),
+  top_p: z.coerce.number().min(0).max(1),
+  keyscale: z.string().min(1).max(20),
+  timesignature: z.enum(["3", "4", "5", "6", "7"]),
+});
+
+export type PostDistinctAudio = z.infer<typeof PostDistinctAudioSchema>;

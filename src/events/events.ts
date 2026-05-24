@@ -102,6 +102,8 @@ export interface TransitionPromptEvent extends JobBaseEvent {
 export interface AudioPromptEvent extends JobBaseEvent {
   prompt: string;
   duration?: number;
+  lyrics?: string;
+  audio_settings?: Record<string, unknown>;
   type: Event.NewAudioPrompt;
 }
 

@@ -166,13 +166,15 @@ export namespace JobOrchestrator {
         };
 
       case Event.NewAudioPrompt:
-        const { duration } = event;
+        const { duration, lyrics, audio_settings } = event;
 
         return {
           ...base,
           type: Event.NewAudioPrompt,
           prompt: prompt ?? "n/a",
           duration,
+          lyrics,
+          audio_settings,
         };
 
       default:
