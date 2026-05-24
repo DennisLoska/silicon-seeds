@@ -84,45 +84,8 @@ export namespace SocketServer {
         await PromptGenerator.img_to_vid_prompt(promptId);
       }
 
-      if (
-        event.type === Event.NewAudioPrompt &&
-        event.mode === JobMode.Speech
-      ) {
-        const metadata = await DB.Meta.findByEventId(event.id);
-        const audioBlob = await comfyClient.getAsset(
-          metadata.filename,
-          metadata.subfolder,
-          metadata.type,
-        );
-
-        const duration = await Metadata.getAudioDuration(audioBlob);
-        const job = await DB.Jobs.findById(event.jobId);
-        await AudioGenerator.schedule_audio({
-          jobId: event.jobId,
-          duration,
-        });
-
-        const clipDuration = job.clip_duration || Metadata.CLIP_DURATION;
-        const transitionDuration =
-          job.transition_duration || Metadata.TRANSITION_DURATION;
-        const clipCount = Math.ceil(
-          (duration + transitionDuration) / (clipDuration + transitionDuration),
-        );
-
-        const textEvents = (await DB.Events.findByJobId(event.jobId)).filter(
-          (item) => item.type === Event.NewTextPrompt,
-        );
-        const scriptEvent = textEvents[0];
-
-        if (scriptEvent?.type === Event.NewTextPrompt) {
-          await PromptGenerator.image_scene_prompts(
-            event.jobId,
-            JobMode.Video,
-            scriptEvent.text,
-            clipCount,
-            job.style_preset as any,
-          );
-        }
+      if (event.type === Event.NewAudioPrompt && event.mode === JobMode.Speech) {
+        await AudioGenerator.handle_speech_complete(event);
       }
 
       if (

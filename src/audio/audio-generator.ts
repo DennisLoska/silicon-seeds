@@ -1,7 +1,10 @@
 import { comfyClient, ModelVariant } from "../comfyui/comfyui-client";
 import { AudioPromptEvent, Event, JobMode } from "../events/events";
+import { Metadata } from "../meta/meta";
+import { PromptGenerator } from "../prompts/prompt-generator";
 import { QueueManager } from "../queue/queue-manager";
 import { JobOrchestrator } from "../jobs/jobs";
+import { Presets } from "../styles/presets";
 import { Utils } from "../utils/utils";
 import { DB } from "../db/db";
 
@@ -52,6 +55,49 @@ export namespace AudioGenerator {
       };
 
       await comfyClient.generate(modelVariant, job);
+    }
+  }
+
+  export async function handle_speech_complete(event: AudioPromptEvent) {
+    Utils.assert(
+      event.mode === JobMode.Speech,
+      "Speech completion handler requires a speech event",
+    );
+
+    const metadata = await DB.Meta.findByEventId(event.id);
+    const audioBlob = await comfyClient.getAsset(
+      metadata.filename,
+      metadata.subfolder,
+      metadata.type,
+    );
+
+    const duration = await Metadata.getAudioDuration(audioBlob);
+    const job = await DB.Jobs.findById(event.jobId);
+    await schedule_audio({
+      jobId: event.jobId,
+      duration,
+    });
+
+    const clipDuration = job.clip_duration || Metadata.CLIP_DURATION;
+    const transitionDuration =
+      job.transition_duration || Metadata.TRANSITION_DURATION;
+    const clipCount = Math.ceil(
+      (duration + transitionDuration) / (clipDuration + transitionDuration),
+    );
+
+    const textEvents = (await DB.Events.findByJobId(event.jobId)).filter(
+      (item) => item.type === Event.NewTextPrompt,
+    );
+    const scriptEvent = textEvents[0];
+
+    if (scriptEvent?.type === Event.NewTextPrompt) {
+      await PromptGenerator.image_scene_prompts(
+        event.jobId,
+        JobMode.Video,
+        scriptEvent.text,
+        clipCount,
+        job.style_preset as Presets | undefined,
+      );
     }
   }
 }
