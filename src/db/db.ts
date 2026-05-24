@@ -668,6 +668,17 @@ export namespace DB {
       return null;
     }
 
+    function getOutputAssetPath(subfolder: string, filename: string) {
+      const outputDir = Bun.env.OUTPUT_DIR?.replace(/\/$/, "") ?? "";
+      const cleanSubfolder = subfolder.replace(/^\/+|\/+$/g, "").trim();
+
+      if (!cleanSubfolder) {
+        return `${outputDir}/${filename}`;
+      }
+
+      return `${outputDir}/${cleanSubfolder}/${filename}`;
+    }
+
     export async function listItems(options: ListItemsOptions = {}) {
       const { cursor, type, limit = 20 } = options;
 
@@ -705,25 +716,39 @@ export namespace DB {
 
       const results = await query
         .orderBy("meta.id", "desc") // UUID7 is sortable chronologically!
-        .limit(limit)
+        .limit(limit * 3)
         .execute();
 
-      return results.map((row) => {
-        const mediaType = getMediaTypeFromExtension(row.filename);
-        return {
-          meta_id: row.meta_id,
-          event_id: row.event_id,
-          filename: row.filename,
-          subfolder: row.subfolder,
-          type: row.meta_type,
-          created_at: row.event_created_at,
-          job_id: row.job_id,
-          mediaType: mediaType,
-        } as ListItemResult & {
-          mediaType: "image" | "video" | null;
+      const items = await Promise.all(
+        results.map(async (row) => {
+          const mediaType = getMediaTypeFromExtension(row.filename);
+          if (!mediaType) return null;
+
+          const file = Bun.file(getOutputAssetPath(row.subfolder, row.filename));
+          if (!(await file.exists())) return null;
+
+          return {
+            meta_id: row.meta_id,
+            event_id: row.event_id,
+            filename: row.filename,
+            subfolder: row.subfolder,
+            type: row.meta_type,
+            created_at: row.event_created_at,
+            job_id: row.job_id,
+            mediaType,
+          } as ListItemResult & {
+            mediaType: "image" | "video";
+            created_at: string;
+          };
+        }),
+      );
+
+      return items
+        .filter((row): row is ListItemResult & {
+          mediaType: "image" | "video";
           created_at: string;
-        };
-      });
+        } => row !== null)
+        .slice(0, limit);
     }
   }
 }
