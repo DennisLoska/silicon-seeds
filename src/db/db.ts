@@ -10,6 +10,7 @@ import {
   JobMode,
   JobStatus,
 } from "../events/events";
+import { JobUpdates } from "../sse/job-updates";
 import { Lora } from "../styles/presets";
 import { Utils } from "../utils/utils";
 
@@ -78,6 +79,22 @@ export namespace DB {
     }),
   });
 
+  function notifyJob(jobId: string) {
+    JobUpdates.publish(jobId);
+  }
+
+  async function notifyJobForEvent(eventId: string) {
+    const event = await db
+      .selectFrom("events")
+      .select("job_id")
+      .where("id", "=", eventId)
+      .executeTakeFirst();
+
+    if (event) {
+      notifyJob(event.job_id);
+    }
+  }
+
   export namespace Jobs {
     export type CancelJobResult = {
       job: JobsSchema;
@@ -86,7 +103,7 @@ export namespace DB {
     };
 
     export async function create_job(payload: InsertJob) {
-      return await db
+      const job = await db
         .insertInto("jobs")
         .values({
           id: Metadata.randomId(),
@@ -95,6 +112,9 @@ export namespace DB {
         })
         .returningAll()
         .executeTakeFirstOrThrow();
+
+      notifyJob(job.id);
+      return job;
     }
 
     export async function list() {
@@ -122,12 +142,15 @@ export namespace DB {
     }
 
     export async function updateStatus(id: string, status: JobLifecycleStatus) {
-      return await db
+      const job = await db
         .updateTable("jobs")
         .set({ status })
         .where("id", "=", id)
         .returningAll()
         .executeTakeFirstOrThrow();
+
+      notifyJob(job.id);
+      return job;
     }
 
     export async function failJob(id: string) {
@@ -160,10 +183,12 @@ export namespace DB {
           )
           .execute();
       });
+
+      notifyJob(id);
     }
 
     export async function cancelJob(id: string): Promise<CancelJobResult> {
-      return await db.transaction().execute(async (trx) => {
+      const result = await db.transaction().execute(async (trx) => {
         const job = await trx
           .selectFrom("jobs")
           .selectAll()
@@ -212,6 +237,9 @@ export namespace DB {
           pendingPromptIds,
         };
       });
+
+      notifyJob(id);
+      return result;
     }
 
     export async function failBrokenJobs() {
@@ -424,7 +452,9 @@ export namespace DB {
         .returningAll()
         .executeTakeFirstOrThrow();
 
-      return rowToEvent(res);
+      const event = rowToEvent(res);
+      notifyJob(event.jobId);
+      return event;
     }
 
     export async function findById(id: string) {
@@ -449,7 +479,9 @@ export namespace DB {
         .returningAll()
         .executeTakeFirstOrThrow();
 
-      return rowToEvent(res);
+      const event = rowToEvent(res);
+      notifyJob(event.jobId);
+      return event;
     }
 
     export async function markComplete(id: string) {
@@ -464,7 +496,9 @@ export namespace DB {
         .returningAll()
         .executeTakeFirstOrThrow();
 
-      return rowToEvent(res);
+      const event = rowToEvent(res);
+      notifyJob(event.jobId);
+      return event;
     }
 
     export async function markFailed(id: string, error: string) {
@@ -479,7 +513,9 @@ export namespace DB {
         .returningAll()
         .executeTakeFirstOrThrow();
 
-      return rowToEvent(res);
+      const event = rowToEvent(res);
+      notifyJob(event.jobId);
+      return event;
     }
 
     export async function requeueRunning() {
@@ -530,7 +566,11 @@ export namespace DB {
         .returningAll()
         .executeTakeFirst();
 
-      return res ? rowToEvent(res) : null;
+      if (!res) return null;
+
+      const event = rowToEvent(res);
+      notifyJob(event.jobId);
+      return event;
     }
 
     export async function findByJobId(jobId: string) {
@@ -547,7 +587,7 @@ export namespace DB {
 
   export namespace Meta {
     export async function create(payload: Omit<MetaSchema, "id">) {
-      return await db
+      const res = await db
         .insertInto("meta")
         .orFail()
         .values({
@@ -555,6 +595,9 @@ export namespace DB {
           ...payload,
         })
         .execute();
+
+      await notifyJobForEvent(payload.event_id);
+      return res;
     }
 
     export async function findByEventId(eventId: string) {

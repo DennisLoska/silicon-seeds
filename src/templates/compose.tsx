@@ -1,11 +1,16 @@
 import { DB } from "../db/db";
 import { JobLifecycleStatus } from "../events/events";
+import { EventList } from "./events-list";
 import { Icons } from "./icons";
 import { ErrorToast } from "./toast";
 
 interface ComposeProps {
   showProgress?: boolean;
   jobId?: string;
+}
+
+interface ComposeProgressProps {
+  jobId: string;
 }
 
 function getJobStatusUi(status?: JobLifecycleStatus) {
@@ -38,9 +43,6 @@ function getJobStatusUi(status?: JobLifecycleStatus) {
 }
 
 export const Compose = async ({ showProgress = false, jobId = "" }: ComposeProps) => {
-  const job = showProgress && jobId ? await DB.Jobs.findById(jobId).catch(() => null) : null;
-  const statusUi = job ? getJobStatusUi(job.status) : null;
-
   return (
   <div className="flex flex-col sm:px-6 py-6 xl:h-full bg-base-200">
     <ErrorToast />
@@ -51,6 +53,8 @@ export const Compose = async ({ showProgress = false, jobId = "" }: ComposeProps
       hx-encoding="multipart/form-data"
       hx-swap="none"
       hx-disable-element="#submit-btn"
+      hx-ext={showProgress && jobId ? "sse" : undefined}
+      sse-connect={showProgress && jobId ? `/jobs/stream?job_id=${jobId}` : undefined}
       hx-on={`
         before-request(this) {
           this.querySelector('.submit-toggle').checked = true;
@@ -303,59 +307,72 @@ export const Compose = async ({ showProgress = false, jobId = "" }: ComposeProps
 
       {/* Card 6: Progress - Only shown when showProgress=true */}
       {showProgress && jobId && (
-        <div className="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] scrollbar-hide overflow-y-scroll xl:w-1/2 2xl:w-1/3 flex flex-col">
-          <div className="card-body flex flex-col">
-            <div className="flex items-start justify-between gap-4 mb-3">
-              <h2 className="card-title text-lg font-semibold flex items-center gap-2">
-                <Icons.PulseWavesIcon />
-                Job Progress
-              </h2>
-              {statusUi ? (
-                <span className={`badge badge-xl ${statusUi.badge}`}>
-                  <statusUi.Icon />
-                  {statusUi.label}
-                </span>
-              ) : null}
-            </div>
-            <div className="mb-4 flex-none space-y-1">
-              <p className="text-base font-semibold text-base-content">
-                {job?.name}
-              </p>
-              <p className="text-sm text-base-content/70">Monitoring job: {jobId}</p>
-            </div>
-            <div
-              id="events-container"
-              className="flex-grow min-h-[300px]"
-              hx-get={`/jobs/events?job_id=${jobId}`}
-              hx-trigger="load, every 2s"
-              hx-swap="innerHTML"
-            >
-              <span className="loading loading-spinner"></span>
-              Loading events...
-            </div>
-
-            {/* View Job Button Section */}
-            <div className="card-actions justify-end mt-4 flex-none gap-2">
-              <button
-                className="btn btn-error btn-outline"
-                hx-get={`/api/fragments/job-action-modal?jobId=${jobId}&action=cancel&source=compose`}
-                hx-target="#job-action-modal"
-                hx-swap="outerHTML"
-              >
-                Cancel
-              </button>
-              <a
-                href={`/jobs?job_id=${jobId}&filter=all&tab=status`}
-                className="btn btn-primary"
-              >
-                View Job
-              </a>
-            </div>
-          </div>
-        </div>
+        <ComposeProgressFragment jobId={jobId} />
       )}
     </form>
     <dialog id="job-action-modal" className="modal"></dialog>
   </div>
+  );
+};
+
+export const ComposeProgressCard = async ({ jobId }: ComposeProgressProps) => {
+  const job = await DB.Jobs.findById(jobId).catch(() => null);
+  const statusUi = job ? getJobStatusUi(job.status) : null;
+
+  return (
+    <div className="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] scrollbar-hide overflow-y-scroll flex flex-col">
+      <div className="card-body flex flex-col">
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <h2 className="card-title text-lg font-semibold flex items-center gap-2">
+            <Icons.PulseWavesIcon />
+            Job Progress
+          </h2>
+          {statusUi ? (
+            <span className={`badge badge-xl ${statusUi.badge}`}>
+              <statusUi.Icon />
+              {statusUi.label}
+            </span>
+          ) : null}
+        </div>
+        <div className="mb-4 flex-none space-y-1">
+          <p className="text-base font-semibold text-base-content">{job?.name}</p>
+          <p className="text-sm text-base-content/70">Monitoring job: {jobId}</p>
+        </div>
+        <div id="events-container" className="flex-grow min-h-[300px]">
+          {await (<EventList jobId={jobId} />)}
+        </div>
+
+        <div className="card-actions justify-end mt-4 flex-none gap-2">
+          <button
+            className="btn btn-error btn-outline"
+            hx-get={`/api/fragments/job-action-modal?jobId=${jobId}&action=cancel&source=compose`}
+            hx-target="#job-action-modal"
+            hx-swap="outerHTML"
+          >
+            Cancel
+          </button>
+          <a
+            href={`/jobs?job_id=${jobId}&filter=all&tab=status`}
+            className="btn btn-primary"
+          >
+            View Job
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const ComposeProgressFragment = async ({ jobId }: ComposeProgressProps) => {
+  return (
+    <div
+      id="compose-progress-fragment"
+      className="w-full xl:w-1/2 2xl:w-1/3 min-w-0 min-h-0 flex flex-col"
+      hx-get={`/jobs/compose-progress?job_id=${jobId}`}
+      hx-trigger="sse:job-update"
+      hx-swap="outerHTML"
+    >
+      {await (<ComposeProgressCard jobId={jobId} />)}
+    </div>
   );
 };

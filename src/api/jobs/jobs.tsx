@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { Templates } from "../../templates/templates";
 import { DB } from "../../db/db";
 import { Api } from "../api";
+import { JobUpdates } from "../../sse/job-updates";
 
 const { JobsFragment, JobTabsFragment, JobDetailsFragment, EventListFragment, GeneratedImagesFragment } =
   Templates;
@@ -84,6 +85,24 @@ app.get("/events", async (c) => {
   return c.html(await (<EventListFragment jobId={jobId} />));
 });
 
+app.get("/compose-progress", async (c) => {
+  const jobId = c.req.query("job_id");
+  if (!jobId) {
+    return c.text("job_id is required", 400);
+  }
+
+  return c.html(await Templates.ComposeProgressFragment({ jobId }));
+});
+
+app.get("/image-progress", async (c) => {
+  const jobId = c.req.query("job_id");
+  if (!jobId) {
+    return c.text("job_id is required", 400);
+  }
+
+  return c.html(await Templates.DistinctImageProgressFragment({ jobId }));
+});
+
 app.get("/generated-images", async (c) => {
   const jobId = c.req.query("job_id");
   if (!jobId) {
@@ -95,6 +114,24 @@ app.get("/generated-images", async (c) => {
   }
 
   return c.html(await (<GeneratedImagesFragment jobId={jobId} />));
+});
+
+app.get("/generated-images-card", async (c) => {
+  const jobId = c.req.query("job_id");
+  if (!jobId) {
+    return c.text("job_id is required", 400);
+  }
+
+  return c.html(await Templates.DistinctImageGeneratedImagesFragment({ jobId }));
+});
+
+app.get("/stream", (c) => {
+  const jobId = c.req.query("job_id");
+  if (!jobId) {
+    return c.text("job_id is required", 400);
+  }
+
+  return JobUpdates.stream(jobId);
 });
 
 export default app;
