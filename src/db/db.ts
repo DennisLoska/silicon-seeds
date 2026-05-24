@@ -267,7 +267,7 @@ export namespace DB {
     }
 
     export async function finalizeCompletedJobs() {
-      const jobsToComplete = await db
+      const settledActiveJobs = await db
         .selectFrom("jobs")
         .innerJoin("events", "events.job_id", "jobs.id")
         .select("jobs.id")
@@ -289,20 +289,21 @@ export namespace DB {
             ),
           ),
         )
-        .where((eb) =>
-          eb.not(
-            eb.exists(
-              eb
-                .selectFrom("events as non_complete_events")
-                .select("non_complete_events.id")
-                .whereRef("non_complete_events.job_id", "=", "jobs.id")
-                .where("non_complete_events.status", "!=", JobStatus.Complete),
-            ),
-          ),
-        )
         .execute();
 
-      for (const job of jobsToComplete) {
+      for (const job of settledActiveJobs) {
+        const failedEvent = await db
+          .selectFrom("events")
+          .select("id")
+          .where("job_id", "=", job.id)
+          .where("status", "=", JobStatus.Failed)
+          .executeTakeFirst();
+
+        if (failedEvent) {
+          await updateStatus(job.id, JobLifecycleStatus.Failed);
+          continue;
+        }
+
         await completeJob(job.id);
       }
     }
