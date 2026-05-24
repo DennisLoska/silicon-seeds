@@ -280,26 +280,82 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
                 <div className="flex flex-wrap gap-2">{metadataBadges}</div>
               )}
               {renderAssetSection()}
-              <div>
-                <p className="text-sm font-medium mb-1 text-base-content/60">
-                  Prompt:
-                </p>
-                <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words">
-                  {promptText}
+              {evt.type === Event.NewAudioPrompt ? (
+                <>
+                  {(() => {
+                    const lyricPromptText = evt.lyrics ? escapeHtml(evt.lyrics) : "";
+
+                    return (
+                      <>
+                  <div>
+                    <p className="text-sm font-medium mb-1 text-base-content/60">
+                      Instrumental Prompt:
+                    </p>
+                    <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words">
+                      {promptText}
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onclick={`navigator.clipboard.writeText("${escapeForJsString(
+                          evt.prompt || "",
+                        )}")`}
+                        className="btn btn-sm btn-secondary mt-2"
+                      >
+                        <Icons.CopyIcon />
+                        <span className="ml-1">Copy</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {evt.lyrics ? (
+                    <div>
+                      <p className="text-sm font-medium mb-1 text-base-content/60">
+                        Lyric Prompt:
+                      </p>
+                      <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words">
+                        {lyricPromptText}
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onclick={`navigator.clipboard.writeText("${escapeForJsString(
+                            evt.lyrics,
+                          )}")`}
+                          className="btn btn-sm btn-secondary mt-2"
+                        >
+                          <Icons.CopyIcon />
+                          <span className="ml-1">Copy</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                      </>
+                    );
+                  })()}
+                </>
+              ) : (
+                <div>
+                  <p className="text-sm font-medium mb-1 text-base-content/60">
+                    Prompt:
+                  </p>
+                  <div className="prompt-text overflow-y-scroll p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words">
+                    {promptText}
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onclick={`navigator.clipboard.writeText("${escapeForJsString(
+                        evt.prompt || "",
+                      )}")`}
+                      className="btn btn-sm btn-secondary mt-2"
+                    >
+                      <Icons.CopyIcon />
+                      <span className="ml-1">Copy</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onclick={`navigator.clipboard.writeText("${escapeForJsString(
-                      evt.prompt || "",
-                    )}")`}
-                    className="btn btn-sm btn-secondary mt-2"
-                  >
-                    <Icons.CopyIcon />
-                    <span className="ml-1">Copy</span>
-                  </button>
-                </div>
-              </div>
+              )}
             </div>
           </details>
         </div>
