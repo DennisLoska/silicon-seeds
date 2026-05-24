@@ -24,12 +24,12 @@ import { VideoGenerator } from "./video/video-generator";
 // - distinct mode: audio generation, video generation
 //
 // Bugs
-// - job is not marked as done when all events have finished
-// - new items in gallery are added vertically and not horizontally
-// - need to sanitize input text in input fields in UI otherwise it breaks json parsing
-// - composite mode: generate video button is not disabled, but it should be whilst the job is running
 // - media tab in job has zoom in effect on image
-// - created_at format is messed up (no ms)
+// - active jobs with zero events can remain active forever
+// - gallery filter UI uses independent checkboxes but behaves like a single-select switcher
+// - user-facing API errors are inconsistent between JSON and HTML fragment flows
+// - compose action lock only disables submit when viewing a running job, not globally across tabs/routes
+// - image/video asset path generation is duplicated across templates and can drift
 //
 // Performance
 // - create tx helper function in DB namesspace
