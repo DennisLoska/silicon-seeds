@@ -72,7 +72,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
       {/* Masonry Gallery */}
       <div
         id="gallery-grid"
-        className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 p-6 gap-4 space-y-4"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 p-6 gap-4"
         aria-live="polite"
       >
         {items.map((item) => (
@@ -81,7 +81,7 @@ export const Gallery = async ({ items, typeFilter }: GalleryProps) => {
 
         {/* Infinite Scroll Sentinel - last element triggers load */}
         <div
-          className="sentinel hidden py-8 text-center break-inside-avoid"
+          className="sentinel hidden py-8 text-center col-span-full"
           hx-get="/gallery/items"
           hx-trigger="revealed"
           hx-swap="afterend"
@@ -111,7 +111,7 @@ export async function renderItems(
       ))}
       {/* New sentinel for next batch - replaces the old one via afterend swap */}
       <div
-        className="sentinel hidden py-8 text-center break-inside-avoid"
+        className="sentinel hidden py-8 text-center col-span-full"
         hx-get="/gallery/items"
         hx-trigger="revealed"
         hx-swap="afterend"
@@ -130,7 +130,7 @@ const GalleryItemCard = ({ item }: { item: GalleryItem }) => {
   const mediaType = item.mediaType;
 
   return (
-    <div className="card bg-base-200 hover:scale-105 transition-transform duration-200 break-inside-avoid rounded-box">
+    <div className="card bg-base-200 hover:scale-105 transition-transform duration-200 rounded-box h-fit">
       <figure className="bg-base-300 flex items-center justify-center overflow-hidden rounded-box">
         {mediaType === "image" && (
           <img

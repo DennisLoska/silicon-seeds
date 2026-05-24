@@ -48,15 +48,14 @@ app.get("/items", async (c) => {
     });
 
     // If no items returned, return "no more items" message
-    if (!items || items.length === 0) {
-      return c.html(
-        <div
-          id="no-more-items"
-          className="text-center py-8 text-base-content/60"
-          style="column-span:all"
-        >
-          No more items
-        </div>,
+      if (!items || items.length === 0) {
+        return c.html(
+          <div
+            id="no-more-items"
+            className="text-center py-8 text-base-content/60 col-span-full"
+          >
+            No more items
+          </div>,
       );
     }
 
