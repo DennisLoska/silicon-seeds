@@ -37,6 +37,11 @@ function formatLabel(value?: string | number | null) {
   return String(value);
 }
 
+function formatSeconds(value?: number | null) {
+  if (value === undefined || value === null) return "Not set";
+  return `${value}s`;
+}
+
 function humanizeEventType(type: Event) {
   switch (type) {
     case Event.NewTextPrompt:
@@ -229,11 +234,11 @@ export const Status = async (job: Job) => {
               </div>
               <div>
                 <div className="text-base-content/60">Clip Duration</div>
-                <div className="font-semibold">{formatLabel(job.clip_duration)}s</div>
+                <div className="font-semibold">{formatSeconds(job.clip_duration)}</div>
               </div>
               <div>
                 <div className="text-base-content/60">Transition Duration</div>
-                <div className="font-semibold">{formatLabel(job.transition_duration)}s</div>
+                <div className="font-semibold">{formatSeconds(job.transition_duration)}</div>
               </div>
             </div>
           </div>
