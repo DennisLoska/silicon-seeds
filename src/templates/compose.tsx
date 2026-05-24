@@ -43,6 +43,9 @@ function getJobStatusUi(status?: JobLifecycleStatus) {
 }
 
 export const Compose = async ({ showProgress = false, jobId = "" }: ComposeProps) => {
+  const activeJob = showProgress && jobId ? await DB.Jobs.findById(jobId).catch(() => null) : null;
+  const isJobRunning = activeJob?.status === JobLifecycleStatus.Active;
+
   return (
   <div className="flex flex-col sm:px-6 py-6 xl:h-full bg-base-200">
     <ErrorToast />
@@ -296,7 +299,12 @@ export const Compose = async ({ showProgress = false, jobId = "" }: ComposeProps
               <button type="reset" className="btn btn-ghost">
                 Reset
               </button>
-              <button type="submit" id="submit-btn" className="btn btn-primary">
+              <button
+                type="submit"
+                id="submit-btn"
+                className="btn btn-primary"
+                disabled={isJobRunning}
+              >
                 Generate Video
                 <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
               </button>
