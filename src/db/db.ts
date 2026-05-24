@@ -142,6 +142,14 @@ export namespace DB {
         .executeTakeFirstOrThrow();
     }
 
+    export async function findByName(name: string) {
+      return await DB.db
+        .selectFrom("jobs")
+        .select(["id", "name"])
+        .where("name", "=", name)
+        .executeTakeFirst();
+    }
+
     export async function deleteById(id: string) {
       // First delete all related events to avoid orphaned records
       await db.deleteFrom("events").where("job_id", "=", id).execute();

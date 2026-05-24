@@ -14,9 +14,13 @@ export namespace PromptGenerator {
     words: z.array(z.string().trim().min(2).max(20)).min(3).max(4),
   });
 
-  export async function job_name() {
-    const res = await LLM.structured(
-      `Generate a fun, memorable title for a generative media job.
+  export async function job_name(originalPrompt?: string | null) {
+    const promptContext = originalPrompt?.trim().slice(0, 600);
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const variationHint = Bun.randomUUIDv7().slice(-6);
+      const res = await LLM.structured(
+        `Generate a fun, memorable title for a generative media job.
 
 Requirements:
 - return exactly 3 or 4 words
@@ -27,16 +31,33 @@ Requirements:
 - no generic filler words like "the", "and", "for", "with"
 - the full title should feel playful, creative, and slightly poetic
 
+${promptContext ? `Creative context from the user's initial prompt:
+${promptContext}
+
+Reflect the subject or mood of that prompt in the title without copying long phrases.
+
+` : ""}Variation hint for this attempt: ${variationHint}
+
 Return structured data only.
 `,
-      JobNameSchema,
-    );
+        JobNameSchema,
+      );
 
-    if (!res?.parsed) {
-      return "Velvet Ember Bloom";
+      const candidate = res?.parsed?.words.join(" ");
+
+      if (!candidate) {
+        Logger.warn("Failed to generate job name, retrying", { attempt });
+        continue;
+      }
+
+      if (!(await DB.Jobs.findByName(candidate))) {
+        return candidate;
+      }
+
+      Logger.warn("Generated duplicate job name, retrying", { candidate, attempt });
     }
 
-    return res.parsed.words.join(" ");
+    return `Job ${Date.now()}`;
   }
 
   export async function txt_to_img_prompt(

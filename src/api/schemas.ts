@@ -1,6 +1,16 @@
 import z from "zod";
 import { Presets } from "../styles/presets";
 
+const AudioKeyscaleSchema = z.enum([
+  "C major",
+  "A minor",
+  "D minor",
+  "E minor",
+  "G major",
+  "B minor",
+  "F# minor",
+]);
+
 export const PostTextToImageSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
   resolution: z.string().max(7).optional(),
@@ -38,14 +48,14 @@ export type PostCompose = z.infer<typeof PostComposeSchema>;
 
 export const PostDistinctAudioSchema = z.object({
   instrumental_prompt: z.string().min(1, "Instrumental prompt is required"),
-  lyric_prompt: z.string().optional(),
+  lyric_prompt: z.string().min(1, "Lyric prompt is required"),
   duration: z.coerce.number().int().min(10).max(720),
   bpm: z.coerce.number().int().min(40).max(240),
   cfg_scale: z.coerce.number().min(0).max(10),
   temperature: z.coerce.number().min(0).max(2),
   top_p: z.coerce.number().min(0).max(1),
-  keyscale: z.string().min(1).max(20),
-  timesignature: z.enum(["3", "4", "5", "6", "7"]),
+  keyscale: AudioKeyscaleSchema,
+  timesignature: z.enum(["2", "3", "4", "6"]),
 });
 
 export type PostDistinctAudio = z.infer<typeof PostDistinctAudioSchema>;
