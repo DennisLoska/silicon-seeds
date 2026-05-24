@@ -3,34 +3,16 @@ import { Logger } from "../logger/logger";
 
 // This is sort of like a utils directory
 export namespace Metadata {
+  // TODO delete these
   export const FPS = 16;
-  export const TIMEOUT = 60;
   export const CLIP_DURATION = 5;
   export const TRANSITION_DURATION = 3;
+
+  export const TIMEOUT = 60;
   export const clientId = Bun.randomUUIDv7();
 
   export function randomId() {
     return Bun.randomUUIDv7();
-  }
-
-  // TODO Can probably delete this
-  export function derive_video_structure(duration: number) {
-    const { CLIP_DURATION, TRANSITION_DURATION } = Metadata;
-
-    // Base equation: duration = (Metadata.CLIP_DURATION * x) + (Metadata.TRANSITION_DURATION * (x - 1))
-    const clipCount = Math.ceil(
-      (duration + TRANSITION_DURATION) / (CLIP_DURATION + TRANSITION_DURATION),
-    );
-
-    const transitionCount = clipCount - 1;
-
-    return {
-      audioDuration: duration,
-      totalDuration:
-        clipCount * CLIP_DURATION + transitionCount * TRANSITION_DURATION,
-      clipCount,
-      transitionCount,
-    };
   }
 
   export async function getAudioDuration(blob: Blob) {

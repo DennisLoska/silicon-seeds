@@ -3,10 +3,14 @@ import zImageTurboApi from "./api/image_z_image_turbo_720p.json";
 import zImageTurboWithLoraApi from "./api/image_z_image_turbo_lora_720p.json";
 import wan2_2_img2vidApi from "./api/video_wan2_2_14B_i2v_720p_5s.json";
 import wan2_2_img2transitionApi from "./api/video_wan2_2_14B_transitions.json";
+import ltx2_3_img2vidApi from "./api/video_ltx2_3_i2v.json";
+import ltx2_3_img2transitionApi from "./api/video_ltx2_3_style_transition.json";
 import ace_step_1_0_api from "./api/audio_ace_step_1_0_instrumental.json";
 import kokoro_tts_api from "./api/kokoro-tts.json";
 import wan2_2_img2vidWorkflow from "./workflows/video_wan2_2_14B_i2v_720p_5s.json";
 import wan2_2_img2transWorkflow from "./workflows/video_wan2_2_14B_transitions.json";
+import ltx2_3_img2vidWorkflow from "./workflows/video_ltx2_3_i2v.json";
+import ltx2_3_img2transWorkflow from "./workflows/video_ltx2_3_style_transition.json";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
 import { Lora } from "../styles/presets";
@@ -72,7 +76,7 @@ export class ComfyUIClient {
 
   async generate(input: ModelVariant, job: JobsSchema) {
     const api = this.buildApi(input, job);
-    const body = this.buildBody(input, api);
+    const body = this.buildBody(input, api, job);
 
     await this.prepareInput(input);
 
@@ -197,7 +201,11 @@ export class ComfyUIClient {
     }
   }
 
-  private buildBody(input: ModelVariant, api: Record<string, unknown>) {
+  private buildBody(
+    input: ModelVariant,
+    api: Record<string, unknown>,
+    job: JobsSchema,
+  ) {
     // This is super important and nowhere documented in ComfyUI :(
     // Without this you won't see all the websocket events...
     const clientId = Metadata.clientId;
@@ -207,8 +215,15 @@ export class ComfyUIClient {
       client_id: clientId,
     };
 
+    let workflow;
     if (input.kind === "image-to-video") {
-      const workflow = wan2_2_img2vidWorkflow;
+      if (job.video_model === "wan2.2") {
+        workflow = wan2_2_img2vidWorkflow;
+      }
+
+      if (job.video_model === "ltx2.3") {
+        workflow = ltx2_3_img2vidWorkflow;
+      }
 
       return JSON.stringify({
         ...base,
@@ -217,7 +232,14 @@ export class ComfyUIClient {
         },
       });
     } else if (input.kind === "image-to-transition") {
-      const workflow = wan2_2_img2transWorkflow;
+      // TODO expose transition model in UI
+      if (job.video_model === "wan2.2") {
+        workflow = wan2_2_img2transWorkflow;
+      }
+      if (job.video_model === "ltx2.3") {
+        workflow = ltx2_3_img2transWorkflow;
+      }
+
       return JSON.stringify({
         ...base,
         extra_data: {
@@ -265,29 +287,47 @@ export class ComfyUIClient {
       // baby seed: 189246353926834
       // api["57:3"].inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
 
-      api = zImageTurboWithLoraApi;
-      api["9"].inputs.filename_prefix = input.id;
-      api["41"].inputs.width = resolution.width;
-      api["41"].inputs.height = resolution.height;
-      api["45"].inputs.text = input.prompt;
-      api["44"].inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
-      api["51"].inputs.strength_model = 0.7;
+      if (job.image_model === "z-image-turbo") {
+        api = zImageTurboWithLoraApi;
+        api["9"].inputs.filename_prefix = input.id;
+        api["41"].inputs.width = resolution.width;
+        api["41"].inputs.height = resolution.height;
+        api["45"].inputs.text = input.prompt;
+        api["44"].inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
+        api["51"].inputs.strength_model = 0.7;
 
-      if (input.lora) {
-        api["51"].inputs.lora_name = `${input.lora}.safetensors`;
+        if (input.lora) {
+          api["51"].inputs.lora_name = `${input.lora}.safetensors`;
+        }
       }
     }
 
     if (input.kind === "image-to-video") {
-      api = wan2_2_img2vidApi;
-      api["93"].inputs.text = input.prompt;
-      api["98"].inputs.width = resolution.width;
-      api["98"].inputs.height = resolution.height;
-      api["98"].inputs.length =
-        (job.clip_duration || Metadata.CLIP_DURATION) *
-        (job.fps || Metadata.FPS);
-      api["108"].inputs.filename_prefix = input.id;
-      api["97"].inputs.image = input.imagePath;
+      if (job.video_model === "wan2.2") {
+        api = wan2_2_img2vidApi;
+        api["93"].inputs.text = input.prompt;
+        api["98"].inputs.width = resolution.width;
+        api["98"].inputs.height = resolution.height;
+        api["98"].inputs.length =
+          (job.clip_duration || Metadata.CLIP_DURATION) *
+            (job.fps || Metadata.FPS) +
+          1;
+        api["108"].inputs.filename_prefix = input.id;
+        api["97"].inputs.image = input.imagePath;
+      }
+
+      if (job.video_model === "ltx2.3") {
+        api = ltx2_3_img2vidApi;
+        api["267:266"].inputs.value = input.prompt;
+        api["267:257"].inputs.value = resolution.width;
+        api["267:258"].inputs.value = resolution.height;
+        api["267:225"].inputs.value =
+          (job.clip_duration || Metadata.CLIP_DURATION) *
+            (job.fps || Metadata.FPS) +
+          1;
+        api["75"].inputs.filename_prefix = input.id;
+        api["269"].inputs.image = input.imagePath;
+      }
     }
 
     if (input.kind === "text-to-speech") {
@@ -308,17 +348,32 @@ export class ComfyUIClient {
     }
 
     if (input.kind === "image-to-transition") {
-      api = wan2_2_img2transitionApi;
-      api["6"].inputs.text = input.prompt;
-      api["68"].inputs.image = input.startImage;
-      api["67"].inputs.width = resolution.width;
-      api["67"].inputs.height = resolution.height;
-      api["67"].inputs.length =
-        (job.transition_duration || Metadata.TRANSITION_DURATION) *
-          (job.fps || Metadata.FPS) +
-        1;
-      api["62"].inputs.image = input.endImage;
-      api["61"].inputs.filename_prefix = input.id;
+      if (job.video_model === "wan2.2") {
+        api = wan2_2_img2transitionApi;
+        api["6"].inputs.text = input.prompt;
+        api["68"].inputs.image = input.startImage;
+        api["67"].inputs.width = resolution.width;
+        api["67"].inputs.height = resolution.height;
+        api["67"].inputs.length =
+          (job.transition_duration || Metadata.TRANSITION_DURATION) *
+            (job.fps || Metadata.FPS) +
+          1;
+        api["62"].inputs.image = input.endImage;
+        api["61"].inputs.filename_prefix = input.id;
+      }
+
+      if (job.video_model === "ltx2.3") {
+        api = ltx2_3_img2transitionApi;
+        api["139:128"].inputs.text = input.prompt;
+        api["137"].inputs.image = input.startImage;
+        api["139:113"].inputs.value = resolution.width;
+        api["139:98"].inputs.value = resolution.height;
+        api["139:114"].inputs.value = job.fps || Metadata.FPS;
+        api["139:143"].inputs.value =
+          job.transition_duration || Metadata.TRANSITION_DURATION;
+        api["138"].inputs.image = input.endImage;
+        api["68"].inputs.filename_prefix = input.id;
+      }
     }
 
     Utils.assert(

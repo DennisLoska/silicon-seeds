@@ -29,7 +29,7 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
       <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex flex-col overflow-hidden resize-none 2xl:resize-x 2xl:min-w-[500px]">
         <div className="card-body flex flex-col flex-grow p-4">
           <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
-              <Icons.DocumentIcon />
+            <Icons.DocumentIcon />
             Video Script
           </h2>
           <textarea
@@ -90,7 +90,8 @@ export const Compose = ({ showProgress = false, jobId = "" }: ComposeProps) => (
                 name="video_model"
                 className="select select-bordered w-full"
               >
-                <option value="wan2.2">Wan2.2</option>
+                <option value="wan2.2">Wan 2.2</option>
+                <option value="ltx2.3">LTX 2.3</option>
               </select>
             </div>
           </div>
