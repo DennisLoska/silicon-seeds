@@ -1,11 +1,14 @@
 import { JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
 import { PromptGenerator } from "../../prompts/prompt-generator";
+import { Utils } from "../../utils/utils";
 import { PostTextToImage } from "../schemas";
 
 export async function text_to_image(options: PostTextToImage): Promise<Response> {
-  const { prompt, resolution, image_model, style_preset, batch_size } = options;
-  if (!prompt || !prompt.trim()) {
+  const { resolution, image_model, style_preset, batch_size } = options;
+  const prompt = Utils.sanitizeInputText(options.prompt);
+
+  if (!prompt) {
     throw new Error("Prompt is required");
   }
 
