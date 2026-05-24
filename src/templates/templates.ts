@@ -5,10 +5,17 @@ import { Media } from "./media";
 import { Events } from "./events";
 import { NotSelected } from "./not-selected";
 import { Dashboard as dashboardComponent } from "./dashboard";
-import { Compose as composeComponent } from "./compose";
+import {
+  Compose as composeComponent,
+  ComposeProgressFragment as composeProgressFragment,
+} from "./compose";
 import { Settings as settingsComponent } from "./settings";
 import { Gallery as galleryComponent } from "./gallery";
-import { DistinctImage as distinctImageComponent } from "./distinct-image";
+import {
+  DistinctImage as distinctImageComponent,
+  DistinctImageGeneratedImagesFragment as distinctImageGeneratedImagesFragment,
+  DistinctImageProgressFragment as distinctImageProgressFragment,
+} from "./distinct-image";
 import { Job } from "../events/events";
 import { OobHeader as oobHeaderComponent } from "./oob-header";
 import { EventList } from "./events-list";
@@ -30,7 +37,11 @@ export namespace Templates {
   export const Dashboard = dashboardComponent;
   export const Settings = settingsComponent;
   export const Compose = composeComponent;
+  export const ComposeProgressFragment = composeProgressFragment;
   export const Gallery = galleryComponent;
   export const DistinctImage = distinctImageComponent;
+  export const DistinctImageProgressFragment = distinctImageProgressFragment;
+  export const DistinctImageGeneratedImagesFragment =
+    distinctImageGeneratedImagesFragment;
   export const OobHeader = oobHeaderComponent;
 }

@@ -1,11 +1,17 @@
 import { DB } from "../db/db";
 import { JobLifecycleStatus } from "../events/events";
+import { EventList } from "./events-list";
+import { GeneratedImages } from "./generated-images";
 import { Icons } from "./icons";
 import { ErrorToast } from "./toast";
 
 interface DistinctImageProps {
   showProgress?: boolean;
   jobId?: string;
+}
+
+interface DistinctImageProgressProps {
+  jobId: string;
 }
 
 function getJobStatusUi(status?: JobLifecycleStatus) {
@@ -41,9 +47,6 @@ export const DistinctImage = async ({
   showProgress = false,
   jobId = "",
 }: DistinctImageProps) => {
-  const job = showProgress && jobId ? await DB.Jobs.findById(jobId).catch(() => null) : null;
-  const statusUi = job ? getJobStatusUi(job.status) : null;
-
   return (
   <div className="flex flex-col sm:px-6 py-6 xl:h-full bg-base-200">
     <ErrorToast />
@@ -54,6 +57,8 @@ export const DistinctImage = async ({
       hx-encoding="multipart/form-data"
       hx-swap="none"
       hx-disable-element="#submit-btn"
+      hx-ext={showProgress && jobId ? "sse" : undefined}
+      sse-connect={showProgress && jobId ? `/jobs/stream?job_id=${jobId}` : undefined}
     >
       {/* Left column: Prompt + Settings + Job Progress stacked vertically */}
       <div className="flex flex-col w-full xl:w-[50%] gap-4">
@@ -207,85 +212,13 @@ export const DistinctImage = async ({
 
         {/* Card 5: Job Progress - only shown when showProgress=true */}
         {showProgress && jobId ? (
-          <div className="card bg-base-100 shadow-xl w-full max-h-[calc(40vh-3rem)] scrollbar-hide overflow-y-scroll flex-none flex flex-col">
-            <div className="card-body flex flex-col p-4">
-              <div className="flex items-start justify-between gap-4 mb-3">
-                <h2 className="card-title text-lg font-semibold flex items-center gap-2">
-                  <Icons.PulseWavesIcon />
-                  Job Progress
-                </h2>
-                {statusUi ? (
-                  <span className={`badge badge-xl ${statusUi.badge}`}>
-                    <statusUi.Icon />
-                    {statusUi.label}
-                  </span>
-                ) : null}
-              </div>
-              <div className="mb-4 flex-none space-y-1">
-                <p className="text-base font-semibold text-base-content">
-                  {job?.name}
-                </p>
-                <p className="text-sm text-base-content/70">
-                  Monitoring job: {jobId}
-                </p>
-              </div>
-
-              {/* Events polling — HTMX fetches events which include NewImagePrompt with image metadata */}
-              <div
-                id="events-container"
-                className="flex-grow"
-                hx-get={`/jobs/events?job_id=${jobId}`}
-                hx-trigger="load, every 2s"
-                hx-swap="innerHTML"
-              >
-                <span className="loading loading-spinner"></span>
-                Loading events...
-              </div>
-
-              {/* View Job Button Section */}
-              <div className="card-actions justify-end mt-4 flex-none gap-2">
-                <button
-                  className="btn btn-error btn-outline"
-                  hx-get={`/api/fragments/job-action-modal?jobId=${jobId}&action=cancel&source=image`}
-                  hx-target="#job-action-modal"
-                  hx-swap="outerHTML"
-                >
-                  Cancel
-                </button>
-                <a
-                  href={`/jobs?job_id=${jobId}&filter=all&tab=status`}
-                  className="btn btn-primary"
-                >
-                  View Job
-                </a>
-              </div>
-            </div>
-          </div>
+          <DistinctImageProgressFragment jobId={jobId} />
         ) : null}
       </div>
 
       {/* Right column: Generated Image - Full height dedicated column */}
       {showProgress && jobId ? (
-        <div className="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] scrollbar-hide overflow-y-scroll xl:flex-1 flex-grow flex flex-col">
-          <div className="card-body flex flex-col p-4">
-            <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
-              <Icons.PhotoCameraIcon />
-              Generated Images
-            </h2>
-            <div
-              id="generated-image-card"
-              className="flex-grow flex items-center justify-center"
-              hx-get={`/jobs/generated-images?job_id=${jobId}`}
-              hx-trigger="load, every 2s"
-              hx-swap="innerHTML"
-            >
-              <span className="loading loading-spinner loading-lg"></span>
-              <p className="text-sm text-base-content/50 mt-4">
-                Waiting for generated images...
-              </p>
-            </div>
-          </div>
-        </div>
+        <DistinctImageGeneratedImagesFragment jobId={jobId} />
       ) : (
         /* Default placeholder - shown when no job is active */
         <div className="card bg-base-100 shadow-xl w-full xl:flex-1 flex-grow min-h-[calc(100vh-7rem)] flex items-center justify-center">
@@ -300,5 +233,102 @@ export const DistinctImage = async ({
     </form>
     <dialog id="job-action-modal" className="modal"></dialog>
   </div>
+  );
+};
+
+export const DistinctImageProgressCard = async ({ jobId }: DistinctImageProgressProps) => {
+  const job = await DB.Jobs.findById(jobId).catch(() => null);
+  const statusUi = job ? getJobStatusUi(job.status) : null;
+
+  return (
+    <div className="card bg-base-100 shadow-xl w-full max-h-[calc(40vh-3rem)] scrollbar-hide overflow-y-scroll flex-none flex flex-col">
+      <div className="card-body flex flex-col p-4">
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <h2 className="card-title text-lg font-semibold flex items-center gap-2">
+            <Icons.PulseWavesIcon />
+            Job Progress
+          </h2>
+          {statusUi ? (
+            <span className={`badge badge-xl ${statusUi.badge}`}>
+              <statusUi.Icon />
+              {statusUi.label}
+            </span>
+          ) : null}
+        </div>
+        <div className="mb-4 flex-none space-y-1">
+          <p className="text-base font-semibold text-base-content">{job?.name}</p>
+          <p className="text-sm text-base-content/70">Monitoring job: {jobId}</p>
+        </div>
+
+        <div id="events-container" className="flex-grow">
+          {await (<EventList jobId={jobId} />)}
+        </div>
+
+        <div className="card-actions justify-end mt-4 flex-none gap-2">
+          <button
+            className="btn btn-error btn-outline"
+            hx-get={`/api/fragments/job-action-modal?jobId=${jobId}&action=cancel&source=image`}
+            hx-target="#job-action-modal"
+            hx-swap="outerHTML"
+          >
+            Cancel
+          </button>
+          <a
+            href={`/jobs?job_id=${jobId}&filter=all&tab=status`}
+            className="btn btn-primary"
+          >
+            View Job
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const DistinctImageProgressFragment = async ({ jobId }: DistinctImageProgressProps) => {
+  return (
+    <div
+      id="distinct-image-progress-fragment"
+      className="w-full min-w-0 min-h-0 flex flex-col"
+      hx-get={`/jobs/image-progress?job_id=${jobId}`}
+      hx-trigger="sse:job-update"
+      hx-swap="outerHTML"
+    >
+      {await (<DistinctImageProgressCard jobId={jobId} />)}
+    </div>
+  );
+};
+
+export const DistinctImageGeneratedImagesCard = async ({
+  jobId,
+}: DistinctImageProgressProps) => {
+  return (
+    <div className="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] scrollbar-hide overflow-y-scroll xl:flex-1 flex-grow flex flex-col">
+      <div className="card-body flex flex-col p-4">
+        <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
+          <Icons.PhotoCameraIcon />
+          Generated Images
+        </h2>
+        <div id="generated-image-card" className="flex-grow flex items-center justify-center">
+          {await (<GeneratedImages jobId={jobId} />)}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const DistinctImageGeneratedImagesFragment = async ({
+  jobId,
+}: DistinctImageProgressProps) => {
+  return (
+    <div
+      id="distinct-image-generated-images-fragment"
+      className="w-full xl:flex-1 flex-grow min-w-0 min-h-0 flex flex-col"
+      hx-get={`/jobs/generated-images-card?job_id=${jobId}`}
+      hx-trigger="sse:job-update"
+      hx-swap="outerHTML"
+    >
+      {await (<DistinctImageGeneratedImagesCard jobId={jobId} />)}
+    </div>
   );
 };
