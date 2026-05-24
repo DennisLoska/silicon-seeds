@@ -3,6 +3,7 @@ import { JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
 import { PromptGenerator } from "../../prompts/prompt-generator";
 import { TextGenerator } from "../../text/text-generator";
+import { Utils } from "../../utils/utils";
 import { PostCompose } from "../schemas";
 
 export async function compose_video(options: PostCompose) {
@@ -19,12 +20,12 @@ export async function compose_video(options: PostCompose) {
   } = options;
 
   // Determine the final script: file takes precedence over text input
-  let finalScript = script?.trim();
+  let finalScript = script ? Utils.sanitizeInputText(script) : undefined;
 
   if (script_file) {
     // Read the uploaded file content
     const fileContent = await script_file.text();
-    finalScript = fileContent.trim();
+    finalScript = Utils.sanitizeInputText(fileContent);
   }
 
   if (!finalScript || finalScript.length < 3) {
