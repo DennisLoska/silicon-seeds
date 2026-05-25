@@ -59,6 +59,19 @@ export interface DbSchema {
     subfolder: string;
     type: "input" | "output" | "temp";
   };
+  autocut_cut_clips: {
+    id: string;
+    created_at: Generated<string> | string;
+    job_id: string;
+    clip_index: number;
+    start_seconds: number;
+    end_seconds: number;
+    duration_seconds: number;
+    reasons: string;
+    transcript_text: string;
+    filename: string;
+    subfolder: string;
+  };
 }
 
 export type JobsSchema = Omit<DbSchema["jobs"], "created_at"> & {
@@ -66,6 +79,9 @@ export type JobsSchema = Omit<DbSchema["jobs"], "created_at"> & {
 };
 export type EventsSchema = DbSchema["events"];
 export type MetaSchema = DbSchema["meta"];
+export type AutoCutCutClipSchema = Omit<DbSchema["autocut_cut_clips"], "created_at"> & {
+  created_at: string;
+};
 export type EventRow = Omit<DbSchema["events"], "created_at"> & {
   created_at: string;
 };
@@ -737,6 +753,47 @@ export namespace DB {
       for (const eventId of eventIds) {
         await notifyJobForEvent(eventId);
       }
+    }
+  }
+
+  export namespace AutoCutCutClips {
+    export async function replaceForJob(
+      jobId: string,
+      clips: Omit<AutoCutCutClipSchema, "id" | "job_id" | "created_at">[],
+    ) {
+      await db.transaction().execute(async (trx) => {
+        await trx
+          .deleteFrom("autocut_cut_clips")
+          .where("job_id", "=", jobId)
+          .execute();
+
+        if (clips.length === 0) {
+          return;
+        }
+
+        await trx
+          .insertInto("autocut_cut_clips")
+          .values(
+            clips.map((clip) => ({
+              id: Metadata.randomId(),
+              created_at: new Date().toISOString(),
+              job_id: jobId,
+              ...clip,
+            })),
+          )
+          .execute();
+      });
+
+      notifyJob(jobId);
+    }
+
+    export async function findByJobId(jobId: string) {
+      return await db
+        .selectFrom("autocut_cut_clips")
+        .selectAll()
+        .where("job_id", "=", jobId)
+        .orderBy("clip_index", "asc")
+        .execute();
     }
   }
 

@@ -11,17 +11,18 @@ import { VideoGenerator } from "../video/video-generator";
 import { DB } from "../db/db";
 import { Event, JobMode, JobStatus, type ImagePromptEvent, type JobEvent, type TransitionPromptEvent, type VideoPromptEvent } from "../events/events";
 import { Presets } from "../styles/presets";
+import { QueueManager } from "../queue/queue-manager";
 import { Utils } from "../utils/utils";
 
 const TMP_ROOT = "/tmp/silicon-seeds-autocut";
 const OUTPUT_SUBDIR = "autocut";
+const CUT_CLIP_SUBDIR = `${OUTPUT_SUBDIR}/cut-clips`;
 const MIN_KEEP_SPAN_SECONDS = 0.08;
 const SILENCE_GAP_SECONDS = 0.8;
 const SILENCE_EDGE_PADDING_SECONDS = 0.04;
 
 export type AutoCutStage =
   | "queued"
-  | "extracting_audio"
   | "transcribing"
   | "analyzing"
   | "rendering"
@@ -46,6 +47,19 @@ export interface AutoCutState {
   outputVideoAssetPath?: string;
   error?: string;
   removals?: AutoCutRemovalSpan[];
+  cutClips?: AutoCutCutClip[];
+}
+
+export interface AutoCutCutClip {
+  index: number;
+  start: number;
+  end: number;
+  durationSeconds: number;
+  removals: AutoCutRemovalSpan[];
+  filename?: string;
+  subfolder?: string;
+  outputPath?: string;
+  outputAssetPath?: string;
 }
 
 interface WhisperXWord {
@@ -85,15 +99,29 @@ interface AutoCutInsertionPlan {
 
 interface AutoCutManifest {
   inputPath: string;
-  audioPath?: string;
   whisperJsonPath?: string;
   durationSeconds?: number;
   transcriptLanguage?: string;
   removalSpans?: AutoCutRemovalSpan[];
+  cutClips?: AutoCutCutClip[];
   keepSpans?: TimeSpan[];
   insertionPlans?: AutoCutInsertionPlan[];
   outputVideoPath?: string;
+  generateInsertClips?: boolean;
 }
+
+interface SourceTimelineItem {
+  kind: "source";
+  start: number;
+  end: number;
+}
+
+interface InsertionTimelineItem {
+  kind: "insertion";
+  insertion: AutoCutInsertionPlan;
+}
+
+type TimelineItem = SourceTimelineItem | InsertionTimelineItem;
 
 function roundTime(value: number) {
   return Math.round(value * 1000) / 1000;
@@ -245,6 +273,133 @@ function dedupeRemovals(removals: AutoCutRemovalSpan[], duration: number) {
   return Array.from(keyed.values()).sort((a, b) => a.start - b.start);
 }
 
+function spansOverlap(a: TimeSpan, b: TimeSpan) {
+  return a.start < b.end && b.start < a.end;
+}
+
+function buildCutClips(removals: AutoCutRemovalSpan[], duration: number): AutoCutCutClip[] {
+  return normalizeSpans(removals, duration).map((span, index) => ({
+    index,
+    start: span.start,
+    end: span.end,
+    durationSeconds: roundTime(span.end - span.start),
+    removals: removals.filter((removal) => spansOverlap(span, removal)),
+  }));
+}
+
+function summarizeClipReasons(clip: AutoCutCutClip) {
+  return Array.from(new Set(clip.removals.map((removal) => removal.reason))).join(", ");
+}
+
+function summarizeClipTranscript(clip: AutoCutCutClip) {
+  return clip.removals
+    .map((removal) => removal.text.trim())
+    .filter((value, index, values) => value.length > 0 && values.indexOf(value) === index)
+    .join(" ");
+}
+
+async function materializeCutClips(
+  jobId: string,
+  inputPath: string,
+  cutClips: AutoCutCutClip[],
+) {
+  const outputDir = Bun.env.OUTPUT_DIR;
+  Utils.assert(outputDir, "OUTPUT_DIR environment variable is not configured");
+  await ensureDir(join(outputDir, CUT_CLIP_SUBDIR));
+
+  const materializedClips: AutoCutCutClip[] = [];
+
+  for (const clip of cutClips) {
+    const filename = `${jobId}-cut-${String(clip.index + 1).padStart(3, "0")}.mp4`;
+    const tempPath = join(
+      workspaceDir(jobId),
+      `cut-clip-${String(clip.index + 1).padStart(3, "0")}.mp4`,
+    );
+    const outputPath = join(outputDir, CUT_CLIP_SUBDIR, filename);
+    await trimMediaSegment(inputPath, tempPath, clip.start, clip.end);
+    await Bun.write(outputPath, await Bun.file(tempPath).arrayBuffer());
+
+    materializedClips.push({
+      ...clip,
+      filename,
+      subfolder: CUT_CLIP_SUBDIR,
+      outputPath,
+      outputAssetPath: `/assets/${CUT_CLIP_SUBDIR}/${filename}`,
+    });
+  }
+
+  await DB.AutoCutCutClips.replaceForJob(
+    jobId,
+    materializedClips.map((clip) => ({
+      clip_index: clip.index,
+      start_seconds: clip.start,
+      end_seconds: clip.end,
+      duration_seconds: clip.durationSeconds,
+      reasons: summarizeClipReasons(clip),
+      transcript_text: summarizeClipTranscript(clip),
+      filename: clip.filename!,
+      subfolder: clip.subfolder!,
+    })),
+  );
+
+  return materializedClips;
+}
+
+function buildTimelineItems(
+  keepSpans: TimeSpan[],
+  insertions: AutoCutInsertionPlan[],
+  duration: number,
+) {
+  const items: TimelineItem[] = [];
+  const skippedInsertions: AutoCutInsertionPlan[] = [];
+  const sortedInsertions = [...insertions].sort(compareTimeline);
+  const normalizedKeepSpans = normalizeSpans(keepSpans, duration);
+  let insertionIndex = 0;
+
+  for (const keepSpan of normalizedKeepSpans) {
+    while (
+      insertionIndex < sortedInsertions.length &&
+      sortedInsertions[insertionIndex].timestamp < keepSpan.start
+    ) {
+      skippedInsertions.push(sortedInsertions[insertionIndex]);
+      insertionIndex += 1;
+    }
+
+    let cursor = keepSpan.start;
+
+    while (
+      insertionIndex < sortedInsertions.length &&
+      sortedInsertions[insertionIndex].timestamp <= keepSpan.end
+    ) {
+      const insertion = sortedInsertions[insertionIndex];
+      const insertionPoint = clampNumber(
+        roundTime(insertion.timestamp),
+        cursor,
+        keepSpan.end,
+      );
+
+      if (insertionPoint - cursor >= MIN_KEEP_SPAN_SECONDS) {
+        items.push({ kind: "source", start: cursor, end: insertionPoint });
+      }
+
+      items.push({ kind: "insertion", insertion });
+      cursor = insertionPoint;
+      insertionIndex += 1;
+    }
+
+    if (keepSpan.end - cursor >= MIN_KEEP_SPAN_SECONDS) {
+      items.push({ kind: "source", start: cursor, end: keepSpan.end });
+    }
+  }
+
+  while (insertionIndex < sortedInsertions.length) {
+    skippedInsertions.push(sortedInsertions[insertionIndex]);
+    insertionIndex += 1;
+  }
+
+  return { items, skippedInsertions };
+}
+
 function compareTimeline(a: { timestamp: number }, b: { timestamp: number }) {
   return a.timestamp - b.timestamp;
 }
@@ -383,11 +538,8 @@ async function renderTimelineComposition(jobId: string) {
   Utils.assert(manifest, `Missing autocut manifest for ${jobId}`);
   Utils.assert(manifest.durationSeconds !== undefined, `Missing duration for ${jobId}`);
   Utils.assert(manifest.insertionPlans, `Missing insertion plans for ${jobId}`);
+  Utils.assert(manifest.keepSpans, `Missing keep spans for ${jobId}`);
 
-  const job = await getJob(jobId);
-  const clipDuration = insertionClipDuration(job);
-  const transDuration = transitionDuration(job);
-  const sortedInsertions = [...manifest.insertionPlans].sort(compareTimeline);
   const sourceFile = manifest.inputPath;
   const duration = manifest.durationSeconds;
   const outputDir = Bun.env.OUTPUT_DIR;
@@ -395,36 +547,27 @@ async function renderTimelineComposition(jobId: string) {
   Utils.assert(outputDir, "OUTPUT_DIR environment variable is not configured");
   await ensureDir(join(outputDir, OUTPUT_SUBDIR));
 
-  const originalSegments: string[] = [];
-  let cursor = 0;
-
-  for (const [index, insertion] of sortedInsertions.entries()) {
-    const start = clampNumber(insertion.timestamp, cursor, duration);
-    const end = start;
-    const segmentPath = join(workspaceDir(jobId), `original-segment-${String(index).padStart(3, "0")}.mp4`);
-
-    if (start - cursor >= MIN_KEEP_SPAN_SECONDS) {
-      await trimMediaSegment(sourceFile, segmentPath, cursor, start);
-      originalSegments.push(segmentPath);
-    }
-
-    cursor = clampNumber(end, cursor, duration);
-  }
-
-  const trailingSegmentPath = join(workspaceDir(jobId), `original-segment-tail.mp4`);
-  if (duration - cursor >= MIN_KEEP_SPAN_SECONDS) {
-    await trimMediaSegment(sourceFile, trailingSegmentPath, cursor, duration);
-    originalSegments.push(trailingSegmentPath);
-  }
-
+  const { items, skippedInsertions } = buildTimelineItems(
+    manifest.keepSpans,
+    manifest.insertionPlans,
+    duration,
+  );
   const orderedAssets: string[] = [];
+  let sourceSegmentIndex = 0;
 
-  for (const [index, insertion] of sortedInsertions.entries()) {
-    const originalSegment = originalSegments[index];
-    if (originalSegment) {
-      orderedAssets.push(originalSegment);
+  for (const item of items) {
+    if (item.kind === "source") {
+      const segmentPath = join(
+        workspaceDir(jobId),
+        `source-segment-${String(sourceSegmentIndex).padStart(3, "0")}.mp4`,
+      );
+      await trimMediaSegment(sourceFile, segmentPath, item.start, item.end);
+      orderedAssets.push(segmentPath);
+      sourceSegmentIndex += 1;
+      continue;
     }
 
+    const { insertion } = item;
     Utils.assert(insertion.incomingTransitionEventId, "Missing incoming transition event id");
     Utils.assert(insertion.videoEventId, "Missing generated video event id");
     Utils.assert(insertion.outgoingTransitionEventId, "Missing outgoing transition event id");
@@ -434,9 +577,11 @@ async function renderTimelineComposition(jobId: string) {
     orderedAssets.push(tmpVideoPath(jobId, insertion.outgoingTransitionEventId));
   }
 
-  const tailSegment = originalSegments.at(-1);
-  if (tailSegment && !orderedAssets.includes(tailSegment)) {
-    orderedAssets.push(tailSegment);
+  if (skippedInsertions.length > 0) {
+    Logger.warn("Skipping autocut insertions that landed inside removed spans", {
+      jobId,
+      skippedInsertionIds: skippedInsertions.map((item) => item.insertionId),
+    });
   }
 
   Utils.assert(orderedAssets.length > 0, "No timeline assets available for final composition");
@@ -535,32 +680,7 @@ async function updateState(jobId: string, patch: Partial<AutoCutState>) {
   return next;
 }
 
-async function runFfmpeg(inputPath: string, outputPath: string) {
-  const process = spawn({
-    cmd: [
-      "ffmpeg",
-      "-y",
-      "-i",
-      inputPath,
-      "-vn",
-      "-ac",
-      "1",
-      "-ar",
-      "16000",
-      "-c:a",
-      "pcm_s16le",
-      outputPath,
-    ],
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-
-  const { stderr, exitCode } = await collectProcessOutput(process);
-  if (exitCode !== 0) {
-    throw new Error(`ffmpeg audio extraction failed: ${stderr.trim()}`);
-  }
-}
-
-async function runWhisperX(audioPath: string, jobId: string) {
+async function runWhisperX(inputPath: string, jobId: string) {
   const whisperBinary = Bun.env.WHISPER_X;
   const whisperOutputDir = join(workspaceDir(jobId), "whisperx");
   await ensureDir(whisperOutputDir);
@@ -572,7 +692,7 @@ async function runWhisperX(audioPath: string, jobId: string) {
   const process = spawn({
     cmd: [
       whisperBinary,
-      audioPath,
+      inputPath,
       "--output_dir",
       whisperOutputDir,
       "--output_format",
@@ -589,7 +709,7 @@ async function runWhisperX(audioPath: string, jobId: string) {
 
   const outputJsonPath = join(
     whisperOutputDir,
-    `${basename(audioPath, extname(audioPath))}.json`,
+    `${basename(inputPath, extname(inputPath))}.json`,
   );
 
   const file = Bun.file(outputJsonPath);
@@ -738,10 +858,12 @@ export namespace AutoCutWorkflow {
     const outputVideoPath = await renderTimelineComposition(event.jobId);
     const outputFilename = basename(outputVideoPath);
     const removals = manifest.removalSpans ?? [];
+    const cutClips = manifest.cutClips ?? [];
 
     await updateState(event.jobId, {
       stage: "complete",
       message: "Autocut complete.",
+      cutClips,
       removals,
       removalCount: removals.length,
       removedDurationSeconds: roundTime(removedDuration(removals, manifest.durationSeconds!)),
@@ -769,7 +891,10 @@ export namespace AutoCutWorkflow {
     await updateManifest(jobId, { insertionPlans: manifest.insertionPlans });
   }
 
-  export async function enqueue(videoFile: File) {
+  export async function enqueue(
+    videoFile: File,
+    options: { generateInsertClips: boolean },
+  ) {
     Utils.assert(videoFile, "Video file is required");
     Utils.assert(videoFile.size > 0, "Uploaded video file is empty");
 
@@ -796,6 +921,8 @@ export namespace AutoCutWorkflow {
 
     await writeManifest(jobId, {
       inputPath,
+      cutClips: [],
+      generateInsertClips: options.generateInsertClips,
       insertionPlans: [],
     });
 
@@ -810,30 +937,25 @@ export namespace AutoCutWorkflow {
     };
 
     await writeState(initialState);
-    void process(jobId, inputPath);
+    void process(jobId, inputPath, options.generateInsertClips);
 
     return { jobId };
   }
 
-  async function process(jobId: string, inputPath: string) {
+  async function process(
+    jobId: string,
+    inputPath: string,
+    generateInsertClips: boolean,
+  ) {
     try {
       Utils.assert(inputPath.startsWith(TMP_ROOT), "Autocut input must live in /tmp workspace");
-
-      await updateState(jobId, {
-        stage: "extracting_audio",
-        message: "Extracting audio track with ffmpeg.",
-      });
-
-      const audioPath = join(workspaceDir(jobId), "source-audio.wav");
-      await runFfmpeg(inputPath, audioPath);
-      await updateManifest(jobId, { audioPath });
 
       await updateState(jobId, {
         stage: "transcribing",
         message: "Running WhisperX transcription.",
       });
 
-      const whisperJsonPath = await runWhisperX(audioPath, jobId);
+      const whisperJsonPath = await runWhisperX(inputPath, jobId);
       const transcript = await Bun.file(whisperJsonPath).json() as WhisperXTranscript;
       Utils.assert(Array.isArray(transcript.segments), "WhisperX JSON is missing segments");
       const duration = await Metadata.getMediaDurationFromPath(inputPath);
@@ -853,15 +975,25 @@ export namespace AutoCutWorkflow {
       });
 
       const llmPlan = await PromptGenerator.autocut_plan_from_whisperx_json(whisperJsonPath);
-      const insertionPlan = await PromptGenerator.autocut_insertions_from_whisperx_json(
-        whisperJsonPath,
-        3,
-      );
+      const insertionPlan = generateInsertClips
+        ? await PromptGenerator.autocut_insertions_from_whisperx_json(
+            whisperJsonPath,
+            3,
+          )
+        : {
+            insertions: [],
+            warnings: [],
+          };
       const mergedRemovals = dedupeRemovals(
         [...silenceRemovals, ...llmPlan.removals],
         duration,
       );
       const keepSpans = invertSpans(mergedRemovals, duration);
+      const cutClips = await materializeCutClips(
+        jobId,
+        inputPath,
+        buildCutClips(mergedRemovals, duration),
+      );
       const insertionPlans: AutoCutInsertionPlan[] = insertionPlan.insertions
         .map((item) => ({
           insertionId: Metadata.randomId(),
@@ -872,6 +1004,8 @@ export namespace AutoCutWorkflow {
         .sort(compareTimeline);
 
       await updateManifest(jobId, {
+        cutClips,
+        generateInsertClips,
         removalSpans: mergedRemovals,
         keepSpans,
         insertionPlans,
@@ -908,6 +1042,7 @@ export namespace AutoCutWorkflow {
           analysisPath,
           `${JSON.stringify({
             removals: mergedRemovals,
+            cutClips,
             keepSpans,
             insertions: insertionPlans,
             warnings: [...llmPlan.warnings, ...insertionPlan.warnings],
@@ -917,6 +1052,7 @@ export namespace AutoCutWorkflow {
         await updateState(jobId, {
           stage: "complete",
           message: "Autocut complete.",
+          cutClips,
           removals: mergedRemovals,
           removalCount: mergedRemovals.length,
           removedDurationSeconds: removedSeconds,
@@ -940,6 +1076,7 @@ export namespace AutoCutWorkflow {
       }
 
       await updateManifest(jobId, { insertionPlans });
+      void QueueManager.pump();
 
       const removedSeconds = roundTime(removedDuration(mergedRemovals, duration));
       const analysisPath = join(workspaceDir(jobId), "cut-plan.json");
@@ -947,6 +1084,7 @@ export namespace AutoCutWorkflow {
         analysisPath,
         `${JSON.stringify({
           removals: mergedRemovals,
+          cutClips,
           keepSpans,
           insertions: insertionPlans,
           warnings: [...llmPlan.warnings, ...insertionPlan.warnings],
@@ -955,7 +1093,10 @@ export namespace AutoCutWorkflow {
 
       await updateState(jobId, {
         stage: "rendering",
-        message: "Generating timeline insert clips and transitions.",
+        message: generateInsertClips
+          ? "Generating timeline insert clips and transitions."
+          : "Rendering final cut video.",
+        cutClips,
         removals: mergedRemovals,
         removalCount: mergedRemovals.length,
         removedDurationSeconds: removedSeconds,

@@ -1,5 +1,6 @@
 import {
   AutoCutWorkflow,
+  type AutoCutCutClip,
   type AutoCutStage,
   type AutoCutState,
 } from "../autocut/autocut-workflow";
@@ -27,8 +28,6 @@ function badgeForStage(stage?: AutoCutStage) {
 
 function stageLabel(stage?: AutoCutStage) {
   switch (stage) {
-    case "extracting_audio":
-      return "Extracting audio";
     case "transcribing":
       return "Transcribing";
     case "analyzing":
@@ -48,6 +47,23 @@ function stageLabel(stage?: AutoCutStage) {
 function formatSeconds(value?: number) {
   if (value === undefined) return "n/a";
   return `${value.toFixed(2)}s`;
+}
+
+function summarizeCutClip(clip: AutoCutCutClip) {
+  const reasons = Array.from(new Set(clip.removals.map((removal) => removal.reason))).join(", ");
+  const text = clip.removals
+    .map((removal) => removal.text.trim())
+    .filter((value, index, values) => value.length > 0 && values.indexOf(value) === index)
+    .join(" ");
+
+  return {
+    reasons: reasons || "n/a",
+    text: text || "[no transcript text]",
+  };
+}
+
+function hasClipAsset(clip: AutoCutCutClip) {
+  return Boolean(clip.outputAssetPath);
 }
 
 const FILE_PICKER_PLACEHOLDER = "No file chosen";
@@ -156,42 +172,58 @@ function AutoCutStatusContent({ state }: { state: AutoCutState | null }) {
                 Download Final Cut
               </a>
             </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">Removal Spans</h3>
-              {state.removals && state.removals.length > 0 ? (
-                <div className="overflow-x-auto rounded-box border border-base-300">
-                  <table className="table table-sm">
-                    <thead>
-                      <tr>
-                        <th>Reason</th>
-                        <th>Start</th>
-                        <th>End</th>
-                        <th>Text</th>
+          </div>
+        ) : null}
+
+        {state.cutClips && state.cutClips.length > 0 ? (
+          <div className="space-y-2">
+            <h3 className="font-semibold">Cut Clips</h3>
+            <div className="overflow-x-auto rounded-box border border-base-300">
+              <table className="table table-sm">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Duration</th>
+                    <th>Reasons</th>
+                    <th>Text</th>
+                    <th>Clip</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {state.cutClips.map((clip) => {
+                    const summary = summarizeCutClip(clip);
+                    return (
+                      <tr key={`${clip.index}-${clip.start}-${clip.end}`}>
+                        <td>{clip.index + 1}</td>
+                        <td>{formatSeconds(clip.start)}</td>
+                        <td>{formatSeconds(clip.end)}</td>
+                        <td>{formatSeconds(clip.durationSeconds)}</td>
+                        <td>{summary.reasons}</td>
+                        <td className="max-w-xl whitespace-pre-wrap break-words">
+                          {summary.text}
+                        </td>
+                        <td>
+                          {hasClipAsset(clip) ? (
+                            <video
+                              className="h-10 w-16 rounded border border-base-300 bg-black object-cover"
+                              src={clip.outputAssetPath}
+                              loop
+                              playsinline
+                              preload="metadata"
+                              onmouseenter="this.currentTime = 0; this.play()"
+                              onmouseleave="this.pause(); this.currentTime = 0"
+                            ></video>
+                          ) : (
+                            <span className="text-xs text-base-content/50">Pending</span>
+                          )}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {state.removals.map((removal, index) => (
-                        <tr key={`${removal.start}-${removal.end}-${index}`}>
-                          <td>
-                            <span className="badge badge-outline">
-                              {removal.reason}
-                            </span>
-                          </td>
-                          <td>{formatSeconds(removal.start)}</td>
-                          <td>{formatSeconds(removal.end)}</td>
-                          <td className="max-w-xl whitespace-pre-wrap break-words">
-                            {removal.text}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p className="text-sm text-base-content/70">
-                  No removable spans were detected.
-                </p>
-              )}
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         ) : null}
@@ -280,6 +312,26 @@ export const AutoCut = async ({
               </label>
               <p className="label">
                 Supported formats: .mp4, .mov, .mkv, .webm
+              </p>
+            </fieldset>
+
+            <fieldset className="fieldset w-full min-w-0">
+              <legend className="fieldset-legend">Options</legend>
+              <input type="hidden" name="generate_insert_clips" value="false" />
+              <label className="label cursor-pointer justify-start gap-3 rounded-box border border-base-300 px-4 py-3">
+                <input
+                  type="checkbox"
+                  name="generate_insert_clips"
+                  value="true"
+                  className="checkbox checkbox-primary"
+                  checked
+                />
+                <span className="text-sm">
+                  Generate optional insert clips and transitions
+                </span>
+              </label>
+              <p className="label">
+                Disable for a clean source-only cut.
               </p>
             </fieldset>
 

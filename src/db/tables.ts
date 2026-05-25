@@ -5,6 +5,7 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
   await db.schema.dropTable("jobs").ifExists().execute();
   await db.schema.dropTable("events").ifExists().execute();
   await db.schema.dropTable("meta").ifExists().execute();
+  await db.schema.dropTable("autocut_cut_clips").ifExists().execute();
 
   await db.schema
     .createTable("jobs")
@@ -66,6 +67,24 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .execute();
 
   await db.schema
+    .createTable("autocut_cut_clips")
+    .ifNotExists()
+    .addColumn("id", "text", (col) => col.primaryKey().notNull())
+    .addColumn("created_at", "text", (col) =>
+      col.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
+    )
+    .addColumn("job_id", "text", (col) => col.notNull().references("jobs.id"))
+    .addColumn("clip_index", "integer", (col) => col.notNull())
+    .addColumn("start_seconds", "real", (col) => col.notNull())
+    .addColumn("end_seconds", "real", (col) => col.notNull())
+    .addColumn("duration_seconds", "real", (col) => col.notNull())
+    .addColumn("reasons", "text", (col) => col.notNull())
+    .addColumn("transcript_text", "text", (col) => col.notNull())
+    .addColumn("filename", "text", (col) => col.notNull())
+    .addColumn("subfolder", "text", (col) => col.notNull())
+    .execute();
+
+  await db.schema
     .createIndex("idx_events_job_id")
     .on("events")
     .column("job_id")
@@ -76,6 +95,13 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .createIndex("idx_events_queue")
     .on("events")
     .columns(["status", "priority", "created_at"])
+    .ifNotExists()
+    .execute();
+
+  await db.schema
+    .createIndex("idx_autocut_cut_clips_job_id")
+    .on("autocut_cut_clips")
+    .columns(["job_id", "clip_index"])
     .ifNotExists()
     .execute();
 }

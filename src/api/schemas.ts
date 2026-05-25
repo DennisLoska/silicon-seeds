@@ -48,6 +48,16 @@ export type PostCompose = z.infer<typeof PostComposeSchema>;
 
 export const PostAutoCutSchema = z.object({
   video_file: z.instanceof(File),
+  generate_insert_clips: z.preprocess((value) => {
+    if (value === undefined) return true;
+
+    const rawValue = Array.isArray(value) ? value.at(-1) : value;
+    if (typeof rawValue === "string") {
+      return ["true", "on", "1"].includes(rawValue.toLowerCase());
+    }
+
+    return Boolean(rawValue);
+  }, z.boolean()),
 });
 
 export type PostAutoCut = z.infer<typeof PostAutoCutSchema>;
