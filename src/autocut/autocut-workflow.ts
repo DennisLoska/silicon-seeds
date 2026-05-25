@@ -114,8 +114,6 @@ interface AutoCutInsertionPlan {
   transcriptContext: string;
   imageEventId?: string;
   videoEventId?: string;
-  incomingTransitionEventId?: string;
-  outgoingTransitionEventId?: string;
 }
 
 interface AutoCutManifest {
@@ -420,6 +418,12 @@ function buildTimelineItems(
       }
 
       const insertionSpanStart = insertionPoint;
+      if (keepSpan.end - insertionSpanStart < replacementDuration) {
+        skippedInsertions.push(insertion);
+        insertionIndex += 1;
+        continue;
+      }
+
       const insertionSpanEnd = clampNumber(
         roundTime(insertionSpanStart + replacementDuration),
         insertionSpanStart,
@@ -540,63 +544,6 @@ function resolutionForJob(resolution?: string) {
     default:
       return { width: 640, height: 480 };
   }
-}
-
-async function extractVideoFrame(
-  inputPath: string,
-  timestamp: number,
-  outputPath: string,
-) {
-  const process = spawn({
-    cmd: [
-      "ffmpeg",
-      "-y",
-      "-ss",
-      `${roundTime(timestamp)}`,
-      "-i",
-      inputPath,
-      "-frames:v",
-      "1",
-      outputPath,
-    ],
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-
-  const { stderr, exitCode } = await collectProcessOutput(process);
-  if (exitCode !== 0) {
-    throw new Error(`ffmpeg frame extraction failed: ${stderr.trim()}`);
-  }
-}
-
-async function extractBoundaryFramesForInsertion(
-  jobId: string,
-  insertion: AutoCutInsertionPlan,
-  duration: number,
-  clipDuration: number,
-) {
-  const beforeFrame = join(
-    workspaceDir(jobId),
-    `${insertion.insertionId}-before.png`,
-  );
-  const afterFrame = join(
-    workspaceDir(jobId),
-    `${insertion.insertionId}-after.png`,
-  );
-  const beforeTimestamp = clampNumber(insertion.timestamp, 0, duration);
-  const afterTimestamp = clampNumber(insertion.timestamp + 0.05, 0, duration);
-
-  await extractVideoFrame(
-    (await readManifest(jobId))!.inputPath,
-    beforeTimestamp,
-    beforeFrame,
-  );
-  await extractVideoFrame(
-    (await readManifest(jobId))!.inputPath,
-    afterTimestamp,
-    afterFrame,
-  );
-
-  return { beforeFrame, afterFrame };
 }
 
 async function getJob(jobId: string) {
@@ -721,36 +668,24 @@ async function renderReplacementTimeline(
     }
 
     const { insertion } = item;
-    Utils.assert(
-      insertion.incomingTransitionEventId,
-      "Missing incoming transition event id",
-    );
     Utils.assert(insertion.videoEventId, "Missing generated video event id");
-    Utils.assert(
-      insertion.outgoingTransitionEventId,
-      "Missing outgoing transition event id",
-    );
-
-    const incomingPath = tmpVideoPath(
-      jobId,
-      insertion.incomingTransitionEventId,
-    );
     const clipPath = tmpVideoPath(jobId, insertion.videoEventId);
-    const outgoingPath = tmpVideoPath(
-      jobId,
-      insertion.outgoingTransitionEventId,
-    );
 
     const replacementPath = join(
       workspaceDir(jobId),
       `replacement-segment-${String(segmentIndex).padStart(3, "0")}.mp4`,
     );
     await renderInsertedVisualSegment(
+      sourceFile,
       replacementPath,
-      incomingPath,
       clipPath,
-      outgoingPath,
+      item.start,
+      item.end,
+      transitionDuration(job),
       item.end - item.start,
+      width,
+      height,
+      fps,
     );
 
     args.push("-i", replacementPath);
@@ -797,38 +732,57 @@ async function renderReplacementTimeline(
 }
 
 async function renderInsertedVisualSegment(
+  sourceFile: string,
   outputPath: string,
-  incomingPath: string,
   clipPath: string,
-  outgoingPath: string,
+  start: number,
+  end: number,
+  xfadeDuration: number,
   targetDuration: number,
+  width: number,
+  height: number,
+  fps: number,
 ) {
   Utils.assert(
     targetDuration > 0,
     `Invalid insertion target duration: ${targetDuration}`,
   );
-  const incomingDuration =
-    await Metadata.getMediaDurationFromPath(incomingPath);
   const clipDuration = await Metadata.getMediaDurationFromPath(clipPath);
-  const outgoingDuration =
-    await Metadata.getMediaDurationFromPath(outgoingPath);
-  const actualDuration = incomingDuration + clipDuration + outgoingDuration;
-  Utils.assert(actualDuration > 0, "Invalid combined AI visual duration");
-  const ptsScale = targetDuration / actualDuration;
+  Utils.assert(clipDuration > 0, "Invalid AI clip duration");
+  Utils.assert(xfadeDuration > 0, "Invalid xfade duration");
+  Utils.assert(
+    targetDuration > xfadeDuration,
+    "Replacement duration must exceed xfade duration",
+  );
+  const sourceInStart = roundTime(start);
+  const sourceOutStart = roundTime(end - xfadeDuration);
+  const ptsScale = targetDuration / clipDuration;
 
   const process = spawn({
     cmd: [
       "ffmpeg",
       "-y",
+      "-ss",
+      `${sourceInStart}`,
+      "-t",
+      `${roundTime(xfadeDuration)}`,
       "-i",
-      incomingPath,
+      sourceFile,
       "-i",
       clipPath,
+      "-ss",
+      `${sourceOutStart}`,
+      "-t",
+      `${roundTime(xfadeDuration)}`,
       "-i",
-      outgoingPath,
+      sourceFile,
       "-an",
       "-filter_complex",
-      `[0:v][1:v][2:v]concat=n=3:v=1:a=0,setsar=1,setpts=${ptsScale}*PTS[v]`,
+      `[0:v]setpts=PTS-STARTPTS,scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:black,fps=${fps},format=yuv420p,setsar=1[srcin];` +
+      `[1:v]setpts=${ptsScale}*PTS,scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:black,fps=${fps},format=yuv420p,setsar=1[clip];` +
+      `[2:v]setpts=PTS-STARTPTS,scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:black,fps=${fps},format=yuv420p,setsar=1[srcout];` +
+      `[srcin][clip]xfade=transition=fade:duration=${roundTime(xfadeDuration)}:offset=0[xf1];` +
+      `[xf1][srcout]xfade=transition=fade:duration=${roundTime(xfadeDuration)}:offset=${roundTime(targetDuration - xfadeDuration)}[v]`,
       "-map",
       "[v]",
       "-t",
@@ -1047,80 +1001,24 @@ export namespace AutoCutWorkflow {
       `Missing insertion plans for ${event.jobId}`,
     );
 
-    if (event.type === Event.NewVideoPrompt) {
-      const insertion = manifest.insertionPlans.find(
-        (plan) => plan.videoEventId === event.id,
-      );
-      Utils.assert(
-        insertion,
-        `Missing insertion mapping for generated video ${event.id}`,
-      );
-
-      const { beforeFrame, afterFrame } =
-        await extractBoundaryFramesForInsertion(
-          event.jobId,
-          insertion,
-          manifest.durationSeconds!,
-          insertionClipDuration(job),
-        );
-
-      const [generatedFirst, generatedLast] =
-        await VideoGenerator.video_frames_for_asset(
-          event.jobId,
-          event.id,
-          tmpVideoPath(event.jobId, event.id),
-        );
-
-      const incoming = await VideoGenerator.schedule_transition({
-        jobId: event.jobId,
-        prompt: `${insertion.prompt}. Seamlessly transition from the real source footage into the generated insert clip.`,
-        startImg: beforeFrame,
-        endImg: generatedFirst,
-      });
-
-      const outgoing = await VideoGenerator.schedule_transition({
-        jobId: event.jobId,
-        prompt: `${insertion.prompt}. Seamlessly transition from the generated insert clip back into the real source footage.`,
-        startImg: generatedLast,
-        endImg: afterFrame,
-      });
-
-      insertion.incomingTransitionEventId = incoming.id;
-      insertion.outgoingTransitionEventId = outgoing.id;
-      await updateManifest(event.jobId, {
-        insertionPlans: manifest.insertionPlans,
-      });
-      return;
-    }
-
-    const allReady = manifest.insertionPlans.every(
-      (plan) =>
-        plan.videoEventId &&
-        plan.incomingTransitionEventId &&
-        plan.outgoingTransitionEventId,
-    );
+    const allReady = manifest.insertionPlans.every((plan) => plan.videoEventId);
 
     if (!allReady) return;
 
-    const transitionIds = manifest.insertionPlans
-      .flatMap((plan) => [
-        plan.incomingTransitionEventId,
-        plan.outgoingTransitionEventId,
-      ])
-      .filter((id): id is string => Boolean(id));
-
-    const transitionEvents = await Promise.all(
-      transitionIds.map((id) => DB.Events.findById(id)),
+    const videoEvents = await Promise.all(
+      manifest.insertionPlans
+        .map((plan) => plan.videoEventId)
+        .filter((id): id is string => Boolean(id))
+        .map((id) => DB.Events.findById(id)),
     );
 
-    if (!transitionEvents.every((item) => item.status === JobStatus.Complete)) {
+    if (!videoEvents.every((item) => item.status === JobStatus.Complete)) {
       return;
     }
 
     await updateState(event.jobId, {
       stage: "rendering",
-      message:
-        "Rendering final timeline composition with inserted clips and transitions.",
+      message: "Rendering final timeline composition with inserted clips.",
     });
 
     const outputVideoPath = await renderTimelineComposition(event.jobId);
