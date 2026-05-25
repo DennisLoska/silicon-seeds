@@ -444,13 +444,16 @@ export class ComfyUIClient {
       if (job.video_model === "ltx2.3") {
         api = ltx2_3_img2transitionApi;
         api["139:128"].inputs.text = input.prompt;
-        api["137"].inputs.image = input.startImage;
+        // The exported LTX workflow uses node 138 as the first-frame input and
+        // node 137 as the last-frame input, so map by workflow semantics rather
+        // than node id order.
+        api["138"].inputs.image = input.startImage;
         api["139:113"].inputs.value = resolution.width;
         api["139:98"].inputs.value = resolution.height;
         api["139:114"].inputs.value = job.fps || Metadata.FPS;
         api["139:143"].inputs.value =
           job.transition_duration || Metadata.TRANSITION_DURATION;
-        api["138"].inputs.image = input.endImage;
+        api["137"].inputs.image = input.endImage;
         api["68"].inputs.filename_prefix = input.id;
       }
     }

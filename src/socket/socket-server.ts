@@ -83,11 +83,16 @@ export namespace SocketServer {
         return;
       }
 
-      // update status to complete
-      await JobOrchestrator.update_schedule({
-        ...event,
-        status: JobStatus.Complete,
-      });
+      const deferCompletion =
+        (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) ||
+        (event.type === Event.NewAudioPrompt && event.mode === JobMode.Speech);
+
+      if (!deferCompletion) {
+        await JobOrchestrator.update_schedule({
+          ...event,
+          status: JobStatus.Complete,
+        });
+      }
 
       if (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) {
         await PromptGenerator.img_to_vid_prompt(promptId);
@@ -98,6 +103,13 @@ export namespace SocketServer {
         event.mode === JobMode.Speech
       ) {
         await AudioGenerator.handle_speech_complete(event);
+      }
+
+      if (deferCompletion) {
+        await JobOrchestrator.update_schedule({
+          ...event,
+          status: JobStatus.Complete,
+        });
       }
 
       if (
