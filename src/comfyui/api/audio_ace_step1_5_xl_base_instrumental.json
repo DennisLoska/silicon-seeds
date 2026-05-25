@@ -1,31 +1,16 @@
 {
   "3": {
     "inputs": {
-      "seed": [
-        "109",
-        0
-      ],
+      "seed": ["109", 0],
       "steps": 50,
       "cfg": 6,
       "sampler_name": "euler",
       "scheduler": "simple",
       "denoise": 1,
-      "model": [
-        "78",
-        0
-      ],
-      "positive": [
-        "94",
-        0
-      ],
-      "negative": [
-        "47",
-        0
-      ],
-      "latent_image": [
-        "98",
-        0
-      ]
+      "model": ["78", 0],
+      "positive": ["94", 0],
+      "negative": ["47", 0],
+      "latent_image": ["98", 0]
     },
     "class_type": "KSampler",
     "_meta": {
@@ -34,14 +19,8 @@
   },
   "18": {
     "inputs": {
-      "samples": [
-        "3",
-        0
-      ],
-      "vae": [
-        "106",
-        0
-      ]
+      "samples": ["3", 0],
+      "vae": ["106", 0]
     },
     "class_type": "VAEDecodeAudio",
     "_meta": {
@@ -50,10 +29,7 @@
   },
   "47": {
     "inputs": {
-      "conditioning": [
-        "94",
-        0
-      ]
+      "conditioning": ["94", 0]
     },
     "class_type": "ConditioningZeroOut",
     "_meta": {
@@ -63,10 +39,7 @@
   "78": {
     "inputs": {
       "shift": 3,
-      "model": [
-        "104",
-        0
-      ]
+      "model": ["104", 0]
     },
     "class_type": "ModelSamplingAuraFlow",
     "_meta": {
@@ -75,12 +48,9 @@
   },
   "94": {
     "inputs": {
-      "tags": "slow, clear, minimalistic, heavenly, peaceful, long strings, along synths, harp, calm, evening, no beat, no drums, no beat, no snare, psychedelic, crisp",
+      "tags": "slow, clear, harmonic, heavenly, peaceful, long strings, along synths, harp, calm, evening, no beat, no drums, no beat, no snare, psychedelic, crisp",
       "lyrics": "[instrumental]",
-      "seed": [
-        "109",
-        0
-      ],
+      "seed": ["109", 0],
       "bpm": 72,
       "duration": 120,
       "timesignature": "4",
@@ -92,10 +62,7 @@
       "top_p": 0.9,
       "top_k": 0,
       "min_p": 0,
-      "clip": [
-        "105",
-        0
-      ]
+      "clip": ["105", 0]
     },
     "class_type": "TextEncodeAceStepAudio1.5",
     "_meta": {
@@ -148,10 +115,7 @@
       "filename_prefix": "audio/ace_step1.5_xl_base",
       "quality": "V0",
       "audioUI": "/api/view?filename=ace_step1.5_xl_base_00003_.mp3&type=output&subfolder=audio&rand=0.12091386647593394",
-      "audio": [
-        "18",
-        0
-      ]
+      "audio": ["18", 0]
     },
     "class_type": "SaveAudioMP3",
     "_meta": {
@@ -168,3 +132,4 @@
     }
   }
 }
+

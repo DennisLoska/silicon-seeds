@@ -72,7 +72,7 @@ export const DistinctAudio = async ({
                 Prompts
               </h2>
               <p className="text-sm text-base-content/70">
-                Shape the arrangement and the lyric intent separately for the ACE 1.5 workflow.
+                Shape the arrangement and lyric intent separately for the ACE Step 1.5 song workflow.
               </p>
             </div>
 
@@ -482,7 +482,7 @@ export const GeneratedAudio = async ({ jobId }: DistinctAudioProgressProps) => {
                   <h3 className="card-title text-base">{audio.filename}</h3>
                   <div className="flex gap-2 mt-2 flex-wrap">
                     {audio.duration ? <span className="badge badge-accent">{audio.duration}s</span> : null}
-                    <span className="badge badge-soft badge-primary">ACE 1.5</span>
+                    <span className="badge badge-soft badge-primary">Song</span>
                   </div>
                 </div>
                 <a href={assetPath} download className="btn btn-primary btn-sm">
