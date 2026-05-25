@@ -10,6 +10,7 @@ import { JobOrchestrator } from "../jobs/jobs";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
 import { DB } from "../db/db";
+import { AutoCutWorkflow } from "../autocut/autocut-workflow";
 
 export namespace SocketServer {
   let ws: WebSocket;
@@ -95,7 +96,16 @@ export namespace SocketServer {
       }
 
       if (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) {
-        await PromptGenerator.img_to_vid_prompt(promptId);
+        const scheduledVideo = await PromptGenerator.img_to_vid_prompt(promptId);
+
+        const jobForImage = await DB.Jobs.findById(event.jobId);
+        if (scheduledVideo && jobForImage.workflow === "autocut") {
+          await AutoCutWorkflow.registerGeneratedVideoEvent(
+            event.jobId,
+            event.id,
+            scheduledVideo.id,
+          );
+        }
       }
 
       if (
@@ -130,6 +140,13 @@ export namespace SocketServer {
           await Bun.write(tmpFile, await videoBlob.arrayBuffer());
         } catch (error) {
           Logger.error("Failed to create video or transition", error);
+        }
+
+        if (await AutoCutWorkflow.shouldHandleVideoEvent(event)) {
+          await AutoCutWorkflow.handleVideoAssetSaved(event);
+          await DB.Jobs.finalizeCompletedJobs();
+          void QueueManager.pump();
+          return;
         }
       }
 

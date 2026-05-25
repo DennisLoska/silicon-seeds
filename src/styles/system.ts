@@ -41,6 +41,13 @@ export namespace StylePrompt {
   Use these example scenes PURELY as reference ONLY, but never use these exact examples.
   Instead come up with a completely new variety of different scenes for the list of prompts.
 
+  Style lock:
+  - You must faithfully follow the requested visual style.
+  - The final prompt must clearly read as ${opt.style.primary}${opt.style.secondary ? ` with ${opt.style.secondary}` : ""}.
+  - Do not substitute a different style family such as futuristic digital art, cyberpunk, photorealism, 3d render, vector art, glossy UI art, or cinematic sci-fi unless those are explicitly part of the requested style examples.
+  - If the requested style uses paper, paint, pigment, sketch, watercolor, or other physical-media cues, those cues must be dominant in the final prompt.
+  - The subject can vary, but the style is not optional.
+
   Important rules:
   - There should be no words or text in the image
 

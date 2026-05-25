@@ -24,6 +24,10 @@ import {
   DistinctAudioGeneratedAudioFragment as distinctAudioGeneratedAudioFragment,
   DistinctAudioProgressFragment as distinctAudioProgressFragment,
 } from "./distinct-audio";
+import {
+  AutoCut as autoCutComponent,
+  AutoCutStatusFragment as autoCutStatusFragment,
+} from "./autocut";
 import { Job } from "../events/events";
 import { OobHeader as oobHeaderComponent } from "./oob-header";
 import { EventList } from "./events-list";
@@ -59,5 +63,7 @@ export namespace Templates {
   export const DistinctAudioProgressFragment = distinctAudioProgressFragment;
   export const DistinctAudioGeneratedAudioFragment =
     distinctAudioGeneratedAudioFragment;
+  export const AutoCut = autoCutComponent;
+  export const AutoCutStatusFragment = autoCutStatusFragment;
   export const OobHeader = oobHeaderComponent;
 }
