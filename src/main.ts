@@ -13,6 +13,8 @@ import { VideoGenerator } from "./video/video-generator";
 // Critical
 // - Vid-to-vid workflow
 // - Keep models in memory
+// - manually select clips and auto-place them
+// - pick clips dynamically from content library
 // - Social Media integration
 // - Metadata for existing files
 // - fish audio, voice clone, replace kokoro

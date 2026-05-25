@@ -389,38 +389,46 @@ function buildTimelineItems(
   const skippedInsertions: AutoCutInsertionPlan[] = [];
   const sortedInsertions = [...insertions].sort(compareTimeline);
   const normalizedKeepSpans = normalizeSpans(keepSpans, duration);
-  let keepSpanIndex = 0;
+  const availableSpans = normalizedKeepSpans.map((span, index) => ({
+    keepSpanIndex: index,
+    start: span.start,
+    end: span.end,
+  }));
 
   for (const insertion of sortedInsertions) {
     const roundedTimestamp = roundTime(insertion.timestamp);
-    while (
-      keepSpanIndex < normalizedKeepSpans.length &&
-      normalizedKeepSpans[keepSpanIndex].end < roundedTimestamp
-    ) {
-      keepSpanIndex += 1;
-    }
+    const candidates = availableSpans
+      .filter((span) => span.end - span.start >= replacementDuration)
+      .map((span) => {
+        const start = clampNumber(
+          roundedTimestamp,
+          span.start,
+          roundTime(span.end - replacementDuration),
+        );
 
-    const candidateSpans = [
-      normalizedKeepSpans[keepSpanIndex],
-      normalizedKeepSpans[keepSpanIndex - 1],
-      normalizedKeepSpans[keepSpanIndex + 1],
-    ].filter((span): span is TimeSpan => Boolean(span));
+        return {
+          span,
+          start,
+          end: roundTime(start + replacementDuration),
+          displacement: Math.abs(start - roundedTimestamp),
+        };
+      })
+      .sort((a, b) => {
+        if (a.displacement !== b.displacement) {
+          return a.displacement - b.displacement;
+        }
 
-    const selectedSpan = candidateSpans.find((span) =>
-      span.end - Math.max(span.start, roundedTimestamp) >= replacementDuration,
-    ) ?? candidateSpans.find((span) => span.end - span.start >= replacementDuration);
+        return a.start - b.start;
+      });
 
-    if (!selectedSpan) {
+    const selected = candidates[0];
+    if (!selected) {
       skippedInsertions.push(insertion);
       continue;
     }
 
-    const insertionStart = clampNumber(
-      roundedTimestamp,
-      selectedSpan.start,
-      roundTime(selectedSpan.end - replacementDuration),
-    );
-    const insertionEnd = roundTime(insertionStart + replacementDuration);
+    const insertionStart = selected.start;
+    const insertionEnd = selected.end;
 
     insertionItems.push({
       kind: "insertion",
@@ -428,26 +436,30 @@ function buildTimelineItems(
       start: insertionStart,
       end: insertionEnd,
     });
+
+    const selectedIndex = availableSpans.findIndex((span) => span === selected.span);
+    if (selectedIndex >= 0) {
+      availableSpans.splice(selectedIndex, 1);
+    }
+
+    if (insertionStart - selected.span.start >= MIN_KEEP_SPAN_SECONDS) {
+      availableSpans.push({
+        keepSpanIndex: selected.span.keepSpanIndex,
+        start: selected.span.start,
+        end: insertionStart,
+      });
+    }
+
+    if (selected.span.end - insertionEnd >= MIN_KEEP_SPAN_SECONDS) {
+      availableSpans.push({
+        keepSpanIndex: selected.span.keepSpanIndex,
+        start: insertionEnd,
+        end: selected.span.end,
+      });
+    }
   }
 
   insertionItems.sort((a, b) => a.start - b.start);
-
-  const compactedInsertions: InsertionTimelineItem[] = [];
-  for (const item of insertionItems) {
-    const previous = compactedInsertions.at(-1);
-    if (!previous || item.start >= previous.end) {
-      compactedInsertions.push(item);
-      continue;
-    }
-
-    if (item.end <= previous.end) {
-      skippedInsertions.push(item.insertion);
-      continue;
-    }
-
-    skippedInsertions.push(previous.insertion);
-    compactedInsertions[compactedInsertions.length - 1] = item;
-  }
 
   const items: TimelineItem[] = [];
   let insertionCursor = 0;
@@ -456,19 +468,22 @@ function buildTimelineItems(
     let cursor = keepSpan.start;
 
     while (
-      insertionCursor < compactedInsertions.length &&
-      compactedInsertions[insertionCursor].end <= keepSpan.start
+      insertionCursor < insertionItems.length &&
+      insertionItems[insertionCursor].end <= keepSpan.start
     ) {
       insertionCursor += 1;
     }
 
     let localIndex = insertionCursor;
     while (
-      localIndex < compactedInsertions.length &&
-      compactedInsertions[localIndex].start < keepSpan.end
+      localIndex < insertionItems.length &&
+      insertionItems[localIndex].start < keepSpan.end
     ) {
-      const insertion = compactedInsertions[localIndex];
-      if (insertion.start > cursor && insertion.start - cursor >= MIN_KEEP_SPAN_SECONDS) {
+      const insertion = insertionItems[localIndex];
+      if (
+        insertion.start > cursor &&
+        insertion.start - cursor >= MIN_KEEP_SPAN_SECONDS
+      ) {
         items.push({ kind: "source", start: cursor, end: insertion.start });
       }
 
