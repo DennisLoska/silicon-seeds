@@ -12,8 +12,15 @@ import { VideoGenerator } from "./video/video-generator";
 //
 // Critical
 // - Vid-to-vid workflow
+// - Keep models in memory
 // - Social Media integration
 // - Metadata for existing files
+// - fish audio, voice clone, replace kokoro
+// - zimage in cpu, fish audio in cpu
+// - export assets as davinci project timeline
+// - preserve autocut assets
+// - preserve metadata about what has been cut and preserve removed snippets
+// - allow autocut clip regeneration with transitions
 
 // Content
 // - consistent style and transitions

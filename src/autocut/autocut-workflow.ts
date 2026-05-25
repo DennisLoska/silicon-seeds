@@ -385,75 +385,104 @@ function buildTimelineItems(
   duration: number,
   replacementDuration: number,
 ) {
-  const items: TimelineItem[] = [];
+  const insertionItems: InsertionTimelineItem[] = [];
   const skippedInsertions: AutoCutInsertionPlan[] = [];
   const sortedInsertions = [...insertions].sort(compareTimeline);
   const normalizedKeepSpans = normalizeSpans(keepSpans, duration);
-  let insertionIndex = 0;
+  let keepSpanIndex = 0;
 
-  for (const keepSpan of normalizedKeepSpans) {
+  for (const insertion of sortedInsertions) {
+    const roundedTimestamp = roundTime(insertion.timestamp);
     while (
-      insertionIndex < sortedInsertions.length &&
-      sortedInsertions[insertionIndex].timestamp < keepSpan.start
+      keepSpanIndex < normalizedKeepSpans.length &&
+      normalizedKeepSpans[keepSpanIndex].end < roundedTimestamp
     ) {
-      skippedInsertions.push(sortedInsertions[insertionIndex]);
-      insertionIndex += 1;
+      keepSpanIndex += 1;
     }
 
+    const candidateSpans = [
+      normalizedKeepSpans[keepSpanIndex],
+      normalizedKeepSpans[keepSpanIndex - 1],
+      normalizedKeepSpans[keepSpanIndex + 1],
+    ].filter((span): span is TimeSpan => Boolean(span));
+
+    const selectedSpan = candidateSpans.find((span) =>
+      span.end - Math.max(span.start, roundedTimestamp) >= replacementDuration,
+    ) ?? candidateSpans.find((span) => span.end - span.start >= replacementDuration);
+
+    if (!selectedSpan) {
+      skippedInsertions.push(insertion);
+      continue;
+    }
+
+    const insertionStart = clampNumber(
+      roundedTimestamp,
+      selectedSpan.start,
+      roundTime(selectedSpan.end - replacementDuration),
+    );
+    const insertionEnd = roundTime(insertionStart + replacementDuration);
+
+    insertionItems.push({
+      kind: "insertion",
+      insertion,
+      start: insertionStart,
+      end: insertionEnd,
+    });
+  }
+
+  insertionItems.sort((a, b) => a.start - b.start);
+
+  const compactedInsertions: InsertionTimelineItem[] = [];
+  for (const item of insertionItems) {
+    const previous = compactedInsertions.at(-1);
+    if (!previous || item.start >= previous.end) {
+      compactedInsertions.push(item);
+      continue;
+    }
+
+    if (item.end <= previous.end) {
+      skippedInsertions.push(item.insertion);
+      continue;
+    }
+
+    skippedInsertions.push(previous.insertion);
+    compactedInsertions[compactedInsertions.length - 1] = item;
+  }
+
+  const items: TimelineItem[] = [];
+  let insertionCursor = 0;
+
+  for (const keepSpan of normalizedKeepSpans) {
     let cursor = keepSpan.start;
 
     while (
-      insertionIndex < sortedInsertions.length &&
-      sortedInsertions[insertionIndex].timestamp <= keepSpan.end
+      insertionCursor < compactedInsertions.length &&
+      compactedInsertions[insertionCursor].end <= keepSpan.start
     ) {
-      const insertion = sortedInsertions[insertionIndex];
-      const insertionPoint = clampNumber(
-        roundTime(insertion.timestamp),
-        cursor,
-        keepSpan.end,
-      );
+      insertionCursor += 1;
+    }
 
-      if (insertionPoint - cursor >= MIN_KEEP_SPAN_SECONDS) {
-        items.push({ kind: "source", start: cursor, end: insertionPoint });
+    let localIndex = insertionCursor;
+    while (
+      localIndex < compactedInsertions.length &&
+      compactedInsertions[localIndex].start < keepSpan.end
+    ) {
+      const insertion = compactedInsertions[localIndex];
+      if (insertion.start > cursor && insertion.start - cursor >= MIN_KEEP_SPAN_SECONDS) {
+        items.push({ kind: "source", start: cursor, end: insertion.start });
       }
 
-      const insertionSpanStart = insertionPoint;
-      if (keepSpan.end - insertionSpanStart < replacementDuration) {
-        skippedInsertions.push(insertion);
-        insertionIndex += 1;
-        continue;
+      if (insertion.end <= keepSpan.end) {
+        items.push(insertion);
+        cursor = insertion.end;
       }
 
-      const insertionSpanEnd = clampNumber(
-        roundTime(insertionSpanStart + replacementDuration),
-        insertionSpanStart,
-        keepSpan.end,
-      );
-
-      if (insertionSpanEnd - insertionSpanStart < MIN_KEEP_SPAN_SECONDS) {
-        skippedInsertions.push(insertion);
-        insertionIndex += 1;
-        continue;
-      }
-
-      items.push({
-        kind: "insertion",
-        insertion,
-        start: insertionSpanStart,
-        end: insertionSpanEnd,
-      });
-      cursor = insertionSpanEnd;
-      insertionIndex += 1;
+      localIndex += 1;
     }
 
     if (keepSpan.end - cursor >= MIN_KEEP_SPAN_SECONDS) {
       items.push({ kind: "source", start: cursor, end: keepSpan.end });
     }
-  }
-
-  while (insertionIndex < sortedInsertions.length) {
-    skippedInsertions.push(sortedInsertions[insertionIndex]);
-    insertionIndex += 1;
   }
 
   return { items, skippedInsertions };
@@ -1270,6 +1299,12 @@ export namespace AutoCutWorkflow {
         return;
       }
 
+      for (const insertion of insertionPlans) {
+        insertion.imageEventId = Metadata.randomId();
+      }
+
+      await updateManifest(jobId, { insertionPlans });
+
       for (const [index, insertion] of insertionPlans.entries()) {
         const imageEvent = await PromptGenerator.styled_img_to_event(
           jobId,
@@ -1277,15 +1312,18 @@ export namespace AutoCutWorkflow {
           insertion.prompt,
           job.style_preset as Presets | undefined,
           index,
+          insertion.imageEventId,
         );
         Utils.assert(
           imageEvent,
           `Failed to schedule styled insert image for ${jobId}`,
         );
-        insertion.imageEventId = imageEvent.id;
+        Utils.assert(
+          imageEvent.id === insertion.imageEventId,
+          `Unexpected image event id for ${jobId}`,
+        );
       }
 
-      await updateManifest(jobId, { insertionPlans });
       void QueueManager.pump();
 
       const removedSeconds = roundTime(

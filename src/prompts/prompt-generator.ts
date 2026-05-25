@@ -325,6 +325,7 @@ Make sure to only include the actual image prompt in your response and nothing m
     message: string,
     preset?: Presets,
     index?: number,
+    id?: string,
   ) {
     const styled = await styled_image_prompt(message, preset);
     if (!styled) {
@@ -332,6 +333,7 @@ Make sure to only include the actual image prompt in your response and nothing m
     }
 
     return await ImageGenerator.schedule_image({
+      id,
       jobId,
       mode,
       prompt: styled.prompt,
