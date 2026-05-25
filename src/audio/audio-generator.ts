@@ -20,7 +20,7 @@ export namespace AudioGenerator {
     jobId: string;
     prompt?: string;
     duration?: number;
-    mode?: JobMode.Speech | JobMode.Instrumental;
+    mode?: JobMode.Speech | JobMode.Song | JobMode.Instrumental;
     lyrics?: string;
     audio_settings?: Record<string, unknown>;
   }) {
@@ -53,6 +53,20 @@ export namespace AudioGenerator {
       const modelVariant: ModelVariant = {
         id,
         kind: "text-to-instrumental",
+        prompt: prompt ?? null,
+        duration,
+        lyrics: lyrics ?? null,
+        settings: audio_settings,
+      };
+
+      await comfyClient.generate(modelVariant, job);
+    }
+
+    if (mode === JobMode.Song) {
+      Utils.assert(duration && duration > 0, "'duration' is not a number");
+      const modelVariant: ModelVariant = {
+        id,
+        kind: "text-to-song",
         prompt: prompt ?? null,
         duration,
         lyrics: lyrics ?? null,

@@ -123,7 +123,11 @@ async function buildMediaData(jobId: string): Promise<MediaData> {
       mediaData.images.push(asset);
     } else if (event.mode === "video") {
       mediaData.videos.push(asset);
-    } else if (event.mode === "speech" || event.mode === "instrumental") {
+    } else if (
+      event.mode === "speech" ||
+      event.mode === "song" ||
+      event.mode === "instrumental"
+    ) {
       mediaData.audio.push(asset);
     }
   }

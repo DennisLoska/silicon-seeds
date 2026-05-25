@@ -22,7 +22,7 @@ export async function text_to_audio(options: PostDistinctAudio): Promise<Respons
 
   await AudioGenerator.schedule_audio({
     jobId,
-    mode: JobMode.Instrumental,
+    mode: JobMode.Song,
     prompt: instrumentalPrompt,
     lyrics: lyricPrompt,
     duration: options.duration,

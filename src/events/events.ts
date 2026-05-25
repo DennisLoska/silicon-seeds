@@ -7,6 +7,7 @@ export enum JobMode {
   Image = "image",
   Video = "video",
   Speech = "speech",
+  Song = "song",
   Instrumental = "instrumental",
 }
 
