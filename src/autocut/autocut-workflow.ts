@@ -62,6 +62,16 @@ export interface AutoCutCutClip {
   outputAssetPath?: string;
 }
 
+export interface AutoCutGenerationSettings {
+  fps: number;
+  resolution: string;
+  clip_duration: number;
+  transition_duration: number;
+  image_model: string;
+  video_model: string;
+  style_preset: Presets;
+}
+
 interface WhisperXWord {
   word?: string;
   start?: number;
@@ -893,7 +903,10 @@ export namespace AutoCutWorkflow {
 
   export async function enqueue(
     videoFile: File,
-    options: { generateInsertClips: boolean },
+    options: {
+      generateInsertClips: boolean;
+      generationSettings?: AutoCutGenerationSettings;
+    },
   ) {
     Utils.assert(videoFile, "Video file is required");
     Utils.assert(videoFile.size > 0, "Uploaded video file is empty");
@@ -901,13 +914,13 @@ export namespace AutoCutWorkflow {
     const job = await JobOrchestrator.create_job({
       original_prompt: `Autocut upload: ${videoFile.name}`,
       workflow: "autocut",
-      fps: Metadata.FPS,
-      resolution: "720p",
-      clip_duration: Metadata.CLIP_DURATION,
-      transition_duration: Metadata.TRANSITION_DURATION,
-      image_model: "z-image-turbo",
-      video_model: "wan2.2",
-      style_preset: Presets.SYSTEM,
+      fps: options.generationSettings?.fps ?? Metadata.FPS,
+      resolution: options.generationSettings?.resolution ?? "720p",
+      clip_duration: options.generationSettings?.clip_duration ?? Metadata.CLIP_DURATION,
+      transition_duration: options.generationSettings?.transition_duration ?? Metadata.TRANSITION_DURATION,
+      image_model: options.generationSettings?.image_model ?? "z-image-turbo",
+      video_model: options.generationSettings?.video_model ?? "wan2.2",
+      style_preset: options.generationSettings?.style_preset ?? Presets.SYSTEM,
     });
 
     const jobId = job.id;

@@ -4,7 +4,15 @@ import {
   type AutoCutStage,
   type AutoCutState,
 } from "../autocut/autocut-workflow";
+import { DB } from "../db/db";
+import { Event, JobLifecycleStatus, JobStatus } from "../events/events";
+import {
+  AIModelsCard,
+  StylePresetCard,
+  VideoSettingsCard,
+} from "./generation-settings-cards";
 import { Icons } from "./icons";
+import { getAssetPath } from "./utils";
 
 interface AutoCutProps {
   showProgress?: boolean;
@@ -13,6 +21,16 @@ interface AutoCutProps {
 
 interface AutoCutStatusProps {
   jobId: string;
+}
+
+interface AutoCutInsertProgressRow {
+  id: string;
+  index: number;
+  kind: "image" | "video" | "transition";
+  label: string;
+  status: JobStatus;
+  assetPath?: string;
+  prompt: string;
 }
 
 function badgeForStage(stage?: AutoCutStage) {
@@ -49,6 +67,34 @@ function formatSeconds(value?: number) {
   return `${value.toFixed(2)}s`;
 }
 
+function progressBadge(status: JobStatus) {
+  switch (status) {
+    case JobStatus.Complete:
+      return "badge-success";
+    case JobStatus.Running:
+      return "badge-warning";
+    case JobStatus.Failed:
+      return "badge-error";
+    case JobStatus.Pending:
+    default:
+      return "badge-ghost";
+  }
+}
+
+function progressLabel(status: JobStatus) {
+  switch (status) {
+    case JobStatus.Complete:
+      return "Complete";
+    case JobStatus.Running:
+      return "Running";
+    case JobStatus.Failed:
+      return "Failed";
+    case JobStatus.Pending:
+    default:
+      return "Pending";
+  }
+}
+
 function summarizeCutClip(clip: AutoCutCutClip) {
   const reasons = Array.from(new Set(clip.removals.map((removal) => removal.reason))).join(", ");
   const text = clip.removals
@@ -67,6 +113,69 @@ function hasClipAsset(clip: AutoCutCutClip) {
 }
 
 const FILE_PICKER_PLACEHOLDER = "No file chosen";
+
+async function loadInsertProgress(jobId: string): Promise<AutoCutInsertProgressRow[]> {
+  const events = await DB.Events.findByJobId(jobId).catch(() => []);
+  const mediaEvents = events.filter(
+    (event): event is Extract<
+      (typeof events)[number],
+      | { type: Event.NewImagePrompt }
+      | { type: Event.NewVideoPrompt }
+      | { type: Event.NewTransitionPrompt }
+    > =>
+      event.type === Event.NewImagePrompt ||
+      event.type === Event.NewVideoPrompt ||
+      event.type === Event.NewTransitionPrompt,
+  );
+
+  const rows = await Promise.all(mediaEvents.map(async (event) => {
+    const meta = event.status === JobStatus.Complete
+      ? await DB.Meta.findByEventId(event.id).catch(() => null)
+      : null;
+
+    if (event.type === Event.NewImagePrompt) {
+      return {
+        id: event.id,
+        index: event.index ?? 0,
+        kind: "image" as const,
+        label: `Insert ${String((event.index ?? 0) + 1).padStart(2, "0")}`,
+        status: event.status,
+        assetPath: meta ? getAssetPath(meta.subfolder, meta.filename) : undefined,
+        prompt: event.prompt,
+      };
+    }
+
+    if (event.type === Event.NewVideoPrompt) {
+      return {
+        id: event.id,
+        index: event.index ?? 0,
+        kind: "video" as const,
+        label: `Insert ${String((event.index ?? 0) + 1).padStart(2, "0")}`,
+        status: event.status,
+        assetPath: meta ? getAssetPath(meta.subfolder, meta.filename) : undefined,
+        prompt: event.prompt,
+      };
+    }
+
+    return {
+      id: event.id,
+      index: Number.MAX_SAFE_INTEGER,
+      kind: "transition" as const,
+      label: event.prompt.includes("back into the real source footage")
+        ? "Outgoing transition"
+        : "Incoming transition",
+      status: event.status,
+      assetPath: meta ? getAssetPath(meta.subfolder, meta.filename) : undefined,
+      prompt: event.prompt,
+    };
+  }));
+
+  return rows.sort((a, b) => {
+    if (a.index !== b.index) return a.index - b.index;
+    const kindOrder = { image: 0, video: 1, transition: 2 };
+    return kindOrder[a.kind] - kindOrder[b.kind];
+  });
+}
 
 function AutoCutEmptyState() {
   return (
@@ -87,7 +196,13 @@ function AutoCutEmptyState() {
   );
 }
 
-function AutoCutStatusContent({ state }: { state: AutoCutState | null }) {
+function AutoCutStatusContent({
+  state,
+  insertProgress,
+}: {
+  state: AutoCutState | null;
+  insertProgress: AutoCutInsertProgressRow[];
+}) {
   if (!state) {
     return (
       <div role="alert" className="alert alert-soft alert-warning">
@@ -176,38 +291,77 @@ function AutoCutStatusContent({ state }: { state: AutoCutState | null }) {
         ) : null}
 
         {state.cutClips && state.cutClips.length > 0 ? (
-          <div className="space-y-2">
-            <h3 className="font-semibold">Cut Clips</h3>
-            <div className="overflow-x-auto rounded-box border border-base-300">
+          <div className="space-y-3">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="font-semibold">Cut Clips</h3>
+                <p className="text-xs text-base-content/60">
+                  Hover a preview to watch and hear the removed snippet.
+                </p>
+              </div>
+              <div className="badge badge-soft badge-neutral">
+                {state.cutClips.length} saved snippets
+              </div>
+            </div>
+            <div className="overflow-x-auto rounded-box border border-base-300 bg-base-200/60 shadow-sm">
               <table className="table table-sm">
                 <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Start</th>
-                    <th>End</th>
-                    <th>Duration</th>
-                    <th>Reasons</th>
-                    <th>Text</th>
-                    <th>Clip</th>
+                  <tr className="text-[11px] uppercase tracking-[0.14em] text-base-content/50">
+                    <th className="bg-base-200">#</th>
+                    <th className="bg-base-200">Range</th>
+                    <th className="bg-base-200">Reasons</th>
+                    <th className="bg-base-200">Transcript</th>
+                    <th className="bg-base-200 text-right">Preview</th>
                   </tr>
                 </thead>
                 <tbody>
                   {state.cutClips.map((clip) => {
                     const summary = summarizeCutClip(clip);
                     return (
-                      <tr key={`${clip.index}-${clip.start}-${clip.end}`}>
-                        <td>{clip.index + 1}</td>
-                        <td>{formatSeconds(clip.start)}</td>
-                        <td>{formatSeconds(clip.end)}</td>
-                        <td>{formatSeconds(clip.durationSeconds)}</td>
-                        <td>{summary.reasons}</td>
-                        <td className="max-w-xl whitespace-pre-wrap break-words">
+                      <tr
+                        key={`${clip.index}-${clip.start}-${clip.end}`}
+                        className="hover:bg-base-100/80 transition-colors"
+                      >
+                        <td className="align-top">
+                          <div className="badge badge-outline badge-sm font-mono">
+                            {clip.index + 1}
+                          </div>
+                        </td>
+                        <td className="align-top">
+                          <div className="flex min-w-36 flex-col gap-1 text-xs">
+                            <div className="flex items-center gap-2 font-mono text-base-content/80">
+                              <span className="rounded bg-base-100 px-2 py-1">
+                                {formatSeconds(clip.start)}
+                              </span>
+                              <span className="text-base-content/40">to</span>
+                              <span className="rounded bg-base-100 px-2 py-1">
+                                {formatSeconds(clip.end)}
+                              </span>
+                            </div>
+                            <div className="text-base-content/50">
+                              {formatSeconds(clip.durationSeconds)} removed
+                            </div>
+                          </div>
+                        </td>
+                        <td className="align-top">
+                          <div className="flex max-w-40 flex-wrap gap-1">
+                            {summary.reasons.split(", ").map((reason) => (
+                              <span
+                                key={`${clip.index}-${reason}`}
+                                className="badge badge-soft badge-warning badge-sm"
+                              >
+                                {reason}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="max-w-xl align-top whitespace-pre-wrap break-words text-sm leading-5 text-base-content/80">
                           {summary.text}
                         </td>
-                        <td>
+                        <td className="align-top text-right">
                           {hasClipAsset(clip) ? (
                             <video
-                              className="h-10 w-16 rounded border border-base-300 bg-black object-cover"
+                              className="ml-auto h-14 w-24 rounded-lg border border-base-300 bg-black object-cover shadow-sm"
                               src={clip.outputAssetPath}
                               loop
                               playsinline
@@ -228,6 +382,76 @@ function AutoCutStatusContent({ state }: { state: AutoCutState | null }) {
           </div>
         ) : null}
 
+        {insertProgress.length > 0 ? (
+          <div className="space-y-3">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="font-semibold">Generated Inserts</h3>
+                <p className="text-xs text-base-content/60">
+                  Live progress for insert images, clips, and transitions.
+                </p>
+              </div>
+              <div className="badge badge-soft badge-primary">
+                {insertProgress.filter((row) => row.status === JobStatus.Complete).length}/{insertProgress.length} complete
+              </div>
+            </div>
+            <div className="overflow-x-auto rounded-box border border-base-300 bg-base-200/60 shadow-sm">
+              <table className="table table-sm">
+                <thead>
+                  <tr className="text-[11px] uppercase tracking-[0.14em] text-base-content/50">
+                    <th className="bg-base-200">Item</th>
+                    <th className="bg-base-200">Type</th>
+                    <th className="bg-base-200">Status</th>
+                    <th className="bg-base-200">Preview</th>
+                    <th className="bg-base-200">Prompt</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {insertProgress.map((row) => (
+                    <tr key={row.id} className="hover:bg-base-100/80 transition-colors">
+                      <td className="align-top font-medium">{row.label}</td>
+                      <td className="align-top">
+                        <span className="badge badge-outline badge-sm uppercase">
+                          {row.kind}
+                        </span>
+                      </td>
+                      <td className="align-top">
+                        <span className={`badge badge-sm ${progressBadge(row.status)}`}>
+                          {progressLabel(row.status)}
+                        </span>
+                      </td>
+                      <td className="align-top">
+                        {row.assetPath ? (
+                          row.kind === "image" ? (
+                            <img
+                              className="h-12 w-20 rounded-lg border border-base-300 bg-black object-cover"
+                              src={row.assetPath}
+                              alt={row.label}
+                            />
+                          ) : (
+                            <video
+                              className="h-12 w-20 rounded-lg border border-base-300 bg-black object-cover"
+                              src={row.assetPath}
+                              muted
+                              playsinline
+                              preload="metadata"
+                            ></video>
+                          )
+                        ) : (
+                          <span className="text-xs text-base-content/50">Waiting</span>
+                        )}
+                      </td>
+                      <td className="max-w-xl align-top whitespace-pre-wrap break-words text-sm leading-5 text-base-content/80">
+                        {row.prompt}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : null}
+
         {isProcessing ? (
           <div className="flex items-center gap-3 text-sm text-base-content/70">
             <span className="loading loading-spinner loading-sm text-primary"></span>
@@ -241,6 +465,7 @@ function AutoCutStatusContent({ state }: { state: AutoCutState | null }) {
 
 export const AutoCutStatusFragment = async ({ jobId }: AutoCutStatusProps) => {
   const state = await AutoCutWorkflow.readState(jobId);
+  const insertProgress = await loadInsertProgress(jobId);
   const shouldPoll = state?.stage !== "complete" && state?.stage !== "failed";
 
   return (
@@ -251,7 +476,7 @@ export const AutoCutStatusFragment = async ({ jobId }: AutoCutStatusProps) => {
       hx-trigger={shouldPoll ? "load delay:5s, every 5s" : undefined}
       hx-swap={shouldPoll ? "outerHTML" : undefined}
     >
-      <AutoCutStatusContent state={state} />
+      <AutoCutStatusContent state={state} insertProgress={insertProgress} />
     </div>
   );
 };
@@ -260,104 +485,129 @@ export const AutoCut = async ({
   showProgress = false,
   jobId = "",
 }: AutoCutProps) => {
+  const currentJob = showProgress && jobId
+    ? await DB.Jobs.findById(jobId).catch(() => null)
+    : null;
+  const isJobRunning = currentJob?.status === JobLifecycleStatus.Active;
+
   return (
     <div className="flex flex-col gap-4 sm:px-6 py-6 xl:h-full bg-base-200">
       <div className="grid gap-4 xl:grid-cols-[minmax(24rem,30rem)_minmax(0,1fr)] xl:items-start">
-        <div className="card bg-base-100 shadow-xl w-full min-w-0">
-          <form
-            className="card-body gap-5 w-full min-w-0"
-            hx-post="/api/jobs/videos/autocut"
-            hx-encoding="multipart/form-data"
-            hx-swap="none"
-            hx-disable-element="#autocut-submit-btn"
-            hx-on={`
-              after-request(this, event) {
-                const redirect = event.detail.xhr.getResponseHeader('HX-Redirect');
-                if (redirect) {
-                  window.location.href = redirect;
-                }
+        <form
+          className="flex flex-col gap-4 min-w-0"
+          x-data="{ generateInsertClips: false }"
+          hx-post="/api/jobs/videos/autocut"
+          hx-encoding="multipart/form-data"
+          hx-swap="none"
+          hx-disable-element="#autocut-submit-btn"
+          hx-on={`
+            after-request(this, event) {
+              const redirect = event.detail.xhr.getResponseHeader('HX-Redirect');
+              if (redirect) {
+                window.location.href = redirect;
               }
-              validation:halted(this) {
-                this.reportValidity();
-              }
-            `}
-          >
-            <div className="space-y-2">
-              <h2 className="card-title text-lg flex items-center gap-2">
-                <Icons.AutoCutSmall />
-                AutoCut
-              </h2>
-              <p className="text-sm text-base-content/70">
-                Upload a video and let AutoCut clean up the edit automatically.
-              </p>
-            </div>
+            }
+            validation:halted(this) {
+              this.reportValidity();
+            }
+          `}
+        >
+          <div className="card bg-base-100 shadow-xl w-full min-w-0">
+            <div className="card-body gap-5 w-full min-w-0">
+              <div className="space-y-2">
+                <h2 className="card-title text-lg flex items-center gap-2">
+                  <Icons.AutoCutSmall />
+                  AutoCut
+                </h2>
+                <p className="text-sm text-base-content/70">
+                  Upload a video and let AutoCut clean up the edit automatically.
+                </p>
+              </div>
 
-            <fieldset className="fieldset w-full min-w-0">
-              <legend className="fieldset-legend">Video Upload</legend>
-              <label className="relative box-border flex w-full max-w-full min-w-0 cursor-pointer items-stretch overflow-hidden rounded-box border border-base-300 bg-base-100">
-                <input
-                  type="file"
-                  name="video_file"
-                  accept="video/*,.mp4,.mov,.mkv,.webm"
-                  className="absolute inset-0 opacity-0"
-                  required
-                  onchange={`this.nextElementSibling.nextElementSibling.textContent = this.files?.[0]?.name || '${FILE_PICKER_PLACEHOLDER}'`}
-                />
-                <span className="pointer-events-none flex shrink-0 items-center bg-primary px-4 text-sm font-medium text-primary-content">
-                  Choose video
+              <fieldset className="fieldset w-full min-w-0">
+                <legend className="fieldset-legend">Video Upload</legend>
+                <label className="relative box-border flex w-full max-w-full min-w-0 cursor-pointer items-stretch overflow-hidden rounded-box border border-base-300 bg-base-100">
+                  <input
+                    type="file"
+                    name="video_file"
+                    accept="video/*,.mp4,.mov,.mkv,.webm"
+                    className="absolute inset-0 opacity-0"
+                    required
+                    onchange={`this.nextElementSibling.nextElementSibling.textContent = this.files?.[0]?.name || '${FILE_PICKER_PLACEHOLDER}'`}
+                  />
+                  <span className="pointer-events-none flex shrink-0 items-center bg-primary px-4 text-sm font-medium text-primary-content">
+                    Choose video
+                  </span>
+                  <span className="min-w-0 max-w-full flex-1 px-4 py-3 whitespace-normal break-all text-sm text-base-content/70">
+                    {FILE_PICKER_PLACEHOLDER}
+                  </span>
+                </label>
+                <p className="label">
+                  Supported formats: .mp4, .mov, .mkv, .webm
+                </p>
+              </fieldset>
+
+              <fieldset className="fieldset w-full min-w-0">
+                <legend className="fieldset-legend">Options</legend>
+                <input type="hidden" name="generate_insert_clips" value="false" />
+                <label className="label cursor-pointer justify-start gap-3 rounded-box border border-base-300 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    name="generate_insert_clips"
+                    value="true"
+                    className="checkbox checkbox-primary"
+                    x-model="generateInsertClips"
+                  />
+                  <span className="text-sm">
+                    Generate optional insert clips and transitions
+                  </span>
+                </label>
+                <p className="label">
+                  Enable to customize AI-generated insert clips.
+                </p>
+              </fieldset>
+
+              <div role="alert" className="alert alert-soft alert-info">
+                <Icons.InfoIcon />
+                <span>
+                  AutoCut removes pauses, filler words, and rough retakes for a
+                  cleaner result.
                 </span>
-                <span className="min-w-0 max-w-full flex-1 px-4 py-3 whitespace-normal break-all text-sm text-base-content/70">
-                  {FILE_PICKER_PLACEHOLDER}
-                </span>
-              </label>
-              <p className="label">
-                Supported formats: .mp4, .mov, .mkv, .webm
-              </p>
-            </fieldset>
+              </div>
 
-            <fieldset className="fieldset w-full min-w-0">
-              <legend className="fieldset-legend">Options</legend>
-              <input type="hidden" name="generate_insert_clips" value="false" />
-              <label className="label cursor-pointer justify-start gap-3 rounded-box border border-base-300 px-4 py-3">
-                <input
-                  type="checkbox"
-                  name="generate_insert_clips"
-                  value="true"
-                  className="checkbox checkbox-primary"
-                  checked
-                />
-                <span className="text-sm">
-                  Generate optional insert clips and transitions
-                </span>
-              </label>
-              <p className="label">
-                Disable for a clean source-only cut.
-              </p>
-            </fieldset>
-
-            <div role="alert" className="alert alert-soft alert-info">
-              <Icons.InfoIcon />
-              <span>
-                AutoCut removes pauses, filler words, and rough retakes for a
-                cleaner result.
-              </span>
+              <div className="card-actions justify-between">
+                <button type="reset" className="btn btn-ghost">
+                  Reset
+                </button>
+                <button
+                  type="submit"
+                  id="autocut-submit-btn"
+                  className="btn btn-primary"
+                  disabled={isJobRunning}
+                >
+                  {isJobRunning ? "AutoCut Running" : "Start AutoCut"}
+                  <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
+                </button>
+              </div>
             </div>
+          </div>
 
-            <div className="card-actions justify-between">
-              <button type="reset" className="btn btn-ghost">
-                Reset
-              </button>
-              <button
-                type="submit"
-                id="autocut-submit-btn"
-                className="btn btn-primary"
-              >
-                Start AutoCut
-                <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
-              </button>
-            </div>
-          </form>
-        </div>
+          <AIModelsCard
+            className="w-full min-w-0"
+            disabledExpr="!generateInsertClips"
+            showExpr="generateInsertClips"
+          />
+          <VideoSettingsCard
+            className="w-full min-w-0"
+            disabledExpr="!generateInsertClips"
+            showExpr="generateInsertClips"
+          />
+          <StylePresetCard
+            className="w-full min-w-0"
+            disabledExpr="!generateInsertClips"
+            showExpr="generateInsertClips"
+          />
+        </form>
 
         {showProgress && jobId ? (
           <AutoCutStatusFragment jobId={jobId} />
