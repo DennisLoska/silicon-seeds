@@ -179,7 +179,7 @@ async function loadInsertProgress(jobId: string): Promise<AutoCutInsertProgressR
 
 function AutoCutEmptyState() {
   return (
-    <div className="card bg-base-100 shadow-xl w-full xl:flex-1">
+    <div className="card bg-base-100 shadow-xl w-full xl:flex-1 flex-grow min-h-[calc(100vh-7rem)]">
       <div className="card-body items-center justify-center text-center gap-4 py-16">
         <div className="text-primary">
           <Icons.AutoCutSmall />
@@ -215,7 +215,7 @@ function AutoCutStatusContent({
   const isProcessing = state.stage !== "complete" && state.stage !== "failed";
 
   return (
-    <div className="card bg-base-100 shadow-xl w-full xl:flex-1">
+    <div className="card bg-base-100 shadow-xl w-full xl:flex-1 flex-grow min-h-[calc(100vh-7rem)]">
       <div className="card-body gap-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
@@ -458,6 +458,23 @@ function AutoCutStatusContent({
             Polling for updates every 5 seconds.
           </div>
         ) : null}
+
+        <div className="card-actions justify-end mt-4 flex-none gap-2">
+          <button
+            className="btn btn-error btn-outline"
+            hx-get={`/api/fragments/job-action-modal?jobId=${state.jobId}&action=cancel&source=autocut`}
+            hx-target="#job-action-modal"
+            hx-swap="outerHTML"
+          >
+            Cancel
+          </button>
+          <a
+            href={`/jobs?job_id=${state.jobId}&filter=all&tab=status`}
+            className="btn btn-primary"
+          >
+            View Job
+          </a>
+        </div>
       </div>
     </div>
   );
@@ -492,129 +509,135 @@ export const AutoCut = async ({
 
   return (
     <div className="flex flex-col gap-4 sm:px-6 py-6 xl:h-full bg-base-200">
-      <div className="grid gap-4 xl:grid-cols-[minmax(24rem,30rem)_minmax(0,1fr)] xl:items-start">
-        <form
-          className="flex flex-col gap-4 min-w-0"
-          x-data="{ generateInsertClips: false }"
-          hx-post="/api/jobs/videos/autocut"
-          hx-encoding="multipart/form-data"
-          hx-swap="none"
-          hx-disable-element="#autocut-submit-btn"
-          hx-on={`
-            after-request(this, event) {
-              const redirect = event.detail.xhr.getResponseHeader('HX-Redirect');
-              if (redirect) {
-                window.location.href = redirect;
-              }
+      <form
+        className="flex flex-col xl:flex-row xl:items-start gap-4 xl:h-full"
+        x-data="{ generateInsertClips: false }"
+        hx-post="/api/jobs/videos/autocut"
+        hx-encoding="multipart/form-data"
+        hx-swap="none"
+        hx-disable-element="#autocut-submit-btn"
+        hx-on={`
+          after-request(this, event) {
+            const redirect = event.detail.xhr.getResponseHeader('HX-Redirect');
+            if (redirect) {
+              window.location.href = redirect;
             }
-            validation:halted(this) {
-              this.reportValidity();
-            }
-          `}
-        >
-          <div className="card bg-base-100 shadow-xl w-full min-w-0">
-            <div className="card-body gap-5 w-full min-w-0">
-              <div className="space-y-2">
-                <h2 className="card-title text-lg flex items-center gap-2">
-                  <Icons.AutoCutSmall />
-                  AutoCut
-                </h2>
-                <p className="text-sm text-base-content/70">
-                  Upload a video and let AutoCut clean up the edit automatically.
-                </p>
-              </div>
+          }
+          validation:halted(this) {
+            this.reportValidity();
+          }
+        `}
+      >
+        <div className="card bg-base-100 shadow-xl w-full xl:w-[30rem] xl:flex-none min-w-0">
+          <div className="card-body gap-5 w-full min-w-0">
+            <div className="space-y-2">
+              <h2 className="card-title text-lg flex items-center gap-2">
+                <Icons.AutoCutSmall />
+                AutoCut
+              </h2>
+              <p className="text-sm text-base-content/70">
+                Upload a video and let AutoCut clean up the edit automatically.
+              </p>
+            </div>
 
-              <fieldset className="fieldset w-full min-w-0">
-                <legend className="fieldset-legend">Video Upload</legend>
-                <label className="relative box-border flex w-full max-w-full min-w-0 cursor-pointer items-stretch overflow-hidden rounded-box border border-base-300 bg-base-100">
-                  <input
-                    type="file"
-                    name="video_file"
-                    accept="video/*,.mp4,.mov,.mkv,.webm"
-                    className="absolute inset-0 opacity-0"
-                    required
-                    onchange={`this.nextElementSibling.nextElementSibling.textContent = this.files?.[0]?.name || '${FILE_PICKER_PLACEHOLDER}'`}
-                  />
-                  <span className="pointer-events-none flex shrink-0 items-center bg-primary px-4 text-sm font-medium text-primary-content">
-                    Choose video
-                  </span>
-                  <span className="min-w-0 max-w-full flex-1 px-4 py-3 whitespace-normal break-all text-sm text-base-content/70">
-                    {FILE_PICKER_PLACEHOLDER}
-                  </span>
-                </label>
-                <p className="label">
-                  Supported formats: .mp4, .mov, .mkv, .webm
-                </p>
-              </fieldset>
-
-              <fieldset className="fieldset w-full min-w-0">
-                <legend className="fieldset-legend">Options</legend>
-                <input type="hidden" name="generate_insert_clips" value="false" />
-                <label className="label cursor-pointer justify-start gap-3 rounded-box border border-base-300 px-4 py-3">
-                  <input
-                    type="checkbox"
-                    name="generate_insert_clips"
-                    value="true"
-                    className="checkbox checkbox-primary"
-                    x-model="generateInsertClips"
-                  />
-                  <span className="text-sm">
-                    Generate optional insert clips and transitions
-                  </span>
-                </label>
-                <p className="label">
-                  Enable to customize AI-generated insert clips.
-                </p>
-              </fieldset>
-
-              <div role="alert" className="alert alert-soft alert-info">
-                <Icons.InfoIcon />
-                <span>
-                  AutoCut removes pauses, filler words, and rough retakes for a
-                  cleaner result.
+            <fieldset className="fieldset w-full min-w-0">
+              <legend className="fieldset-legend">Video Upload</legend>
+              <label className="relative box-border flex w-full max-w-full min-w-0 cursor-pointer items-stretch overflow-hidden rounded-box border border-base-300 bg-base-100">
+                <input
+                  type="file"
+                  name="video_file"
+                  accept="video/*,.mp4,.mov,.mkv,.webm"
+                  className="absolute inset-0 opacity-0"
+                  required
+                  onchange={`this.nextElementSibling.nextElementSibling.textContent = this.files?.[0]?.name || '${FILE_PICKER_PLACEHOLDER}'`}
+                />
+                <span className="pointer-events-none flex shrink-0 items-center bg-primary px-4 text-sm font-medium text-primary-content">
+                  Choose video
                 </span>
-              </div>
+                <span className="min-w-0 max-w-full flex-1 px-4 py-3 whitespace-normal break-all text-sm text-base-content/70">
+                  {FILE_PICKER_PLACEHOLDER}
+                </span>
+              </label>
+              <p className="label">
+                Supported formats: .mp4, .mov, .mkv, .webm
+              </p>
+            </fieldset>
 
-              <div className="card-actions justify-between">
-                <button type="reset" className="btn btn-ghost">
-                  Reset
-                </button>
-                <button
-                  type="submit"
-                  id="autocut-submit-btn"
-                  className="btn btn-primary"
-                  disabled={isJobRunning}
-                >
-                  {isJobRunning ? "AutoCut Running" : "Start AutoCut"}
-                  <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
-                </button>
-              </div>
+            <fieldset className="fieldset w-full min-w-0">
+              <legend className="fieldset-legend">Options</legend>
+              <input type="hidden" name="generate_insert_clips" value="false" />
+              <label className="label cursor-pointer justify-start gap-3 rounded-box border border-base-300 px-4 py-3">
+                <input
+                  type="checkbox"
+                  name="generate_insert_clips"
+                  value="true"
+                  className="checkbox checkbox-primary"
+                  x-model="generateInsertClips"
+                />
+                <span className="text-sm">
+                  Generate optional insert clips and transitions
+                </span>
+              </label>
+              <p className="label">
+                Enable to customize AI-generated insert clips.
+              </p>
+            </fieldset>
+
+            <div role="alert" className="alert alert-soft alert-info">
+              <Icons.InfoIcon />
+              <span>
+                AutoCut removes pauses, filler words, and rough retakes for a
+                cleaner result.
+              </span>
+            </div>
+
+            <div className="card-actions justify-between">
+              <button type="reset" className="btn btn-ghost">
+                Reset
+              </button>
+              <button
+                type="submit"
+                id="autocut-submit-btn"
+                className="btn btn-primary"
+                disabled={isJobRunning}
+              >
+                {isJobRunning ? "AutoCut Running" : "Start AutoCut"}
+                <span className="loading loading-spinner loading-md ml-2 hidden htmx-indicator"></span>
+              </button>
             </div>
           </div>
+        </div>
 
-          <AIModelsCard
-            className="w-full min-w-0"
-            disabledExpr="!generateInsertClips"
-            showExpr="generateInsertClips"
-          />
-          <VideoSettingsCard
-            className="w-full min-w-0"
-            disabledExpr="!generateInsertClips"
-            showExpr="generateInsertClips"
-          />
-          <StylePresetCard
-            className="w-full min-w-0"
-            disabledExpr="!generateInsertClips"
-            showExpr="generateInsertClips"
-          />
-        </form>
+        <div className="hidden min-w-0 xl:w-[24rem] xl:flex-none xl:flex xl:flex-col xl:gap-4">
+          <div x-show="!generateInsertClips"></div>
+          <div
+            className="min-w-0 xl:flex xl:flex-col xl:gap-4"
+            x-show="generateInsertClips"
+          >
+            <AIModelsCard
+              className="w-full min-w-0"
+              disabledExpr="!generateInsertClips"
+            />
+            <VideoSettingsCard
+              className="w-full min-w-0"
+              disabledExpr="!generateInsertClips"
+            />
+            <StylePresetCard
+              className="w-full min-w-0"
+              disabledExpr="!generateInsertClips"
+            />
+          </div>
+        </div>
 
-        {showProgress && jobId ? (
-          <AutoCutStatusFragment jobId={jobId} />
-        ) : (
-          <AutoCutEmptyState />
-        )}
-      </div>
+        <div className="min-w-0 xl:flex-1 flex-grow min-h-[calc(100vh-7rem)] flex">
+          {showProgress && jobId ? (
+            <AutoCutStatusFragment jobId={jobId} />
+          ) : (
+            <AutoCutEmptyState />
+          )}
+        </div>
+      </form>
+      <dialog id="job-action-modal" className="modal"></dialog>
     </div>
   );
 };

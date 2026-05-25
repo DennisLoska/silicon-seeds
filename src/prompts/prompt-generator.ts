@@ -268,6 +268,33 @@ Return structured data only.
     return `Job ${Date.now()}`;
   }
 
+  async function styled_image_prompt(message: string, preset?: Presets) {
+    const styleFn = preset
+      ? StylePresets.presets[preset]
+      : StylePresets.presets[Presets.SYSTEM];
+
+    const { instructions, lora } = styleFn({ title: message });
+
+    const res = await LLM.message(
+      `Create an excellent image prompt based on these instructions:
+
+${instructions}
+
+Make sure to only include the actual image prompt in your response and nothing more!
+`,
+    );
+
+    if (res === null || !res.content || res.content.trim() === "") {
+      Logger.warn("Failed to generate image prompt - skipping");
+      return null;
+    }
+
+    return {
+      prompt: res.content.trim(),
+      lora,
+    };
+  }
+
   export async function txt_to_img_prompt(
     jobId: string,
     mode: JobMode = JobMode.Image,
@@ -276,37 +303,41 @@ Return structured data only.
     preset?: Presets,
     index?: number,
   ) {
-    const styleFn = preset
-      ? StylePresets.presets[preset]
-      : StylePresets.presets[Presets.SYSTEM];
-
-    const { instructions, lora } = styleFn({ title: message });
-
     for (let i = 0; i < batchSize; i++) {
-      const res = await LLM.message(
-        `Create an excellent image prompt based on these instructions:
-
-${instructions}
-
-Make sure to only include the actual image prompt in your response and nothing more!
-`,
-      );
-
-      if (res === null || !res.content || res.content.trim() === "") {
-        Logger.warn("Failed to generate image prompt - skipping");
-        // TODO could add retry
+      const styled = await styled_image_prompt(message, preset);
+      if (!styled) {
         return null;
       }
-      const prompt = res.content.trim();
 
       await ImageGenerator.schedule_image({
         jobId,
         mode,
-        prompt,
-        lora,
+        prompt: styled.prompt,
+        lora: styled.lora,
         index,
       });
     }
+  }
+
+  export async function styled_img_to_event(
+    jobId: string,
+    mode: JobMode,
+    message: string,
+    preset?: Presets,
+    index?: number,
+  ) {
+    const styled = await styled_image_prompt(message, preset);
+    if (!styled) {
+      return null;
+    }
+
+    return await ImageGenerator.schedule_image({
+      jobId,
+      mode,
+      prompt: styled.prompt,
+      lora: styled.lora,
+      index,
+    });
   }
 
   export async function img_to_vid_prompt(promptId: string) {

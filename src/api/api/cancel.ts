@@ -25,6 +25,10 @@ async function renderCancelResponse(c: Context, jobId: string, context: CancelJo
     return c.html(await Templates.DistinctAudio({ showProgress: true, jobId }));
   }
 
+  if (context.source === "autocut") {
+    return c.html(await Templates.AutoCut({ showProgress: true, jobId }));
+  }
+
   const job = await DB.Jobs.findById(jobId);
   const filter = context.filter ?? "all";
   const tab = context.tab ?? "status";
