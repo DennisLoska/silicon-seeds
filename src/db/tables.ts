@@ -15,6 +15,7 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     )
     .addColumn("status", "text", (col) => col.notNull().defaultTo("active"))
     .addColumn("name", "text", (col) => col.notNull())
+    .addColumn("workflow", "text", (col) => col.defaultTo("compose"))
     .addColumn("original_prompt", "text")
     .addColumn("fps", "integer", (col) => col.defaultTo(null))
     .addColumn("clip_duration", "integer", (col) => col.defaultTo(null))

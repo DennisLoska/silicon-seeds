@@ -448,6 +448,40 @@ export namespace Icons {
     </svg>
   );
 
+  export const AutoCut = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-12 w-12 shrink-0 text-primary"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M9.75 3.75 12 6l2.25-2.25m-4.5 0L12 6m0 0 2.25 2.25M12 6 9.75 8.25m10.5 9.75-4.72-4.72m0 0a3 3 0 1 0-4.243-4.243m4.243 4.243-4.243-4.243m0 0L3.75 20.25"
+      />
+    </svg>
+  );
+
+  export const AutoCutSmall = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-6 w-6 shrink-0"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M9.75 3.75 12 6l2.25-2.25m-4.5 0L12 6m0 0 2.25 2.25M12 6 9.75 8.25m10.5 9.75-4.72-4.72m0 0a3 3 0 1 0-4.243-4.243m4.243 4.243-4.243-4.243m0 0L3.75 20.25"
+      />
+    </svg>
+  );
+
   export const Text = () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"

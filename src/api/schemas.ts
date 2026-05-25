@@ -46,6 +46,12 @@ export const PostComposeSchema = z
 
 export type PostCompose = z.infer<typeof PostComposeSchema>;
 
+export const PostAutoCutSchema = z.object({
+  video_file: z.instanceof(File),
+});
+
+export type PostAutoCut = z.infer<typeof PostAutoCutSchema>;
+
 export const PostDistinctAudioSchema = z.object({
   instrumental_prompt: z.string().min(1, "Instrumental prompt is required"),
   lyric_prompt: z.string().min(1, "Lyric prompt is required"),

@@ -22,11 +22,13 @@ const app = new Hono();
 
 export namespace ApiServer {
   let server: Bun.Server<undefined>;
+  const MAX_REQUEST_BODY_SIZE = 1024 * 1024 * 1024;
 
   export function start() {
     server = Bun.serve({
       port: 3000,
       idleTimeout: Metadata.TIMEOUT,
+      maxRequestBodySize: MAX_REQUEST_BODY_SIZE,
       fetch: app.fetch,
     });
   }

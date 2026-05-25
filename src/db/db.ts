@@ -20,6 +20,7 @@ export interface DbSchema {
     created_at: Generated<string> | string;
     status: JobLifecycleStatus;
     name: string;
+    workflow?: string | null;
     original_prompt?: string | null;
     fps?: number;
     clip_duration?: number;
@@ -287,7 +288,7 @@ export namespace DB {
       const settledActiveJobs = await db
         .selectFrom("jobs")
         .innerJoin("events", "events.job_id", "jobs.id")
-        .select("jobs.id")
+        .select(["jobs.id", "jobs.workflow"])
         .distinct()
         .where("jobs.status", "=", JobLifecycleStatus.Active)
         .where((eb) =>
@@ -309,6 +310,19 @@ export namespace DB {
         .execute();
 
       for (const job of settledActiveJobs) {
+        if (job.workflow === "autocut") {
+          const compositionEvent = await db
+            .selectFrom("events")
+            .select("id")
+            .where("job_id", "=", job.id)
+            .where("type", "=", Event.NewVideoComposition)
+            .executeTakeFirst();
+
+          if (!compositionEvent) {
+            continue;
+          }
+        }
+
         const failedEvent = await db
           .selectFrom("events")
           .select("id")
