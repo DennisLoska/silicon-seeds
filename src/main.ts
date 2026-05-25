@@ -11,8 +11,13 @@ import { VideoGenerator } from "./video/video-generator";
 // TODO list:
 //
 // Critical
+// - SHIP IT
+// - Asset compression + caching
 // - Vid-to-vid workflow
 // - Keep models in memory
+// - keep cut out video snippets
+// - export davinci resolve timeline
+// - generate autocaptions
 // - manually select clips and auto-place them
 // - pick clips dynamically from content library
 // - Social Media integration
