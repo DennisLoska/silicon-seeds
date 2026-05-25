@@ -78,10 +78,6 @@ export namespace AudioGenerator {
 
     const duration = await Metadata.getAudioDuration(audioBlob);
     const job = await DB.Jobs.findById(event.jobId);
-    await schedule_audio({
-      jobId: event.jobId,
-      duration,
-    });
 
     const clipDuration = job.clip_duration || Metadata.CLIP_DURATION;
     const transitionDuration =
@@ -104,5 +100,10 @@ export namespace AudioGenerator {
         job.style_preset as Presets | undefined,
       );
     }
+
+    await schedule_audio({
+      jobId: event.jobId,
+      duration,
+    });
   }
 }
