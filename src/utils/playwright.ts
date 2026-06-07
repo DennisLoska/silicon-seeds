@@ -127,10 +127,11 @@ async function dismissCookies(page: import("playwright").Page) {
 export namespace Playwright {
   /**
    * Take screenshots of a list of URLs, dismissing cookie/consent banners automatically.
+   * Processes URLs in parallel batches (default concurrency: 3).
    * Returns an array of result objects with `filepath` and `url`.
    */
   export async function takeScreenshots(
-    options: ScreenshotOptions,
+    options: ScreenshotOptions & { concurrency?: number },
   ): Promise<ScreenshotResult[]> {
     const outDir = options.outDir ?? "/tmp";
 
@@ -138,37 +139,66 @@ export namespace Playwright {
     await Bun.write(outDir + "/.keep", "");
 
     const browser = await chromium.launch({ headless: true });
+    const concurrency = options.concurrency ?? 3;
     const results: ScreenshotResult[] = [];
 
-    for (const item of options.urls) {
+    async function screenshotOne(item: { url: string; output?: string }): Promise<ScreenshotResult> {
       const page = await browser.newPage();
-      const outputName = item.output ?? generateOutputName(item.url);
-      const screenshotPath = `${outDir}/${outputName}`;
+      try {
+        const outputName = item.output ?? generateOutputName(item.url);
+        const screenshotPath = `${outDir}/${outputName}`;
 
-      Logger.info(`Navigating to ${item.url} ...`);
+        Logger.info(`Navigating to ${item.url} ...`);
 
-      await page.goto(item.url, {
-        waitUntil: "domcontentloaded",
-        timeout: 60_000,
-      });
+        await page.goto(item.url, {
+          waitUntil: "domcontentloaded",
+          timeout: 60_000,
+        });
 
-      // Try dismissing cookies up to 3 times (some sites show multiple banners)
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const dismissed = await dismissCookies(page);
-        if (!dismissed) break;
-        await new Promise((r) => setTimeout(r, 1_500));
+        // Try dismissing cookies up to 3 times (some sites show multiple banners)
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const dismissed = await dismissCookies(page);
+          if (!dismissed) break;
+          await new Promise((r) => setTimeout(r, 1_500));
+        }
+
+        // Final wait for content to settle
+        await new Promise((r) => setTimeout(r, 2_000));
+
+        await page.screenshot({ path: screenshotPath });
+        Logger.info(`Saved ${screenshotPath}`);
+
+        return { filepath: screenshotPath, url: item.url };
+      } finally {
+        await page.close();
       }
-
-      // Final wait for content to settle
-      await new Promise((r) => setTimeout(r, 2_000));
-
-      await page.screenshot({ path: screenshotPath });
-      Logger.info(`Saved ${screenshotPath}`);
-
-      results.push({ filepath: screenshotPath, url: item.url });
-      await page.close();
     }
 
+    // Process URLs in parallel batches using a semaphore pattern
+    const queue = [...options.urls];
+    const running: Promise<void>[] = [];
+
+    for (const item of queue) {
+      const p = screenshotOne(item).then((result) => {
+        results.push(result);
+      });
+      running.push(p);
+
+      if (running.length >= concurrency) {
+        await Promise.race(running);
+        // Remove completed promises from the array
+        for (let i = running.length - 1; i >= 0; i--) {
+          try {
+            await running[i];
+            running.splice(i, 1);
+          } catch {
+            running.splice(i, 1);
+          }
+        }
+      }
+    }
+
+    await Promise.all(running);
     await browser.close();
     return results;
   }

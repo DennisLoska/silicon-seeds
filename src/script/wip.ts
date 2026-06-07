@@ -9,8 +9,7 @@ const urls = [
   "https://thetyee.ca/News/2025/12/10/Jordan-Peterson-School/",
 ];
 
-async function main() {
-  await Logger.init();
+async function urls_to_screenshots(urls: string[]) {
   const res = await LLM.structured(
     `Generate a list of filenames in snake_case for screenshots of the provided urls: ${urls}`,
     z.array(z.string()).min(urls.length),
@@ -21,8 +20,13 @@ async function main() {
 
   await Playwright.takeScreenshots({
     urls: urls.map((url, i) => ({ url, output: names[i] })),
-    outDir: "./screenshots",
+    outDir: "/tmp",
   });
+
+  process.exit(0);
 }
 
-main();
+async function urls_to_video_clisp(urls: string[]) {}
+
+await Logger.init();
+urls_to_screenshots(urls);

@@ -9,14 +9,11 @@ import {
 } from "../prompts/prompt-generator";
 import { JobOrchestrator } from "../jobs/jobs";
 import { TextGenerator } from "../text/text-generator";
-import { ImageGenerator } from "../image/image-generator";
-import { VideoGenerator } from "../video/video-generator";
 import { DB } from "../db/db";
 import {
   Event,
   JobMode,
   JobStatus,
-  type ImagePromptEvent,
   type JobEvent,
   type TransitionPromptEvent,
   type VideoPromptEvent,
@@ -24,6 +21,7 @@ import {
 import { Presets } from "../styles/presets";
 import { QueueManager } from "../queue/queue-manager";
 import { Utils } from "../utils/utils";
+import { WhisperX } from "../whisperx/whisperx";
 
 const TMP_ROOT = "/tmp/silicon-seeds-autocut";
 const OUTPUT_SUBDIR = "autocut";
@@ -177,10 +175,6 @@ function tmpVideoPath(jobId: string, eventId: string) {
   return `/tmp/${jobId}_${eventId}.mp4`;
 }
 
-async function ensureDir(path: string) {
-  await mkdir(path, { recursive: true });
-}
-
 async function readManifest(jobId: string) {
   const file = Bun.file(manifestFile(jobId));
   if (!(await file.exists())) {
@@ -191,7 +185,7 @@ async function readManifest(jobId: string) {
 }
 
 async function writeManifest(jobId: string, manifest: AutoCutManifest) {
-  await ensureDir(workspaceDir(jobId));
+  await mkdir(workspaceDir(jobId), { recursive: true });
   await Bun.write(
     manifestFile(jobId),
     `${JSON.stringify(manifest, null, 2)}\n`,
@@ -207,27 +201,6 @@ async function updateManifest(jobId: string, patch: Partial<AutoCutManifest>) {
   } satisfies AutoCutManifest;
   await writeManifest(jobId, next);
   return next;
-}
-
-async function collectProcessOutput(process: ReturnType<typeof spawn>) {
-  const decoder = new TextDecoder();
-  let stdout = "";
-  let stderr = "";
-
-  if (process.stdout && typeof process.stdout !== "number") {
-    for await (const chunk of process.stdout) {
-      stdout += typeof chunk === "string" ? chunk : decoder.decode(chunk);
-    }
-  }
-
-  if (process.stderr && typeof process.stderr !== "number") {
-    for await (const chunk of process.stderr) {
-      stderr += typeof chunk === "string" ? chunk : decoder.decode(chunk);
-    }
-  }
-
-  const exitCode = await process.exited;
-  return { stdout, stderr, exitCode };
 }
 
 function normalizeSpans(spans: TimeSpan[], duration: number) {
@@ -339,7 +312,7 @@ async function materializeCutClips(
 ) {
   const outputDir = Bun.env.OUTPUT_DIR;
   Utils.assert(outputDir, "OUTPUT_DIR environment variable is not configured");
-  await ensureDir(join(outputDir, CUT_CLIP_SUBDIR));
+  await mkdir(join(outputDir, CUT_CLIP_SUBDIR), { recursive: true });
 
   const materializedClips: AutoCutCutClip[] = [];
 
@@ -437,7 +410,9 @@ function buildTimelineItems(
       end: insertionEnd,
     });
 
-    const selectedIndex = availableSpans.findIndex((span) => span === selected.span);
+    const selectedIndex = availableSpans.findIndex(
+      (span) => span === selected.span,
+    );
     if (selectedIndex >= 0) {
       availableSpans.splice(selectedIndex, 1);
     }
@@ -639,7 +614,7 @@ async function renderTimelineComposition(jobId: string) {
   );
 
   Utils.assert(outputDir, "OUTPUT_DIR environment variable is not configured");
-  await ensureDir(join(outputDir, OUTPUT_SUBDIR));
+  await mkdir(join(outputDir, OUTPUT_SUBDIR), { recursive: true });
 
   const { items, skippedInsertions } = buildTimelineItems(
     manifest.keepSpans,
@@ -767,7 +742,7 @@ async function renderReplacementTimeline(
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  const { stderr, exitCode } = await collectProcessOutput(process);
+  const { stderr, exitCode } = await Utils.collectProcessOutput(process);
   if (exitCode !== 0) {
     throw new Error(
       `ffmpeg replacement timeline render failed: ${stderr.trim()}`,
@@ -823,10 +798,10 @@ async function renderInsertedVisualSegment(
       "-an",
       "-filter_complex",
       `[0:v]setpts=PTS-STARTPTS,scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:black,fps=${fps},format=yuv420p,setsar=1[srcin];` +
-      `[1:v]setpts=${ptsScale}*PTS,scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:black,fps=${fps},format=yuv420p,setsar=1[clip];` +
-      `[2:v]setpts=PTS-STARTPTS,scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:black,fps=${fps},format=yuv420p,setsar=1[srcout];` +
-      `[srcin][clip]xfade=transition=fade:duration=${roundTime(xfadeDuration)}:offset=0[xf1];` +
-      `[xf1][srcout]xfade=transition=fade:duration=${roundTime(xfadeDuration)}:offset=${roundTime(targetDuration - xfadeDuration)}[v]`,
+        `[1:v]setpts=${ptsScale}*PTS,scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:black,fps=${fps},format=yuv420p,setsar=1[clip];` +
+        `[2:v]setpts=PTS-STARTPTS,scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:black,fps=${fps},format=yuv420p,setsar=1[srcout];` +
+        `[srcin][clip]xfade=transition=fade:duration=${roundTime(xfadeDuration)}:offset=0[xf1];` +
+        `[xf1][srcout]xfade=transition=fade:duration=${roundTime(xfadeDuration)}:offset=${roundTime(targetDuration - xfadeDuration)}[v]`,
       "-map",
       "[v]",
       "-t",
@@ -846,7 +821,7 @@ async function renderInsertedVisualSegment(
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  const { stderr, exitCode } = await collectProcessOutput(process);
+  const { stderr, exitCode } = await Utils.collectProcessOutput(process);
   if (exitCode !== 0) {
     throw new Error(
       `ffmpeg inserted visual segment render failed: ${stderr.trim()}`,
@@ -887,7 +862,7 @@ async function trimMediaSegment(
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  const { stderr, exitCode } = await collectProcessOutput(process);
+  const { stderr, exitCode } = await Utils.collectProcessOutput(process);
   if (exitCode !== 0) {
     throw new Error(`ffmpeg segment trim failed: ${stderr.trim()}`);
   }
@@ -901,7 +876,7 @@ function removedDuration(removals: AutoCutRemovalSpan[], duration: number) {
 }
 
 async function writeState(state: AutoCutState) {
-  await ensureDir(workspaceDir(state.jobId));
+  await mkdir(workspaceDir(state.jobId), { recursive: true });
   await Bun.write(
     statusFile(state.jobId),
     `${JSON.stringify(state, null, 2)}\n`,
@@ -922,48 +897,6 @@ async function updateState(jobId: string, patch: Partial<AutoCutState>) {
 
   await writeState(next);
   return next;
-}
-
-async function runWhisperX(inputPath: string, jobId: string) {
-  const whisperBinary = Bun.env.WHISPER_X;
-  const whisperOutputDir = join(workspaceDir(jobId), "whisperx");
-  await ensureDir(whisperOutputDir);
-
-  if (!whisperBinary) {
-    throw new Error("WHISPER_X environment variable is not configured");
-  }
-
-  const process = spawn({
-    cmd: [
-      whisperBinary,
-      inputPath,
-      "--output_dir",
-      whisperOutputDir,
-      "--output_format",
-      "json",
-    ],
-    cwd: whisperOutputDir,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-
-  const { stdout, stderr, exitCode } = await collectProcessOutput(process);
-  if (exitCode !== 0) {
-    throw new Error(`WhisperX failed: ${(stderr || stdout).trim()}`);
-  }
-
-  const outputJsonPath = join(
-    whisperOutputDir,
-    `${basename(inputPath, extname(inputPath))}.json`,
-  );
-
-  const file = Bun.file(outputJsonPath);
-  if (!(await file.exists())) {
-    throw new Error(
-      `WhisperX did not write expected JSON output to ${outputJsonPath}`,
-    );
-  }
-
-  return outputJsonPath;
 }
 
 async function renderAutocutVideo(
@@ -1011,7 +944,7 @@ async function renderAutocutVideo(
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  const { stderr, exitCode } = await collectProcessOutput(process);
+  const { stderr, exitCode } = await Utils.collectProcessOutput(process);
   if (exitCode !== 0) {
     throw new Error(`ffmpeg autocut render failed: ${stderr.trim()}`);
   }
@@ -1138,7 +1071,7 @@ export namespace AutoCutWorkflow {
 
     const jobId = job.id;
     const dir = workspaceDir(jobId);
-    await ensureDir(dir);
+    await mkdir(dir, { recursive: true });
 
     const safeName = slugifyFilename(
       videoFile.name || `upload${extname(videoFile.type || "")}`,
@@ -1189,10 +1122,15 @@ export namespace AutoCutWorkflow {
         message: "Transcribing the video.",
       });
 
-      const whisperJsonPath = await runWhisperX(inputPath, jobId);
+      const whisperJsonPath = await WhisperX.run(
+        inputPath,
+        `${TMP_ROOT}/${jobId}`,
+      );
+
       const transcript = (await Bun.file(
         whisperJsonPath,
       ).json()) as WhisperXTranscript;
+
       Utils.assert(
         Array.isArray(transcript.segments),
         "WhisperX JSON is missing segments",
@@ -1265,7 +1203,7 @@ export namespace AutoCutWorkflow {
         throw new Error("OUTPUT_DIR environment variable is not configured");
       }
 
-      await ensureDir(join(outputDir, OUTPUT_SUBDIR));
+      await mkdir(join(outputDir, OUTPUT_SUBDIR), { recursive: true });
 
       if (insertionPlans.length === 0) {
         await updateState(jobId, {
