@@ -392,7 +392,7 @@ export async function find_relevant_videos(text: string): Promise<string[]> {
   );
 
   const res = await LLM.structured(
-    `Return a list of up to 5 YouTube video URLs about the following topic.\n\nTopic:\n${text}\n\nRules:\n- Only short videos under 10 minutes\n- Return ONLY a JSON array of strings, nothing else\n- No markdown, no explanation\n\nExample format:\n["https://www.youtube.com/watch?v=abc123"]`,
+    `Use your searxng_web_search tool to find up to 5 short YouTube videos (under 10 minutes) about the following topic.\n\nTopic:\n${text}\n\nRules:\n- Use the search tool — do NOT make up URLs\n- Only include real, working YouTube video links\n- Prefer concise explanations over long lectures\n- Return ONLY a JSON array of strings, nothing else\n- No markdown, no explanation\n\nExample format:\n["https://www.youtube.com/watch?v=abc123"]`,
     z.array(z.string()).min(0).max(5),
   );
 
