@@ -1,5 +1,7 @@
 import { spawn } from "bun";
+import { Utils } from "../utils/utils";
 import { Logger } from "../logger/logger";
+import { comfyClient } from "../comfyui/comfyui-client";
 
 // This is sort of like a utils directory
 export namespace Metadata {
@@ -13,6 +15,54 @@ export namespace Metadata {
 
   export function randomId() {
     return Bun.randomUUIDv7();
+  }
+
+  export function save({
+    filename,
+    filetype,
+    job_id,
+    title,
+    decscription,
+    tags,
+    prompt,
+  }: {
+    filename: string;
+    filetype: string;
+    job_id: string;
+    title: string;
+    decscription: string;
+    tags: string[];
+    prompt: string;
+  }) {
+    const contentDir = Bun.env.OUTPUT_DIR;
+    Utils.assert(contentDir, "OUTPUT_DIR environment variable is not set");
+
+    Bun.write(
+      `${contentDir}/${job_id}/metadata.json`,
+      JSON.stringify({
+        job_id,
+        filename,
+        filetype,
+        title,
+        decscription,
+        tags,
+        prompt,
+      }),
+    );
+  }
+
+  export async function getAsset(promptId: string) {
+    const res = await comfyClient.getImageOutput(promptId);
+    if (res === null) {
+      Logger.info("Failed to fetch image location for video prompt");
+      return null;
+    }
+
+    const { filename, subfolder, kind } = res;
+    const img = await comfyClient.getAsset(filename, subfolder, kind);
+    const buffer = await img.arrayBuffer();
+
+    return { buffer, filename };
   }
 
   export async function getMediaDurationFromPath(filePath: string) {

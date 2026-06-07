@@ -13,6 +13,7 @@ import { DB } from "../db/db";
 import { AutoCutWorkflow } from "../autocut/autocut-workflow";
 import { Lora, Presets } from "../styles/presets";
 import { ImageGenerator } from "../image/image-generator";
+import { LLM } from "../llm/llm";
 
 export namespace SocketServer {
   let ws: WebSocket;
@@ -98,15 +99,44 @@ export namespace SocketServer {
         });
       }
 
+      // [STATE: asset_saved] — for image and video promptst
+      if (
+        event.type === Event.NewImagePrompt ||
+        event.type === Event.NewVideoPrompt
+      ) {
+        const res = await comfyClient.getImageOutput(promptId);
+        if (res === null) {
+          Logger.info("No asset generated for prompt, skipping metadata save");
+        }
+
+        const assRes = await Utils.getAsset(promptId);
+        Utils.assert(assRes, "Failed to retrieve generated asset");
+        const { buffer, filename } = assRes;
+        await Bun.write(`${Bun.env.CONTENT_DIR}/${filename}`, buffer);
+      }
+
       // [STATE: image_to_video] (deferred) — generate video prompt from image, schedule video event
       if (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) {
-        const vidRes = await PromptGenerator.img_to_vid_prompt(promptId);
+        const assRes = await Utils.getAsset(promptId);
+        Utils.assert(
+          assRes,
+          "Failed to retrieve generated image for video prompt",
+        );
+
+        const { buffer, filename } = assRes;
+        const base64 = Buffer.from(buffer).toString("base64");
+
+        const image = await LLM.client.files.prepareImageBase64(
+          filename,
+          base64,
+        );
+        const vidRes = await PromptGenerator.img_to_vid_prompt(promptId, image);
         Utils.assert(vidRes, "Failed to generate img to vid prompt");
 
         const scheduledVideo = await VideoGenerator.schedule_video({
           jobId: event.jobId,
           prompt: vidRes.prompt,
-          filename: vidRes.filename,
+          filename: filename,
           index: event.index,
         });
 

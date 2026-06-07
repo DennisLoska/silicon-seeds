@@ -8,6 +8,7 @@ import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
 import { DB } from "../db/db";
 import z from "zod/v3";
+import { FileHandle } from "@lmstudio/sdk";
 
 export type AutoCutRemovalSpan = {
   start: number;
@@ -350,7 +351,7 @@ Make sure to only include the actual image prompt in your response and nothing m
     });
   }
 
-  export async function img_to_vid_prompt(promptId: string) {
+  export async function img_to_vid_prompt(promptId: string, image: FileHandle) {
     const event = await DB.Events.findById(promptId);
     Utils.assert(
       event,
@@ -358,19 +359,6 @@ Make sure to only include the actual image prompt in your response and nothing m
     );
 
     if (event.type !== Event.NewImagePrompt) return;
-
-    const res = await comfyClient.getImageOutput(promptId);
-    if (res === null) {
-      Logger.info("Failed to fetch image location for video prompt");
-      return null;
-    }
-
-    const { filename, subfolder, kind } = res;
-    const img = await comfyClient.getAsset(filename, subfolder, kind);
-    const buffer = await img.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString("base64");
-
-    const image = await LLM.client.files.prepareImageBase64(filename, base64);
 
     const response = await LLM.message(
       `Generate a detailed video generation prompt for a 5 second long video based on the content of the image.
@@ -399,7 +387,7 @@ Make sure to only include the actual video generation prompt in your response an
       return null;
     }
 
-    return { prompt: response.content, filename };
+    return { prompt: response.content };
   }
 
   export function script_prompt(description: string) {
