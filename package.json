@@ -43,6 +43,7 @@
     "@lmstudio/sdk": "^1.5.0",
     "@logtape/logtape": "^2.0.4",
     "@logtape/pretty": "^2.0.4",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/cli": "^4.2.2",
     "daisyui": "^5.5.19",
     "hono": "^4.12.9",

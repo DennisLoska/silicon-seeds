@@ -1,4 +1,5 @@
 import nodeAssert from "node:assert";
+import { spawn } from "bun";
 
 const IS_PRODUCTION = Bun.env.NODE_ENV === "production";
 
@@ -27,5 +28,28 @@ export namespace Utils {
       .replace(/\r/g, "\n")
       .replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
       .trim();
+  }
+
+  export async function collectProcessOutput(
+    process: ReturnType<typeof spawn>,
+  ) {
+    const decoder = new TextDecoder();
+    let stdout = "";
+    let stderr = "";
+
+    if (process.stdout && typeof process.stdout !== "number") {
+      for await (const chunk of process.stdout) {
+        stdout += typeof chunk === "string" ? chunk : decoder.decode(chunk);
+      }
+    }
+
+    if (process.stderr && typeof process.stderr !== "number") {
+      for await (const chunk of process.stderr) {
+        stderr += typeof chunk === "string" ? chunk : decoder.decode(chunk);
+      }
+    }
+
+    const exitCode = await process.exited;
+    return { stdout, stderr, exitCode };
   }
 }

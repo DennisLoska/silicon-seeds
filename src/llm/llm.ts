@@ -1,15 +1,13 @@
 import { FileHandle, LMStudioClient } from "@lmstudio/sdk";
 import { Logger } from "../logger/logger";
 import z from "zod/v3";
+import { Utils } from "../utils/utils";
 
 const llmClient = new LMStudioClient();
-// const llm = await llmClient.llm.model(
-//   "qwen3.6-27b-claude-opus-reasoning-distill-v2",
-// );
-// const llm = await llmClient.llm.model("qwen/qwen3-vl-30b");
-// const llm = await llmClient.llm.model("qwen/qwen3-vl-4b");
-// const llm = await llmClient.llm.model("qwen/qwen3-vl-8b");
-const llm = await llmClient.llm.model("qwen3.6-35b-a3b");
+const LLM_MODEL = Bun.env.LLM_MODEL;
+Utils.assert(LLM_MODEL, "LLM_MODEL variable missing");
+
+const llm = await llmClient.llm.model(LLM_MODEL);
 
 export namespace LLM {
   export const client = llmClient;
@@ -33,6 +31,8 @@ export namespace LLM {
       return null;
     }
   }
+
+  export async function web_search(query: string): Promise<string | null> {}
 
   export async function image_prompt_list(msg: string, amount: number) {
     let mapSchema: any = {};
