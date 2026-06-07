@@ -99,8 +99,15 @@ export namespace SocketServer {
       }
 
       if (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) {
-        const scheduledVideo =
-          await PromptGenerator.img_to_vid_prompt(promptId);
+        const vidRes = await PromptGenerator.img_to_vid_prompt(promptId);
+        Utils.assert(vidRes, "Failed to generate img to vid prompt");
+
+        const scheduledVideo = await VideoGenerator.schedule_video({
+          jobId: event.jobId,
+          prompt: vidRes.prompt,
+          filename: vidRes.filename,
+          index: event.index,
+        });
 
         const jobForImage = await DB.Jobs.findById(event.jobId);
         if (scheduledVideo && jobForImage.workflow === "autocut") {

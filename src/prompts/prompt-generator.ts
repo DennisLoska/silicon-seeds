@@ -399,12 +399,7 @@ Make sure to only include the actual video generation prompt in your response an
       return null;
     }
 
-    return await VideoGenerator.schedule_video({
-      jobId: event.jobId,
-      prompt: response.content,
-      filename,
-      index: event.index,
-    });
+    return { prompt: response.content, filename };
   }
 
   export function script_prompt(description: string) {
