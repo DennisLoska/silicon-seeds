@@ -111,23 +111,37 @@ export namespace SocketServer {
 
         const assRes = await Metadata.getAsset(promptId);
         Utils.assert(assRes, "Failed to retrieve generated asset");
+
         const { buffer, filename } = assRes;
-        await Bun.write(`${Bun.env.CONTENT_LIBRARY_DIR}/${filename}`, buffer);
-        await Metadata.save({
-          job_id: event.jobId,
-          prompt: event.prompt,
-          created_at: event.created_at,
-          filename,
-          fps: job.fps,
-          duration: job.clip_duration,
-          style: job.style_preset,
-          resolution: job.resolution,
-          model:
-            event.type === Event.NewImagePrompt
-              ? job.image_model
-              : job.video_model,
-          filetype: event.type === Event.NewImagePrompt ? "image" : "video",
-        });
+        let fileType: "image" | "video" | "unknown" = "unknown";
+        if (filename.endsWith("png")) fileType = "image";
+        if (filename.endsWith("mp4")) fileType = "video";
+
+        await Promise.all([
+          Bun.write(
+            `${Bun.env.CONTENT_LIBRARY_DIR}/${fileType}/${filename}`,
+            buffer,
+          ),
+          Metadata.save({
+            id: promptId,
+            job_id: event.jobId,
+            prompt: event.prompt,
+            created_at: event.created_at,
+            filename,
+            fps: event.type === Event.NewVideoPrompt ? job.fps : undefined,
+            duration:
+              event.type === Event.NewVideoPrompt
+                ? job.clip_duration
+                : undefined,
+            style: job.style_preset,
+            resolution: job.resolution,
+            model:
+              event.type === Event.NewImagePrompt
+                ? job.image_model
+                : job.video_model,
+            filetype: fileType,
+          }),
+        ]);
       }
 
       // [STATE: image_to_video] (deferred) — generate video prompt from image, schedule video event
