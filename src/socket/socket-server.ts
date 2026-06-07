@@ -99,7 +99,7 @@ export namespace SocketServer {
         });
       }
 
-      // [STATE: asset_saved] — for image and video promptst
+      // [STATE: save_content] — for image and video promptst
       if (
         event.type === Event.NewImagePrompt ||
         event.type === Event.NewVideoPrompt
@@ -109,15 +109,30 @@ export namespace SocketServer {
           Logger.info("No asset generated for prompt, skipping metadata save");
         }
 
-        const assRes = await Utils.getAsset(promptId);
+        const assRes = await Metadata.getAsset(promptId);
         Utils.assert(assRes, "Failed to retrieve generated asset");
         const { buffer, filename } = assRes;
-        await Bun.write(`${Bun.env.CONTENT_DIR}/${filename}`, buffer);
+        await Bun.write(`${Bun.env.CONTENT_LIBRARY_DIR}/${filename}`, buffer);
+        await Metadata.save({
+          job_id: event.jobId,
+          prompt: event.prompt,
+          created_at: event.created_at,
+          filename,
+          fps: job.fps,
+          duration: job.clip_duration,
+          style: job.style_preset,
+          resolution: job.resolution,
+          model:
+            event.type === Event.NewImagePrompt
+              ? job.image_model
+              : job.video_model,
+          filetype: event.type === Event.NewImagePrompt ? "image" : "video",
+        });
       }
 
       // [STATE: image_to_video] (deferred) — generate video prompt from image, schedule video event
       if (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) {
-        const assRes = await Utils.getAsset(promptId);
+        const assRes = await Metadata.getAsset(promptId);
         Utils.assert(
           assRes,
           "Failed to retrieve generated image for video prompt",

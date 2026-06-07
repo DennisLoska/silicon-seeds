@@ -17,36 +17,53 @@ export namespace Metadata {
     return Bun.randomUUIDv7();
   }
 
-  export function save({
+  export async function save({
+    job_id,
+    created_at,
     filename,
     filetype,
-    job_id,
-    title,
-    decscription,
-    tags,
+    resolution,
     prompt,
+    model,
+    style,
+    fps,
+    duration,
   }: {
+    job_id: string;
+    created_at?: string;
     filename: string;
     filetype: string;
-    job_id: string;
-    title: string;
-    decscription: string;
-    tags: string[];
+    resolution?: string;
     prompt: string;
+    model?: string;
+    style?: string;
+    fps?: number;
+    duration?: number;
   }) {
-    const contentDir = Bun.env.OUTPUT_DIR;
+    const contentDir = Bun.env.CONTENT_LIBRARY_DIR;
     Utils.assert(contentDir, "OUTPUT_DIR environment variable is not set");
 
-    Bun.write(
-      `${contentDir}/${job_id}/metadata.json`,
+    // TODO add these using comfy client
+    const title = "";
+    const decscription = "";
+    const tags: string[] = [];
+
+    await Bun.write(
+      `${contentDir}/${filename.split(".")[0]}.metadata.json`,
       JSON.stringify({
         job_id,
+        created_at,
         filename,
         filetype,
+        resolution,
         title,
         decscription,
         tags,
         prompt,
+        model,
+        style,
+        fps,
+        duration,
       }),
     );
   }
