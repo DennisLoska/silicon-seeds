@@ -19,7 +19,7 @@ async function main() {
   if (!res) return;
   const names = res.parsed;
 
-  Playwright.takeScreenshots({
+  await Playwright.takeScreenshots({
     urls: urls.map((url, i) => ({ url, output: names[i] })),
     outDir: "./screenshots",
   });
