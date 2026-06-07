@@ -94,7 +94,9 @@ async function runProcess(cmd: string[], context: string) {
 
   const status = await process.exited;
   if (status !== 0) {
-    throw new Error(`${context} failed with exit code ${status}: ${stderr.trim()}`);
+    throw new Error(
+      `${context} failed with exit code ${status}: ${stderr.trim()}`,
+    );
   }
 }
 
@@ -234,6 +236,7 @@ export namespace VideoGenerator {
       prompt: string;
       index: number;
     }[] = [];
+
     for (let i = 0; i < frames.length; i++) {
       const current = frames[i];
       const next = frames[i + 1];
@@ -317,9 +320,16 @@ export namespace VideoGenerator {
     return names;
   }
 
-  export async function video_frames_for_asset(jobId: string, id: string, filePath: string) {
+  export async function video_frames_for_asset(
+    jobId: string,
+    id: string,
+    filePath: string,
+  ) {
     const names = await video_frames(id, filePath);
-    return names.map((name) => `${Bun.env.INPUT_DIR}/${name}`) as [string, string];
+    return names.map((name) => `${Bun.env.INPUT_DIR}/${name}`) as [
+      string,
+      string,
+    ];
   }
 
   async function transition_prompt(first: string, second: string) {

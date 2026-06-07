@@ -13,7 +13,6 @@ import { DB } from "../db/db";
 import { AutoCutWorkflow } from "../autocut/autocut-workflow";
 import { Lora, Presets } from "../styles/presets";
 import { ImageGenerator } from "../image/image-generator";
-import { JobContentArea } from "../templates/jobs";
 
 export namespace SocketServer {
   let ws: WebSocket;
@@ -78,6 +77,7 @@ export namespace SocketServer {
       await comfyClient.free_memory(true, true);
       QueueManager.releaseComfyIdle();
 
+      // [STATE: idle] — guard for non-active jobs
       if (
         event.status !== JobStatus.Running ||
         job.status !== JobLifecycleStatus.Active
@@ -98,6 +98,7 @@ export namespace SocketServer {
         });
       }
 
+      // [STATE: image_to_video] (deferred) — generate video prompt from image, schedule video event
       if (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) {
         const vidRes = await PromptGenerator.img_to_vid_prompt(promptId);
         Utils.assert(vidRes, "Failed to generate img to vid prompt");
@@ -119,6 +120,7 @@ export namespace SocketServer {
         }
       }
 
+      // [STATE: speech_complete] (deferred) — handle TTS complete → generate scenes → style prompts → schedule images
       if (
         event.type === Event.NewAudioPrompt &&
         event.mode === JobMode.Speech
@@ -188,6 +190,7 @@ export namespace SocketServer {
         });
       }
 
+      // [STATE: video_asset_saved] — download asset to /tmp, handle AutoCut special case
       if (
         event.type === Event.NewVideoPrompt ||
         event.type === Event.NewTransitionPrompt
@@ -216,6 +219,7 @@ export namespace SocketServer {
         }
       }
 
+      // [STATE: prepare_transitions] — generate transition prompts, schedule transitions
       if (event.type === Event.NewVideoPrompt && event.mode === JobMode.Video) {
         const transitions = await VideoGenerator.prepare_transitions(event);
 
@@ -232,6 +236,7 @@ export namespace SocketServer {
         }
       }
 
+      // [STATE: check_completion] — non-media events: finalize and pump queue
       if (
         !(
           event.type === Event.NewVideoPrompt ||
@@ -243,7 +248,6 @@ export namespace SocketServer {
         void QueueManager.pump();
         return;
       }
-
       const events = await JobOrchestrator.job_events(event.jobId);
       const allComplete = events
         .filter(
@@ -268,6 +272,7 @@ export namespace SocketServer {
       void QueueManager.pump();
     }
 
+    // [STATE: processing_error] (execution_interrupted) — mark event failed, fail job if active
     if (msg.type === "execution_interrupted") {
       Logger.warn("===execution_interrupted===", msg.data);
 
@@ -294,6 +299,7 @@ export namespace SocketServer {
       void QueueManager.pump();
     }
 
+    // [STATE: processing_error] (execution_error) — mark event failed with exception message
     if (msg.type === "execution_error") {
       Logger.error("===execution_error===", msg.data);
 
