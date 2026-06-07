@@ -11,11 +11,10 @@ import { WhisperX } from "../whisperx/whisperx";
 import { YtDlp } from "../yt/yt";
 
 // MEMO: Find proper APIs online to use
-const OUTPUT_DIR = "/tmp/wip";
-const MAX_CLIPS_PER_VIDEO = 3; // max semantic clips extracted per source video
-const MAX_CLIP_SECONDS = 10;
-const CLIP_END_BUFFER_MS = 0.1; // seconds of buffer at end to avoid cutting words harshly
-const SCORE_THRESHOLD = 0.2; // minimum relevance score to consider a clip valid
+
+// --------------------------
+
+// TODO delete this garbage
 
 // The "similarity baseline" — a script idea against which transcript segments
 // are evaluated for relevance. Only segments whose content semantically aligns
@@ -45,6 +44,14 @@ const urls = [
   "https://www.christianpost.com/news/jordan-peterson-still-very-sick-amid-neurological-battle.html",
   "https://thetyee.ca/News/2025/12/10/Jordan-Peterson-School/",
 ];
+
+// --------------------------
+
+const OUTPUT_DIR = "/tmp/wip";
+const MAX_CLIPS_PER_VIDEO = 3; // max semantic clips extracted per source video
+const MAX_CLIP_SECONDS = 10;
+const CLIP_END_BUFFER_MS = 0.1; // seconds of buffer at end to avoid cutting words harshly
+const SCORE_THRESHOLD = 0.2; // minimum relevance score to consider a clip valid
 
 async function urls_to_screenshots(urls: string[]) {
   const res = await LLM.structured(
@@ -153,8 +160,6 @@ async function downloadVideos(videoUrls: string[]): Promise<VideoInfo[]> {
 
   return videoPaths;
 }
-
-// ── Step 2: Transcribe videos ────────────────────────────────────────────────
 
 interface Transcript {
   mp4Path: string;
@@ -358,8 +363,6 @@ function printSummary(clips: FinalClip[]) {
   }
 }
 
-// ── URL Discovery Functions ──────────────────────────────────────────────────
-
 /**
  * find_relevant_websites — ask the LLM to return a list of relevant website URLs
  * based on the input text. Returns an empty array if no results or on error.
@@ -391,9 +394,8 @@ export async function find_relevant_videos(text: string): Promise<string[]> {
     `[Discovery] Finding relevant videos for: ${text.slice(0, 80)}...`,
   );
 
-  const res = await LLM.structured(
-    `Use your searxng_web_search tool to find up to 5 short YouTube videos (under 10 minutes) about the following topic.\n\nTopic:\n${text}\n\nRules:\n- Use the search tool — do NOT make up URLs\n- Only include real, working YouTube video links\n- Prefer concise explanations over long lectures\n- Return ONLY a JSON array of strings, nothing else\n- No markdown, no explanation\n\nExample format:\n["https://www.youtube.com/watch?v=abc123"]`,
-    z.array(z.string()).min(0).max(5),
+  const res = await LLM.web_search(
+    `Use search tool and find up to 5 short YouTube videos (under 10 minutes) about the following topic.\n\nTopic:\n${text}\n\n Make sure to only include the title and video URL in your answer`,
   );
 
   if (!res) {
@@ -401,9 +403,19 @@ export async function find_relevant_videos(text: string): Promise<string[]> {
     return [];
   }
 
+  const response = await LLM.structured(
+    `Extract all the urls from the following text and return them as a JSON array: ${res}`,
+    z.array(z.string().url()).min(0).max(5),
+  );
+
+  if (!response?.parsed) {
+    Logger.warn(`[Discovery] LLM failed to return relevant videos`);
+    return [];
+  }
+
   // Filter to only valid YouTube URLs
   const youtubeUrlRegex = /youtube\.com\/watch\?v=/;
-  const videoUrls = res.parsed.filter(
+  const videoUrls = response.parsed.filter(
     (u): u is string => typeof u === "string" && youtubeUrlRegex.test(u),
   );
 
@@ -466,8 +478,6 @@ async function urls_to_video_clips(videoUrls?: string[]) {
 
   process.exit(0);
 }
-
-// ── Entry point ──────────────────────────────────────────────────────────────
 
 await Logger.init();
 urls_to_video_clips();
