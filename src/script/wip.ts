@@ -202,7 +202,7 @@ async function urls_to_video_clips(urls: string[]) {
       )
       .join("\n");
 
-    const prompt = `You are a video clip curator. Your job is to find the most relevant segments from a video transcript that align with a specific topic (the "baseline"). These clips serve as suggestions/best guesses — even loosely related content should be included.
+    const prompt = `You are a video clip curator. Your job is to group adjacent transcript segments into coherent, self-contained clips that align with a specific topic (the "baseline"). Each clip must be between ${MIN_CLIP_SECONDS} and ${MAX_CLIP_SECONDS} seconds long.
 
 The baseline topic is:
 ${SCRIPT_BASELINE}
@@ -211,31 +211,36 @@ Here are all transcript segments from the video, each with its index, time range
 
 ${segmentList}
 
-For EACH segment, evaluate how well it relates to the baseline topic. Return ONLY a JSON array of objects matching this schema (no extra keys, no markdown):
+Return ONLY a JSON array of clip objects matching this schema (no extra keys, no markdown):
 [
   {
-    "segment_index": <integer>,
-    "start": <number>,
-    "end": <number>,
-    "text": "<the segment text>",
+    "clip_index": <integer starting at 1>,
+    "segment_indices": [<array of adjacent segment indices that form this clip>],
+    "start": <number — the start time of the first segment in the group>,
+    "end": <number — the end time of the last segment in the group>,
+    "combined_text": "<all segment texts joined together>",
     "relevance_score": <float 0-1>
   }
 ]
 
-Scoring guide:
-- relevance_score: 0.0 = completely unrelated, 0.3 = tangentially related, 0.6 = somewhat on-topic, 1.0 = directly on-topic
-- Include ALL segments in the output (do not skip any)
-- Be generous — these are suggestions, so even loosely relevant segments should score above 0.2
+Rules:
+- Each clip must be between ${MIN_CLIP_SECONDS}s and ${MAX_CLIP_SECONDS}s long (end - start)
+- Segment indices in each group MUST be adjacent (no gaps)
+- Include as many clips as you can find that are relevant — these are suggestions/best guesses
+- relevance_score: 0.0 = completely unrelated, 1.0 = directly on-topic
+- Be generous — even loosely relevant segments should score above 0.2
+- If a single segment is already coherent and relevant, it can be its own clip (just one index in the array)
 `;
 
     const res = await LLM.structured(
       prompt,
       z.array(
         z.object({
-          segment_index: z.number(),
+          clip_index: z.number(),
+          segment_indices: z.array(z.number()),
           start: z.number(),
           end: z.number(),
-          text: z.string(),
+          combined_text: z.string(),
           relevance_score: z.number().min(0).max(1),
         }),
       ),
@@ -246,16 +251,26 @@ Scoring guide:
       continue;
     }
 
-    const scored = res.parsed;
+    const clips = res.parsed;
 
-    // Filter: relevance >= 0.2 (generous threshold for suggestions), duration > 0
-    const candidates = scored.filter(
-      (s) => s.relevance_score >= 0.2 && s.end - s.start > 0,
+    // Log all scores for debugging
+    Logger.info(`  All proposed clips:`);
+    for (const c of clips) {
+      Logger.info(
+        `    clip ${c.clip_index}: segments=[${c.segment_indices.join(",")}], relevance=${c.relevance_score.toFixed(2)}, duration=${(c.end - c.start).toFixed(1)}s`,
+      );
+    }
+
+    // Filter: relevance >= 0.2, duration > 0
+    // Do NOT filter by MAX_CLIP_SECONDS — the LLM proposes what's relevant,
+    // we clamp to max length in step 5 when trimming.
+    const validClips = clips.filter(
+      (c) => c.relevance_score >= 0.2 && c.end - c.start > 0,
     );
 
     // Sort by relevance descending, pick top-N
-    candidates.sort((a, b) => b.relevance_score - a.relevance_score);
-    const selected = candidates.slice(0, MAX_CLIPS_PER_VIDEO);
+    validClips.sort((a, b) => b.relevance_score - a.relevance_score);
+    const selected = validClips.slice(0, MAX_CLIPS_PER_VIDEO);
 
     Logger.info(`  Selected ${selected.length} clips for ${safeName}`);
 
@@ -267,28 +282,16 @@ Scoring guide:
       const c = selected[i];
       const segmentDuration = c.end - c.start;
 
-      // Clamp clip length to [MIN_CLIP_SECONDS, MAX_CLIP_SECONDS]
-      let clipStart = c.start;
-      let clipEnd: number;
-      if (segmentDuration > MAX_CLIP_SECONDS) {
-        clipEnd = clipStart + MAX_CLIP_SECONDS;
-      } else if (segmentDuration < MIN_CLIP_SECONDS) {
-        // Extend to minimum by using the full segment (can't extend beyond end)
-        clipEnd = c.end;
-      } else {
-        clipEnd = c.end;
-      }
-
       const outputPath = join(
         clipDir,
         `clip_${String(i + 1).padStart(2, "0")}.mp4`,
       );
 
       Logger.info(
-        `[5/5] Trimming clip ${i + 1}/${selected.length}: t=${c.start.toFixed(1)}-${c.end.toFixed(1)}s → output ${clipEnd.toFixed(1)}s (${(clipEnd - clipStart).toFixed(1)}s)`,
+        `[5/5] Trimming clip ${i + 1}/${selected.length}: segments=[${c.segment_indices.join(",")}], t=${c.start.toFixed(1)}-${c.end.toFixed(1)}s (${(c.end - c.start).toFixed(1)}s)`,
       );
 
-      await trimSegment(mp4Path, outputPath, clipStart, clipEnd);
+      await trimSegment(mp4Path, outputPath, c.start, c.end);
       const stat = await Bun.file(outputPath).stat();
       Logger.info(
         `    → ${outputPath} (${(stat.size / 1_000_000).toFixed(2)} MB)`,
@@ -297,9 +300,9 @@ Scoring guide:
       allClips.push({
         sourceSafeName: safeName,
         clipIndex: i + 1,
-        start: clipStart,
-        end: clipEnd,
-        text: c.text,
+        start: c.start,
+        end: c.end,
+        text: c.combined_text,
         outputPath,
       });
     }
