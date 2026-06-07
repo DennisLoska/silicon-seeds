@@ -16,7 +16,7 @@ const OUTPUT_DIR = "/tmp/wip";
 const MAX_CLIPS_PER_VIDEO = 3; // max semantic clips extracted per source video
 const MIN_CLIP_SECONDS = 1;
 const MAX_CLIP_SECONDS = 10;
-const CLIP_END_BUFFER_MS = 0.5; // seconds of buffer at end to avoid cutting words harshly
+const CLIP_END_BUFFER_MS = 0.1; // seconds of buffer at end to avoid cutting words harshly
 
 // The "similarity baseline" — a script idea against which transcript segments
 // are evaluated for relevance. Only segments whose content semantically aligns
@@ -294,7 +294,10 @@ Rules:
       );
 
       // Add buffer at end so we don't cut the last word harshly
-      const clipEnd = Math.min(c.end + CLIP_END_BUFFER_MS, c.start + MAX_CLIP_SECONDS);
+      const clipEnd = Math.min(
+        c.end + CLIP_END_BUFFER_MS,
+        c.start + MAX_CLIP_SECONDS,
+      );
 
       Logger.info(
         `[5/5] Trimming clip ${i + 1}/${selected.length}: segments=[${c.segment_indices.join(",")}], t=${c.start.toFixed(1)}-${clipEnd.toFixed(1)}s (${(clipEnd - c.start).toFixed(1)}s)`,
