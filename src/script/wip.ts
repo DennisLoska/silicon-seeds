@@ -17,6 +17,7 @@ const MAX_CLIPS_PER_VIDEO = 3; // max semantic clips extracted per source video
 const MIN_CLIP_SECONDS = 1;
 const MAX_CLIP_SECONDS = 10;
 const CLIP_END_BUFFER_MS = 0.1; // seconds of buffer at end to avoid cutting words harshly
+const SCORE_THRESHOLD = 0.2; // minimum relevance score to consider a clip valid
 
 // The "similarity baseline" — a script idea against which transcript segments
 // are evaluated for relevance. Only segments whose content semantically aligns
@@ -228,7 +229,7 @@ Rules:
 - Segment indices in each group MUST be adjacent (no gaps)
 - Include as many clips as you can find that are relevant — these are suggestions/best guesses
 - relevance_score: 0.0 = completely unrelated, 1.0 = directly on-topic
-- Be generous — even loosely relevant segments should score above 0.2
+- Be generous — even loosely relevant segments should score above 0.3
 - If a single segment is already coherent and relevant, it can be its own clip (just one index in the array)
 `;
 
@@ -269,14 +270,14 @@ Rules:
       }
     }
 
-    // Filter: relevance >= 0.2, duration > 0
     const validClips = clips.filter(
-      (c) => c.relevance_score >= 0.2 && c.end - c.start > 0,
+      (c) => c.relevance_score >= SCORE_THRESHOLD && c.end - c.start > 0,
     );
 
     // Sort by relevance descending, pick top-N
-    validClips.sort((a, b) => b.relevance_score - a.relevance_score);
-    const selected = validClips.slice(0, MAX_CLIPS_PER_VIDEO);
+    const selected = validClips.sort(
+      (a, b) => b.relevance_score - a.relevance_score,
+    );
 
     Logger.info(`  Selected ${selected.length} clips for ${safeName}`);
 
