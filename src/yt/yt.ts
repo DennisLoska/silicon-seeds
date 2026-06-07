@@ -1,10 +1,12 @@
 import { Utils } from "../utils/utils";
-import { basename, extname, join } from "node:path";
+import { join } from "node:path";
 import { spawn } from "bun";
 import { mkdir, readdir } from "node:fs/promises";
 
 export namespace YtDlp {
-  const YT_DLP = "/home/dennis/work/transcripts/.venv/bin/yt-dlp";
+  const YT_DLP = Bun.env.YT_DLP;
+  console.log(Bun.env);
+  Utils.assert(YT_DLP, "YT_DLP environment variable is not configured");
 
   export interface VideoInfo {
     id: string;
@@ -21,6 +23,7 @@ export namespace YtDlp {
    * without downloading anything. Returns one JSON object per line (NDJSON).
    */
   export async function list(url: string): Promise<VideoInfo[]> {
+    Utils.assert(YT_DLP, "YT_DLP environment variable is not configured");
     const process = spawn({
       cmd: [YT_DLP, "--flat-playlist", "--skip-download", "-j", url],
       stdio: ["ignore", "pipe", "pipe"],
@@ -51,6 +54,7 @@ export namespace YtDlp {
 
     const audioPathTemplate = join(outputDir, `${titleSanitized}.%(ext)s`);
 
+    Utils.assert(YT_DLP, "YT_DLP environment variable is not configured");
     const process = spawn({
       cmd: [
         YT_DLP,
@@ -100,6 +104,7 @@ export namespace YtDlp {
 
     const audioPathTemplate = join(outputDir, `${titleSanitized}.%(ext)s`);
 
+    Utils.assert(YT_DLP, "YT_DLP environment variable is not configured");
     const process = spawn({
       cmd: [
         YT_DLP,
@@ -150,6 +155,7 @@ export namespace YtDlp {
 
     const videoPathTemplate = join(outputDir, `${titleSanitized}.%(ext)s`);
 
+    Utils.assert(YT_DLP, "YT_DLP environment variable is not configured");
     const process = spawn({
       cmd: [
         YT_DLP,
@@ -201,6 +207,7 @@ export namespace YtDlp {
 
     const videoPathTemplate = join(outputDir, `${titleSanitized}.%(ext)s`);
 
+    Utils.assert(YT_DLP, "YT_DLP environment variable is not configured");
     const process = spawn({
       cmd: [
         YT_DLP,

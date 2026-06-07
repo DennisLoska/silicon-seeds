@@ -5,19 +5,19 @@ import { mkdir } from "node:fs/promises";
 
 export namespace WhisperX {
   export async function run(inputPath: string, outputPath?: string) {
-    const whisperBinary = Bun.env.WHISPER_X;
+    const WHISPER = Bun.env.WHISPER_X;
     const baseOutputDir = outputPath ?? "/tmp";
     const output = join(baseOutputDir, "whisperx");
 
     await mkdir(output, { recursive: true });
 
-    if (!whisperBinary) {
+    if (!WHISPER) {
       throw new Error("WHISPER_X environment variable is not configured");
     }
 
     const process = spawn({
       cmd: [
-        whisperBinary,
+        WHISPER,
         inputPath,
         "--output_dir",
         output,
