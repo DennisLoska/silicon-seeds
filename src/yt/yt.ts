@@ -139,6 +139,109 @@ export namespace YtDlp {
   }
 
   /**
+   * Download a full MP4 video from a single video URL and return the path.
+   */
+  export async function downloadVideo(
+    videoUrl: string,
+    outputDir: string,
+    titleSanitized: string,
+  ): Promise<string> {
+    await mkdir(outputDir, { recursive: true });
+
+    const videoPathTemplate = join(outputDir, `${titleSanitized}.%(ext)s`);
+
+    const process = spawn({
+      cmd: [
+        YT_DLP,
+        "--format",
+        "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+        "--merge-output-format",
+        "mp4",
+        "--output",
+        videoPathTemplate,
+        "--extractor-args",
+        'youtube:player_client=["web"]',
+        "--no-warnings",
+        "--quiet",
+        videoUrl,
+      ],
+      cwd: outputDir,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    const { stdout, stderr, exitCode } =
+      await Utils.collectProcessOutput(process);
+    if (exitCode !== 0) {
+      throw new Error(`yt-dlp download failed: ${(stderr || stdout).trim()}`);
+    }
+
+    // Find the actual MP4 file that was written
+    const entries = await readdir(outputDir);
+    for (const entry of entries) {
+      if (entry.startsWith(titleSanitized) && entry.endsWith(".mp4")) {
+        return join(outputDir, entry);
+      }
+    }
+
+    throw new Error(
+      `yt-dlp did not produce expected MP4 in ${outputDir} for title "${titleSanitized}"`,
+    );
+  }
+
+  /**
+   * Download a full MP4 video from a single video URL with cookies support.
+   */
+  export async function downloadVideoWithCookies(
+    videoUrl: string,
+    outputDir: string,
+    titleSanitized: string,
+    cookieFile: string,
+  ): Promise<string> {
+    await mkdir(outputDir, { recursive: true });
+
+    const videoPathTemplate = join(outputDir, `${titleSanitized}.%(ext)s`);
+
+    const process = spawn({
+      cmd: [
+        YT_DLP,
+        "--format",
+        "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+        "--merge-output-format",
+        "mp4",
+        "--output",
+        videoPathTemplate,
+        "--cookiefile",
+        cookieFile,
+        "--extractor-args",
+        'youtube:player_client=["web"]',
+        "--no-warnings",
+        "--quiet",
+        videoUrl,
+      ],
+      cwd: outputDir,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    const { stdout, stderr, exitCode } =
+      await Utils.collectProcessOutput(process);
+    if (exitCode !== 0) {
+      throw new Error(`yt-dlp download failed: ${(stderr || stdout).trim()}`);
+    }
+
+    // Find the actual MP4 file that was written
+    const entries = await readdir(outputDir);
+    for (const entry of entries) {
+      if (entry.startsWith(titleSanitized) && entry.endsWith(".mp4")) {
+        return join(outputDir, entry);
+      }
+    }
+
+    throw new Error(
+      `yt-dlp did not produce expected MP4 in ${outputDir} for title "${titleSanitized}"`,
+    );
+  }
+
+  /**
    * Sanitize a video or channel title to create a safe directory/file name.
    */
   export function sanitizeTitle(title: string): string {
