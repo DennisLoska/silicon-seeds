@@ -16,6 +16,7 @@ const OUTPUT_DIR = "/tmp/wip";
 const MAX_CLIPS_PER_VIDEO = 3; // max semantic clips extracted per source video
 const MIN_CLIP_SECONDS = 1;
 const MAX_CLIP_SECONDS = 10;
+const CLIP_END_BUFFER_MS = 0.5; // seconds of buffer at end to avoid cutting words harshly
 
 // The "similarity baseline" — a script idea against which transcript segments
 // are evaluated for relevance. Only segments whose content semantically aligns
@@ -253,12 +254,17 @@ Rules:
 
     const clips = res.parsed;
 
+    Logger.info(`  LLM returned ${clips.length} clip proposals`);
+
     // Log all scores for debugging
-    Logger.info(`  All proposed clips:`);
-    for (const c of clips) {
-      Logger.info(
-        `    clip ${c.clip_index}: segments=[${c.segment_indices.join(",")}], relevance=${c.relevance_score.toFixed(2)}, duration=${(c.end - c.start).toFixed(1)}s`,
-      );
+    if (clips.length === 0) {
+      Logger.warn(`  No clips proposed — check the prompt/LLM response`);
+    } else {
+      for (const c of clips) {
+        Logger.info(
+          `    clip ${c.clip_index}: segments=[${c.segment_indices.join(",")}], relevance=${c.relevance_score.toFixed(2)}, duration=${(c.end - c.start).toFixed(1)}s`,
+        );
+      }
     }
 
     // Filter: relevance >= 0.2, duration > 0
@@ -287,11 +293,14 @@ Rules:
         `clip_${String(i + 1).padStart(2, "0")}.mp4`,
       );
 
+      // Add buffer at end so we don't cut the last word harshly
+      const clipEnd = Math.min(c.end + CLIP_END_BUFFER_MS, c.start + MAX_CLIP_SECONDS);
+
       Logger.info(
-        `[5/5] Trimming clip ${i + 1}/${selected.length}: segments=[${c.segment_indices.join(",")}], t=${c.start.toFixed(1)}-${c.end.toFixed(1)}s (${(c.end - c.start).toFixed(1)}s)`,
+        `[5/5] Trimming clip ${i + 1}/${selected.length}: segments=[${c.segment_indices.join(",")}], t=${c.start.toFixed(1)}-${clipEnd.toFixed(1)}s (${(clipEnd - c.start).toFixed(1)}s)`,
       );
 
-      await trimSegment(mp4Path, outputPath, c.start, c.end);
+      await trimSegment(mp4Path, outputPath, c.start, clipEnd);
       const stat = await Bun.file(outputPath).stat();
       Logger.info(
         `    → ${outputPath} (${(stat.size / 1_000_000).toFixed(2)} MB)`,
@@ -301,7 +310,7 @@ Rules:
         sourceSafeName: safeName,
         clipIndex: i + 1,
         start: c.start,
-        end: c.end,
+        end: clipEnd,
         text: c.combined_text,
         outputPath,
       });
