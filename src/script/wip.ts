@@ -354,20 +354,91 @@ function printSummary(clips: FinalClip[]) {
   }
 }
 
+// ── URL Discovery Functions ──────────────────────────────────────────────────
+
+/**
+ * find_relevant_websites — ask the LLM to return a list of relevant website URLs
+ * based on the input text. Returns an empty array if no results or on error.
+ */
+export async function find_relevant_websites(text: string): Promise<string[]> {
+  Logger.info(`[Discovery] Finding relevant websites for: ${text}...`);
+
+  const res = await LLM.structured(
+    `Given the following text, search the web and find and return a list of up to 5 highly relevant website URLs (https links) that provide in-depth information on the topic.\n\nText:\n${text}\n\nReturn ONLY a JSON array of URL strings (no extra keys, no markdown):\n["https://example.com/article", "https://example.org/guide"]`,
+    z.array(z.string().url()).min(0).max(5),
+  );
+
+  if (!res) {
+    Logger.warn(`[Discovery] LLM failed to return relevant websites`);
+    return [];
+  }
+
+  const urls = res.parsed.filter((u): u is string => typeof u === "string");
+  Logger.info(`[Discovery] Found ${urls.length} relevant websites`);
+  return urls;
+}
+
+/**
+ * find_relevant_videos — ask the LLM to return a list of relevant YouTube video URLs
+ * based on the input text. Returns an empty array if no results or on error.
+ */
+export async function find_relevant_videos(text: string): Promise<string[]> {
+  Logger.info(`[Discovery] Finding relevant videos for: ${text}`);
+
+  const res = await LLM.structured(
+    `Given the following text, search the web and find and return a list of up to 5 highly relevant YouTube video URLs (https://www.youtube.com/watch?v=...) that discuss the topic in depth.\n\nText:\n${text}\n\nReturn ONLY a JSON array of YouTube URL strings (no extra keys, no markdown):\n["https://www.youtube.com/watch?v=abc123", "https://www.youtube.com/watch?v=def456"]`,
+    z
+      .array(
+        z
+          .string()
+          .url()
+          .regex(/youtube\.com\/watch\?v=/),
+      )
+      .min(0)
+      .max(5),
+  );
+
+  if (!res) {
+    Logger.warn(`[Discovery] LLM failed to return relevant videos`);
+    return [];
+  }
+
+  const urls = res.parsed.filter((u): u is string => typeof u === "string");
+  Logger.info(`[Discovery] Found ${urls.length} relevant videos`);
+  return urls;
+}
+
+// ── Pipeline Entry Point ─────────────────────────────────────────────────────
+
 /**
  * urls_to_video_clips — full pipeline:
- *   1. Download each YouTube video as MP4
- *   2. Transcribe with WhisperX → get timestamped segments
- *   3. Ask LLM to score every segment against the SCRIPT_BASELINE
- *   4. Pick top-N clips per video (max MAX_CLIPS_PER_VIDEO), ensuring each is
+ *   1. If no video URLs provided, discover them via LLM (find_relevant_videos)
+ *   2. Download each YouTube video as MP4
+ *   3. Transcribe with WhisperX → get timestamped segments
+ *   4. Ask LLM to score every segment against the SCRIPT_BASELINE
+ *   5. Pick top-N clips per video (max MAX_CLIPS_PER_VIDEO), ensuring each is
  *      between MIN_CLIP_SECONDS and MAX_CLIP_SECONDS long
- *   5. Trim those segments with ffmpeg into /tmp/wip/<video>/clip_*.mp4
+ *   6. Trim those segments with ffmpeg into /tmp/wip/<video>/clip_*.mp4
  */
-async function urls_to_video_clips(videoUrls: string[]) {
+async function urls_to_video_clips(videoUrls?: string[]) {
   await mkdir(OUTPUT_DIR, { recursive: true });
 
+  // Step 0: Discover videos if none provided
+  let resolvedUrls = videoUrls;
+  if (!resolvedUrls || resolvedUrls.length === 0) {
+    Logger.info(
+      "[Discovery] No video URLs provided — auto-discovering via LLM",
+    );
+    const discovered = await find_relevant_videos(SCRIPT_BASELINE);
+    if (discovered.length === 0) {
+      Logger.error("[Discovery] No relevant videos found — aborting pipeline");
+      process.exit(1);
+    }
+    resolvedUrls = discovered;
+  }
+
   // Step 1: Download videos
-  const videos = await downloadVideos(videoUrls);
+  const videos = await downloadVideos(resolvedUrls);
 
   // Step 2: Transcribe all videos
   const transcripts = await transcribeVideos(videos);
