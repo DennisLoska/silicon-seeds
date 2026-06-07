@@ -151,3 +151,6 @@ docs/
 static/alpine.min.js
 static/htmx.min.js
 static/style.css
+
+# Content library
+content/

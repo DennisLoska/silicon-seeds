@@ -11,6 +11,9 @@ import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
 import { DB } from "../db/db";
 import { AutoCutWorkflow } from "../autocut/autocut-workflow";
+import { Lora, Presets } from "../styles/presets";
+import { ImageGenerator } from "../image/image-generator";
+import { LLM } from "../llm/llm";
 
 export namespace SocketServer {
   let ws: WebSocket;
@@ -75,6 +78,7 @@ export namespace SocketServer {
       await comfyClient.free_memory(true, true);
       QueueManager.releaseComfyIdle();
 
+      // [STATE: idle] — guard for non-active jobs
       if (
         event.status !== JobStatus.Running ||
         job.status !== JobLifecycleStatus.Active
@@ -95,8 +99,75 @@ export namespace SocketServer {
         });
       }
 
+      // [STATE: save_content] — for image and video promptst
+      if (
+        event.type === Event.NewImagePrompt ||
+        event.type === Event.NewVideoPrompt
+      ) {
+        const res = await comfyClient.getImageOutput(promptId);
+        if (res === null) {
+          Logger.info("No asset generated for prompt, skipping metadata save");
+        }
+
+        const assRes = await Metadata.getAsset(promptId);
+        Utils.assert(assRes, "Failed to retrieve generated asset");
+
+        const { buffer, filename } = assRes;
+        let fileType: "image" | "video" | "unknown" = "unknown";
+        if (filename.endsWith("png")) fileType = "image";
+        if (filename.endsWith("mp4")) fileType = "video";
+
+        await Promise.all([
+          Bun.write(
+            `${Bun.env.CONTENT_LIBRARY_DIR}/${fileType}/${filename}`,
+            buffer,
+          ),
+          Metadata.save({
+            id: promptId,
+            job_id: event.jobId,
+            prompt: event.prompt,
+            created_at: event.created_at,
+            filename,
+            fps: event.type === Event.NewVideoPrompt ? job.fps : undefined,
+            duration:
+              event.type === Event.NewVideoPrompt
+                ? job.clip_duration
+                : undefined,
+            style: job.style_preset,
+            resolution: job.resolution,
+            model:
+              event.type === Event.NewImagePrompt
+                ? job.image_model
+                : job.video_model,
+            filetype: fileType,
+          }),
+        ]);
+      }
+
+      // [STATE: image_to_video] (deferred) — generate video prompt from image, schedule video event
       if (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) {
-        const scheduledVideo = await PromptGenerator.img_to_vid_prompt(promptId);
+        const assRes = await Metadata.getAsset(promptId);
+        Utils.assert(
+          assRes,
+          "Failed to retrieve generated image for video prompt",
+        );
+
+        const { buffer, filename } = assRes;
+        const base64 = Buffer.from(buffer).toString("base64");
+
+        const image = await LLM.client.files.prepareImageBase64(
+          filename,
+          base64,
+        );
+        const vidRes = await PromptGenerator.img_to_vid_prompt(promptId, image);
+        Utils.assert(vidRes, "Failed to generate img to vid prompt");
+
+        const scheduledVideo = await VideoGenerator.schedule_video({
+          jobId: event.jobId,
+          prompt: vidRes.prompt,
+          filename: filename,
+          index: event.index,
+        });
 
         const jobForImage = await DB.Jobs.findById(event.jobId);
         if (scheduledVideo && jobForImage.workflow === "autocut") {
@@ -108,11 +179,67 @@ export namespace SocketServer {
         }
       }
 
+      // [STATE: speech_complete] (deferred) — handle TTS complete → generate scenes → style prompts → schedule images
       if (
         event.type === Event.NewAudioPrompt &&
         event.mode === JobMode.Speech
       ) {
-        await AudioGenerator.handle_speech_complete(event);
+        // Extract duration and clip count to schedule instrumental generation and prompts for video scenes
+        const { duration, clipCount } =
+          await AudioGenerator.handle_tts_complete(event);
+
+        // Schedule instrumental generation to overlap with video generation and editing
+        await AudioGenerator.schedule_audio({
+          jobId: event.jobId,
+          duration,
+          mode: JobMode.Instrumental,
+        });
+
+        // Schedule prompts for video scenes
+        const textEvents = (await DB.Events.findByJobId(event.jobId)).filter(
+          (item) => item.type === Event.NewTextPrompt,
+        );
+        const scriptEvent = textEvents[0];
+
+        if (scriptEvent?.type === Event.NewTextPrompt) {
+          const scenes = await PromptGenerator.image_scene_prompts(
+            scriptEvent.text,
+            clipCount,
+          );
+          if (scenes) {
+            const styledImgPrompts = await Promise.all(
+              scenes.map(async (scene, index) => {
+                const res = await PromptGenerator.txt_to_img_prompt(
+                  scene,
+                  1,
+                  job.style_preset as Presets | undefined,
+                );
+                if (!res) return null;
+                const [item] = res;
+
+                return { prompt: item?.prompt, lora: item?.lora, index };
+              }),
+            );
+
+            Logger.info("Generated styled image prompts:", styledImgPrompts);
+            Utils.assert(
+              styledImgPrompts.every((item) => Boolean(item?.prompt)),
+              "One or more scene prompts not defined",
+            );
+
+            await Promise.all(
+              styledImgPrompts.map(async (item) => {
+                await ImageGenerator.schedule_image({
+                  jobId: event.jobId,
+                  mode: JobMode.Video,
+                  prompt: item?.prompt as unknown as string,
+                  lora: item?.lora as unknown as Lora | undefined,
+                  index: item?.index,
+                });
+              }),
+            );
+          }
+        }
       }
 
       if (deferCompletion) {
@@ -122,6 +249,7 @@ export namespace SocketServer {
         });
       }
 
+      // [STATE: video_asset_saved] — download asset to /tmp, handle AutoCut special case
       if (
         event.type === Event.NewVideoPrompt ||
         event.type === Event.NewTransitionPrompt
@@ -150,6 +278,7 @@ export namespace SocketServer {
         }
       }
 
+      // [STATE: prepare_transitions] — generate transition prompts, schedule transitions
       if (event.type === Event.NewVideoPrompt && event.mode === JobMode.Video) {
         const transitions = await VideoGenerator.prepare_transitions(event);
 
@@ -166,6 +295,7 @@ export namespace SocketServer {
         }
       }
 
+      // [STATE: check_completion] — non-media events: finalize and pump queue
       if (
         !(
           event.type === Event.NewVideoPrompt ||
@@ -177,7 +307,6 @@ export namespace SocketServer {
         void QueueManager.pump();
         return;
       }
-
       const events = await JobOrchestrator.job_events(event.jobId);
       const allComplete = events
         .filter(
@@ -202,6 +331,7 @@ export namespace SocketServer {
       void QueueManager.pump();
     }
 
+    // [STATE: processing_error] (execution_interrupted) — mark event failed, fail job if active
     if (msg.type === "execution_interrupted") {
       Logger.warn("===execution_interrupted===", msg.data);
 
@@ -228,10 +358,12 @@ export namespace SocketServer {
       void QueueManager.pump();
     }
 
+    // [STATE: processing_error] (execution_error) — mark event failed with exception message
     if (msg.type === "execution_error") {
       Logger.error("===execution_error===", msg.data);
 
-      const { prompt_id: promptId, exception_message: exceptionMessage } = msg.data;
+      const { prompt_id: promptId, exception_message: exceptionMessage } =
+        msg.data;
 
       if (promptId) {
         const event = await DB.Events.findById(promptId).catch(() => null);

@@ -27,7 +27,8 @@ export namespace AudioGenerator {
     return await JobOrchestrator.schedule_task({
       ...event,
       type: Event.NewAudioPrompt,
-      mode: event.mode ?? (event.prompt ? JobMode.Speech : JobMode.Instrumental),
+      mode:
+        event.mode ?? (event.prompt ? JobMode.Speech : JobMode.Instrumental),
     });
   }
 
@@ -77,10 +78,10 @@ export namespace AudioGenerator {
     }
   }
 
-  export async function handle_speech_complete(event: AudioPromptEvent) {
+  export async function handle_tts_complete(event: AudioPromptEvent) {
     Utils.assert(
       event.mode === JobMode.Speech,
-      "Speech completion handler requires a speech event",
+      "TTS completion handler requires a speech event",
     );
 
     const metadata = await DB.Meta.findByEventId(event.id);
@@ -100,24 +101,6 @@ export namespace AudioGenerator {
       (duration + transitionDuration) / (clipDuration + transitionDuration),
     );
 
-    const textEvents = (await DB.Events.findByJobId(event.jobId)).filter(
-      (item) => item.type === Event.NewTextPrompt,
-    );
-    const scriptEvent = textEvents[0];
-
-    if (scriptEvent?.type === Event.NewTextPrompt) {
-      await PromptGenerator.image_scene_prompts(
-        event.jobId,
-        JobMode.Video,
-        scriptEvent.text,
-        clipCount,
-        job.style_preset as Presets | undefined,
-      );
-    }
-
-    await schedule_audio({
-      jobId: event.jobId,
-      duration,
-    });
+    return { duration, clipDuration, transitionDuration, clipCount };
   }
 }
