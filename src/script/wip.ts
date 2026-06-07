@@ -309,4 +309,4 @@ Rules:
 
 await Logger.init();
 urls_to_video_clips(yt_urls);
-urls_to_screenshots(urls);
+// urls_to_screenshots(urls);

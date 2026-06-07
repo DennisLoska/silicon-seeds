@@ -5,7 +5,6 @@ import { mkdir, readdir } from "node:fs/promises";
 
 export namespace YtDlp {
   const YT_DLP = Bun.env.YT_DLP;
-  console.log(Bun.env);
   Utils.assert(YT_DLP, "YT_DLP environment variable is not configured");
 
   export interface VideoInfo {
