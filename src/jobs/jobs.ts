@@ -56,7 +56,10 @@ export namespace JobOrchestrator {
     if (event.status === JobStatus.Pending) {
       return await DB.Events.create({
         ...event,
-        priority: event.priority && event.priority > 0 ? event.priority : getPriority(event),
+        priority:
+          event.priority && event.priority > 0
+            ? event.priority
+            : getPriority(event),
       });
     }
 
@@ -72,7 +75,7 @@ export namespace JobOrchestrator {
       return await DB.Events.updateStatus(event.id, event.status);
     }
 
-    return event;
+    Utils.assert(false, "Invalid job status");
   }
 
   export async function schedule_task(event: Partial<JobEvent>) {

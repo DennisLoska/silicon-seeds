@@ -11,6 +11,9 @@ import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
 import { DB } from "../db/db";
 import { AutoCutWorkflow } from "../autocut/autocut-workflow";
+import { Lora, Presets } from "../styles/presets";
+import { ImageGenerator } from "../image/image-generator";
+import { JobContentArea } from "../templates/jobs";
 
 export namespace SocketServer {
   let ws: WebSocket;
@@ -96,7 +99,8 @@ export namespace SocketServer {
       }
 
       if (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) {
-        const scheduledVideo = await PromptGenerator.img_to_vid_prompt(promptId);
+        const scheduledVideo =
+          await PromptGenerator.img_to_vid_prompt(promptId);
 
         const jobForImage = await DB.Jobs.findById(event.jobId);
         if (scheduledVideo && jobForImage.workflow === "autocut") {
@@ -112,7 +116,62 @@ export namespace SocketServer {
         event.type === Event.NewAudioPrompt &&
         event.mode === JobMode.Speech
       ) {
-        await AudioGenerator.handle_speech_complete(event);
+        // Extract duration and clip count to schedule instrumental generation and prompts for video scenes
+        const { duration, clipCount } =
+          await AudioGenerator.handle_tts_complete(event);
+
+        // Schedule instrumental generation to overlap with video generation and editing
+        await AudioGenerator.schedule_audio({
+          jobId: event.jobId,
+          duration,
+          mode: JobMode.Instrumental,
+        });
+
+        // Schedule prompts for video scenes
+        const textEvents = (await DB.Events.findByJobId(event.jobId)).filter(
+          (item) => item.type === Event.NewTextPrompt,
+        );
+        const scriptEvent = textEvents[0];
+
+        if (scriptEvent?.type === Event.NewTextPrompt) {
+          const scenes = await PromptGenerator.image_scene_prompts(
+            scriptEvent.text,
+            clipCount,
+          );
+          if (scenes) {
+            const styledImgPrompts = await Promise.all(
+              scenes.map(async (scene, index) => {
+                const res = await PromptGenerator.txt_to_img_prompt(
+                  scene,
+                  1,
+                  job.style_preset as Presets | undefined,
+                );
+                if (!res) return null;
+                const [item] = res;
+
+                return { prompt: item?.prompt, lora: item?.lora, index };
+              }),
+            );
+
+            Logger.info("Generated styled image prompts:", styledImgPrompts);
+            Utils.assert(
+              styledImgPrompts.every((item) => Boolean(item?.prompt)),
+              "One or more scene prompts not defined",
+            );
+
+            await Promise.all(
+              styledImgPrompts.map(async (item) => {
+                await ImageGenerator.schedule_image({
+                  jobId: event.jobId,
+                  mode: JobMode.Video,
+                  prompt: item?.prompt as unknown as string,
+                  lora: item?.lora as unknown as Lora | undefined,
+                  index: item?.index,
+                });
+              }),
+            );
+          }
+        }
       }
 
       if (deferCompletion) {
@@ -231,7 +290,8 @@ export namespace SocketServer {
     if (msg.type === "execution_error") {
       Logger.error("===execution_error===", msg.data);
 
-      const { prompt_id: promptId, exception_message: exceptionMessage } = msg.data;
+      const { prompt_id: promptId, exception_message: exceptionMessage } =
+        msg.data;
 
       if (promptId) {
         const event = await DB.Events.findById(promptId).catch(() => null);

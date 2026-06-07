@@ -28,15 +28,17 @@ export namespace PromptGenerator {
     words: z.array(z.string().trim().min(2).max(20)).min(3).max(4),
   });
 
-  const AutoCutRemovalSchema = z.object({
-    start: z.number().min(0),
-    end: z.number().min(0),
-    text: z.string().trim().min(1).max(240),
-    reason: z.enum(["filler", "restart", "obvious_mistake"]),
-    confidence: z.number().min(0).max(1),
-  }).refine((value) => value.end > value.start, {
-    message: "Removal span end must be greater than start",
-  });
+  const AutoCutRemovalSchema = z
+    .object({
+      start: z.number().min(0),
+      end: z.number().min(0),
+      text: z.string().trim().min(1).max(240),
+      reason: z.enum(["filler", "restart", "obvious_mistake"]),
+      confidence: z.number().min(0).max(1),
+    })
+    .refine((value) => value.end > value.start, {
+      message: "Removal span end must be greater than start",
+    });
 
   const AutoCutPlanSchema = z.object({
     removals: z.array(AutoCutRemovalSchema).max(200),
@@ -115,13 +117,17 @@ Return structured data only.`;
             segmentText: segment.text?.trim() ?? "",
           };
         })
-        .filter((word): word is {
-          segmentIndex: number;
-          start: number;
-          end: number;
-          text: string;
-          segmentText: string;
-        } => word !== null);
+        .filter(
+          (
+            word,
+          ): word is {
+            segmentIndex: number;
+            start: number;
+            end: number;
+            text: string;
+            segmentText: string;
+          } => word !== null,
+        );
 
       return words;
     });
@@ -142,8 +148,9 @@ Return structured data only.`;
       const slice = words.slice(start, start + chunkSize);
       if (slice.length === 0) continue;
 
-      const lines = slice.map((word) =>
-        `${word.start.toFixed(2)}-${word.end.toFixed(2)} | seg:${word.segmentIndex} | word:${word.text} | context:${word.segmentText}`
+      const lines = slice.map(
+        (word) =>
+          `${word.start.toFixed(2)}-${word.end.toFixed(2)} | seg:${word.segmentIndex} | word:${word.text} | context:${word.segmentText}`,
       );
 
       chunks.push(lines.join("\n"));
@@ -239,12 +246,16 @@ Requirements:
 - no generic filler words like "the", "and", "for", "with"
 - the full title should feel playful, creative, and slightly poetic
 
-${promptContext ? `Creative context from the user's initial prompt:
+${
+  promptContext
+    ? `Creative context from the user's initial prompt:
 ${promptContext}
 
 Reflect the subject or mood of that prompt in the title without copying long phrases.
 
-` : ""}Variation hint for this attempt: ${variationHint}
+`
+    : ""
+}Variation hint for this attempt: ${variationHint}
 
 Return structured data only.
 `,
@@ -262,7 +273,10 @@ Return structured data only.
         return candidate;
       }
 
-      Logger.warn("Generated duplicate job name, retrying", { candidate, attempt });
+      Logger.warn("Generated duplicate job name, retrying", {
+        candidate,
+        attempt,
+      });
     }
 
     return `Job ${Date.now()}`;
@@ -276,7 +290,7 @@ Return structured data only.
     const { instructions, lora } = styleFn({ title: message });
 
     const res = await LLM.message(
-      `Create an excellent image prompt based on these instructions:
+      `Create excellent image prompt(s) based on these instructions:
 
 ${instructions}
 
@@ -296,27 +310,21 @@ Make sure to only include the actual image prompt in your response and nothing m
   }
 
   export async function txt_to_img_prompt(
-    jobId: string,
-    mode: JobMode = JobMode.Image,
     message: string,
     batchSize = 1,
     preset?: Presets,
-    index?: number,
   ) {
+    const prompts = [];
+
     for (let i = 0; i < batchSize; i++) {
       const styled = await styled_image_prompt(message, preset);
+      prompts.push(styled);
       if (!styled) {
         return null;
       }
-
-      await ImageGenerator.schedule_image({
-        jobId,
-        mode,
-        prompt: styled.prompt,
-        lora: styled.lora,
-        index,
-      });
     }
+
+    return prompts;
   }
 
   export async function styled_img_to_event(
@@ -412,19 +420,20 @@ Your response should only include the actual essay including it's title and noth
   }
 
   export async function image_scene_prompts(
-    jobId: string,
-    mode: JobMode,
     text: string,
     amount: number,
-    preset?: Presets,
-  ) {
-    const list_prompt = `Image Prompt Instructions:
+  ): Promise<string[] | null> {
+    {
+      const list_prompt = `Image Prompt Instructions:
 
-- Generate a list of ${amount} image prompts
+- Generate a list of ${amount} stylistic, holistically coherent image prompts
 - Ensure each prompt is not longer than ~25-50 words
-- The different prompts should be unique and have a great amount of variety
+- Content: The different prompts should be unique and have a great amount of variety
 between them to ensure the final composition will consist of a wide range of
-different scenes describing the video script.
+different scenes which all refer to the same story or script
+- Style: The prompts should all follow the same style and vibe to ensure the final
+composition looks coherent and like all scenes belong together, but they should not be
+too similar to each other. The style should be cinematic, detailed, and visually rich.
 - Your response should only include the list of image prompts - nothing more!
 - There should be no duplicate prompts in the list make sure each prompt is unique!
 - The resulting images should contain no text or words in them at all so do not
@@ -438,69 +447,76 @@ start to finish:
 
 ${text}
 `;
-    const res = await LLM.image_prompt_list(list_prompt, amount);
-    if (!res?.parsed) return null;
+      const res = await LLM.image_prompt_list(list_prompt, amount);
+      if (!res?.parsed) return null;
 
-    let scenes = Object.values(res.parsed);
-    Logger.info("scenes: ", res.parsed);
-    Logger.info("amount: ", amount);
-    Logger.info("actual: ", scenes.length);
+      let scenes = Object.values(res.parsed);
+      Logger.info("scenes: ", res.parsed);
+      Logger.info("amount: ", amount);
+      Logger.info("actual: ", scenes.length);
 
-    if (!Array.isArray(scenes)) return null;
-    Utils.assert(
-      scenes.length >= amount,
-      "LLM did not generate the desired amount of scene prompts.",
-    );
-
-    if (scenes.length > amount) {
-      Logger.warn(
-        "The model generated more prompts than requested, slicing the array!",
-        {
-          expected: amount,
-          actual: scenes.length,
-          scenes,
-        },
+      if (!Array.isArray(scenes)) return null;
+      Utils.assert(
+        scenes.length >= amount,
+        "LLM did not generate the desired amount of scene prompts.",
       );
 
-      scenes = scenes.slice(0, amount);
-    }
+      if (scenes.length > amount) {
+        Logger.warn(
+          "The model generated more prompts than requested, slicing the array!",
+          {
+            expected: amount,
+            actual: scenes.length,
+            scenes,
+          },
+        );
 
-    await Promise.all(
-      scenes.map((scene, index) =>
-        txt_to_img_prompt(jobId, mode, scene, 1, preset, index),
-      ),
-    );
+        scenes = scenes.slice(0, amount);
+      }
+
+      return scenes;
+    }
   }
 
   export async function autocut_plan_from_whisperx_json(jsonPath: string) {
-    const transcript = await Bun.file(jsonPath).json() as WhisperXTranscript;
+    const transcript = (await Bun.file(jsonPath).json()) as WhisperXTranscript;
     const chunks = buildAutocutChunks(transcript);
 
     if (chunks.length === 0) {
       return {
         removals: [] as AutoCutRemovalSpan[],
-        warnings: ["WhisperX JSON did not contain timed words, so only silence trimming can run."],
+        warnings: [
+          "WhisperX JSON did not contain timed words, so only silence trimming can run.",
+        ],
       };
     }
 
     const chunkResults = await Promise.all(
       chunks.map((chunk, index) =>
         LLM.structured(
-          autocut_chunk_prompt(transcript.language, index, chunks.length, chunk),
+          autocut_chunk_prompt(
+            transcript.language,
+            index,
+            chunks.length,
+            chunk,
+          ),
           AutoCutPlanSchema,
-        )
+        ),
       ),
     );
 
     const removals = chunkResults
       .flatMap((result) => result?.parsed?.removals ?? [])
-      .map((removal) => ({
-        start: removal.start,
-        end: removal.end,
-        text: removal.text,
-        reason: removal.reason,
-        confidence: removal.confidence,
-      } satisfies AutoCutRemovalSpan));
+      .map(
+        (removal) =>
+          ({
+            start: removal.start,
+            end: removal.end,
+            text: removal.text,
+            reason: removal.reason,
+            confidence: removal.confidence,
+          }) satisfies AutoCutRemovalSpan,
+      );
 
     const warnings: string[] = [];
     if (chunks.length > 1) {
@@ -510,7 +526,9 @@ ${text}
     }
 
     if (chunkResults.some((result) => result === null)) {
-      warnings.push("At least one transcript-analysis chunk failed and was skipped.");
+      warnings.push(
+        "At least one transcript-analysis chunk failed and was skipped.",
+      );
     }
 
     return {
@@ -523,13 +541,15 @@ ${text}
     jsonPath: string,
     desiredCount = 3,
   ) {
-    const transcript = await Bun.file(jsonPath).json() as WhisperXTranscript;
+    const transcript = (await Bun.file(jsonPath).json()) as WhisperXTranscript;
     const chunks = buildAutocutChunks(transcript);
 
     if (chunks.length === 0) {
       return {
         insertions: [] as AutoCutInsertion[],
-        warnings: ["WhisperX JSON did not contain timed words, so no insertion prompts could be planned."],
+        warnings: [
+          "WhisperX JSON did not contain timed words, so no insertion prompts could be planned.",
+        ],
       };
     }
 
@@ -537,19 +557,28 @@ ${text}
     const results = await Promise.all(
       chunks.map((chunk, index) =>
         LLM.structured(
-          insertion_chunk_prompt(transcript.language, index, chunks.length, chunk, perChunk),
+          insertion_chunk_prompt(
+            transcript.language,
+            index,
+            chunks.length,
+            chunk,
+            perChunk,
+          ),
           AutoCutInsertionPlanSchema,
-        )
+        ),
       ),
     );
 
     const insertions = results
       .flatMap((result) => result?.parsed?.insertions ?? [])
-      .map((item) => ({
-        timestamp: item.timestamp,
-        transcriptContext: item.transcriptContext,
-        prompt: item.prompt,
-      } satisfies AutoCutInsertion));
+      .map(
+        (item) =>
+          ({
+            timestamp: item.timestamp,
+            transcriptContext: item.transcriptContext,
+            prompt: item.prompt,
+          }) satisfies AutoCutInsertion,
+      );
 
     const warnings: string[] = [];
     if (chunks.length > 1) {
@@ -559,7 +588,9 @@ ${text}
     }
 
     if (results.some((result) => result === null)) {
-      warnings.push("At least one insertion-planning chunk failed and was skipped.");
+      warnings.push(
+        "At least one insertion-planning chunk failed and was skipped.",
+      );
     }
 
     return {
