@@ -10,6 +10,7 @@ import { Utils } from "../utils/utils";
 import { WhisperX } from "../whisperx/whisperx";
 import { YtDlp } from "../yt/yt";
 
+// MEMO: Find proper APIs online to use
 const OUTPUT_DIR = "/tmp/wip";
 const MAX_CLIPS_PER_VIDEO = 3; // max semantic clips extracted per source video
 const MAX_CLIP_SECONDS = 10;
@@ -58,8 +59,6 @@ async function urls_to_screenshots(urls: string[]) {
     urls: urls.map((url, i) => ({ url, output: names[i] })),
     outDir: OUTPUT_DIR,
   });
-
-  process.exit(0);
 }
 
 /** Trim a video to [start, end) seconds using ffmpeg. */
@@ -141,7 +140,12 @@ async function downloadVideos(videoUrls: string[]): Promise<VideoInfo[]> {
       Logger.info(`  Already exists: ${existingMp4}, skipping download`);
       mp4Path = join(videoDir, existingMp4);
     } else {
-      mp4Path = await YtDlp.downloadVideo(url, videoDir, safeName);
+      try {
+        mp4Path = await YtDlp.downloadVideo(url, videoDir, safeName);
+      } catch (err) {
+        Logger.warn(`  Failed to download ${url}: ${(err as Error).message}`);
+        continue;
+      }
     }
 
     videoPaths.push({ url, mp4Path, safeName });
@@ -383,19 +387,13 @@ export async function find_relevant_websites(text: string): Promise<string[]> {
  * based on the input text. Returns an empty array if no results or on error.
  */
 export async function find_relevant_videos(text: string): Promise<string[]> {
-  Logger.info(`[Discovery] Finding relevant videos for: ${text}`);
+  Logger.info(
+    `[Discovery] Finding relevant videos for: ${text.slice(0, 80)}...`,
+  );
 
   const res = await LLM.structured(
-    `Given the following text, search the web and find and return a list of up to 5 highly relevant YouTube video URLs (https://www.youtube.com/watch?v=...) that discuss the topic in depth.\n\nText:\n${text}\n\nReturn ONLY a JSON array of YouTube URL strings (no extra keys, no markdown):\n["https://www.youtube.com/watch?v=abc123", "https://www.youtube.com/watch?v=def456"]`,
-    z
-      .array(
-        z
-          .string()
-          .url()
-          .regex(/youtube\.com\/watch\?v=/),
-      )
-      .min(0)
-      .max(5),
+    `Return a list of up to 5 YouTube video URLs about the following topic.\n\nTopic:\n${text}\n\nRules:\n- Only short videos under 10 minutes\n- Return ONLY a JSON array of strings, nothing else\n- No markdown, no explanation\n\nExample format:\n["https://www.youtube.com/watch?v=abc123"]`,
+    z.array(z.string()).min(0).max(5),
   );
 
   if (!res) {
@@ -403,9 +401,14 @@ export async function find_relevant_videos(text: string): Promise<string[]> {
     return [];
   }
 
-  const urls = res.parsed.filter((u): u is string => typeof u === "string");
-  Logger.info(`[Discovery] Found ${urls.length} relevant videos`);
-  return urls;
+  // Filter to only valid YouTube URLs
+  const youtubeUrlRegex = /youtube\.com\/watch\?v=/;
+  const videoUrls = res.parsed.filter(
+    (u): u is string => typeof u === "string" && youtubeUrlRegex.test(u),
+  );
+
+  Logger.info(`[Discovery] Found ${videoUrls.length} relevant videos`);
+  return videoUrls;
 }
 
 // ── Pipeline Entry Point ─────────────────────────────────────────────────────
@@ -429,16 +432,22 @@ async function urls_to_video_clips(videoUrls?: string[]) {
     Logger.info(
       "[Discovery] No video URLs provided — auto-discovering via LLM",
     );
+
     const discovered = await find_relevant_videos(SCRIPT_BASELINE);
     if (discovered.length === 0) {
       Logger.error("[Discovery] No relevant videos found — aborting pipeline");
-      process.exit(1);
+      return null;
     }
     resolvedUrls = discovered;
   }
 
   // Step 1: Download videos
   const videos = await downloadVideos(resolvedUrls);
+
+  if (videos.length === 0) {
+    Logger.error("[Pipeline] No videos could be downloaded — aborting");
+    return null;
+  }
 
   // Step 2: Transcribe all videos
   const transcripts = await transcribeVideos(videos);
@@ -461,5 +470,5 @@ async function urls_to_video_clips(videoUrls?: string[]) {
 // ── Entry point ──────────────────────────────────────────────────────────────
 
 await Logger.init();
-urls_to_video_clips(yt_urls);
+urls_to_video_clips();
 // urls_to_screenshots(urls);
