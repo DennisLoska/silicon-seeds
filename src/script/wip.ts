@@ -10,9 +10,9 @@ const urls = [
 ];
 
 const yt_urls = [
-  "https://www.youtube.com/watch?v=1dY2j1fH1Tw", // Jordan Peterson Wife Confirms the Sad Truth He Will Not Return to Public Life
-  "https://www.youtube.com/watch?v=0KCU8HKci1Y", // Dinner With Jordan Peterson
-  "https://www.youtube.com/watch?v=3VgRb24HqqY", // The BIGGEST LIE About Israel and Palestine Debunked by Benjamin Netanyahu | Jordan Peterson Debates
+  "https://www.youtube.com/watch?v=4zG583WPNWQ", // You Have to Sacrifice… - Jordan Peterson (14s)
+  "https://www.youtube.com/watch?v=0KCU8HKci1Y", // Dinner With Jordan Peterson (28s)
+  "https://www.youtube.com/watch?v=3VgRb24HqqY", // The BIGGEST LIE About Israel and Palestine Debunked by Benjamin Netanyahu | Jordan Peterson Debates (59s)
 ];
 
 async function urls_to_screenshots(urls: string[]) {
