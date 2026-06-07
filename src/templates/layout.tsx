@@ -4,7 +4,10 @@ export const Layout = ({ children }: { children: Child }) => (
   <html lang="en" data-theme="bumblebee">
     <head>
       <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+      />
       <title>Silicon Seeds</title>
       <link href="/static/style.css" rel="stylesheet" />
       <script src="/static/htmx.min.js"></script>
