@@ -203,7 +203,7 @@ async function urls_to_video_clips(urls: string[]) {
       )
       .join("\n");
 
-    const prompt = `You are a video clip curator. Your job is to group adjacent transcript segments into coherent, self-contained clips that align with a specific topic (the "baseline"). Each clip must be between ${MIN_CLIP_SECONDS} and ${MAX_CLIP_SECONDS} seconds long.
+    const prompt = `You are a video clip curator. Your job is to group adjacent transcript segments into coherent, self-contained clips that align with a specific topic (the "baseline").
 
 The baseline topic is:
 ${SCRIPT_BASELINE}
@@ -225,7 +225,6 @@ Return ONLY a JSON array of clip objects matching this schema (no extra keys, no
 ]
 
 Rules:
-- Each clip must be between ${MIN_CLIP_SECONDS}s and ${MAX_CLIP_SECONDS}s long (end - start)
 - Segment indices in each group MUST be adjacent (no gaps)
 - Include as many clips as you can find that are relevant — these are suggestions/best guesses
 - relevance_score: 0.0 = completely unrelated, 1.0 = directly on-topic
@@ -235,16 +234,19 @@ Rules:
 
     const res = await LLM.structured(
       prompt,
-      z.array(
-        z.object({
-          clip_index: z.number(),
-          segment_indices: z.array(z.number()),
-          start: z.number(),
-          end: z.number(),
-          combined_text: z.string(),
-          relevance_score: z.number().min(0).max(1),
-        }),
-      ),
+      z
+        .array(
+          z.object({
+            clip_index: z.number(),
+            segment_indices: z.array(z.number()),
+            start: z.number(),
+            end: z.number(),
+            combined_text: z.string(),
+            relevance_score: z.number().min(0).max(1),
+          }),
+        )
+        .min(1)
+        .max(MAX_CLIPS_PER_VIDEO),
     );
 
     if (!res) {
@@ -268,8 +270,6 @@ Rules:
     }
 
     // Filter: relevance >= 0.2, duration > 0
-    // Do NOT filter by MAX_CLIP_SECONDS — the LLM proposes what's relevant,
-    // we clamp to max length in step 5 when trimming.
     const validClips = clips.filter(
       (c) => c.relevance_score >= 0.2 && c.end - c.start > 0,
     );
@@ -286,17 +286,16 @@ Rules:
 
     for (let i = 0; i < selected.length; i++) {
       const c = selected[i];
-      const segmentDuration = c.end - c.start;
-
-      const outputPath = join(
-        clipDir,
-        `clip_${String(i + 1).padStart(2, "0")}.mp4`,
-      );
 
       // Add buffer at end so we don't cut the last word harshly
       const clipEnd = Math.min(
         c.end + CLIP_END_BUFFER_MS,
         c.start + MAX_CLIP_SECONDS,
+      );
+
+      const outputPath = join(
+        clipDir,
+        `clip_${String(i + 1).padStart(2, "0")}.mp4`,
       );
 
       Logger.info(
