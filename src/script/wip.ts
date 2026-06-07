@@ -202,7 +202,7 @@ async function urls_to_video_clips(urls: string[]) {
       )
       .join("\n");
 
-    const prompt = `You are a video clip curator. Your job is to find the most relevant segments from a video transcript that align with a specific topic (the "baseline").
+    const prompt = `You are a video clip curator. Your job is to find the most relevant segments from a video transcript that align with a specific topic (the "baseline"). These clips serve as suggestions/best guesses — even loosely related content should be included.
 
 The baseline topic is:
 ${SCRIPT_BASELINE}
@@ -222,10 +222,10 @@ For EACH segment, evaluate how well it relates to the baseline topic. Return ONL
   }
 ]
 
-Rules:
-- relevance_score: 0.0 = completely unrelated, 1.0 = directly on-topic
+Scoring guide:
+- relevance_score: 0.0 = completely unrelated, 0.3 = tangentially related, 0.6 = somewhat on-topic, 1.0 = directly on-topic
 - Include ALL segments in the output (do not skip any)
-- Be strict — only high-quality relevant segments should score above 0.5
+- Be generous — these are suggestions, so even loosely relevant segments should score above 0.2
 `;
 
     const res = await LLM.structured(
@@ -248,12 +248,9 @@ Rules:
 
     const scored = res.parsed;
 
-    // Filter: relevance >= 0.5, duration within bounds
+    // Filter: relevance >= 0.2 (generous threshold for suggestions), duration > 0
     const candidates = scored.filter(
-      (s) =>
-        s.relevance_score >= 0.5 &&
-        s.end - s.start >= MIN_CLIP_SECONDS &&
-        s.end - s.start <= MAX_CLIP_SECONDS,
+      (s) => s.relevance_score >= 0.2 && s.end - s.start > 0,
     );
 
     // Sort by relevance descending, pick top-N
@@ -268,16 +265,30 @@ Rules:
 
     for (let i = 0; i < selected.length; i++) {
       const c = selected[i];
+      const segmentDuration = c.end - c.start;
+
+      // Clamp clip length to [MIN_CLIP_SECONDS, MAX_CLIP_SECONDS]
+      let clipStart = c.start;
+      let clipEnd: number;
+      if (segmentDuration > MAX_CLIP_SECONDS) {
+        clipEnd = clipStart + MAX_CLIP_SECONDS;
+      } else if (segmentDuration < MIN_CLIP_SECONDS) {
+        // Extend to minimum by using the full segment (can't extend beyond end)
+        clipEnd = c.end;
+      } else {
+        clipEnd = c.end;
+      }
+
       const outputPath = join(
         clipDir,
         `clip_${String(i + 1).padStart(2, "0")}.mp4`,
       );
 
       Logger.info(
-        `[5/5] Trimming clip ${i + 1}/${selected.length}: t=${c.start.toFixed(1)}-${c.end.toFixed(1)}s`,
+        `[5/5] Trimming clip ${i + 1}/${selected.length}: t=${c.start.toFixed(1)}-${c.end.toFixed(1)}s → output ${clipEnd.toFixed(1)}s (${(clipEnd - clipStart).toFixed(1)}s)`,
       );
 
-      await trimSegment(mp4Path, outputPath, c.start, c.end);
+      await trimSegment(mp4Path, outputPath, clipStart, clipEnd);
       const stat = await Bun.file(outputPath).stat();
       Logger.info(
         `    → ${outputPath} (${(stat.size / 1_000_000).toFixed(2)} MB)`,
@@ -286,8 +297,8 @@ Rules:
       allClips.push({
         sourceSafeName: safeName,
         clipIndex: i + 1,
-        start: c.start,
-        end: c.end,
+        start: clipStart,
+        end: clipEnd,
         text: c.text,
         outputPath,
       });
