@@ -13,10 +13,14 @@ import { Metadata } from "../meta/meta";
 
 const mcpClient = new Client({ name: "mcp-client", version: "1.0.0" });
 const transport = new StdioClientTransport({
-  command: "uvx",
-  args: ["duckduckgo-mcp-server"],
+  command: "bun",
+  args: ["run", "mcp-searxng"],
   env: {
     ...process.env,
+    SERVER_URL: "http://localhost:8888",
+    SEARXNG_URL: "http://localhost:8888",
+    X_REAL_IP: "127.0.0.1",
+    X_FORWARDED_FOR: "127.0.0.1",
     USER_AGENT:
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
   },
@@ -26,43 +30,25 @@ await mcpClient.connect(transport);
 
 const { tools: mcpTools } = await mcpClient.listTools();
 const runnableTools = mcpTools.map((mcpTool) => {
-  // 2. Dynamically build a standard Zod parameters object to satisfy LM Studio's keyValidator
-  const zodFields: Record<string, any> = {};
-  const properties = (mcpTool.inputSchema as any).properties || {};
-
-  for (const [key, value] of Object.entries(properties) as [string, any][]) {
-    let schemaType: any = z.any();
-
-    // Map JSON Schema types into real executable Zod types
-    if (value.type === "string") {
-      schemaType = z.string();
-    } else if (value.type === "number" || value.type === "integer") {
-      schemaType = z.number();
-    } else if (value.type === "boolean") {
-      schemaType = z.boolean();
-    } else if (value.type === "array") {
-      schemaType = z.array(z.any());
-    }
-
-    // Attach description meta-tags if provided by the MCP server
-    if (value.description) {
-      schemaType = schemaType.describe(value.description);
-    }
-
-    // Apply strict optional vs required rules
-    const isRequired = (mcpTool.inputSchema as any).required?.includes(key);
-    zodFields[key] = isRequired ? schemaType : schemaType.optional();
-  }
-
   return tool({
     name: mcpTool.name,
     description: mcpTool.description ?? "Perform a live action via MCP",
     // Pass the raw JSON input schema parameters directly
-    parameters: zodFields,
+    parameters: {
+      query: z.string().describe("The primary search query string."),
+
+      categories: z
+        .array(z.string())
+        .describe(
+          "CRITICAL: Must be an array of strings. Example: ['videos'] or ['general']. Never pass a single string.",
+        ),
+
+      time_range: z.string().optional().default("month"),
+    },
     // The implementation method is triggered automatically by .act()
     implementation: async (args: any) => {
       Logger.info(`[LM Studio Engine triggered tool call]: ${mcpTool.name}`);
-      if (mcpTool.name === "search" || mcpTool.name === "fetch_content") {
+      if (mcpTool.name === "searxng_web_search") {
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
 
