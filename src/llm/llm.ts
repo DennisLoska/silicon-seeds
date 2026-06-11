@@ -1,4 +1,4 @@
-import { FileHandle, LMStudioClient } from "@lmstudio/sdk";
+import { ChatLike, FileHandle, LMStudioClient, tool } from "@lmstudio/sdk";
 import { Logger } from "../logger/logger";
 import z from "zod/v3";
 import { Utils } from "../utils/utils";
@@ -8,6 +8,78 @@ const LLM_MODEL = Bun.env.LLM_MODEL;
 Utils.assert(LLM_MODEL, "LLM_MODEL variable missing");
 
 const llm = await llmClient.llm.model(LLM_MODEL);
+import { Client, StdioClientTransport } from "@modelcontextprotocol/client";
+import { Metadata } from "../meta/meta";
+
+const mcpClient = new Client({ name: "mcp-client", version: "1.0.0" });
+const transport = new StdioClientTransport({
+  command: "uvx",
+  args: ["mcp-searxng"], // Spawns the python meta-search backend
+  env: {
+    ...process.env,
+    // Connects to a free, random open public instance without a key
+    SEARXNG_URL: "https://searx.space",
+  },
+});
+await mcpClient.connect(transport);
+
+const { tools: mcpTools } = await mcpClient.listTools();
+const runnableTools = mcpTools.map((mcpTool) => {
+  // 2. Dynamically build a standard Zod parameters object to satisfy LM Studio's keyValidator
+  const zodFields: Record<string, any> = {};
+  const properties = (mcpTool.inputSchema as any).properties || {};
+
+  for (const [key, value] of Object.entries(properties) as [string, any][]) {
+    let schemaType: any = z.any();
+
+    // Map JSON Schema types into real executable Zod types
+    if (value.type === "string") {
+      schemaType = z.string();
+    } else if (value.type === "number" || value.type === "integer") {
+      schemaType = z.number();
+    } else if (value.type === "boolean") {
+      schemaType = z.boolean();
+    } else if (value.type === "array") {
+      schemaType = z.array(z.any());
+    }
+
+    // Attach description meta-tags if provided by the MCP server
+    if (value.description) {
+      schemaType = schemaType.describe(value.description);
+    }
+
+    // Apply strict optional vs required rules
+    const isRequired = (mcpTool.inputSchema as any).required?.includes(key);
+    zodFields[key] = isRequired ? schemaType : schemaType.optional();
+  }
+
+  return tool({
+    name: mcpTool.name,
+    description: mcpTool.description ?? "Perform a live action via MCP",
+    // Pass the raw JSON input schema parameters directly
+    parameters: zodFields,
+    // The implementation method is triggered automatically by .act()
+    implementation: async (args: any) => {
+      console.log(`\n[LM Studio Engine triggered tool call]: ${mcpTool.name}`);
+
+      try {
+        const response = await mcpClient.callTool({
+          name: mcpTool.name,
+          arguments: args,
+        });
+
+        // Return string text output back into the underlying active model context
+        const textContent = response.content
+          .map((item: any) => item.text ?? "")
+          .join("\n");
+
+        return textContent;
+      } catch (error) {
+        Logger.error("error", error);
+      }
+    },
+  });
+});
 
 export namespace LLM {
   export const client = llmClient;
@@ -32,7 +104,31 @@ export namespace LLM {
     }
   }
 
-  export async function web_search(query: string): Promise<string | null> {}
+  export async function web_search(query: string): Promise<string | null> {
+    const conversationContext: ChatLike = [
+      {
+        role: "system",
+        content:
+          "You are an AI research assistant. Be concise. Only call the 'search' tool if absolutely necessary. If a web search returns an empty result, DO NOT loop or repeat the search over and over; assume the service is rate-limited and immediately work with the data you already have.",
+      },
+      {
+        role: "user",
+        content: query,
+      },
+    ];
+
+    let result = "";
+
+    await llm.act(conversationContext, runnableTools, {
+      maxTokens: Metadata.MAX_TOKENS,
+      // Optional streaming callback to monitor internal thoughts and messages
+      onMessage: (message) => {
+        result = message.toString();
+      },
+    });
+
+    return result;
+  }
 
   export async function image_prompt_list(msg: string, amount: number) {
     let mapSchema: any = {};
