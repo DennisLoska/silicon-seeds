@@ -14,13 +14,14 @@ import { Metadata } from "../meta/meta";
 const mcpClient = new Client({ name: "mcp-client", version: "1.0.0" });
 const transport = new StdioClientTransport({
   command: "uvx",
-  args: ["mcp-searxng"], // Spawns the python meta-search backend
+  args: ["duckduckgo-mcp-server"],
   env: {
     ...process.env,
-    // Connects to a free, random open public instance without a key
-    SEARXNG_URL: "https://searx.space",
+    USER_AGENT:
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
   },
 });
+
 await mcpClient.connect(transport);
 
 const { tools: mcpTools } = await mcpClient.listTools();
@@ -60,7 +61,10 @@ const runnableTools = mcpTools.map((mcpTool) => {
     parameters: zodFields,
     // The implementation method is triggered automatically by .act()
     implementation: async (args: any) => {
-      console.log(`\n[LM Studio Engine triggered tool call]: ${mcpTool.name}`);
+      Logger.info(`[LM Studio Engine triggered tool call]: ${mcpTool.name}`);
+      if (mcpTool.name === "search" || mcpTool.name === "fetch_content") {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
 
       try {
         const response = await mcpClient.callTool({
