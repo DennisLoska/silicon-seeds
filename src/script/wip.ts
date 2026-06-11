@@ -395,8 +395,11 @@ export async function find_relevant_videos(text: string): Promise<string[]> {
   );
 
   const res = await LLM.web_search(
-    `Use search tool and find up to 5 short YouTube videos (under 10 minutes) about the following topic.\n\nTopic:\n${text}\n\n Make sure to only include the title and video URL in your answer`,
+    // `Use search tool and find up to 5 short YouTube videos (under 10 minutes) about the following topic.\n\nTopic:\n${text}\n\n Make sure to only include the title and video URL in your answer`,
+    "Use search tool to find out current weather in berlin in celsius",
   );
+
+  Logger.info("RESPONSE", res);
 
   if (!res) {
     Logger.warn(`[Discovery] LLM failed to return relevant videos`);

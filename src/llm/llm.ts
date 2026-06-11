@@ -17,6 +17,9 @@ const transport = new StdioClientTransport({
   args: ["run", "mcp-searxng"],
   env: {
     ...process.env,
+    // MCP_RATE_INIT_MAX: "1000",
+    // MCP_RATE_SESSION_MAX: "5000",
+    // MCP_RATE_WINDOW_MS: "1000",
     SERVER_URL: "http://localhost:8888",
     SEARXNG_URL: "http://localhost:8888",
     X_REAL_IP: "127.0.0.1",
