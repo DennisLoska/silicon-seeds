@@ -11,6 +11,7 @@ export namespace Metadata {
   export const FPS = 16;
   export const CLIP_DURATION = 5;
   export const TRANSITION_DURATION = 3;
+  export const MAX_TOKENS = 5_000;
 
   export const TIMEOUT = 60;
   export const clientId = Bun.randomUUIDv7();

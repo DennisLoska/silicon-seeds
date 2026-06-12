@@ -17,10 +17,6 @@ export namespace YtDlp {
     [key: string]: unknown;
   }
 
-  /**
-   * Extract metadata for all videos in a URL (single video or playlist)
-   * without downloading anything. Returns one JSON object per line (NDJSON).
-   */
   export async function list(url: string): Promise<VideoInfo[]> {
     Utils.assert(YT_DLP, "YT_DLP environment variable is not configured");
     const process = spawn({
@@ -41,35 +37,42 @@ export namespace YtDlp {
     return lines.map((line) => JSON.parse(line) as VideoInfo);
   }
 
-  /**
-   * Download audio from a single video URL and return the path to the MP3 file.
-   */
-  export async function downloadAudio(
+  type DownloadFormat = "audio" | "video";
+
+  const FORMAT_CONFIG: Record<DownloadFormat, { format: string; ext: string; merge?: string }> = {
+    audio: { format: "bestaudio/best", ext: ".mp3" },
+    video: { format: "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best", ext: ".mp4", merge: "mp4" },
+  };
+
+  async function downloadBase(
     videoUrl: string,
     outputDir: string,
     titleSanitized: string,
+    type: DownloadFormat,
+    cookieFile?: string,
   ): Promise<string> {
     await mkdir(outputDir, { recursive: true });
 
-    const audioPathTemplate = join(outputDir, `${titleSanitized}.%(ext)s`);
+    const cfg = FORMAT_CONFIG[type];
+    const pathTemplate = join(outputDir, `${titleSanitized}.%(ext)s`);
 
     Utils.assert(YT_DLP, "YT_DLP environment variable is not configured");
-    const process = spawn({
-      cmd: [
-        YT_DLP,
-        "--format",
-        "bestaudio/best",
-        "--output",
-        audioPathTemplate,
-        "--extractor-args",
-        'youtube:player_client=["web"]',
-        "--no-warnings",
-        "--quiet",
-        videoUrl,
-      ],
-      cwd: outputDir,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
+    const cmd = [
+      YT_DLP,
+      "--format",
+      cfg.format,
+      ...(cfg.merge ? ["--merge-output-format", cfg.merge] : []),
+      "--output",
+      pathTemplate,
+      ...(cookieFile ? ["--cookies", cookieFile] : []),
+      "--extractor-args",
+      'youtube:player_client=["web"]',
+      "--no-warnings",
+      "--quiet",
+      videoUrl,
+    ];
+
+    const process = spawn({ cmd, cwd: outputDir, stdio: ["ignore", "pipe", "pipe"] });
 
     const { stdout, stderr, exitCode } =
       await Utils.collectProcessOutput(process);
@@ -77,179 +80,52 @@ export namespace YtDlp {
       throw new Error(`yt-dlp download failed: ${(stderr || stdout).trim()}`);
     }
 
-    // Find the actual MP3 file that was written
     const entries = await readdir(outputDir);
     for (const entry of entries) {
-      if (entry.startsWith(titleSanitized) && entry.endsWith(".mp3")) {
+      if (entry.startsWith(titleSanitized) && entry.endsWith(cfg.ext)) {
         return join(outputDir, entry);
       }
     }
 
     throw new Error(
-      `yt-dlp did not produce expected MP3 in ${outputDir} for title "${titleSanitized}"`,
+      `yt-dlp did not produce expected ${cfg.ext} in ${outputDir} for title "${titleSanitized}"`,
     );
   }
 
-  /**
-   * Download audio from a single video URL with cookies support.
-   */
+  export async function downloadAudio(
+    videoUrl: string,
+    outputDir: string,
+    titleSanitized: string,
+  ): Promise<string> {
+    return downloadBase(videoUrl, outputDir, titleSanitized, "audio");
+  }
+
   export async function downloadAudioWithCookies(
     videoUrl: string,
     outputDir: string,
     titleSanitized: string,
     cookieFile: string,
   ): Promise<string> {
-    await mkdir(outputDir, { recursive: true });
-
-    const audioPathTemplate = join(outputDir, `${titleSanitized}.%(ext)s`);
-
-    Utils.assert(YT_DLP, "YT_DLP environment variable is not configured");
-    const process = spawn({
-      cmd: [
-        YT_DLP,
-        "--format",
-        "bestaudio/best",
-        "--output",
-        audioPathTemplate,
-        "--cookiefile",
-        cookieFile,
-        "--extractor-args",
-        'youtube:player_client=["web"]',
-        "--no-warnings",
-        "--quiet",
-        videoUrl,
-      ],
-      cwd: outputDir,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-
-    const { stdout, stderr, exitCode } =
-      await Utils.collectProcessOutput(process);
-    if (exitCode !== 0) {
-      throw new Error(`yt-dlp download failed: ${(stderr || stdout).trim()}`);
-    }
-
-    // Find the actual MP3 file that was written
-    const entries = await readdir(outputDir);
-    for (const entry of entries) {
-      if (entry.startsWith(titleSanitized) && entry.endsWith(".mp3")) {
-        return join(outputDir, entry);
-      }
-    }
-
-    throw new Error(
-      `yt-dlp did not produce expected MP3 in ${outputDir} for title "${titleSanitized}"`,
-    );
+    return downloadBase(videoUrl, outputDir, titleSanitized, "audio", cookieFile);
   }
 
-  /**
-   * Download a full MP4 video from a single video URL and return the path.
-   */
   export async function downloadVideo(
     videoUrl: string,
     outputDir: string,
     titleSanitized: string,
   ): Promise<string> {
-    await mkdir(outputDir, { recursive: true });
-
-    const videoPathTemplate = join(outputDir, `${titleSanitized}.%(ext)s`);
-
-    Utils.assert(YT_DLP, "YT_DLP environment variable is not configured");
-    const process = spawn({
-      cmd: [
-        YT_DLP,
-        "--format",
-        "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
-        "--merge-output-format",
-        "mp4",
-        "--output",
-        videoPathTemplate,
-        "--extractor-args",
-        'youtube:player_client=["web"]',
-        "--no-warnings",
-        "--quiet",
-        videoUrl,
-      ],
-      cwd: outputDir,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-
-    const { stdout, stderr, exitCode } =
-      await Utils.collectProcessOutput(process);
-    if (exitCode !== 0) {
-      throw new Error(`yt-dlp download failed: ${(stderr || stdout).trim()}`);
-    }
-
-    // Find the actual MP4 file that was written
-    const entries = await readdir(outputDir);
-    for (const entry of entries) {
-      if (entry.startsWith(titleSanitized) && entry.endsWith(".mp4")) {
-        return join(outputDir, entry);
-      }
-    }
-
-    throw new Error(
-      `yt-dlp did not produce expected MP4 in ${outputDir} for title "${titleSanitized}"`,
-    );
+    return downloadBase(videoUrl, outputDir, titleSanitized, "video");
   }
 
-  /**
-   * Download a full MP4 video from a single video URL with cookies support.
-   */
   export async function downloadVideoWithCookies(
     videoUrl: string,
     outputDir: string,
     titleSanitized: string,
     cookieFile: string,
   ): Promise<string> {
-    await mkdir(outputDir, { recursive: true });
-
-    const videoPathTemplate = join(outputDir, `${titleSanitized}.%(ext)s`);
-
-    Utils.assert(YT_DLP, "YT_DLP environment variable is not configured");
-    const process = spawn({
-      cmd: [
-        YT_DLP,
-        "--format",
-        "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
-        "--merge-output-format",
-        "mp4",
-        "--output",
-        videoPathTemplate,
-        "--cookiefile",
-        cookieFile,
-        "--extractor-args",
-        'youtube:player_client=["web"]',
-        "--no-warnings",
-        "--quiet",
-        videoUrl,
-      ],
-      cwd: outputDir,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-
-    const { stdout, stderr, exitCode } =
-      await Utils.collectProcessOutput(process);
-    if (exitCode !== 0) {
-      throw new Error(`yt-dlp download failed: ${(stderr || stdout).trim()}`);
-    }
-
-    // Find the actual MP4 file that was written
-    const entries = await readdir(outputDir);
-    for (const entry of entries) {
-      if (entry.startsWith(titleSanitized) && entry.endsWith(".mp4")) {
-        return join(outputDir, entry);
-      }
-    }
-
-    throw new Error(
-      `yt-dlp did not produce expected MP4 in ${outputDir} for title "${titleSanitized}"`,
-    );
+    return downloadBase(videoUrl, outputDir, titleSanitized, "video", cookieFile);
   }
 
-  /**
-   * Sanitize a video or channel title to create a safe directory/file name.
-   */
   export function sanitizeTitle(title: string): string {
     return title
       .replace(/[^\w\s-]/g, "")
