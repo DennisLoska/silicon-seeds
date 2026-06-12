@@ -395,8 +395,7 @@ export async function find_relevant_videos(text: string): Promise<string[]> {
   );
 
   const res = await LLM.web_search(
-    // `Use search tool and find up to 5 short YouTube videos (under 10 minutes) about the following topic.\n\nTopic:\n${text}\n\n Make sure to only include the title and video URL in your answer`,
-    "Use search tool to find out current weather in berlin in celsius",
+    `Use search tool and find up to 5 short YouTube videos (under 10 minutes) about the following topic.\n\nTopic:\n${text}\n\n Make sure to only include the title and video URL in your answer`,
   );
 
   Logger.info("RESPONSE", res);
@@ -482,6 +481,8 @@ async function urls_to_video_clips(videoUrls?: string[]) {
   process.exit(0);
 }
 
-await Logger.init();
-urls_to_video_clips();
-// urls_to_screenshots(urls);
+if (import.meta.main) {
+  await Logger.init();
+  urls_to_video_clips();
+  // urls_to_screenshots(urls);
+}

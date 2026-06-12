@@ -69,6 +69,7 @@ const runnableTools = mcpTools.map((mcpTool) => {
         return textContent;
       } catch (error) {
         Logger.error("error", error);
+        return `Error calling tool ${mcpTool.name}: ${error instanceof Error ? error.message : String(error)}`;
       }
     },
   });
