@@ -399,7 +399,6 @@ export async function find_relevant_videos(text: string): Promise<string[]> {
   );
 
   Logger.info("RESPONSE", res);
-
   if (!res) {
     Logger.warn(`[Discovery] LLM failed to return relevant videos`);
     return [];

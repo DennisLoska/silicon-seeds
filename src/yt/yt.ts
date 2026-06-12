@@ -17,10 +17,6 @@ export namespace YtDlp {
     [key: string]: unknown;
   }
 
-  /**
-   * Extract metadata for all videos in a URL (single video or playlist)
-   * without downloading anything. Returns one JSON object per line (NDJSON).
-   */
   export async function list(url: string): Promise<VideoInfo[]> {
     Utils.assert(YT_DLP, "YT_DLP environment variable is not configured");
     const process = spawn({
@@ -130,9 +126,6 @@ export namespace YtDlp {
     return downloadBase(videoUrl, outputDir, titleSanitized, "video", cookieFile);
   }
 
-  /**
-   * Sanitize a video or channel title to create a safe directory/file name.
-   */
   export function sanitizeTitle(title: string): string {
     return title
       .replace(/[^\w\s-]/g, "")

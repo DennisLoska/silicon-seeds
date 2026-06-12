@@ -17,9 +17,6 @@ const transport = new StdioClientTransport({
   args: ["run", "mcp-searxng"],
   env: {
     ...process.env,
-    // MCP_RATE_INIT_MAX: "1000",
-    // MCP_RATE_SESSION_MAX: "5000",
-    // MCP_RATE_WINDOW_MS: "1000",
     SERVER_URL: "http://localhost:8888",
     SEARXNG_URL: "http://localhost:8888",
     X_REAL_IP: "127.0.0.1",
@@ -36,7 +33,6 @@ const runnableTools = mcpTools.map((mcpTool) => {
   return tool({
     name: mcpTool.name,
     description: mcpTool.description ?? "Perform a live action via MCP",
-    // Pass the raw JSON input schema parameters directly
     parameters: {
       query: z.string().describe("The primary search query string."),
 
@@ -48,7 +44,6 @@ const runnableTools = mcpTools.map((mcpTool) => {
 
       time_range: z.string().optional().default("month"),
     },
-    // The implementation method is triggered automatically by .act()
     implementation: async (args: any) => {
       Logger.info(`[LM Studio Engine triggered tool call]: ${mcpTool.name}`);
       if (mcpTool.name === "searxng_web_search") {
@@ -61,7 +56,6 @@ const runnableTools = mcpTools.map((mcpTool) => {
           arguments: args,
         });
 
-        // Return string text output back into the underlying active model context
         const textContent = response.content
           .map((item: any) => item.text ?? "")
           .join("\n");
@@ -115,7 +109,6 @@ export namespace LLM {
 
     await llm.act(conversationContext, runnableTools, {
       maxTokens: Metadata.MAX_TOKENS,
-      // Optional streaming callback to monitor internal thoughts and messages
       onMessage: (message) => {
         result = message.toString();
       },
