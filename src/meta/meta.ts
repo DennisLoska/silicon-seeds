@@ -3,6 +3,7 @@ import { Utils } from "../utils/utils";
 import { Logger } from "../logger/logger";
 import { comfyClient } from "../comfyui/comfyui-client";
 import { LLM } from "../llm/llm";
+import { Chroma } from "../chroma/chroma";
 import z from "zod/v3";
 
 // This is sort of like a utils directory
@@ -77,24 +78,38 @@ export namespace Metadata {
     const title = titleRes?.content;
     const tags = tagsRes?.parsed;
 
+    const metaJson = {
+      job_id,
+      created_at,
+      filename,
+      filetype,
+      resolution,
+      title,
+      description,
+      tags,
+      prompt,
+      model,
+      style,
+      fps,
+      duration,
+    };
+
     await Bun.write(
       `${contentDir}/${filetype}/.${filename.split(".")[0]}.metadata.json`,
-      JSON.stringify({
-        job_id,
-        created_at,
-        filename,
-        filetype,
-        resolution,
-        title,
-        description,
-        tags,
-        prompt,
-        model,
-        style,
-        fps,
-        duration,
-      }),
+      JSON.stringify(metaJson),
     );
+
+    Chroma.saveEmbedding({
+      id: filename.split(".")[0],
+      title: title ?? "",
+      description: description ?? "",
+      tags: tags ?? [],
+      prompt,
+      filename,
+      filetype,
+      resolution,
+      style,
+    });
   }
 
   export async function getAsset(promptId: string) {

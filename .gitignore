@@ -155,5 +155,8 @@ static/style.css
 # Content library (formatted but untracked — see content/.gitignore)
 
 
+# ChromaDB local data
+chroma-data/
+
 # AI stuff
 .oneshot-state

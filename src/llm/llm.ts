@@ -151,4 +151,12 @@ export namespace LLM {
       return null;
     }
   }
+
+  const EMBEDDING_DIM = 384;
+
+  export async function generateEmbedding(_text: string): Promise<number[]> {
+    // Mock: LM Studio lacks embedding model.  Returns random 384-dim vector.
+    // TODO: replace with real embedding API when model available.
+    return Array.from({ length: EMBEDDING_DIM }, () => Math.random() * 2 - 1);
+  }
 }
