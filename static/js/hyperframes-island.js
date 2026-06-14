@@ -15,15 +15,6 @@ var __toESM = (mod, isNodeMode, target) => {
   return to;
 };
 var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, {
-      get: all[name],
-      enumerable: true,
-      configurable: true,
-      set: (newValue) => all[name] = () => newValue
-    });
-};
 
 // node_modules/react/cjs/react.development.js
 var require_react_development = __commonJS((exports, module) => {
@@ -16886,606 +16877,244 @@ var require_client = __commonJS((exports, module) => {
   }
 });
 
+// node_modules/react/cjs/react-jsx-dev-runtime.development.js
+var require_react_jsx_dev_runtime_development = __commonJS((exports) => {
+  var React = __toESM(require_react());
+  (function() {
+    function getComponentNameFromType(type) {
+      if (type == null)
+        return null;
+      if (typeof type === "function")
+        return type.$$typeof === REACT_CLIENT_REFERENCE ? null : type.displayName || type.name || null;
+      if (typeof type === "string")
+        return type;
+      switch (type) {
+        case REACT_FRAGMENT_TYPE:
+          return "Fragment";
+        case REACT_PROFILER_TYPE:
+          return "Profiler";
+        case REACT_STRICT_MODE_TYPE:
+          return "StrictMode";
+        case REACT_SUSPENSE_TYPE:
+          return "Suspense";
+        case REACT_SUSPENSE_LIST_TYPE:
+          return "SuspenseList";
+        case REACT_ACTIVITY_TYPE:
+          return "Activity";
+      }
+      if (typeof type === "object")
+        switch (typeof type.tag === "number" && console.error("Received an unexpected object in getComponentNameFromType(). This is likely a bug in React. Please file an issue."), type.$$typeof) {
+          case REACT_PORTAL_TYPE:
+            return "Portal";
+          case REACT_CONTEXT_TYPE:
+            return type.displayName || "Context";
+          case REACT_CONSUMER_TYPE:
+            return (type._context.displayName || "Context") + ".Consumer";
+          case REACT_FORWARD_REF_TYPE:
+            var innerType = type.render;
+            type = type.displayName;
+            type || (type = innerType.displayName || innerType.name || "", type = type !== "" ? "ForwardRef(" + type + ")" : "ForwardRef");
+            return type;
+          case REACT_MEMO_TYPE:
+            return innerType = type.displayName || null, innerType !== null ? innerType : getComponentNameFromType(type.type) || "Memo";
+          case REACT_LAZY_TYPE:
+            innerType = type._payload;
+            type = type._init;
+            try {
+              return getComponentNameFromType(type(innerType));
+            } catch (x) {}
+        }
+      return null;
+    }
+    function testStringCoercion(value) {
+      return "" + value;
+    }
+    function checkKeyStringCoercion(value) {
+      try {
+        testStringCoercion(value);
+        var JSCompiler_inline_result = false;
+      } catch (e) {
+        JSCompiler_inline_result = true;
+      }
+      if (JSCompiler_inline_result) {
+        JSCompiler_inline_result = console;
+        var JSCompiler_temp_const = JSCompiler_inline_result.error;
+        var JSCompiler_inline_result$jscomp$0 = typeof Symbol === "function" && Symbol.toStringTag && value[Symbol.toStringTag] || value.constructor.name || "Object";
+        JSCompiler_temp_const.call(JSCompiler_inline_result, "The provided key is an unsupported type %s. This value must be coerced to a string before using it here.", JSCompiler_inline_result$jscomp$0);
+        return testStringCoercion(value);
+      }
+    }
+    function getTaskName(type) {
+      if (type === REACT_FRAGMENT_TYPE)
+        return "<>";
+      if (typeof type === "object" && type !== null && type.$$typeof === REACT_LAZY_TYPE)
+        return "<...>";
+      try {
+        var name = getComponentNameFromType(type);
+        return name ? "<" + name + ">" : "<...>";
+      } catch (x) {
+        return "<...>";
+      }
+    }
+    function getOwner() {
+      var dispatcher = ReactSharedInternals.A;
+      return dispatcher === null ? null : dispatcher.getOwner();
+    }
+    function UnknownOwner() {
+      return Error("react-stack-top-frame");
+    }
+    function hasValidKey(config) {
+      if (hasOwnProperty.call(config, "key")) {
+        var getter = Object.getOwnPropertyDescriptor(config, "key").get;
+        if (getter && getter.isReactWarning)
+          return false;
+      }
+      return config.key !== undefined;
+    }
+    function defineKeyPropWarningGetter(props, displayName) {
+      function warnAboutAccessingKey() {
+        specialPropKeyWarningShown || (specialPropKeyWarningShown = true, console.error("%s: `key` is not a prop. Trying to access it will result in `undefined` being returned. If you need to access the same value within the child component, you should pass it as a different prop. (https://react.dev/link/special-props)", displayName));
+      }
+      warnAboutAccessingKey.isReactWarning = true;
+      Object.defineProperty(props, "key", {
+        get: warnAboutAccessingKey,
+        configurable: true
+      });
+    }
+    function elementRefGetterWithDeprecationWarning() {
+      var componentName = getComponentNameFromType(this.type);
+      didWarnAboutElementRef[componentName] || (didWarnAboutElementRef[componentName] = true, console.error("Accessing element.ref was removed in React 19. ref is now a regular prop. It will be removed from the JSX Element type in a future release."));
+      componentName = this.props.ref;
+      return componentName !== undefined ? componentName : null;
+    }
+    function ReactElement(type, key, props, owner, debugStack, debugTask) {
+      var refProp = props.ref;
+      type = {
+        $$typeof: REACT_ELEMENT_TYPE,
+        type,
+        key,
+        props,
+        _owner: owner
+      };
+      (refProp !== undefined ? refProp : null) !== null ? Object.defineProperty(type, "ref", {
+        enumerable: false,
+        get: elementRefGetterWithDeprecationWarning
+      }) : Object.defineProperty(type, "ref", { enumerable: false, value: null });
+      type._store = {};
+      Object.defineProperty(type._store, "validated", {
+        configurable: false,
+        enumerable: false,
+        writable: true,
+        value: 0
+      });
+      Object.defineProperty(type, "_debugInfo", {
+        configurable: false,
+        enumerable: false,
+        writable: true,
+        value: null
+      });
+      Object.defineProperty(type, "_debugStack", {
+        configurable: false,
+        enumerable: false,
+        writable: true,
+        value: debugStack
+      });
+      Object.defineProperty(type, "_debugTask", {
+        configurable: false,
+        enumerable: false,
+        writable: true,
+        value: debugTask
+      });
+      Object.freeze && (Object.freeze(type.props), Object.freeze(type));
+      return type;
+    }
+    function jsxDEVImpl(type, config, maybeKey, isStaticChildren, debugStack, debugTask) {
+      var children = config.children;
+      if (children !== undefined)
+        if (isStaticChildren)
+          if (isArrayImpl(children)) {
+            for (isStaticChildren = 0;isStaticChildren < children.length; isStaticChildren++)
+              validateChildKeys(children[isStaticChildren]);
+            Object.freeze && Object.freeze(children);
+          } else
+            console.error("React.jsx: Static children should always be an array. You are likely explicitly calling React.jsxs or React.jsxDEV. Use the Babel transform instead.");
+        else
+          validateChildKeys(children);
+      if (hasOwnProperty.call(config, "key")) {
+        children = getComponentNameFromType(type);
+        var keys = Object.keys(config).filter(function(k) {
+          return k !== "key";
+        });
+        isStaticChildren = 0 < keys.length ? "{key: someKey, " + keys.join(": ..., ") + ": ...}" : "{key: someKey}";
+        didWarnAboutKeySpread[children + isStaticChildren] || (keys = 0 < keys.length ? "{" + keys.join(": ..., ") + ": ...}" : "{}", console.error(`A props object containing a "key" prop is being spread into JSX:
+  let props = %s;
+  <%s {...props} />
+React keys must be passed directly to JSX without using spread:
+  let props = %s;
+  <%s key={someKey} {...props} />`, isStaticChildren, children, keys, children), didWarnAboutKeySpread[children + isStaticChildren] = true);
+      }
+      children = null;
+      maybeKey !== undefined && (checkKeyStringCoercion(maybeKey), children = "" + maybeKey);
+      hasValidKey(config) && (checkKeyStringCoercion(config.key), children = "" + config.key);
+      if ("key" in config) {
+        maybeKey = {};
+        for (var propName in config)
+          propName !== "key" && (maybeKey[propName] = config[propName]);
+      } else
+        maybeKey = config;
+      children && defineKeyPropWarningGetter(maybeKey, typeof type === "function" ? type.displayName || type.name || "Unknown" : type);
+      return ReactElement(type, children, maybeKey, getOwner(), debugStack, debugTask);
+    }
+    function validateChildKeys(node) {
+      isValidElement(node) ? node._store && (node._store.validated = 1) : typeof node === "object" && node !== null && node.$$typeof === REACT_LAZY_TYPE && (node._payload.status === "fulfilled" ? isValidElement(node._payload.value) && node._payload.value._store && (node._payload.value._store.validated = 1) : node._store && (node._store.validated = 1));
+    }
+    function isValidElement(object) {
+      return typeof object === "object" && object !== null && object.$$typeof === REACT_ELEMENT_TYPE;
+    }
+    var REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy"), REACT_ACTIVITY_TYPE = Symbol.for("react.activity"), REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), ReactSharedInternals = React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, hasOwnProperty = Object.prototype.hasOwnProperty, isArrayImpl = Array.isArray, createTask = console.createTask ? console.createTask : function() {
+      return null;
+    };
+    React = {
+      react_stack_bottom_frame: function(callStackForError) {
+        return callStackForError();
+      }
+    };
+    var specialPropKeyWarningShown;
+    var didWarnAboutElementRef = {};
+    var unknownOwnerDebugStack = React.react_stack_bottom_frame.bind(React, UnknownOwner)();
+    var unknownOwnerDebugTask = createTask(getTaskName(UnknownOwner));
+    var didWarnAboutKeySpread = {};
+    exports.Fragment = REACT_FRAGMENT_TYPE;
+    exports.jsxDEV = function(type, config, maybeKey, isStaticChildren) {
+      var trackActualOwner = 1e4 > ReactSharedInternals.recentlyCreatedOwnerStacks++;
+      return jsxDEVImpl(type, config, maybeKey, isStaticChildren, trackActualOwner ? Error("react-stack-top-frame") : unknownOwnerDebugStack, trackActualOwner ? createTask(getTaskName(type)) : unknownOwnerDebugTask);
+    };
+  })();
+});
+
+// node_modules/react/jsx-dev-runtime.js
+var require_jsx_dev_runtime = __commonJS((exports, module) => {
+  var react_jsx_dev_runtime_development = __toESM(require_react_jsx_dev_runtime_development());
+  if (false) {} else {
+    module.exports = react_jsx_dev_runtime_development;
+  }
+});
+
 // src/hypercut/hyperframes-island.tsx
 var import_react = __toESM(require_react(), 1);
 var import_client = __toESM(require_client(), 1);
-
-// node_modules/hono/dist/utils/html.js
-var HtmlEscapedCallbackPhase = {
-  Stringify: 1,
-  BeforeStream: 2,
-  Stream: 3
-};
-var raw = (value, callbacks) => {
-  const escapedString = new String(value);
-  escapedString.isEscaped = true;
-  escapedString.callbacks = callbacks;
-  return escapedString;
-};
-var escapeRe = /[&<>'"]/;
-var stringBufferToString = async (buffer, callbacks) => {
-  let str = "";
-  callbacks ||= [];
-  const resolvedBuffer = await Promise.all(buffer);
-  for (let i = resolvedBuffer.length - 1;; i--) {
-    str += resolvedBuffer[i];
-    i--;
-    if (i < 0) {
-      break;
-    }
-    let r = resolvedBuffer[i];
-    if (typeof r === "object") {
-      callbacks.push(...r.callbacks || []);
-    }
-    const isEscaped = r.isEscaped;
-    r = await (typeof r === "object" ? r.toString() : r);
-    if (typeof r === "object") {
-      callbacks.push(...r.callbacks || []);
-    }
-    if (r.isEscaped ?? isEscaped) {
-      str += r;
-    } else {
-      const buf = [str];
-      escapeToBuffer(r, buf);
-      str = buf[0];
-    }
-  }
-  return raw(str, callbacks);
-};
-var escapeToBuffer = (str, buffer) => {
-  const match = str.search(escapeRe);
-  if (match === -1) {
-    buffer[0] += str;
-    return;
-  }
-  let escape;
-  let index;
-  let lastIndex = 0;
-  for (index = match;index < str.length; index++) {
-    switch (str.charCodeAt(index)) {
-      case 34:
-        escape = "&quot;";
-        break;
-      case 39:
-        escape = "&#39;";
-        break;
-      case 38:
-        escape = "&amp;";
-        break;
-      case 60:
-        escape = "&lt;";
-        break;
-      case 62:
-        escape = "&gt;";
-        break;
-      default:
-        continue;
-    }
-    buffer[0] += str.substring(lastIndex, index) + escape;
-    lastIndex = index + 1;
-  }
-  buffer[0] += str.substring(lastIndex, index);
-};
-var resolveCallbackSync = (str) => {
-  const callbacks = str.callbacks;
-  if (!callbacks?.length) {
-    return str;
-  }
-  const buffer = [str];
-  const context = {};
-  callbacks.forEach((c) => c({ phase: HtmlEscapedCallbackPhase.Stringify, buffer, context }));
-  return buffer[0];
-};
-
-// node_modules/hono/dist/jsx/constants.js
-var DOM_RENDERER = /* @__PURE__ */ Symbol("RENDERER");
-var DOM_ERROR_HANDLER = /* @__PURE__ */ Symbol("ERROR_HANDLER");
-var DOM_INTERNAL_TAG = /* @__PURE__ */ Symbol("INTERNAL");
-var PERMALINK = /* @__PURE__ */ Symbol("PERMALINK");
-
-// node_modules/hono/dist/jsx/dom/utils.js
-var setInternalTagFlag = (fn) => {
-  fn[DOM_INTERNAL_TAG] = true;
-  return fn;
-};
-
-// node_modules/hono/dist/jsx/dom/context.js
-var createContextProviderFunction = (values) => ({ value, children }) => {
-  if (!children) {
-    return;
-  }
-  const props = {
-    children: [
-      {
-        tag: setInternalTagFlag(() => {
-          values.push(value);
-        }),
-        props: {}
-      }
-    ]
-  };
-  if (Array.isArray(children)) {
-    props.children.push(...children.flat());
-  } else {
-    props.children.push(children);
-  }
-  props.children.push({
-    tag: setInternalTagFlag(() => {
-      values.pop();
-    }),
-    props: {}
-  });
-  const res = { tag: "", props, type: "" };
-  res[DOM_ERROR_HANDLER] = (err) => {
-    values.pop();
-    throw err;
-  };
-  return res;
-};
-
-// node_modules/hono/dist/jsx/context.js
-var globalContexts = [];
-var createContext = (defaultValue) => {
-  const values = [defaultValue];
-  const context = (props) => {
-    values.push(props.value);
-    let string;
-    try {
-      string = props.children ? (Array.isArray(props.children) ? new JSXFragmentNode("", {}, props.children) : props.children).toString() : "";
-    } catch (e) {
-      values.pop();
-      throw e;
-    }
-    if (string instanceof Promise) {
-      return string.finally(() => values.pop()).then((resString) => raw(resString, resString.callbacks));
-    } else {
-      values.pop();
-      return raw(string);
-    }
-  };
-  context.values = values;
-  context.Provider = context;
-  context[DOM_RENDERER] = createContextProviderFunction(values);
-  globalContexts.push(context);
-  return context;
-};
-var useContext = (context) => {
-  return context.values.at(-1);
-};
-
-// node_modules/hono/dist/jsx/intrinsic-element/common.js
-var deDupeKeyMap = {
-  title: [],
-  script: ["src"],
-  style: ["data-href"],
-  link: ["href"],
-  meta: ["name", "httpEquiv", "charset", "itemProp"]
-};
-var domRenderers = {};
-var dataPrecedenceAttr = "data-precedence";
-var isStylesheetLinkWithPrecedence = (props) => props.rel === "stylesheet" && ("precedence" in props);
-var shouldDeDupeByKey = (tagName, supportSort) => {
-  if (tagName === "link") {
-    return supportSort;
-  }
-  return deDupeKeyMap[tagName].length > 0;
-};
-
-// node_modules/hono/dist/jsx/intrinsic-element/components.js
-var exports_components = {};
-__export(exports_components, {
-  title: () => title,
-  style: () => style,
-  script: () => script,
-  meta: () => meta,
-  link: () => link,
-  input: () => input,
-  form: () => form,
-  button: () => button
-});
-
-// node_modules/hono/dist/jsx/children.js
-var toArray = (children) => Array.isArray(children) ? children : [children];
-
-// node_modules/hono/dist/jsx/intrinsic-element/components.js
-var metaTagMap = /* @__PURE__ */ new WeakMap;
-var insertIntoHead = (tagName, tag, props, precedence) => ({ buffer, context }) => {
-  if (!buffer) {
-    return;
-  }
-  const map = metaTagMap.get(context) || {};
-  metaTagMap.set(context, map);
-  const tags = map[tagName] ||= [];
-  let duped = false;
-  const deDupeKeys = deDupeKeyMap[tagName];
-  const deDupeByKey = shouldDeDupeByKey(tagName, precedence !== undefined);
-  if (deDupeByKey) {
-    LOOP:
-      for (const [, tagProps] of tags) {
-        if (tagName === "link" && !(tagProps.rel === "stylesheet" && tagProps[dataPrecedenceAttr] !== undefined)) {
-          continue;
-        }
-        for (const key of deDupeKeys) {
-          if ((tagProps?.[key] ?? null) === props?.[key]) {
-            duped = true;
-            break LOOP;
-          }
-        }
-      }
-  }
-  if (duped) {
-    buffer[0] = buffer[0].replaceAll(tag, "");
-  } else if (deDupeByKey || tagName === "link") {
-    tags.push([tag, props, precedence]);
-  } else {
-    tags.unshift([tag, props, precedence]);
-  }
-  if (buffer[0].indexOf("</head>") !== -1) {
-    let insertTags;
-    if (tagName === "link" || precedence !== undefined) {
-      const precedences = [];
-      insertTags = tags.map(([tag2, , tagPrecedence], index) => {
-        if (tagPrecedence === undefined) {
-          return [tag2, Number.MAX_SAFE_INTEGER, index];
-        }
-        let order = precedences.indexOf(tagPrecedence);
-        if (order === -1) {
-          precedences.push(tagPrecedence);
-          order = precedences.length - 1;
-        }
-        return [tag2, order, index];
-      }).sort((a, b) => a[1] - b[1] || a[2] - b[2]).map(([tag2]) => tag2);
-    } else {
-      insertTags = tags.map(([tag2]) => tag2);
-    }
-    insertTags.forEach((tag2) => {
-      buffer[0] = buffer[0].replaceAll(tag2, "");
-    });
-    buffer[0] = buffer[0].replace(/(?=<\/head>)/, insertTags.join(""));
-  }
-};
-var returnWithoutSpecialBehavior = (tag, children, props) => raw(new JSXNode(tag, props, toArray(children ?? [])).toString());
-var documentMetadataTag = (tag, children, props, sort) => {
-  if ("itemProp" in props) {
-    return returnWithoutSpecialBehavior(tag, children, props);
-  }
-  let { precedence, blocking, ...restProps } = props;
-  precedence = sort ? precedence ?? "" : undefined;
-  if (sort) {
-    restProps[dataPrecedenceAttr] = precedence;
-  }
-  const string = new JSXNode(tag, restProps, toArray(children || [])).toString();
-  if (string instanceof Promise) {
-    return string.then((resString) => raw(string, [
-      ...resString.callbacks || [],
-      insertIntoHead(tag, resString, restProps, precedence)
-    ]));
-  } else {
-    return raw(string, [insertIntoHead(tag, string, restProps, precedence)]);
-  }
-};
-var title = ({ children, ...props }) => {
-  const nameSpaceContext = getNameSpaceContext();
-  if (nameSpaceContext) {
-    const context = useContext(nameSpaceContext);
-    if (context === "svg" || context === "head") {
-      return new JSXNode("title", props, toArray(children ?? []));
-    }
-  }
-  return documentMetadataTag("title", children, props, false);
-};
-var script = ({
-  children,
-  ...props
-}) => {
-  const nameSpaceContext = getNameSpaceContext();
-  if (["src", "async"].some((k) => !props[k]) || nameSpaceContext && useContext(nameSpaceContext) === "head") {
-    return returnWithoutSpecialBehavior("script", children, props);
-  }
-  return documentMetadataTag("script", children, props, false);
-};
-var style = ({
-  children,
-  ...props
-}) => {
-  if (!["href", "precedence"].every((k) => (k in props))) {
-    return returnWithoutSpecialBehavior("style", children, props);
-  }
-  props["data-href"] = props.href;
-  delete props.href;
-  return documentMetadataTag("style", children, props, true);
-};
-var link = ({ children, ...props }) => {
-  if (["onLoad", "onError"].some((k) => (k in props)) || props.rel === "stylesheet" && (!("precedence" in props) || ("disabled" in props))) {
-    return returnWithoutSpecialBehavior("link", children, props);
-  }
-  return documentMetadataTag("link", children, props, isStylesheetLinkWithPrecedence(props));
-};
-var meta = ({ children, ...props }) => {
-  const nameSpaceContext = getNameSpaceContext();
-  if (nameSpaceContext && useContext(nameSpaceContext) === "head") {
-    return returnWithoutSpecialBehavior("meta", children, props);
-  }
-  return documentMetadataTag("meta", children, props, false);
-};
-var newJSXNode = (tag, { children, ...props }) => new JSXNode(tag, props, toArray(children ?? []));
-var form = (props) => {
-  if (typeof props.action === "function") {
-    props.action = PERMALINK in props.action ? props.action[PERMALINK] : undefined;
-  }
-  return newJSXNode("form", props);
-};
-var formActionableElement = (tag, props) => {
-  if (typeof props.formAction === "function") {
-    props.formAction = PERMALINK in props.formAction ? props.formAction[PERMALINK] : undefined;
-  }
-  return newJSXNode(tag, props);
-};
-var input = (props) => formActionableElement("input", props);
-var button = (props) => formActionableElement("button", props);
-
-// node_modules/hono/dist/jsx/utils.js
-var normalizeElementKeyMap = /* @__PURE__ */ new Map([
-  ["className", "class"],
-  ["htmlFor", "for"],
-  ["crossOrigin", "crossorigin"],
-  ["httpEquiv", "http-equiv"],
-  ["itemProp", "itemprop"],
-  ["fetchPriority", "fetchpriority"],
-  ["noModule", "nomodule"],
-  ["formAction", "formaction"]
-]);
-var normalizeIntrinsicElementKey = (key) => normalizeElementKeyMap.get(key) || key;
-var styleObjectForEach = (style2, fn) => {
-  for (const [k, v] of Object.entries(style2)) {
-    const key = k[0] === "-" || !/[A-Z]/.test(k) ? k : k.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
-    fn(key, v == null ? null : typeof v === "number" ? !key.match(/^(?:a|border-im|column(?:-c|s)|flex(?:$|-[^b])|grid-(?:ar|[^a])|font-w|li|or|sca|st|ta|wido|z)|ty$/) ? `${v}px` : `${v}` : v);
-  }
-};
-
-// node_modules/hono/dist/jsx/base.js
-var nameSpaceContext = undefined;
-var getNameSpaceContext = () => nameSpaceContext;
-var toSVGAttributeName = (key) => /[A-Z]/.test(key) && key.match(/^(?:al|basel|clip(?:Path|Rule)$|co|do|fill|fl|fo|gl|let|lig|i|marker[EMS]|o|pai|pointe|sh|st[or]|text[^L]|tr|u|ve|w)/) ? key.replace(/([A-Z])/g, "-$1").toLowerCase() : key;
-var emptyTags = [
-  "area",
-  "base",
-  "br",
-  "col",
-  "embed",
-  "hr",
-  "img",
-  "input",
-  "keygen",
-  "link",
-  "meta",
-  "param",
-  "source",
-  "track",
-  "wbr"
-];
-var booleanAttributes = [
-  "allowfullscreen",
-  "async",
-  "autofocus",
-  "autoplay",
-  "checked",
-  "controls",
-  "default",
-  "defer",
-  "disabled",
-  "download",
-  "formnovalidate",
-  "hidden",
-  "inert",
-  "ismap",
-  "itemscope",
-  "loop",
-  "multiple",
-  "muted",
-  "nomodule",
-  "novalidate",
-  "open",
-  "playsinline",
-  "readonly",
-  "required",
-  "reversed",
-  "selected"
-];
-var childrenToStringToBuffer = (children, buffer) => {
-  for (let i = 0, len = children.length;i < len; i++) {
-    const child = children[i];
-    if (typeof child === "string") {
-      escapeToBuffer(child, buffer);
-    } else if (typeof child === "boolean" || child === null || child === undefined) {
-      continue;
-    } else if (child instanceof JSXNode) {
-      child.toStringToBuffer(buffer);
-    } else if (typeof child === "number" || child.isEscaped) {
-      buffer[0] += child;
-    } else if (child instanceof Promise) {
-      buffer.unshift("", child);
-    } else {
-      childrenToStringToBuffer(child, buffer);
-    }
-  }
-};
-var JSXNode = class {
-  tag;
-  props;
-  key;
-  children;
-  isEscaped = true;
-  localContexts;
-  constructor(tag, props, children) {
-    this.tag = tag;
-    this.props = props;
-    this.children = children;
-  }
-  get type() {
-    return this.tag;
-  }
-  get ref() {
-    return this.props.ref || null;
-  }
-  toString() {
-    const buffer = [""];
-    this.localContexts?.forEach(([context, value]) => {
-      context.values.push(value);
-    });
-    try {
-      this.toStringToBuffer(buffer);
-    } finally {
-      this.localContexts?.forEach(([context]) => {
-        context.values.pop();
-      });
-    }
-    return buffer.length === 1 ? "callbacks" in buffer ? resolveCallbackSync(raw(buffer[0], buffer.callbacks)).toString() : buffer[0] : stringBufferToString(buffer, buffer.callbacks);
-  }
-  toStringToBuffer(buffer) {
-    const tag = this.tag;
-    const props = this.props;
-    let { children } = this;
-    buffer[0] += `<${tag}`;
-    const normalizeKey = nameSpaceContext && useContext(nameSpaceContext) === "svg" ? (key) => toSVGAttributeName(normalizeIntrinsicElementKey(key)) : (key) => normalizeIntrinsicElementKey(key);
-    for (let [key, v] of Object.entries(props)) {
-      key = normalizeKey(key);
-      if (key === "children") {} else if (key === "style" && typeof v === "object") {
-        let styleStr = "";
-        styleObjectForEach(v, (property, value) => {
-          if (value != null) {
-            styleStr += `${styleStr ? ";" : ""}${property}:${value}`;
-          }
-        });
-        buffer[0] += ' style="';
-        escapeToBuffer(styleStr, buffer);
-        buffer[0] += '"';
-      } else if (typeof v === "string") {
-        buffer[0] += ` ${key}="`;
-        escapeToBuffer(v, buffer);
-        buffer[0] += '"';
-      } else if (v === null || v === undefined) {} else if (typeof v === "number" || v.isEscaped) {
-        buffer[0] += ` ${key}="${v}"`;
-      } else if (typeof v === "boolean" && booleanAttributes.includes(key)) {
-        if (v) {
-          buffer[0] += ` ${key}=""`;
-        }
-      } else if (key === "dangerouslySetInnerHTML") {
-        if (children.length > 0) {
-          throw new Error("Can only set one of `children` or `props.dangerouslySetInnerHTML`.");
-        }
-        children = [raw(v.__html)];
-      } else if (v instanceof Promise) {
-        buffer[0] += ` ${key}="`;
-        buffer.unshift('"', v);
-      } else if (typeof v === "function") {
-        if (!key.startsWith("on") && key !== "ref") {
-          throw new Error(`Invalid prop '${key}' of type 'function' supplied to '${tag}'.`);
-        }
-      } else {
-        buffer[0] += ` ${key}="`;
-        escapeToBuffer(v.toString(), buffer);
-        buffer[0] += '"';
-      }
-    }
-    if (emptyTags.includes(tag) && children.length === 0) {
-      buffer[0] += "/>";
-      return;
-    }
-    buffer[0] += ">";
-    childrenToStringToBuffer(children, buffer);
-    buffer[0] += `</${tag}>`;
-  }
-};
-var JSXFunctionNode = class extends JSXNode {
-  toStringToBuffer(buffer) {
-    const { children } = this;
-    const props = { ...this.props };
-    if (children.length) {
-      props.children = children.length === 1 ? children[0] : children;
-    }
-    const res = this.tag.call(null, props);
-    if (typeof res === "boolean" || res == null) {
-      return;
-    } else if (res instanceof Promise) {
-      if (globalContexts.length === 0) {
-        buffer.unshift("", res);
-      } else {
-        const currentContexts = globalContexts.map((c) => [c, c.values.at(-1)]);
-        buffer.unshift("", res.then((childRes) => {
-          if (childRes instanceof JSXNode) {
-            childRes.localContexts = currentContexts;
-          }
-          return childRes;
-        }));
-      }
-    } else if (res instanceof JSXNode) {
-      res.toStringToBuffer(buffer);
-    } else if (typeof res === "number" || res.isEscaped) {
-      buffer[0] += res;
-      if (res.callbacks) {
-        buffer.callbacks ||= [];
-        buffer.callbacks.push(...res.callbacks);
-      }
-    } else {
-      escapeToBuffer(res, buffer);
-    }
-  }
-};
-var JSXFragmentNode = class extends JSXNode {
-  toStringToBuffer(buffer) {
-    childrenToStringToBuffer(this.children, buffer);
-  }
-};
-var initDomRenderer = false;
-var jsxFn = (tag, props, children) => {
-  if (!initDomRenderer) {
-    for (const k in domRenderers) {
-      exports_components[k][DOM_RENDERER] = domRenderers[k];
-    }
-    initDomRenderer = true;
-  }
-  if (typeof tag === "function") {
-    return new JSXFunctionNode(tag, props, children);
-  } else if (exports_components[tag]) {
-    return new JSXFunctionNode(exports_components[tag], props, children);
-  } else if (tag === "svg" || tag === "head") {
-    nameSpaceContext ||= createContext("");
-    return new JSXNode(tag, props, [
-      new JSXFunctionNode(nameSpaceContext, {
-        value: tag
-      }, children)
-    ]);
-  } else {
-    return new JSXNode(tag, props, children);
-  }
-};
-
-// node_modules/hono/dist/jsx/jsx-dev-runtime.js
-function jsxDEV(tag, props, key) {
-  let node;
-  if (!props || !("children" in props)) {
-    node = jsxFn(tag, props, []);
-  } else {
-    const children = props.children;
-    node = Array.isArray(children) ? jsxFn(tag, props, children) : jsxFn(tag, props, [children]);
-  }
-  node.key = key;
-  return node;
-}
-
-// src/hypercut/hyperframes-island.tsx
+var jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
 var TIMELINE_SCALE = 50;
-function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }) {
+function HyperframesIsland({ jobId, sourceVideoUrl, initialClips = [] }) {
   const [clips, setClips] = import_react.useState(initialClips);
   const [suggestions, setSuggestions] = import_react.useState([]);
   const [duration, setDuration] = import_react.useState(0);
   const [currentTime, setCurrentTime] = import_react.useState(0);
-  const videoRef = import_react.default.useRef(null);
+  const videoRef = import_react.useRef(null);
   import_react.useEffect(() => {
     fetch(`/api/jobs/hypercut/${jobId}/suggestions`).then((res) => res.json()).then((data) => {
       setSuggestions(data.suggestions);
-    }).catch((err) => console.error("Failed to load suggestions", err));
+    }).catch(() => {});
   }, [jobId]);
   const timelineWidth = import_react.useMemo(() => Math.max(duration * TIMELINE_SCALE, 800), [duration]);
   async function addToTimeline(suggestion) {
@@ -17511,26 +17140,17 @@ function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }) {
         })
       });
       setClips((prev) => [...prev, clip]);
-    } catch (err) {
-      console.error("Failed to add clip", err);
-    }
+    } catch {}
   }
   async function renderTimeline() {
-    try {
-      const res = await fetch(`/api/jobs/hypercut/${jobId}/render`, {
-        method: "POST"
-      });
-      const data = await res.json();
-      alert(data.output_path ? `Rendered: ${data.output_path}` : `Error: ${data.error}`);
-    } catch (err) {
-      console.error("Render failed", err);
-      alert("Render failed");
-    }
+    const res = await fetch(`/api/jobs/hypercut/${jobId}/render`, { method: "POST" });
+    const data = await res.json();
+    alert(data.output_path ? `Rendered: ${data.output_path}` : `Error: ${data.error}`);
   }
-  return /* @__PURE__ */ jsxDEV("div", {
+  return /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
     className: "hyperframes-island space-y-4",
     children: [
-      /* @__PURE__ */ jsxDEV("video", {
+      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("video", {
         ref: videoRef,
         src: sourceVideoUrl,
         controls: true,
@@ -17538,16 +17158,16 @@ function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }) {
         onLoadedMetadata: () => setDuration(videoRef.current?.duration ?? 0),
         onTimeUpdate: () => setCurrentTime(videoRef.current?.currentTime ?? 0)
       }, undefined, false, undefined, this),
-      /* @__PURE__ */ jsxDEV("div", {
+      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
         className: "flex gap-4",
         children: [
-          /* @__PURE__ */ jsxDEV("div", {
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
             className: "flex-1 overflow-x-auto border rounded p-2 bg-base-200",
-            children: /* @__PURE__ */ jsxDEV("div", {
+            children: /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
               className: "relative h-32",
               style: { width: timelineWidth },
               children: [
-                clips.map((clip) => /* @__PURE__ */ jsxDEV("div", {
+                clips.map((clip) => /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
                   className: `absolute h-8 rounded px-2 text-xs flex items-center overflow-hidden ${clip.kind === "autocut_cut" ? "bg-error/30 border border-error" : "bg-primary/30 border border-primary"}`,
                   style: {
                     left: clip.start * TIMELINE_SCALE,
@@ -17557,40 +17177,39 @@ function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }) {
                   title: clip.label,
                   children: clip.label.slice(0, 20)
                 }, clip.id, false, undefined, this)),
-                /* @__PURE__ */ jsxDEV("div", {
+                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
                   className: "absolute top-0 bottom-0 w-px bg-accent",
                   style: { left: currentTime * TIMELINE_SCALE }
                 }, undefined, false, undefined, this)
               ]
             }, undefined, true, undefined, this)
           }, undefined, false, undefined, this),
-          /* @__PURE__ */ jsxDEV("div", {
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
             className: "w-64 space-y-2",
             children: [
-              /* @__PURE__ */ jsxDEV("h3", {
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h3", {
                 className: "font-bold",
                 children: "Suggestions"
               }, undefined, false, undefined, this),
-              /* @__PURE__ */ jsxDEV("div", {
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
                 className: "max-h-64 overflow-y-auto space-y-2",
-                children: suggestions.map((s) => /* @__PURE__ */ jsxDEV("div", {
+                children: suggestions.map((s) => /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
                   className: `card card-compact p-2 cursor-pointer hover:bg-base-300 ${s.source_type === "autocut_cut" ? "bg-error/10" : "bg-base-100"}`,
                   onClick: () => addToTimeline(s),
                   children: [
-                    /* @__PURE__ */ jsxDEV("span", {
+                    /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
                       className: "badge badge-sm",
                       children: s.source_type
                     }, undefined, false, undefined, this),
-                    /* @__PURE__ */ jsxDEV("p", {
+                    /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
                       className: "text-xs truncate",
                       children: s.text_content ?? s.asset_id ?? "content"
                     }, undefined, false, undefined, this),
-                    /* @__PURE__ */ jsxDEV("p", {
+                    /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
                       className: "text-xs opacity-60",
                       children: [
                         s.transcript_anchor_start.toFixed(1),
-                        "s -",
-                        " ",
+                        "s - ",
                         s.transcript_anchor_end.toFixed(1),
                         "s"
                       ]
@@ -17598,7 +17217,7 @@ function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }) {
                   ]
                 }, s.id, true, undefined, this))
               }, undefined, false, undefined, this),
-              /* @__PURE__ */ jsxDEV("button", {
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
                 className: "btn btn-primary btn-sm w-full",
                 onClick: renderTimeline,
                 children: "Render"
@@ -17610,11 +17229,8 @@ function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }) {
     ]
   }, undefined, true, undefined, this);
 }
-var mount = document.getElementById("hyperframes-island");
-if (mount) {
-  const props = JSON.parse(mount.dataset.props ?? "{}");
-  const root = import_client.createRoot(mount);
-  root.render(/* @__PURE__ */ jsxDEV(HyperframesIsland, {
-    ...props
-  }, undefined, false, undefined, this));
-}
+globalThis.mountHyperframesIsland = function(element) {
+  const props = JSON.parse(element.dataset.props ?? "{}");
+  const root = import_client.createRoot(element);
+  root.render(import_react.default.createElement(HyperframesIsland, props));
+};

@@ -14,6 +14,7 @@ export const Layout = ({ children }: { children: Child }) => (
       <script src="/static/htmx-ext-sse.min.js"></script>
       <script defer src="/static/alpine.min.js"></script>
       <script defer src="/static/handlers.js"></script>
+      <script defer src="/static/js/hyperframes-island.js"></script>
     </head>
     <body>{children}</body>
   </html>

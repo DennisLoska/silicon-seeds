@@ -57,7 +57,20 @@ export function HypercutWorkspace(props: {
         data-props={JSON.stringify(props)}
         className="min-h-[500px]"
       />
-      <script src="/static/js/hyperframes-island.js" type="module" />
+      <script>{`
+        (function(){
+          var el = document.getElementById('hyperframes-island');
+          if (!el) return;
+          function tryMount() {
+            if (window.mountHyperframesIsland) {
+              window.mountHyperframesIsland(el);
+            } else {
+              setTimeout(tryMount, 100);
+            }
+          }
+          tryMount();
+        })();
+      `}</script>
     </div>
   );
 }

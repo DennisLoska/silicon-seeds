@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+/** @jsxImportSource react */
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 interface TimelineClip {
@@ -22,18 +23,17 @@ interface Suggestion {
 interface Props {
   jobId: string;
   sourceVideoUrl: string;
-  initialClips: TimelineClip[];
+  initialClips?: TimelineClip[];
 }
 
-const TIMELINE_SCALE = 50; // pixels per second
+const TIMELINE_SCALE = 50;
 
-function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }: Props) {
+function HyperframesIsland({ jobId, sourceVideoUrl, initialClips = [] }: Props) {
   const [clips, setClips] = useState<TimelineClip[]>(initialClips);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-
-  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     fetch(`/api/jobs/hypercut/${jobId}/suggestions`)
@@ -41,7 +41,7 @@ function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }: Props) {
       .then((data: { suggestions: Suggestion[] }) => {
         setSuggestions(data.suggestions);
       })
-      .catch((err) => console.error("Failed to load suggestions", err));
+      .catch(() => {});
   }, [jobId]);
 
   const timelineWidth = useMemo(
@@ -55,13 +55,9 @@ function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }: Props) {
       start: suggestion.transcript_anchor_start,
       end: suggestion.transcript_anchor_end,
       track: suggestion.source_type === "autocut_cut" ? 0 : 1,
-      label:
-        suggestion.text_content ??
-        suggestion.asset_id ??
-        suggestion.source_type,
+      label: suggestion.text_content ?? suggestion.asset_id ?? suggestion.source_type,
       kind: suggestion.source_type === "autocut_cut" ? "autocut_cut" : "content",
     };
-
     try {
       await fetch("/api/jobs/hypercut/clips", {
         method: "POST",
@@ -76,22 +72,13 @@ function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }: Props) {
         }),
       });
       setClips((prev) => [...prev, clip]);
-    } catch (err) {
-      console.error("Failed to add clip", err);
-    }
+    } catch {}
   }
 
   async function renderTimeline() {
-    try {
-      const res = await fetch(`/api/jobs/hypercut/${jobId}/render`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      alert(data.output_path ? `Rendered: ${data.output_path}` : `Error: ${data.error}`);
-    } catch (err) {
-      console.error("Render failed", err);
-      alert("Render failed");
-    }
+    const res = await fetch(`/api/jobs/hypercut/${jobId}/render`, { method: "POST" });
+    const data = await res.json();
+    alert(data.output_path ? `Rendered: ${data.output_path}` : `Error: ${data.error}`);
   }
 
   return (
@@ -104,20 +91,14 @@ function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }: Props) {
         onLoadedMetadata={() => setDuration(videoRef.current?.duration ?? 0)}
         onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime ?? 0)}
       />
-
       <div className="flex gap-4">
         <div className="flex-1 overflow-x-auto border rounded p-2 bg-base-200">
-          <div
-            className="relative h-32"
-            style={{ width: timelineWidth }}
-          >
+          <div className="relative h-32" style={{ width: timelineWidth }}>
             {clips.map((clip) => (
               <div
                 key={clip.id}
                 className={`absolute h-8 rounded px-2 text-xs flex items-center overflow-hidden ${
-                  clip.kind === "autocut_cut"
-                    ? "bg-error/30 border border-error"
-                    : "bg-primary/30 border border-primary"
+                  clip.kind === "autocut_cut" ? "bg-error/30 border border-error" : "bg-primary/30 border border-primary"
                 }`}
                 style={{
                   left: clip.start * TIMELINE_SCALE,
@@ -135,7 +116,6 @@ function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }: Props) {
             />
           </div>
         </div>
-
         <div className="w-64 space-y-2">
           <h3 className="font-bold">Suggestions</h3>
           <div className="max-h-64 overflow-y-auto space-y-2">
@@ -148,12 +128,9 @@ function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }: Props) {
                 onClick={() => addToTimeline(s)}
               >
                 <span className="badge badge-sm">{s.source_type}</span>
-                <p className="text-xs truncate">
-                  {s.text_content ?? s.asset_id ?? "content"}
-                </p>
+                <p className="text-xs truncate">{s.text_content ?? s.asset_id ?? "content"}</p>
                 <p className="text-xs opacity-60">
-                  {s.transcript_anchor_start.toFixed(1)}s -{" "}
-                  {s.transcript_anchor_end.toFixed(1)}s
+                  {s.transcript_anchor_start.toFixed(1)}s - {s.transcript_anchor_end.toFixed(1)}s
                 </p>
               </div>
             ))}
@@ -167,9 +144,9 @@ function HyperframesIsland({ jobId, sourceVideoUrl, initialClips }: Props) {
   );
 }
 
-const mount = document.getElementById("hyperframes-island");
-if (mount) {
-  const props = JSON.parse(mount.dataset.props ?? "{}");
-  const root = createRoot(mount);
-  root.render(<HyperframesIsland {...props} />);
-}
+(globalThis as any).mountHyperframesIsland = function (element: HTMLElement) {
+  const props = JSON.parse(element.dataset.props ?? "{}");
+  const root = createRoot(element);
+  root.render(React.createElement(HyperframesIsland, props));
+};
+
