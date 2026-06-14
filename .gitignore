@@ -153,3 +153,8 @@ static/htmx.min.js
 static/style.css
 
 # Content library (formatted but untracked — see content/.gitignore)
+
+
+# AI stuff
+.oneshot-state
+.oneshot-state
