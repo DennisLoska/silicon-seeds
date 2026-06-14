@@ -1,3 +1,4 @@
+import { DB } from "../../db/db";
 import { JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
 import { PromptGenerator } from "../../prompts/prompt-generator";
@@ -19,14 +20,23 @@ export async function text_to_image(options: PostTextToImage): Promise<Response>
     style_preset,
   });
 
-  const batchSize = batch_size;
-  void PromptGenerator.txt_to_img_prompt(
-    jobId,
-    JobMode.Image,
-    prompt,
-    batchSize,
-    options.style_preset,
+  const batchSize = batch_size ?? 1;
+  const scheduled = await Promise.all(
+    Array.from({ length: batchSize }, (_, index) =>
+      PromptGenerator.styled_img_to_event(
+        jobId,
+        JobMode.Image,
+        prompt,
+        style_preset,
+        index,
+      ),
+    ),
   );
+
+  if (scheduled.some((event) => !event)) {
+    await DB.Jobs.failJob(jobId);
+    throw new Error("Failed to schedule one or more image events");
+  }
 
   return new Response(JSON.stringify({ message: "job queued" }), {
     status: 200,
