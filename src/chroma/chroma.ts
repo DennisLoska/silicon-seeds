@@ -98,4 +98,28 @@ export namespace Chroma {
 
     Logger.info("Embedding saved to ChromaDB", { id: meta.id });
   }
+
+  export async function search(
+    query: string,
+    limit = 5,
+  ): Promise<{ id: string; score: number; type: string }[]> {
+    if (!isReady()) await init();
+
+    const embedding = await LLM.generateEmbedding(query);
+    const results = await collection.query({
+      queryEmbeddings: [embedding],
+      nResults: limit,
+      include: ["metadatas", "distances"],
+    });
+
+    const ids = results.ids[0] ?? [];
+    const metadatas = results.metadatas[0] ?? [];
+    const distances = results.distances?.[0] ?? [];
+
+    return ids.map((id, i) => ({
+      id,
+      score: distances[i] ?? 0,
+      type: (metadatas[i]?.filetype as string) ?? "unknown",
+    }));
+  }
 }
