@@ -2,6 +2,7 @@ import { DB } from "../../db/db";
 import { JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
 import { PromptGenerator } from "../../prompts/prompt-generator";
+import { QueueManager } from "../../queue/queue-manager";
 import { Presets } from "../../styles/presets";
 import { text_to_script } from "./text-to-script";
 
@@ -24,44 +25,51 @@ export async function script_to_scenes() {
     "From Death to Life: The Resurrection and Eternal Hope",
   ];
 
-  for (const prompt of list) {
-    // TODO pass as post body instead
-    const res = await text_to_script(prompt);
-    const json = await res.json();
-    const script = json.message;
+  QueueManager.hold();
+  try {
+    for (const prompt of list) {
+      // TODO pass as post body instead
+      const res = await text_to_script(prompt);
+      const json = await res.json();
+      const script = json.message;
 
-    if (!script) {
-      await DB.Jobs.failJob(jobId);
-      return new Response(JSON.stringify({ message: "Oh no" }), {
-        status: 500,
-      });
-    }
-
-    const scenes = await PromptGenerator.image_scene_prompts(script, 40);
-
-    if (!scenes) {
-      await DB.Jobs.failJob(jobId);
-      return new Response(JSON.stringify({ message: "Failed to generate scenes" }), {
-        status: 500,
-      });
-    }
-
-    for (const scene of scenes) {
-      const scheduled = await PromptGenerator.styled_img_to_event(
-        jobId,
-        JobMode.Video,
-        scene,
-        Presets.WATERCOLOR,
-      );
-
-      if (!scheduled) {
+      if (!script) {
         await DB.Jobs.failJob(jobId);
-        return new Response(JSON.stringify({ message: "Failed to schedule scene event" }), {
+        return new Response(JSON.stringify({ message: "Oh no" }), {
           status: 500,
         });
       }
+
+      const scenes = await PromptGenerator.image_scene_prompts(script, 40);
+
+      if (!scenes) {
+        await DB.Jobs.failJob(jobId);
+        return new Response(JSON.stringify({ message: "Failed to generate scenes" }), {
+          status: 500,
+        });
+      }
+
+      for (const scene of scenes) {
+        const scheduled = await PromptGenerator.styled_img_to_event(
+          jobId,
+          JobMode.Video,
+          scene,
+          Presets.WATERCOLOR,
+        );
+
+        if (!scheduled) {
+          await DB.Jobs.failJob(jobId);
+          return new Response(JSON.stringify({ message: "Failed to schedule scene event" }), {
+            status: 500,
+          });
+        }
+      }
     }
+  } finally {
+    QueueManager.release();
   }
+
+  void QueueManager.pump();
 
   return new Response(JSON.stringify({ message: "job queued" }));
 }
