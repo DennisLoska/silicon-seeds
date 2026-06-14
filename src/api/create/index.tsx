@@ -1,8 +1,20 @@
 import { Hono } from "hono";
 import { Templates } from "../../templates/templates";
+import { DB } from "../../db/db";
 
 const app = new Hono();
-const { Layout, App, AutoCut, AutoCutStatusFragment, DistinctAudio, DistinctImage, OobHeader } = Templates;
+const {
+  Layout,
+  App,
+  AutoCut,
+  AutoCutStatusFragment,
+  DistinctAudio,
+  DistinctImage,
+  HypercutPage,
+  HypercutWorkspace,
+  HypercutSuggestions,
+  OobHeader,
+} = Templates;
 
 app.get("/image", async (c) => {
   const showProgress = c.req.query("show_progress") === "true";
@@ -80,6 +92,52 @@ app.get("/autocut/status", async (c) => {
   }
 
   return c.html(<AutoCutStatusFragment jobId={jobId} />);
+});
+
+app.get("/hypercut", async (c) => {
+  const jobId = c.req.query("job_id") || "";
+
+  if (c.req.header("HX-Request")) {
+    return c.html(
+      <>
+        {jobId ? (
+          <HypercutWorkspace
+            jobId={jobId}
+            sourceVideoUrl={`/assets/source/${jobId}`}
+          />
+        ) : (
+          <HypercutPage />
+        )}
+        <OobHeader title="HyperCut" />
+      </>,
+    );
+  }
+
+  return c.html(
+    <Layout>
+      <App page="hypercut">
+        {jobId ? (
+          <HypercutWorkspace
+            jobId={jobId}
+            sourceVideoUrl={`/assets/source/${jobId}`}
+          />
+        ) : (
+          <HypercutPage />
+        )}
+      </App>
+    </Layout>,
+  );
+});
+
+app.get("/hypercut/suggestions", async (c) => {
+  const jobId = c.req.query("job_id") || "";
+
+  if (!jobId) {
+    return c.html(<div>Missing job_id</div>);
+  }
+
+  const suggestions = await DB.Hypercut.findSuggestionsByJob(jobId);
+  return c.html(<HypercutSuggestions jobId={jobId} suggestions={suggestions} />);
 });
 
 app.get("/", (c) => c.redirect("/create/image"));

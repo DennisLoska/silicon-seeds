@@ -62,6 +62,7 @@ export const App = ({ children, page }: AppProps) => (
               {page === "compose" && "Compose"}
               {page === "audio" && "Audio"}
               {page === "autocut" && "AutoCut"}
+              {page === "hypercut" && "HyperCut"}
               {page === "image" && "Image"}
               {page === "video" && "Video"}
               {page === "text" && "Text"}
@@ -125,6 +126,12 @@ export const App = ({ children, page }: AppProps) => (
               label="AutoCut"
               id="sidebar-autocut"
               icon={<Icons.AutoCutSmall />}
+            />
+            <SidebarItem
+              href="/create/hypercut"
+              label="HyperCut"
+              id="sidebar-hypercut"
+              icon={<Icons.Video />}
             />
             <SidebarItem
               href="/create/image"
