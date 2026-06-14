@@ -4,7 +4,7 @@ import { Logger } from "../logger/logger";
 
 const COLLECTION_NAME = "asset_embeddings";
 
-export type ChromaAssetMeta = {
+type ChromaInput = {
   id: string;
   title: string;
   description: string;
@@ -19,7 +19,7 @@ export type ChromaAssetMeta = {
 type ChromaStoredMeta = {
   title: string;
   description: string;
-  tags: string[];
+  tags: string;
   prompt: string;
   filename: string;
   filetype: string;
@@ -41,7 +41,7 @@ export namespace Chroma {
     return !!(client && collection);
   }
 
-  export function mapMetaToChroma(meta: ChromaAssetMeta): {
+  function mapMetaToChroma(meta: ChromaInput): {
     metadata: ChromaStoredMeta;
     document: string;
   } {
@@ -49,7 +49,7 @@ export namespace Chroma {
       metadata: {
         title: meta.title ?? "",
         description: meta.description ?? "",
-        tags: meta.tags ?? [],
+        tags: (meta.tags ?? []).join(", "),
         prompt: meta.prompt ?? "",
         filename: meta.filename ?? "",
         filetype: meta.filetype ?? "",
@@ -62,7 +62,13 @@ export namespace Chroma {
     };
   }
 
-  export async function saveEmbedding(meta: ChromaAssetMeta) {
+  export async function exists(id: string): Promise<boolean> {
+    if (!isReady()) await init();
+    const result = await collection.get({ ids: [id] });
+    return result.ids.length > 0;
+  }
+
+  export async function saveEmbedding(meta: ChromaInput) {
     if (!isReady()) await init();
 
     const { metadata, document } = mapMetaToChroma(meta);

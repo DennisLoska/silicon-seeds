@@ -7,7 +7,11 @@ const llmClient = new LMStudioClient();
 const LLM_MODEL = Bun.env.LLM_MODEL;
 Utils.assert(LLM_MODEL, "LLM_MODEL variable missing");
 
-const llm = await llmClient.llm.model(LLM_MODEL);
+const llmModel = await llmClient.llm.model(LLM_MODEL);
+
+const EMBEDDING_MODEL = Bun.env.EMBEDDING_MODEL ?? "text-embedding-qwen3-embedding-8b";
+const embeddingModel = await llmClient.embedding.model(EMBEDDING_MODEL);
+
 import { Client, StdioClientTransport } from "@modelcontextprotocol/client";
 import { Metadata } from "../meta/meta";
 
@@ -76,13 +80,13 @@ export namespace LLM {
   export async function message(msg: string, images?: FileHandle[]) {
     try {
       if (images) {
-        return await llm.respond(
+        return await llmModel.respond(
           { role: "user", content: msg, images },
           { maxTokens: MAX_TOKENS },
         );
       }
 
-      return await llm.respond(
+      return await llmModel.respond(
         { role: "user", content: msg },
         { maxTokens: MAX_TOKENS },
       );
@@ -107,7 +111,7 @@ export namespace LLM {
 
     let result = "";
 
-    await llm.act(conversationContext, runnableTools, {
+    await llmModel.act(conversationContext, runnableTools, {
       maxTokens: Metadata.MAX_TOKENS,
       onMessage: (message) => {
         result = message.toString();
@@ -127,7 +131,7 @@ export namespace LLM {
       // Why TypeScript :(
       const typedSchema = z.object(mapSchema);
 
-      return await llm.respond(msg, {
+      return await llmModel.respond(msg, {
         structured: typedSchema,
         maxTokens: MAX_TOKENS,
       });
@@ -142,7 +146,7 @@ export namespace LLM {
     schema: T,
   ) {
     try {
-      return (await llm.respond(msg, {
+      return (await llmModel.respond(msg, {
         structured: schema,
         maxTokens: MAX_TOKENS,
       })) as unknown as { parsed: z.infer<T> } | null;
@@ -152,11 +156,8 @@ export namespace LLM {
     }
   }
 
-  const EMBEDDING_DIM = 384;
-
-  export async function generateEmbedding(_text: string): Promise<number[]> {
-    // Mock: LM Studio lacks embedding model.  Returns random 384-dim vector.
-    // TODO: replace with real embedding API when model available.
-    return Array.from({ length: EMBEDDING_DIM }, () => Math.random() * 2 - 1);
+  export async function generateEmbedding(text: string): Promise<number[]> {
+    const result = await embeddingModel.embed(text);
+    return result.embedding;
   }
 }

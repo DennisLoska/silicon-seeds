@@ -71,9 +71,16 @@ async function main() {
         try {
           const raw = await Bun.file(fp).json();
           const stem = raw.filename?.split(".")[0] ?? fp.split("/").pop()!.split(".")[0].replace(/^\./, "");
+          const id = raw.id ?? stem;
+
+          const alreadyExists = await Chroma.exists(id);
+          if (alreadyExists) {
+            Logger.info(`− ${rel} (already exists)`);
+            return;
+          }
 
           await Chroma.saveEmbedding({
-            id: raw.id ?? stem,
+            id,
             title: raw.title ?? "",
             description: raw.description ?? "",
             tags: raw.tags ?? [],
