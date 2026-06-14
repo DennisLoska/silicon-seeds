@@ -83,6 +83,7 @@ async function main() {
   await Logger.init();
 
   await DB.Jobs.failBrokenJobs();
+  await DB.Jobs.failJobsWithNoEvents();
   await DB.Jobs.finalizeCompletedJobs();
   await QueueManager.resume();
   JobOrchestrator.init();

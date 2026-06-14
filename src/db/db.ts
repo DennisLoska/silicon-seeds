@@ -296,6 +296,21 @@ export namespace DB {
       }
     }
 
+    export async function failJobsWithNoEvents() {
+      const orphanedJobs = await db
+        .selectFrom("jobs")
+        .leftJoin("events", "events.job_id", "jobs.id")
+        .select("jobs.id")
+        .where("jobs.status", "=", JobLifecycleStatus.Active)
+        .groupBy("jobs.id")
+        .having((eb) => eb.fn.count("events.id"), "=", 0)
+        .execute();
+
+      for (const job of orphanedJobs) {
+        await failJob(job.id);
+      }
+    }
+
     export async function completeJob(id: string) {
       return await updateStatus(id, JobLifecycleStatus.Complete);
     }

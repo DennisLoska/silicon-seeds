@@ -9,6 +9,7 @@ export namespace QueueManager {
   export let comfyQueue = 0;
   let pumping = false;
   let waitingForComfyIdle = false;
+  let holdCount = 0;
 
   export function holdForComfyIdle() {
     waitingForComfyIdle = true;
@@ -18,6 +19,14 @@ export namespace QueueManager {
     waitingForComfyIdle = false;
   }
 
+  export function hold() {
+    holdCount++;
+  }
+
+  export function release() {
+    holdCount = Math.max(0, holdCount - 1);
+  }
+
   export async function resume() {
     await DB.Events.requeueRunning();
   }
@@ -25,6 +34,7 @@ export namespace QueueManager {
   export async function pump() {
     if (pumping) return;
     if (waitingForComfyIdle) return;
+    if (holdCount > 0) return;
     pumping = true;
 
     try {

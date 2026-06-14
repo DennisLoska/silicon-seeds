@@ -1,6 +1,8 @@
+import { DB } from "../../db/db";
 import { JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
 import { PromptGenerator } from "../../prompts/prompt-generator";
+import { QueueManager } from "../../queue/queue-manager";
 import { Utils } from "../../utils/utils";
 import { PostTextToImage } from "../schemas";
 
@@ -19,14 +21,31 @@ export async function text_to_image(options: PostTextToImage): Promise<Response>
     style_preset,
   });
 
-  const batchSize = batch_size;
-  void PromptGenerator.txt_to_img_prompt(
-    jobId,
-    JobMode.Image,
-    prompt,
-    batchSize,
-    options.style_preset,
-  );
+  const batchSize = batch_size ?? 1;
+  const scheduled: Awaited<ReturnType<typeof PromptGenerator.styled_img_to_event>>[] = [];
+
+  QueueManager.hold();
+  try {
+    for (let index = 0; index < batchSize; index++) {
+      const event = await PromptGenerator.styled_img_to_event(
+        jobId,
+        JobMode.Image,
+        prompt,
+        style_preset,
+        index,
+      );
+      scheduled.push(event);
+    }
+  } finally {
+    QueueManager.release();
+  }
+
+  if (scheduled.some((event) => !event)) {
+    await DB.Jobs.failJob(jobId);
+    throw new Error("Failed to schedule one or more image events");
+  }
+
+  void QueueManager.pump();
 
   return new Response(JSON.stringify({ message: "job queued" }), {
     status: 200,
