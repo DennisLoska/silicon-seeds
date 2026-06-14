@@ -2,7 +2,7 @@ import { ChromaClient, type Collection } from "chromadb";
 import { LLM } from "../llm/llm";
 import { Logger } from "../logger/logger";
 
-const COLLECTION_NAME = "asset_embeddings";
+const COLLECTION_NAME = "silicon_seeds";
 
 type ChromaInput = {
   id: string;
@@ -56,7 +56,11 @@ export namespace Chroma {
         resolution: meta.resolution ?? "",
         style: meta.style ?? "",
       },
-      document: [meta.title, meta.description, `Tags: ${(meta.tags ?? []).join(", ")}`]
+      document: [
+        meta.title,
+        meta.description,
+        `Tags: ${(meta.tags ?? []).join(", ")}`,
+      ]
         .filter(Boolean)
         .join(". "),
     };
