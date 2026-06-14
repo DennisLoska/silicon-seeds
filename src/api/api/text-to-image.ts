@@ -21,17 +21,18 @@ export async function text_to_image(options: PostTextToImage): Promise<Response>
   });
 
   const batchSize = batch_size ?? 1;
-  const scheduled = await Promise.all(
-    Array.from({ length: batchSize }, (_, index) =>
-      PromptGenerator.styled_img_to_event(
-        jobId,
-        JobMode.Image,
-        prompt,
-        style_preset,
-        index,
-      ),
-    ),
-  );
+  const scheduled: Awaited<ReturnType<typeof PromptGenerator.styled_img_to_event>>[] = [];
+
+  for (let index = 0; index < batchSize; index++) {
+    const event = await PromptGenerator.styled_img_to_event(
+      jobId,
+      JobMode.Image,
+      prompt,
+      style_preset,
+      index,
+    );
+    scheduled.push(event);
+  }
 
   if (scheduled.some((event) => !event)) {
     await DB.Jobs.failJob(jobId);
