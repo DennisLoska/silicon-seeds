@@ -15,7 +15,7 @@
   "type": "commonjs",
   "main": "src/main.ts",
   "scripts": {
-    "prestart": "tsc --noEmit",
+    "prestart": "bun run build:hyperframes-island && tsc --noEmit",
     "start": "bun src/main.ts",
     "start:based": "bun src/main.ts",
     "start:hot": "bun --hot src/main.ts",

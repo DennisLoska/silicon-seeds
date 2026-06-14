@@ -4,6 +4,7 @@ import { DB } from "./db/db";
 import { ImageGenerator } from "./image/image-generator";
 import { JobOrchestrator } from "./jobs/jobs";
 import { Logger } from "./logger/logger";
+import { MCPVideo } from "./mcp/mcp-video";
 import { QueueManager } from "./queue/queue-manager";
 import { SocketServer } from "./socket/socket-server";
 import { VideoGenerator } from "./video/video-generator";
@@ -90,6 +91,7 @@ async function main() {
   ImageGenerator.init();
   VideoGenerator.init();
   AudioGenerator.init();
+  await MCPVideo.init();
 
   ApiServer.start();
   await SocketServer.start();
