@@ -1,0 +1,118 @@
+import z from "zod/v3";
+import { readdir } from "node:fs/promises";
+import { join } from "node:path";
+import { LLM } from "../llm/llm";
+import { Logger } from "../logger/logger";
+
+const FALLBACK_OUTPUT = "/run/media/dennis/ai/comfy-ui/output";
+
+const IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
+
+function isImage(name: string): boolean {
+  const i = name.lastIndexOf(".");
+  return i > 0 && IMAGE_EXTS.has(name.slice(i).toLowerCase());
+}
+
+function resCat(w: number, h: number): string {
+  const m = Math.min(w, h);
+  if (m <= 240) return "240p";
+  if (m <= 360) return "360p";
+  if (m <= 480) return "480p";
+  if (m <= 720) return "720p";
+  if (m <= 1080) return "1080p";
+  if (m <= 1440) return "1440p";
+  return m <= 2160 ? "4k" : "8k";
+}
+
+async function getRes(fp: string): Promise<string | null> {
+  try {
+    const p = Bun.spawn(["file", fp]);
+    const t = await new Response(p.stdout).text();
+    const m = t.match(/(\d+)\s*x\s*(\d+)/);
+    return m ? resCat(+m[1], +m[2]) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function getCreated(fp: string): Promise<string> {
+  try {
+    const s = await Bun.file(fp).stat();
+    return s.birthtime?.toISOString() ?? new Date().toISOString();
+  } catch {
+    return new Date().toISOString();
+  }
+}
+
+async function genMetadata(fp: string): Promise<void> {
+  const fn = fp.split("/").pop()!;
+  const stem = fn.split(".")[0];
+  const out = join(
+    Bun.env.OUTPUT_DIR ?? FALLBACK_OUTPUT,
+    `.${stem}.metadata.json`,
+  );
+
+  if (await Bun.file(out).exists()) return;
+
+  Logger.info(`→ ${fn}`);
+
+  const buf = await Bun.file(fp).arrayBuffer();
+  const b64 = Buffer.from(buf).toString("base64");
+  const h = await LLM.client.files.prepareImageBase64(fn, b64);
+
+  const msg = await LLM.message("Describe this image in detail.", [h]);
+  if (!msg?.content) {
+    Logger.warn(`No description returned for ${fn}`);
+    return;
+  }
+
+  const [t, tg] = await Promise.all([
+    LLM.message(`Short title (5–10 words) for: ${msg.content}`),
+    LLM.structured(
+      `Tags (3–5) for: ${msg.content}`,
+      z.array(z.string()).min(1).max(5),
+    ),
+  ]);
+
+  const meta = {
+    job_id: Bun.randomUUIDv7(),
+    created_at: await getCreated(fp),
+    filename: fn,
+    filetype: "image",
+    resolution: await getRes(fp),
+    title: t?.content ?? null,
+    description: msg.content,
+    tags: tg?.parsed ?? [],
+    prompt: null,
+    model: null,
+    style: null,
+  };
+
+  await Bun.write(`${out}/image`, JSON.stringify(meta));
+  Logger.info(`✓ .${stem}.metadata.json`);
+}
+
+async function main() {
+  await Logger.init();
+
+  const dir = Bun.env.OUTPUT_DIR ?? FALLBACK_OUTPUT;
+  const files = (await readdir(dir)).filter(isImage).sort();
+
+  if (!files.length) {
+    Logger.info("No images found");
+    return;
+  }
+
+  Logger.info(`${files.length} images, batch 3`);
+
+  for (let i = 0; i < files.length; i += 3) {
+    const batch = files.slice(i, i + 3);
+    await Promise.all(batch.map((f) => genMetadata(join(dir, f))));
+  }
+
+  Logger.info("Done");
+}
+
+if (import.meta.main) {
+  main();
+}
