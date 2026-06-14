@@ -47,10 +47,14 @@ async function getCreated(fp: string): Promise<string> {
 async function genMetadata(fp: string): Promise<void> {
   const fn = fp.split("/").pop()!;
   const stem = fn.split(".")[0];
-  const out = join(
-    Bun.env.OUTPUT_DIR ?? FALLBACK_OUTPUT,
-    `.${stem}.metadata.json`,
-  );
+  const contentDir = Bun.env.CONTENT_LIBRARY_DIR;
+  if (!contentDir) {
+    Logger.warn("CONTENT_LIBRARY_DIR not set — skipping metadata save");
+    return;
+  }
+
+  const imgDir = join(contentDir, "image");
+  const out = join(imgDir, `.${stem}.metadata.json`);
 
   if (await Bun.file(out).exists()) return;
 
@@ -68,10 +72,7 @@ async function genMetadata(fp: string): Promise<void> {
 
   const [t, tg] = await Promise.all([
     LLM.message(`Short title (5–10 words) for: ${msg.content}`),
-    LLM.structured(
-      `Tags (3–5) for: ${msg.content}`,
-      z.array(z.string()).min(1).max(5),
-    ),
+    LLM.structured(`Tags (3–5) for: ${msg.content}`, z.array(z.string()).min(1).max(5)),
   ]);
 
   const meta = {
@@ -88,14 +89,27 @@ async function genMetadata(fp: string): Promise<void> {
     style: null,
   };
 
-  await Bun.write(`${out}/image`, JSON.stringify(meta));
-  Logger.info(`✓ .${stem}.metadata.json`);
+  // Write image first, then metadata — if crash mid-batch, metadata absence
+  // ensures re-run reprocesses rather than leaving orphan metadata.
+  await Bun.write(join(imgDir, fn), buf);
+  await Bun.write(out, JSON.stringify(meta, null, 2));
+  Logger.info(`✓ .${stem}.metadata.json + ${fn}`);
 }
 
 async function main() {
   await Logger.init();
 
   const dir = Bun.env.OUTPUT_DIR ?? FALLBACK_OUTPUT;
+  const contentDir = Bun.env.CONTENT_LIBRARY_DIR;
+  if (!contentDir) {
+    Logger.error("CONTENT_LIBRARY_DIR not set — run from silicon-seeds/ or set env");
+    process.exit(1);
+  }
+
+  // Ensure the image subdirectory exists
+  const imgDir = join(contentDir, "image");
+  await Bun.$`mkdir -p ${imgDir}`.nothrow();
+
   const files = (await readdir(dir)).filter(isImage).sort();
 
   if (!files.length) {
@@ -103,10 +117,11 @@ async function main() {
     return;
   }
 
-  Logger.info(`${files.length} images, batch 3`);
+  const BATCH_SIZE = 5;
+  Logger.info(`${files.length} images → ${imgDir}, batch ${BATCH_SIZE}`);
 
-  for (let i = 0; i < files.length; i += 3) {
-    const batch = files.slice(i, i + 3);
+  for (let i = 0; i < files.length; i += BATCH_SIZE) {
+    const batch = files.slice(i, i + BATCH_SIZE);
     await Promise.all(batch.map((f) => genMetadata(join(dir, f))));
   }
 
