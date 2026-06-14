@@ -103,7 +103,8 @@ export class ComfyUIClient {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to generate content: ${response.body}`);
+      const errorText = await response.text().catch(() => "Unknown error");
+      throw new Error(`ComfyUI /prompt failed (${response.status}): ${errorText}`);
     }
 
     const json = await response.json();

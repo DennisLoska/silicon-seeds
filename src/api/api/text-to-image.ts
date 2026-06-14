@@ -7,7 +7,8 @@ import { Utils } from "../../utils/utils";
 import { PostTextToImage } from "../schemas";
 
 export async function text_to_image(options: PostTextToImage): Promise<Response> {
-  const { resolution, image_model, style_preset, batch_size } = options;
+  const { image_model, style_preset, batch_size } = options;
+  const resolution = options.resolution ?? "720p";
   const prompt = Utils.sanitizeInputText(options.prompt);
 
   if (!prompt) {
