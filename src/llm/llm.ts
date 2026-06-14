@@ -9,7 +9,8 @@ Utils.assert(LLM_MODEL, "LLM_MODEL variable missing");
 
 const llmModel = await llmClient.llm.model(LLM_MODEL);
 
-const EMBEDDING_MODEL = Bun.env.EMBEDDING_MODEL ?? "text-embedding-qwen3-embedding-8b";
+const EMBEDDING_MODEL = Bun.env.EMBEDDING_MODEL;
+Utils.assert(EMBEDDING_MODEL, "EMBEDDING_MODEL variable missing");
 const embeddingModel = await llmClient.embedding.model(EMBEDDING_MODEL);
 
 import { Client, StdioClientTransport } from "@modelcontextprotocol/client";
