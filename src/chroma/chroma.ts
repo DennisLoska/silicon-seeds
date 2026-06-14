@@ -32,11 +32,15 @@ export namespace Chroma {
   let collection: Collection;
 
   async function init() {
-    client = new ChromaClient();
+    const port = Number(Bun.env.CHROMADB_PORT) || 8000;
+    client = new ChromaClient({ port });
     try {
       await client.heartbeat();
     } catch (e) {
-      Logger.error("ChromaDB healthcheck failed — is the server running on port 8000?", { error: e instanceof Error ? e.message : String(e) });
+      Logger.error(
+        "ChromaDB healthcheck failed — is the server running on i.e. port 8000?",
+        { error: e instanceof Error ? e.message : String(e) },
+      );
       process.exit(1);
     }
     collection = await client.getOrCreateCollection({ name: COLLECTION_NAME });
