@@ -32,7 +32,7 @@ export namespace Chroma {
   let collection: Collection;
 
   async function init() {
-    const port = Number(Bun.env.CHROMADB_PORT) || 8000;
+    const port = Number(Bun.env.CHROMADB_PORT);
     client = new ChromaClient({ port });
     try {
       await client.heartbeat();
