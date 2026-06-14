@@ -29,6 +29,7 @@ export interface DbSchema {
     image_model?: string;
     video_model?: string;
     style_preset?: string;
+    source_video_path?: string | null;
   };
   events: {
     id: string;
@@ -72,6 +73,28 @@ export interface DbSchema {
     filename: string;
     subfolder: string;
   };
+  hypercut_suggestions: {
+    id: string;
+    created_at: Generated<string> | string;
+    job_id: string;
+    source_type: "image" | "video" | "text" | "autocut_cut";
+    asset_id: string | null;
+    text_content: string | null;
+    transcript_anchor_start: number;
+    transcript_anchor_end: number;
+    score: number | null;
+    status: "pending" | "accepted" | "rejected";
+  };
+  hypercut_clips: {
+    id: string;
+    created_at: Generated<string> | string;
+    job_id: string;
+    suggestion_id: string | null;
+    start_time: number;
+    end_time: number;
+    track: number;
+    layer_data: string;
+  };
 }
 
 export type JobsSchema = Omit<DbSchema["jobs"], "created_at"> & {
@@ -80,6 +103,12 @@ export type JobsSchema = Omit<DbSchema["jobs"], "created_at"> & {
 export type EventsSchema = DbSchema["events"];
 export type MetaSchema = DbSchema["meta"];
 export type AutoCutCutClipSchema = Omit<DbSchema["autocut_cut_clips"], "created_at"> & {
+  created_at: string;
+};
+export type HypercutSuggestionSchema = Omit<DbSchema["hypercut_suggestions"], "created_at"> & {
+  created_at: string;
+};
+export type HypercutClipSchema = Omit<DbSchema["hypercut_clips"], "created_at"> & {
   created_at: string;
 };
 export type EventRow = Omit<DbSchema["events"], "created_at"> & {
@@ -808,6 +837,74 @@ export namespace DB {
         .selectAll()
         .where("job_id", "=", jobId)
         .orderBy("clip_index", "asc")
+        .execute();
+    }
+  }
+
+  export namespace Hypercut {
+    export async function insertSuggestion(
+      suggestion: HypercutSuggestionSchema,
+    ) {
+      await db.insertInto("hypercut_suggestions").values(suggestion).execute();
+      return suggestion;
+    }
+
+    export async function insertSuggestions(
+      suggestions: HypercutSuggestionSchema[],
+    ) {
+      if (suggestions.length === 0) return [];
+      await db.insertInto("hypercut_suggestions").values(suggestions).execute();
+      return suggestions;
+    }
+
+    export async function findSuggestionsByJob(jobId: string) {
+      return await db
+        .selectFrom("hypercut_suggestions")
+        .where("job_id", "=", jobId)
+        .orderBy("transcript_anchor_start", "asc")
+        .selectAll()
+        .execute();
+    }
+
+    export async function updateSuggestionStatus(
+      id: string,
+      status: HypercutSuggestionSchema["status"],
+    ) {
+      await db
+        .updateTable("hypercut_suggestions")
+        .set({ status })
+        .where("id", "=", id)
+        .execute();
+    }
+
+    export async function insertClip(clip: HypercutClipSchema) {
+      await db.insertInto("hypercut_clips").values(clip).execute();
+      return clip;
+    }
+
+    export async function findClipsByJob(jobId: string) {
+      return await db
+        .selectFrom("hypercut_clips")
+        .where("job_id", "=", jobId)
+        .orderBy("start_time", "asc")
+        .selectAll()
+        .execute();
+    }
+
+    export async function deleteClip(id: string) {
+      await db.deleteFrom("hypercut_clips").where("id", "=", id).execute();
+    }
+
+    export async function updateClip(clip: HypercutClipSchema) {
+      await db
+        .updateTable("hypercut_clips")
+        .set({
+          start_time: clip.start_time,
+          end_time: clip.end_time,
+          track: clip.track,
+          layer_data: clip.layer_data,
+        })
+        .where("id", "=", clip.id)
         .execute();
     }
   }
