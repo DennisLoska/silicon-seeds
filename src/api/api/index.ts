@@ -19,7 +19,16 @@ import {
   PostDistinctAudioSchema,
   PostAutoCutSchema,
   PostTextToImageSchema,
+  PostHypercutSchema,
 } from "../schemas";
+import {
+  post_hypercut,
+  get_suggestions,
+  accept_suggestion,
+  reject_suggestion,
+  add_clip,
+  render_job,
+} from "./hypercut";
 
 const app = new Hono();
 
@@ -111,6 +120,36 @@ app.post("/jobs/:job_id/events/:event_id/regenerate", async (c) => {
   const jobId = c.req.param("job_id");
   const eventId = c.req.param("event_id");
   return regenerate_event(c, jobId, eventId);
+});
+
+app.post(
+  "/jobs/hypercut",
+  zValidator("form", PostHypercutSchema),
+  async (c) => {
+    const body = c.req.valid("form");
+    return post_hypercut(body);
+  },
+);
+
+app.get("/jobs/hypercut/:job_id/suggestions", async (c) => {
+  return get_suggestions(c.req.param("job_id"));
+});
+
+app.post("/jobs/hypercut/suggestions/:id/accept", async (c) => {
+  return accept_suggestion(c.req.param("id"));
+});
+
+app.post("/jobs/hypercut/suggestions/:id/reject", async (c) => {
+  return reject_suggestion(c.req.param("id"));
+});
+
+app.post("/jobs/hypercut/clips", async (c) => {
+  const body = await c.req.json();
+  return add_clip(body);
+});
+
+app.post("/jobs/hypercut/:job_id/render", async (c) => {
+  return render_job(c.req.param("job_id"));
 });
 
 export default app;

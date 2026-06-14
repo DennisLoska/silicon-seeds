@@ -21,6 +21,15 @@ export const PostTextToImageSchema = z.object({
 
 export type PostTextToImage = z.infer<typeof PostTextToImageSchema>;
 
+export const PostHypercutSchema = z.object({
+  prompt: z.string().optional(),
+  resolution: z.string().max(7).optional(),
+  video_model: z.string().max(50).optional(),
+  video_file: z.instanceof(File),
+});
+
+export type PostHypercut = z.infer<typeof PostHypercutSchema>;
+
 export const PostComposeSchema = z
   .object({
     script: z.string().optional(),
