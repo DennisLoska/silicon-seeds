@@ -60,18 +60,22 @@ async function main() {
     return;
   }
 
-  const BATCH_SIZE = 5;
+  const BATCH_SIZE = 2;
   Logger.info(`${allFiles.length} metadata files, batch ${BATCH_SIZE}`);
 
   for (let i = 0; i < allFiles.length; i += BATCH_SIZE) {
     const batch = allFiles.slice(i, i + BATCH_SIZE);
-    Logger.info(`Batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(allFiles.length / BATCH_SIZE)}`);
+    Logger.info(
+      `Batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(allFiles.length / BATCH_SIZE)}`,
+    );
     await Promise.all(
       batch.map(async (fp) => {
         const rel = relative(contentDir, fp);
         try {
           const raw = await Bun.file(fp).json();
-          const stem = raw.filename?.split(".")[0] ?? fp.split("/").pop()!.split(".")[0].replace(/^\./, "");
+          const stem =
+            raw.filename?.split(".")[0] ??
+            fp.split("/").pop()!.split(".")[0].replace(/^\./, "");
           const id = raw.id ?? stem;
 
           const alreadyExists = await Chroma.exists(id);
@@ -94,7 +98,9 @@ async function main() {
 
           Logger.info(`✓ ${rel}`);
         } catch (err) {
-          Logger.error(`✗ ${rel}`, { error: err instanceof Error ? err.message : String(err) });
+          Logger.error(`✗ ${rel}`, {
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
       }),
     );
