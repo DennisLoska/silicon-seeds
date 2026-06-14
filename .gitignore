@@ -152,5 +152,8 @@ static/alpine.min.js
 static/htmx.min.js
 static/style.css
 
-# Content library
-content/
+# Content library (formatted but untracked — see content/.gitignore)
+
+
+# AI stuff
+.oneshot-state
