@@ -5,6 +5,7 @@ import { Templates } from "../templates/templates";
 import { not_found } from "./not_found";
 import { Logger } from "../logger/logger";
 import { serveStatic } from "hono/bun";
+import { DB } from "../db/db";
 import apiRoutes from "./api/index";
 import fragmentRoutes from "./fragments";
 import dashboardRoutes from "./dashboard";
@@ -168,6 +169,53 @@ app.onError((error, c) => {
     },
     500,
   );
+});
+
+app.get("/assets/source/:jobId", async (c) => {
+  const jobId = c.req.param("jobId");
+  const job = await DB.Jobs.findById(jobId);
+
+  if (!job.source_video_path) {
+    return c.text("Source video not found", 404);
+  }
+
+  const file = Bun.file(job.source_video_path);
+  if (!(await file.exists())) {
+    return c.text("Source video file missing", 404);
+  }
+
+  const stats = await file.stat();
+  const etag = `"${stats.size}-${stats.mtime.getTime()}"`;
+
+  const ifNoneMatch = c.req.header("If-None-Match");
+  if (ifNoneMatch === etag) {
+    return new Response(null, { status: 304, headers: { ETag: etag } });
+  }
+
+  const range = c.req.header("Range");
+  if (range) {
+    const match = range.match(/bytes=(\d+)-(\d*)/);
+    if (match) {
+      const start = parseInt(match[1]);
+      const end = match[2] ? parseInt(match[2]) : stats.size - 1;
+      const contentLength = end - start + 1;
+      const buffer = (await file.arrayBuffer()).slice(start, end + 1);
+      return c.body(buffer, 206, {
+        "Content-Type": "video/mp4",
+        "Content-Length": contentLength.toString(),
+        "Content-Range": `bytes ${start}-${end}/${stats.size}`,
+        "Accept-Ranges": "bytes",
+        "ETag": etag,
+      });
+    }
+  }
+
+  return c.body(await file.arrayBuffer(), 200, {
+    "Content-Type": "video/mp4",
+    "Content-Length": stats.size.toString(),
+    "Accept-Ranges": "bytes",
+    "ETag": etag,
+  });
 });
 
 app.notFound((c) => {
