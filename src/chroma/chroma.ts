@@ -3,6 +3,7 @@ import { LLM } from "../llm/llm";
 import { Logger } from "../logger/logger";
 
 const COLLECTION_NAME = "silicon_seeds";
+const CHROMA_TIMEOUT = 5_000;
 
 type ChromaInput = {
   id: string;
@@ -33,6 +34,12 @@ export namespace Chroma {
 
   async function init() {
     client = new ChromaClient();
+    await Promise.race([
+      client.heartbeat(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("ChromaDB unreachable — is the server running?")), CHROMA_TIMEOUT),
+      ),
+    ]);
     collection = await client.getOrCreateCollection({ name: COLLECTION_NAME });
     Logger.info("ChromaDB ready", { collection: COLLECTION_NAME });
   }

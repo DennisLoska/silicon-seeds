@@ -65,6 +65,7 @@ async function main() {
 
   for (let i = 0; i < allFiles.length; i += BATCH_SIZE) {
     const batch = allFiles.slice(i, i + BATCH_SIZE);
+    Logger.info(`Batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(allFiles.length / BATCH_SIZE)}`);
     await Promise.all(
       batch.map(async (fp) => {
         const rel = relative(contentDir, fp);
