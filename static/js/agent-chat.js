@@ -12,8 +12,8 @@
     var panel = document.getElementById("agent-chat-panel");
     if (!panel) return;
 
-    // Extract jobId from panel name
-    jobId = panel.getAttribute("data-job-id");
+    // Extract jobId from panel or its closest parent
+    jobId = panel.getAttribute("data-job-id") || panel.closest("[data-job-id]")?.getAttribute("data-job-id");
     if (!jobId) return;
 
     messagesEl = document.getElementById("agent-chat-messages");
@@ -207,23 +207,14 @@
       });
   }
 
-  function hookForm() {
-    if (formEl) {
-      formEl.addEventListener("submit", function (e) {
-        e.preventDefault();
-        if (!inputEl || !inputEl.value.trim()) return;
-        sendMessage(inputEl.value.trim());
-      });
-    }
+  // Init immediately — runs on page load and after HTMX swaps (HTMX execs scripts sync)
+  init();
+  if (formEl) {
+    formEl.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!inputEl || !inputEl.value.trim()) return;
+      sendMessage(inputEl.value.trim());
+    });
   }
-
-  // Init on both DOMContentLoaded (initial load) and after HTMX swaps
-  function doInit() {
-    init();
-    hookForm();
-  }
-
-  document.addEventListener("DOMContentLoaded", doInit);
-  document.addEventListener("htmx:afterSwap", doInit);
 
 })();

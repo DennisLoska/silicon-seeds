@@ -100,7 +100,6 @@ export async function get_composition(jobId: string) {
   if (!html.includes("__clipManifest")) {
     const bridgeScript = `<script>
 (function(){
-  console.log("[hypercut-bridge] running");
   var compEl = document.querySelector('[data-composition-id]');
   if (!compEl) return;
   var dur = parseFloat(compEl.getAttribute('data-composition-duration') || '0');
@@ -132,11 +131,16 @@ export async function get_composition(jobId: string) {
   }
   var manifest = { clips: clips, scenes: [], durationInFrames: Math.round(dur * 30) };
   window.__clipManifest = manifest;
-  // Delay sends until the @hyperframes/studio hook's message listener is ready.
-  setTimeout(function() {
-    window.parent.postMessage({ source: 'hf-preview', type: 'timeline', clips: manifest.clips, durationInFrames: manifest.durationInFrames }, '*');
-    window.parent.postMessage({ source: 'hf-preview', type: 'state', frame: 0, isPlaying: false }, '*');
-  }, 500);
+  // Keep sending until the @hyperframes/studio hook picks it up.
+  // The hook checks: if store elements are empty && __clipManifest exists, it reads manifest.
+  // We send state messages (frame counter incremented each time to look like real playback).
+  var attempts = 0;
+  function sendManifest() {
+    if (++attempts > 30) return; // 15s max
+    window.parent.postMessage({ source: 'hf-preview', type: 'state', frame: Math.min(attempts * 5, manifest.durationInFrames), isPlaying: false }, '*');
+    setTimeout(sendManifest, 500);
+  }
+  sendManifest();
 })();
 </script>`;
     html = html.replace("</body>", `${bridgeScript}</body>`);

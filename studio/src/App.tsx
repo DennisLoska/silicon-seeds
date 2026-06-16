@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useMemo, useState } from "react";
-import { NLELayout } from "@hyperframes/studio";
+import { NLELayout, usePlayerStore } from "@hyperframes/studio";
 import { TimelineEditProvider } from "../../node_modules/@hyperframes/studio/src/contexts/TimelineEditContext";
 import { FileManagerProvider } from "../../node_modules/@hyperframes/studio/src/contexts/FileManagerContext";
 import { sendReady, sendCompositionLoaded, sendWaiting, sendError, onParentMessage } from "./bridge";
@@ -40,6 +40,7 @@ function useStubFileManager(jobId: string | null) {
 }
 
 export function App() {
+  console.log("[App] rendered");
   const jobId = useUrlParam("job_id");
   const [status, setStatus] = useState<"loading" | "waiting" | "loaded" | "error">("loading");
   const fileManager = useStubFileManager(jobId);
@@ -63,6 +64,39 @@ export function App() {
       }
     });
   }, [jobId]);
+
+  useEffect(() => {
+    if (status !== "loaded") return;
+    let cancelled = false;
+    let attempts = 0;
+    function poll() {
+      if (cancelled || ++attempts > 30) return;
+      try {
+        const player = document.querySelector("hyperframes-player") as any;
+        if (!player?.shadowRoot) { setTimeout(poll, 500); return; }
+        const iframe = player.shadowRoot.querySelector("iframe");
+        if (!iframe?.contentWindow) { setTimeout(poll, 500); return; }
+        const win = iframe.contentWindow;
+        const manifest = win.__clipManifest;
+        if (!manifest?.clips?.length) { setTimeout(poll, 500); return; }
+        const store = usePlayerStore.getState();
+        if (store.elements.length > 0) return;
+        const elements = manifest.clips.map((c: any, i: number) => ({
+          id: c.id || "clip-" + i, key: c.id || "clip-" + i,
+          label: c.label || c.id || "",
+          tag: c.tagName || c.kind || "video",
+          start: c.start, duration: c.duration,
+          track: c.track || 0, src: c.assetUrl || undefined,
+        }));
+        console.log("[manifest] setting", elements.length, "elements");
+        store.setElements(elements);
+        store.setDuration(manifest.durationInFrames / 30);
+        store.setTimelineReady(true);
+      } catch (e) { setTimeout(poll, 500); }
+    }
+    setTimeout(poll, 500);
+    return () => { cancelled = true; };
+  }, [status]);
 
   if (!jobId) return <div style={{ padding: 16, color: "#cdd6f4" }}>Missing job_id</div>;
   if (status === "loading" || status === "waiting")
