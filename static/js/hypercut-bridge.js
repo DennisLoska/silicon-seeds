@@ -42,6 +42,19 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     iframe = document.getElementById("hyperframes-studio-iframe");
+    if (iframe) {
+      var jobId = iframe.getAttribute("data-job-id");
+      if (jobId) {
+        fetch("/api/hypercut/" + jobId + "/preview")
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.url) iframe.src = data.url;
+          })
+          .catch(function (err) {
+            console.error("HyperCut: preview server error", err);
+          });
+      }
+    }
   });
 
   // Inject spinner animation

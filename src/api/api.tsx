@@ -203,15 +203,6 @@ app.use(async (c, next) => {
   await next();
 });
 
-// Serve the studio app (built @hyperframes/studio iframe)
-app.get("/studio", async (c) => {
-  const file = Bun.file("./studio/index.html");
-  if (await file.exists()) {
-    return c.html(await file.text());
-  }
-  return c.text("Studio not built. Run `bun run build:studio`", 500);
-});
-
 // Smart Root Route
 app.get("/", async (c) => {
   return Api.renderFragment(c, Dashboard, "dashboard", () => (

@@ -175,4 +175,22 @@ app.post("/hypercut/:job_id/chat", async (c) => {
   return handleAgentChat(c.req.param("job_id"), c);
 });
 
+// Preview server management — spawns npx hyperframes preview for the composition
+import { HypercutPreviewManager } from "../../hypercut/preview-manager";
+
+app.get("/hypercut/:job_id/preview", async (c) => {
+  const jobId = c.req.param("job_id");
+  const outputDir = Bun.env.OUTPUT_DIR;
+  if (!outputDir) return c.json({ error: "OUTPUT_DIR not configured" }, 500);
+
+  const projectDir = `${outputDir}/hypercut-${jobId}`;
+  try {
+    const port = await HypercutPreviewManager.start(jobId, projectDir);
+    return c.json({ url: `http://127.0.0.1:${port}/` });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return c.json({ error: msg }, 500);
+  }
+});
+
 export default app;

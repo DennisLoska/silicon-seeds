@@ -96,7 +96,7 @@ export function HypercutWorkspace(props: {
           <span class="loading loading-spinner loading-sm" />
         </aside>
         <iframe
-          src={`/studio?job_id=${props.jobId}`}
+          data-job-id={props.jobId}
           class="flex-1 border-0 rounded-box bg-base-200"
           id="hyperframes-studio-iframe"
         />

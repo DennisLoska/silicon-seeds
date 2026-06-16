@@ -128,22 +128,34 @@ export namespace HyperCutWorkflow {
 
     const job = await DB.Jobs.findById(jobId);
     const resolution = (job.resolution ?? "landscape") as any;
-    const src = job.source_video_path
-      ? `/assets/source/${jobId}`
+
+    // Copy source video into project dir so hyperframes preview can serve it
+    const projectDir = `${outputDir}/hypercut-${jobId}`;
+    const videoFilename = job.source_video_path
+      ? `source_${jobId}.mp4`
       : "";
+    if (job.source_video_path) {
+      await Bun.write(`${projectDir}/${videoFilename}`, Bun.file(job.source_video_path));
+    }
+    const src = videoFilename ? videoFilename : "";
 
     const elements = buildChunkedClips(src, jobId, removals, duration);
     const totalDuration = elements.reduce((sum, el) => sum + el.duration, 0);
 
-    const html = generateHyperframesHtml(elements, totalDuration, {
+    let html = generateHyperframesHtml(elements, totalDuration, {
       resolution,
       compositionId: `hypercut-${jobId}`,
       includeScripts: true,
     });
 
-    const compPath = `${outputDir}/hypercut-${jobId}.html`;
-    await Bun.write(compPath, html);
-    Logger.info("HyperCut: initial composition generated", {
+    // Post-process: register GSAP timeline so runtime discovers it
+    html = html.replace(
+      'const tl = gsap.timeline({ paused: true });',
+      'const tl = gsap.timeline({ paused: true }); window.__timelines = window.__timelines || {}; window.__timelines["hypercut-' + jobId + '"] = tl;',
+    );
+
+    await Bun.write(`${projectDir}/index.html`, html);
+    Logger.info("HyperCut: composition generated", {
       jobId,
       clips: elements.length,
       duration: totalDuration,
@@ -172,7 +184,8 @@ export namespace HyperCutWorkflow {
   }
 
   export async function render(jobId: string, outputDir: string) {
-    const compPath = `${outputDir}/hypercut-${jobId}.html`;
+    const projectDir = `${outputDir}/hypercut-${jobId}`;
+    const compPath = `${projectDir}/index.html`;
 
     const file = Bun.file(compPath);
     if (!(await file.exists())) {
@@ -186,7 +199,7 @@ export namespace HyperCutWorkflow {
     const job = createRenderJob({
       fps: 30,
       quality: "standard",
-      entryFile: `hypercut-${jobId}.html`,
+      entryFile: `hypercut-${jobId}/index.html`,
       format: "mp4",
     });
 
