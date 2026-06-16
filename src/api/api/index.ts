@@ -165,6 +165,11 @@ app.post("/composition/:job_id/add-suggestion", async (c) => {
   return add_suggestion_to_composition(c.req.param("job_id"), body);
 });
 
+// @hyperframes/studio expects composition at /api/projects/:id/preview
+app.get("/projects/:job_id/preview", async (c) => {
+  return get_composition(c.req.param("job_id"));
+});
+
 // Agent chat endpoint — SSE stream
 app.post("/hypercut/:job_id/chat", async (c) => {
   return handleAgentChat(c.req.param("job_id"), c);
