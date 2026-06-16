@@ -156,18 +156,20 @@ export function HypercutSuggestions(props: {
                   </span>
                   <div class="flex gap-1">
                     <button
-                      class="btn btn-xs btn-success add-to-timeline"
-                      data-suggestion-id={s.id}
-                      data-job-id={props.jobId}
-                    >
-                      Add
-                    </button>
-                    <button
-                      class="btn btn-xs btn-ghost bg-base-100/80"
+                      class="btn btn-xs bg-white shadow-sm"
+                      style="cursor:pointer"
                       hx-post={`/api/jobs/hypercut/suggestions/${s.id}/reject`}
                       hx-swap="none"
                     >
                       Skip
+                    </button>
+                    <button
+                      class="btn btn-xs btn-success add-to-timeline"
+                      style="cursor:pointer"
+                      data-suggestion-id={s.id}
+                      data-job-id={props.jobId}
+                    >
+                      Add
                     </button>
                   </div>
                 </div>
