@@ -123,79 +123,85 @@ export function HypercutSuggestions(props: {
       {props.suggestions.length === 0 && (
         <p class="text-sm opacity-70">No suggestions yet.</p>
       )}
-      {props.suggestions.map((s) => (
-        <div
-          key={s.id}
-          class="relative bg-base-200 rounded-box overflow-hidden"
-        >
-          {s.source_type !== "autocut_cut" && s.meta_filename ? (
-            <>
-              {s.source_type === "video" ? (
-                <video
-                  src={getAssetPath(s.meta_subfolder ?? "", s.meta_filename!)}
-                  class="w-full h-auto object-contain"
-                  muted
-                />
-              ) : (
-                <img
-                  src={getAssetPath(s.meta_subfolder ?? "", s.meta_filename!)}
-                  class="w-full h-auto object-contain"
-                />
-              )}
-              <div class="absolute inset-0 flex flex-col justify-between pointer-events-none p-2">
-                <div class="flex justify-between items-start pointer-events-auto">
-                  <span
-                    class={`badge badge-xs ${
-                      s.source_type === "video"
-                        ? "badge-accent"
-                        : "badge-primary"
-                    }`}
-                  >
-                    {s.source_type}
-                  </span>
-                  <div class="flex gap-1">
-                    <button
-                      class="btn btn-xs bg-white shadow-sm"
-                      style="cursor:pointer"
-                      hx-post={`/api/jobs/hypercut/suggestions/${s.id}/reject`}
-                      hx-swap="none"
+      {props.suggestions.map((s) => {
+        const displayFilename = s.asset_filename ?? s.meta_filename;
+        const displaySubfolder = s.asset_subfolder ?? s.meta_subfolder ?? "";
+        const isVideo = displayFilename
+          ? /\.(mp4|webm|mov|avi|mkv)$/i.test(displayFilename)
+          : false;
+
+        return (
+          <div
+            key={s.id}
+            class="relative bg-base-200 rounded-box overflow-hidden"
+          >
+            {s.source_type !== "autocut_cut" && displayFilename ? (
+              <>
+                {isVideo ? (
+                  <video
+                    src={getAssetPath(displaySubfolder, displayFilename!)}
+                    class="w-full h-auto object-contain"
+                    muted
+                  />
+                ) : (
+                  <img
+                    src={getAssetPath(displaySubfolder, displayFilename!)}
+                    class="w-full h-auto object-contain"
+                  />
+                )}
+                <div class="absolute inset-0 flex flex-col justify-between pointer-events-none p-2">
+                  <div class="flex justify-between items-start pointer-events-auto">
+                    <span
+                      class={`badge badge-xs ${
+                        isVideo ? "badge-accent" : "badge-primary"
+                      }`}
                     >
-                      Skip
-                    </button>
-                    <button
-                      class="btn btn-xs btn-success add-to-timeline"
-                      style="cursor:pointer"
-                      data-suggestion-id={s.id}
-                      data-job-id={props.jobId}
-                    >
-                      Add
-                    </button>
+                      {s.source_type}
+                    </span>
+                    <div class="flex gap-1">
+                      <button
+                        class="btn btn-xs bg-white shadow-sm"
+                        style="cursor:pointer"
+                        hx-post={`/api/jobs/hypercut/suggestions/${s.id}/reject`}
+                        hx-swap="none"
+                      >
+                        Skip
+                      </button>
+                      <button
+                        class="btn btn-xs btn-success add-to-timeline"
+                        style="cursor:pointer"
+                        data-suggestion-id={s.id}
+                        data-job-id={props.jobId}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                  <div class="pointer-events-auto">
+                    <p class="text-xs opacity-80 bg-base-100/70 px-1.5 py-0.5 rounded inline-block">
+                      {s.transcript_anchor_start.toFixed(2)}s -{" "}
+                      {s.transcript_anchor_end.toFixed(2)}s
+                    </p>
                   </div>
                 </div>
-                <div class="pointer-events-auto">
-                  <p class="text-xs opacity-80 bg-base-100/70 px-1.5 py-0.5 rounded inline-block">
-                    {s.transcript_anchor_start.toFixed(2)}s -{" "}
-                    {s.transcript_anchor_end.toFixed(2)}s
-                  </p>
+              </>
+            ) : (
+              <div class="flex items-center justify-between p-2">
+                <div class="flex items-center gap-2">
+                  <span class="badge badge-sm badge-primary">{s.source_type}</span>
+                  {s.text_content && (
+                    <p class="text-sm truncate max-w-[120px]">{s.text_content}</p>
+                  )}
                 </div>
+                <p class="text-xs opacity-60">
+                  {s.transcript_anchor_start.toFixed(2)}s -{" "}
+                  {s.transcript_anchor_end.toFixed(2)}s
+                </p>
               </div>
-            </>
-          ) : (
-            <div class="flex items-center justify-between p-2">
-              <div class="flex items-center gap-2">
-                <span class="badge badge-sm badge-primary">{s.source_type}</span>
-                {s.text_content && (
-                  <p class="text-sm truncate max-w-[120px]">{s.text_content}</p>
-                )}
-              </div>
-              <p class="text-xs opacity-60">
-                {s.transcript_anchor_start.toFixed(2)}s -{" "}
-                {s.transcript_anchor_end.toFixed(2)}s
-              </p>
-            </div>
-          )}
-        </div>
-      ))}
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -84,6 +84,8 @@ export interface DbSchema {
     transcript_anchor_end: number;
     score: number | null;
     status: "pending" | "accepted" | "rejected";
+    asset_filename: string | null;
+    asset_subfolder: string | null;
   };
   hypercut_clips: {
     id: string;
@@ -109,6 +111,8 @@ export type HypercutSuggestionSchema = Omit<DbSchema["hypercut_suggestions"], "c
   created_at: string;
   meta_filename?: string | null;
   meta_subfolder?: string | null;
+  asset_filename?: string | null;
+  asset_subfolder?: string | null;
 };
 export type HypercutClipSchema = Omit<DbSchema["hypercut_clips"], "created_at"> & {
   created_at: string;
@@ -878,6 +882,8 @@ export namespace DB {
           "hypercut_suggestions.status",
           "meta.filename as meta_filename",
           "meta.subfolder as meta_subfolder",
+          "hypercut_suggestions.asset_filename",
+          "hypercut_suggestions.asset_subfolder",
         ])
         .execute();
     }
@@ -902,6 +908,8 @@ export namespace DB {
           "hypercut_suggestions.status",
           "meta.filename as meta_filename",
           "meta.subfolder as meta_subfolder",
+          "hypercut_suggestions.asset_filename",
+          "hypercut_suggestions.asset_subfolder",
         ])
         .execute();
     }

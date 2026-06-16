@@ -79,7 +79,22 @@ export async function get_composition(jobId: string) {
     return new Response("Composition not found.", { status: 404 });
   }
 
-  const html = await file.text();
+  let html = await file.text();
+  // Hyperframes runtime requires data-duration (not data-end) for each clip.
+  // Convert data-end to data-duration where needed.
+  html = html.replace(
+    /<([a-z]+)(?=[^>]*\bdata-start="([\d.]+)")(?=[^>]*\bdata-end="([\d]+(?:\.\d+)?)")(?![^>]*\bdata-duration=)[^>]*>/gi,
+    (match, _tag, start, end) => {
+      const dur = (parseFloat(end) - parseFloat(start)).toFixed(3);
+      return match.replace("data-end=", `data-duration="${dur}" data-end=`);
+    },
+  );
+  // Inject hyperframes runtime if not present (auto-inject from @hyperframes/player
+  // references stale CDN path n.iife.js which returns 404)
+  if (!html.includes("hyperframe.runtime.iife")) {
+    const runtimeScript = `<script src="/static/studio/hyperframe.runtime.iife.js"></script>`;
+    html = html.replace("</head>", `${runtimeScript}</head>`);
+  }
   return new Response(html, {
     status: 200,
     headers: { "Content-Type": "text/html" },

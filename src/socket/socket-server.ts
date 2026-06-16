@@ -114,8 +114,8 @@ export namespace SocketServer {
 
         const { buffer, filename } = assRes;
         let fileType: "image" | "video" | "unknown" = "unknown";
-        if (filename.endsWith("png")) fileType = "image";
-        if (filename.endsWith("mp4")) fileType = "video";
+        if (/\.(png|jpg|jpeg|webp|gif|bmp|svg)$/i.test(filename)) fileType = "image";
+        if (/\.(mp4|webm|mov|avi|mkv)$/i.test(filename)) fileType = "video";
 
         await Promise.all([
           Bun.write(

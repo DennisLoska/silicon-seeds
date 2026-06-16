@@ -62,6 +62,8 @@ export namespace HyperCutWorkflow {
         score: null,
         status: "pending",
         created_at: new Date().toISOString(),
+        asset_filename: null,
+        asset_subfolder: null,
       });
     }
 
@@ -105,6 +107,8 @@ export namespace HyperCutWorkflow {
             score: result.score ?? 0,
             status: "pending",
             created_at: new Date().toISOString(),
+            asset_filename: result.filename || null,
+            asset_subfolder: result.subfolder || null,
           });
         }
       } catch (error) {

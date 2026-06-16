@@ -102,7 +102,7 @@ export namespace Chroma {
   export async function search(
     query: string,
     limit = 5,
-  ): Promise<{ id: string; score: number; type: string }[]> {
+  ): Promise<{ id: string; score: number; type: string; filename: string; subfolder: string }[]> {
     if (!isReady()) await init();
 
     const embedding = await LLM.generateEmbedding(query);
@@ -120,6 +120,8 @@ export namespace Chroma {
       id,
       score: distances[i] ?? 0,
       type: (metadatas[i]?.filetype as string) ?? "unknown",
+      filename: (metadatas[i]?.filename as string) ?? "",
+      subfolder: "",
     }));
   }
 }

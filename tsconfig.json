@@ -7,7 +7,7 @@
     "resolveJsonModule": true,
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
-    "jsxImportSource": "react",
+    "jsxImportSource": "hono/jsx",
     "module": "es2022",
     "target": "ES2022",
     "baseUrl": ".",
