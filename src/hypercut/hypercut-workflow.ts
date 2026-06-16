@@ -92,7 +92,7 @@ export namespace HyperCutWorkflow {
     for (const segment of segments) {
       const queryText = await summarizeSegment(segment);
       try {
-        const results = await Chroma.search(queryText, 3);
+        const results = await Chroma.search(queryText, 5);
         for (const result of results) {
           await DB.Hypercut.insertSuggestion({
             id: Metadata.randomId(),

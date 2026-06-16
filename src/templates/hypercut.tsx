@@ -101,7 +101,6 @@ export function HypercutWorkspace(props: {
           id="hyperframes-studio-iframe"
         />
         <aside
-          id="agent-chat-panel"
           data-job-id={props.jobId}
           class="w-80 overflow-y-auto border-l shrink-0 flex flex-col bg-base-200 rounded-box"
         >
