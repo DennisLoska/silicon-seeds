@@ -11,8 +11,6 @@ const {
   DistinctAudio,
   DistinctImage,
   HypercutPage,
-  HypercutWorkspace,
-  HypercutSuggestions,
   OobHeader,
 } = Templates;
 
@@ -93,6 +91,8 @@ app.get("/autocut/status", async (c) => {
 
   return c.html(<AutoCutStatusFragment jobId={jobId} />);
 });
+
+import { HypercutWorkspace, HypercutSuggestions } from "../../templates/hypercut";
 
 app.get("/hypercut", async (c) => {
   const jobId = c.req.query("job_id") || "";

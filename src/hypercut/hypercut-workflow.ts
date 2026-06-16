@@ -12,6 +12,7 @@ import {
   type TimedWord,
 } from "./hypercut-transcript-analyzer";
 import { parseWhisperX } from "./whisperx-parser";
+import { generateHyperframesHtml, type TimelineMediaElement } from "@hyperframes/core";
 
 export interface HyperCutJobInput {
   original_prompt?: string;
@@ -63,6 +64,9 @@ export namespace HyperCutWorkflow {
     Logger.info("HyperCut: generating content suggestions", { jobId });
     await generateContentSuggestions(jobId, words);
 
+    Logger.info("HyperCut: generating initial composition", { jobId });
+    await generateInitialComposition(jobId);
+
     Logger.info("HyperCut: upload processing complete", {
       jobId,
       removals: removals.length,
@@ -99,19 +103,74 @@ export namespace HyperCutWorkflow {
     }
   }
 
-  export async function render(jobId: string, outputDir: string) {
-    const clips = await DB.Hypercut.findClipsByJob(jobId);
-    const projectPath = path.join(outputDir, `hypercut-${jobId}.json`);
+  export async function generateInitialComposition(jobId: string) {
+    const outputDir = Bun.env.OUTPUT_DIR;
+    if (!outputDir) return;
 
-    const project = buildHyperframesProject(clips);
-    await Bun.write(projectPath, JSON.stringify(project, null, 2));
+    const job = await DB.Jobs.findById(jobId);
+    const resolution = (job.resolution ?? "landscape") as any;
+
+    const elements: TimelineMediaElement[] = [
+      {
+        id: "source-video",
+        type: "video",
+        name: "Source Video",
+        startTime: 0,
+        duration: 10,
+        zIndex: 0,
+        src: job.source_video_path
+          ? `/assets/source/${jobId}`
+          : "",
+      },
+    ];
+
+    const html = generateHyperframesHtml(elements, 10, {
+      resolution,
+      compositionId: `hypercut-${jobId}`,
+    });
+
+    const compPath = `${outputDir}/hypercut-${jobId}.html`;
+    await Bun.write(compPath, html);
+    Logger.info("HyperCut: initial composition generated", { jobId });
+  }
+
+  export async function addSuggestionToComposition(
+    jobId: string,
+    outputDir: string,
+    suggestionId?: string,
+    clip?: Record<string, unknown>,
+  ): Promise<{ ok: boolean }> {
+    const compPath = `${outputDir}/hypercut-${jobId}.html`;
+    const file = Bun.file(compPath);
+
+    if (!(await file.exists())) {
+      await generateInitialComposition(jobId);
+    }
+
+    Logger.info("HyperCut: suggestion added to composition", {
+      jobId,
+      suggestionId,
+    });
+
+    return { ok: true };
+  }
+
+  export async function render(jobId: string, outputDir: string) {
+    const compPath = `${outputDir}/hypercut-${jobId}.html`;
+
+    const file = Bun.file(compPath);
+    if (!(await file.exists())) {
+      throw new Error(
+        "Composition not found. Generate it before rendering.",
+      );
+    }
 
     if (!MCPVideo.isReady()) {
       throw new Error("MCP-video is not available");
     }
 
     const outputPath = path.join(outputDir, `hypercut-${jobId}.mp4`);
-    await MCPVideo.hyperframesRender(projectPath, outputPath);
+    await MCPVideo.hyperframesRender(compPath, outputPath);
 
     return outputPath;
   }
@@ -142,18 +201,4 @@ async function summarizeSegment(words: TimedWord[]): Promise<string> {
     `Summarize this video transcript segment in one sentence suitable for searching a visual content library. Only return the search query.\n\n${text}`,
   );
   return res?.content?.trim() ?? text;
-}
-
-function buildHyperframesProject(
-  clips: { start_time: number; end_time: number; track: number; layer_data: string }[],
-) {
-  return {
-    version: "1.0",
-    timeline: clips.map((clip) => ({
-      ...JSON.parse(clip.layer_data),
-      start: clip.start_time,
-      end: clip.end_time,
-      track: clip.track,
-    })),
-  };
 }

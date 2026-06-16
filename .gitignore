@@ -160,3 +160,7 @@ chroma-data/
 
 # AI stuff
 .oneshot-state
+
+# Studio build artifacts
+static/studio/
+studio/main.js

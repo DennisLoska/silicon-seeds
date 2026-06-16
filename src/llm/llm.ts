@@ -76,6 +76,7 @@ const runnableTools = mcpTools.map((mcpTool) => {
 
 export namespace LLM {
   export const client = llmClient;
+  export const model = llmModel;
   const MAX_TOKENS = 10_000;
 
   export async function message(msg: string, images?: FileHandle[]) {

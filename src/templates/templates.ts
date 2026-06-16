@@ -30,8 +30,6 @@ import {
 } from "./autocut";
 import {
   HypercutPage as hypercutPageComponent,
-  HypercutWorkspace as hypercutWorkspaceComponent,
-  HypercutSuggestions as hypercutSuggestionsComponent,
 } from "./hypercut";
 import { Job } from "../events/events";
 import { OobHeader as oobHeaderComponent } from "./oob-header";
@@ -71,7 +69,5 @@ export namespace Templates {
   export const AutoCut = autoCutComponent;
   export const AutoCutStatusFragment = autoCutStatusFragment;
   export const HypercutPage = hypercutPageComponent;
-  export const HypercutWorkspace = hypercutWorkspaceComponent;
-  export const HypercutSuggestions = hypercutSuggestionsComponent;
   export const OobHeader = oobHeaderComponent;
 }

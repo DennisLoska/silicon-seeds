@@ -47,27 +47,6 @@ export async function reject_suggestion(id: string) {
   return new Response(null, { status: 204 });
 }
 
-export async function add_clip(body: {
-  job_id: string;
-  suggestion_id?: string;
-  start_time: number;
-  end_time: number;
-  track: number;
-  layer_data: Record<string, unknown>;
-}) {
-  const clip = await DB.Hypercut.insertClip({
-    id: crypto.randomUUID(),
-    job_id: body.job_id,
-    suggestion_id: body.suggestion_id ?? null,
-    start_time: body.start_time,
-    end_time: body.end_time,
-    track: body.track,
-    layer_data: JSON.stringify(body.layer_data),
-    created_at: new Date().toISOString(),
-  });
-  return Response.json({ clip });
-}
-
 export async function render_job(jobId: string) {
   const outputDir = Bun.env.OUTPUT_DIR;
   if (!outputDir) {
@@ -80,6 +59,65 @@ export async function render_job(jobId: string) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     Logger.error("HyperCut render failed", { jobId, message });
+    return Response.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function get_composition(jobId: string) {
+  const outputDir = Bun.env.OUTPUT_DIR;
+  if (!outputDir) {
+    return new Response("OUTPUT_DIR not configured", { status: 500 });
+  }
+
+  const compPath = `${outputDir}/hypercut-${jobId}.html`;
+  const file = Bun.file(compPath);
+  if (!(await file.exists())) {
+    return new Response("Composition not found. Generate it first.", { status: 404 });
+  }
+
+  const html = await file.text();
+  return new Response(html, {
+    status: 200,
+    headers: { "Content-Type": "text/html" },
+  });
+}
+
+export async function save_composition(jobId: string, body: { html?: string }) {
+  if (!body.html) {
+    return Response.json({ error: "html field required" }, { status: 400 });
+  }
+
+  const outputDir = Bun.env.OUTPUT_DIR;
+  if (!outputDir) {
+    return Response.json({ error: "OUTPUT_DIR not configured" }, { status: 500 });
+  }
+
+  const compPath = `${outputDir}/hypercut-${jobId}.html`;
+  await Bun.write(compPath, body.html);
+  Logger.info("HyperCut composition saved", { jobId });
+  return Response.json({ ok: true });
+}
+
+export async function add_suggestion_to_composition(
+  jobId: string,
+  body: { suggestion_id?: string; clip?: Record<string, unknown> },
+) {
+  const outputDir = Bun.env.OUTPUT_DIR;
+  if (!outputDir) {
+    return Response.json({ error: "OUTPUT_DIR not configured" }, { status: 500 });
+  }
+
+  try {
+    const result = await HyperCutWorkflow.addSuggestionToComposition(
+      jobId,
+      outputDir,
+      body.suggestion_id,
+      body.clip,
+    );
+    return Response.json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    Logger.error("Failed to add suggestion to composition", { jobId, message });
     return Response.json({ error: message }, { status: 500 });
   }
 }

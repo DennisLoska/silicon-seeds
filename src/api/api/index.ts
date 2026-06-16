@@ -26,9 +26,12 @@ import {
   get_suggestions,
   accept_suggestion,
   reject_suggestion,
-  add_clip,
   render_job,
+  get_composition,
+  save_composition,
+  add_suggestion_to_composition,
 } from "./hypercut";
+import { handleAgentChat } from "./agent";
 
 const app = new Hono();
 
@@ -143,13 +146,28 @@ app.post("/jobs/hypercut/suggestions/:id/reject", async (c) => {
   return reject_suggestion(c.req.param("id"));
 });
 
-app.post("/jobs/hypercut/clips", async (c) => {
-  const body = await c.req.json();
-  return add_clip(body);
-});
-
 app.post("/jobs/hypercut/:job_id/render", async (c) => {
   return render_job(c.req.param("job_id"));
+});
+
+// Composition HTML endpoints (used by @hyperframes/studio iframe)
+app.get("/composition/:job_id", async (c) => {
+  return get_composition(c.req.param("job_id"));
+});
+
+app.post("/composition/:job_id", async (c) => {
+  const body = await c.req.json();
+  return save_composition(c.req.param("job_id"), body);
+});
+
+app.post("/composition/:job_id/add-suggestion", async (c) => {
+  const body = await c.req.json();
+  return add_suggestion_to_composition(c.req.param("job_id"), body);
+});
+
+// Agent chat endpoint — SSE stream
+app.post("/hypercut/:job_id/chat", async (c) => {
+  return handleAgentChat(c.req.param("job_id"), c);
 });
 
 export default app;

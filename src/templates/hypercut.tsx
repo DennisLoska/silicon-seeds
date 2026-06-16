@@ -1,5 +1,6 @@
 import { Icons } from "./icons";
 import type { HypercutSuggestionSchema } from "../db/db";
+import { AgentChat } from "./agent-chat";
 
 export function HypercutPage() {
   return (
@@ -52,29 +53,31 @@ export function HypercutWorkspace(props: {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">HyperCut Workspace</h1>
-      <div
-        id="hyperframes-island"
-        data-props={JSON.stringify(props)}
-        className="min-h-[500px]"
-      />
-      <script
-        dangerouslySetInnerHTML={{
-          __html: [
-            "(function(){",
-            "  var el = document.getElementById('hyperframes-island');",
-            "  if (!el) return;",
-            "  function tryMount() {",
-            "    if (window.mountHyperframesIsland) {",
-            "      window.mountHyperframesIsland(el);",
-            "    } else {",
-            "      setTimeout(tryMount, 100);",
-            "    }",
-            "  }",
-            "  tryMount();",
-            "})();",
-          ].join("\n"),
-        }}
-      />
+      <div className="flex gap-4 h-[calc(100vh-12rem)]">
+        <aside
+          id="suggestions-panel"
+          class="w-72 overflow-y-auto border-r p-2 space-y-2 shrink-0"
+          hx-get={`/create/hypercut/suggestions?job_id=${props.jobId}`}
+          hx-trigger="load, every 5s"
+          hx-swap="innerHTML"
+        >
+          <span class="loading loading-spinner loading-sm" />
+        </aside>
+        <iframe
+          src={`/studio?job_id=${props.jobId}`}
+          class="flex-1 border-0 rounded-box bg-base-200"
+          id="hyperframes-studio-iframe"
+        />
+        <aside
+          id="agent-chat-panel"
+          data-job-id={props.jobId}
+          class="w-80 overflow-y-auto border-l shrink-0 flex flex-col bg-base-200 rounded-box"
+        >
+          <AgentChat jobId={props.jobId} />
+        </aside>
+      </div>
+      <script defer src="/static/js/hypercut-bridge.js" />
+      <script defer src="/static/js/agent-chat.js" />
     </div>
   );
 }
@@ -84,25 +87,25 @@ export function HypercutSuggestions(props: {
   suggestions: HypercutSuggestionSchema[];
 }) {
   return (
-    <div className="space-y-2">
-      <h2 className="text-lg font-bold">Suggestions</h2>
+    <div class="space-y-2">
+      <h2 class="text-lg font-bold">Suggestions</h2>
       {props.suggestions.length === 0 && (
-        <p className="text-sm opacity-70">No suggestions yet.</p>
+        <p class="text-sm opacity-70">No suggestions yet.</p>
       )}
       {props.suggestions.map((s) => (
         <div
           key={s.id}
-          className={`card card-compact ${
+          class={`card card-compact ${
             s.source_type === "autocut_cut"
               ? "bg-error/10 border border-error/30"
               : "bg-base-100 shadow-sm"
           }`}
         >
-          <div className="card-body p-3">
-            <div className="flex justify-between items-start gap-2">
-              <div className="min-w-0">
+          <div class="card-body p-3">
+            <div class="flex justify-between items-start gap-2">
+              <div class="min-w-0">
                 <span
-                  className={`badge badge-sm ${
+                  class={`badge badge-sm ${
                     s.source_type === "autocut_cut"
                       ? "badge-error"
                       : "badge-primary"
@@ -110,24 +113,24 @@ export function HypercutSuggestions(props: {
                 >
                   {s.source_type}
                 </span>
-                <p className="text-sm mt-1 truncate">
+                <p class="text-sm mt-1 truncate">
                   {s.text_content ?? s.asset_id ?? "content"}
                 </p>
-                <p className="text-xs opacity-60">
+                <p class="text-xs opacity-60">
                   {s.transcript_anchor_start.toFixed(2)}s -{" "}
                   {s.transcript_anchor_end.toFixed(2)}s
                 </p>
               </div>
-              <div className="card-actions flex-nowrap">
+              <div class="card-actions flex-nowrap">
                 <button
-                  className="btn btn-xs btn-success"
-                  hx-post={`/api/jobs/hypercut/suggestions/${s.id}/accept`}
-                  hx-swap="none"
+                  class="btn btn-xs btn-success add-to-timeline"
+                  data-suggestion-id={s.id}
+                  data-job-id={props.jobId}
                 >
                   Add
                 </button>
                 <button
-                  className="btn btn-xs btn-ghost"
+                  class="btn btn-xs btn-ghost"
                   hx-post={`/api/jobs/hypercut/suggestions/${s.id}/reject`}
                   hx-swap="none"
                 >
