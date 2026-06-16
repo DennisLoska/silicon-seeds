@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   Player,
   PlayerControls,
-  Timeline,
   usePlayerStore,
   useTimelinePlayer,
 } from "@hyperframes/studio";
@@ -22,15 +21,10 @@ function Controls() {
   const isPlaying = usePlayerStore((s) => s.isPlaying);
 
   return (
-    <>
-      <PlayerControls
-        onTogglePlay={() => (isPlaying ? player.pause() : player.play())}
-        onSeek={(time) => player.seek(time)}
-      />
-      <div style={{ height: 192, overflowY: "auto" }}>
-        <Timeline />
-      </div>
-    </>
+    <PlayerControls
+      onTogglePlay={() => (isPlaying ? player.pause() : player.play())}
+      onSeek={(time) => player.seek(time)}
+    />
   );
 }
 
