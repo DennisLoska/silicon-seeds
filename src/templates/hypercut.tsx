@@ -88,7 +88,7 @@ export function HypercutWorkspace(props: {
       <div className="flex gap-4 h-[calc(100vh-12rem)]">
         <aside
           id="suggestions-panel"
-          class="w-72 overflow-y-auto border-r p-2 space-y-2 shrink-0"
+          class="w-72 overflow-y-auto p-2 space-y-2 shrink-0 scrollbar-thin"
           hx-get={`/create/hypercut/suggestions?job_id=${props.jobId}`}
           hx-trigger="load, every 5s"
           hx-swap="innerHTML"
@@ -102,7 +102,7 @@ export function HypercutWorkspace(props: {
         />
         <aside
           data-job-id={props.jobId}
-          class="w-80 overflow-y-auto border-l shrink-0 flex flex-col bg-base-200 rounded-box"
+          class="w-80 overflow-y-auto shrink-0 flex flex-col bg-base-200 rounded-box scrollbar-thin"
         >
           <AgentChat jobId={props.jobId} />
         </aside>
@@ -160,7 +160,7 @@ export function HypercutSuggestions(props: {
                     </span>
                     <div class="flex gap-1">
                       <button
-                        class="btn btn-xs bg-white shadow-sm"
+                        class="btn btn-xs btn-ghost"
                         style="cursor:pointer"
                         hx-post={`/api/jobs/hypercut/suggestions/${s.id}/reject`}
                         hx-swap="none"

@@ -23,6 +23,29 @@
   display: none;
 }
 
+/* Thin primary-colored scrollbar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-primary);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-button {
+  display: none;
+}
+
 /* Show spinner during HTMX request */
 .htmx-request .htmx-indicator,
 button.htmx-request .htmx-indicator {

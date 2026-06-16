@@ -89,11 +89,57 @@ export async function get_composition(jobId: string) {
       return match.replace("data-end=", `data-duration="${dur}" data-end=`);
     },
   );
-  // Inject hyperframes runtime if not present (auto-inject from @hyperframes/player
-  // references stale CDN path n.iife.js which returns 404)
+  // Inject hyperframes runtime — CDN auto-inject from @hyperframes/player references
+  // stale n.iife.js (404). Use local copy instead.
   if (!html.includes("hyperframe.runtime.iife")) {
     const runtimeScript = `<script src="/static/studio/hyperframe.runtime.iife.js"></script>`;
     html = html.replace("</head>", `${runtimeScript}</head>`);
+  }
+  // Inject timeline bridge: reads DOM clips, sets __clipManifest, sends postMessage
+  // so @hyperframes/studio's NLELayout can populate the timeline UI.
+  if (!html.includes("__clipManifest")) {
+    const bridgeScript = `<script>
+(function(){
+  console.log("[hypercut-bridge] running");
+  var compEl = document.querySelector('[data-composition-id]');
+  if (!compEl) return;
+  var dur = parseFloat(compEl.getAttribute('data-composition-duration') || '0');
+  var clips = [];
+  var els = document.querySelectorAll('[data-hf-id]');
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    var id = el.getAttribute('data-hf-id');
+    var start = parseFloat(el.getAttribute('data-start') || '0');
+    var duration = parseFloat(el.getAttribute('data-duration') || el.getAttribute('data-end') || '0') - start;
+    var name = el.getAttribute('data-name') || id;
+    var track = parseInt(el.getAttribute('data-layer') || '0', 10);
+    var src = el.getAttribute('src') || el.getAttribute('data-src') || '';
+    var tag = el.tagName.toLowerCase();
+    var kind = tag === 'video' ? 'video' : tag === 'audio' ? 'audio' : tag === 'img' ? 'image' : 'element';
+    clips.push({
+      id: id,
+      label: name,
+      start: start,
+      duration: duration,
+      track: track,
+      kind: kind,
+      tagName: tag,
+      compositionId: compEl.getAttribute('data-composition-id'),
+      parentCompositionId: null,
+      compositionSrc: null,
+      assetUrl: src || null,
+    });
+  }
+  var manifest = { clips: clips, scenes: [], durationInFrames: Math.round(dur * 30) };
+  window.__clipManifest = manifest;
+  // Delay sends until the @hyperframes/studio hook's message listener is ready.
+  setTimeout(function() {
+    window.parent.postMessage({ source: 'hf-preview', type: 'timeline', clips: manifest.clips, durationInFrames: manifest.durationInFrames }, '*');
+    window.parent.postMessage({ source: 'hf-preview', type: 'state', frame: 0, isPlaying: false }, '*');
+  }, 500);
+})();
+</script>`;
+    html = html.replace("</body>", `${bridgeScript}</body>`);
   }
   return new Response(html, {
     status: 200,

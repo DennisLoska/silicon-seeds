@@ -138,6 +138,7 @@ export namespace HyperCutWorkflow {
     const html = generateHyperframesHtml(elements, totalDuration, {
       resolution,
       compositionId: `hypercut-${jobId}`,
+      includeScripts: true,
     });
 
     const compPath = `${outputDir}/hypercut-${jobId}.html`;

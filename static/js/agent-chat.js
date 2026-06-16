@@ -207,9 +207,7 @@
       });
   }
 
-  // Hook form submit
-  document.addEventListener("DOMContentLoaded", function () {
-    init();
+  function hookForm() {
     if (formEl) {
       formEl.addEventListener("submit", function (e) {
         e.preventDefault();
@@ -217,18 +215,15 @@
         sendMessage(inputEl.value.trim());
       });
     }
-  });
+  }
 
-  // Allow keyboard submit with Enter
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      var active = document.activeElement;
-      if (active && active.name === "message" && formEl) {
-        e.preventDefault();
-        if (!active.value.trim()) return;
-        sendMessage(active.value.trim());
-      }
-    }
-  });
+  // Init on both DOMContentLoaded (initial load) and after HTMX swaps
+  function doInit() {
+    init();
+    hookForm();
+  }
+
+  document.addEventListener("DOMContentLoaded", doInit);
+  document.addEventListener("htmx:afterSwap", doInit);
 
 })();
