@@ -92,22 +92,31 @@ app.get("/autocut/status", async (c) => {
   return c.html(<AutoCutStatusFragment jobId={jobId} />);
 });
 
-import { HypercutWorkspace, HypercutSuggestions } from "../../templates/hypercut";
+import { HypercutWorkspace, HypercutSuggestions, HypercutJobStatus } from "../../templates/hypercut";
 
 app.get("/hypercut", async (c) => {
+  const showProgress = c.req.query("show_progress") === "true";
   const jobId = c.req.query("job_id") || "";
+
+  const content = await (async () => {
+    if (!jobId) return <HypercutPage />;
+
+    if (showProgress) {
+      return <HypercutJobStatus jobId={jobId} />;
+    }
+
+    return (
+      <HypercutWorkspace
+        jobId={jobId}
+        sourceVideoUrl={`/assets/source/${jobId}`}
+      />
+    );
+  })();
 
   if (c.req.header("HX-Request")) {
     return c.html(
       <>
-        {jobId ? (
-          <HypercutWorkspace
-            jobId={jobId}
-            sourceVideoUrl={`/assets/source/${jobId}`}
-          />
-        ) : (
-          <HypercutPage />
-        )}
+        {content}
         <OobHeader title="HyperCut" />
       </>,
     );
@@ -115,16 +124,7 @@ app.get("/hypercut", async (c) => {
 
   return c.html(
     <Layout>
-      <App page="hypercut">
-        {jobId ? (
-          <HypercutWorkspace
-            jobId={jobId}
-            sourceVideoUrl={`/assets/source/${jobId}`}
-          />
-        ) : (
-          <HypercutPage />
-        )}
-      </App>
+      <App page="hypercut">{content}</App>
     </Layout>,
   );
 });

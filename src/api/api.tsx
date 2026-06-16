@@ -86,6 +86,9 @@ app.use(
   }),
 );
 
+// Favicon
+app.get("/favicon.ico", (c) => c.redirect("/static/favicon.svg"));
+
 // Serve media files under /assets/*
 // Files are stored in OUTPUT_DIR/<filename>, so we serve them at /assets/<filename>
 // Custom handler strips the /assets/ prefix before serving

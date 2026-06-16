@@ -1,7 +1,7 @@
 // postMessage bridge between HTMX parent and @hyperframes/studio iframe
 
 export interface BridgeMessage {
-  type: "hypercut-studio-ready" | "composition-loaded" | "error";
+  type: "hypercut-studio-ready" | "composition-loaded" | "waiting" | "error";
   payload?: Record<string, unknown>;
 }
 
@@ -14,6 +14,10 @@ export function sendCompositionLoaded(jobId: string) {
     { type: "composition-loaded", payload: { jobId } },
     "*",
   );
+}
+
+export function sendWaiting(message: string) {
+  window.parent.postMessage({ type: "waiting", payload: { message } }, "*");
 }
 
 export function sendError(message: string) {

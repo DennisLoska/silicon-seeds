@@ -72,7 +72,11 @@ export async function get_composition(jobId: string) {
   const compPath = `${outputDir}/hypercut-${jobId}.html`;
   const file = Bun.file(compPath);
   if (!(await file.exists())) {
-    return new Response("Composition not found. Generate it first.", { status: 404 });
+    const job = await DB.Jobs.findById(jobId).catch(() => null);
+    if (job?.status === "failed") {
+      return new Response("Job failed — composition was not generated.", { status: 404 });
+    }
+    return new Response("Composition not found.", { status: 404 });
   }
 
   const html = await file.text();

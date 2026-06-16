@@ -200,4 +200,72 @@ export function HypercutSuggestions(props: {
   );
 }
 
+export async function HypercutJobStatus({ jobId }: { jobId: string }) {
+  const { DB } = await import("../db/db");
+  const { JobLifecycleStatus } = await import("../events/events");
+
+  const job = await DB.Jobs.findById(jobId).catch(() => null);
+
+  if (!job) {
+    return (
+      <div class="p-4">
+        <div class="alert alert-error">
+          <span>Job not found.</span>
+          <a href="/create/hypercut" class="btn btn-sm">New Job</a>
+        </div>
+      </div>
+    );
+  }
+
+  if (job.status === JobLifecycleStatus.Failed) {
+    return (
+      <div class="p-4">
+        <div class="alert alert-error mb-4">
+          <Icons.StatusFailedSmall />
+          <span>HyperCut job failed. No composition generated.</span>
+          <a href="/create/hypercut" class="btn btn-sm">New Job</a>
+        </div>
+      </div>
+    );
+  }
+
+  const isProcessing = job.status === JobLifecycleStatus.Active;
+
+  return (
+    <div
+      class="p-4"
+      hx-ext={isProcessing ? "sse" : undefined}
+      sse-connect={isProcessing ? `/jobs/stream?job_id=${jobId}` : undefined}
+      hx-get={isProcessing ? `/create/hypercut?show_progress=true&job_id=${jobId}` : undefined}
+      hx-trigger={isProcessing ? "sse:job_complete" : undefined}
+      hx-swap={isProcessing ? "outerHTML" : undefined}
+    >
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body items-center text-center gap-4 py-12">
+          {isProcessing ? (
+            <>
+              <span class="loading loading-spinner loading-lg text-primary" />
+              <h2 class="card-title text-xl">Processing HyperCut Job</h2>
+              <p class="text-sm opacity-70 max-w-md">
+                Transcribing video, detecting filler words, generating content
+                suggestions, and building composition...
+              </p>
+            </>
+          ) : (
+            <>
+              <Icons.StatusComplete />
+              <h2 class="card-title text-xl">HyperCut Complete</h2>
+              <p class="text-sm opacity-70">Loading workspace...</p>
+              <meta
+                http-equiv="refresh"
+                content={`0;url=/create/hypercut?job_id=${jobId}`}
+              />
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const HypercutIcon = Icons.Video;

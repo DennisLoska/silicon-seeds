@@ -9,6 +9,7 @@ export const Layout = ({ children }: { children: Child }) => (
         content="width=device-width, initial-scale=1.0, viewport-fit=cover"
       />
       <title>Silicon Seeds</title>
+      <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
       <link href="/static/style.css" rel="stylesheet" />
       <script src="/static/htmx.min.js"></script>
       <script src="/static/htmx-ext-sse.min.js"></script>
