@@ -4,8 +4,9 @@ import { Chroma } from "../chroma/chroma";
 import { JobOrchestrator } from "../jobs/jobs";
 import { LLM } from "../llm/llm";
 import { Logger } from "../logger/logger";
-import { MCPVideo } from "../mcp/mcp-video";
+
 import { Metadata } from "../meta/meta";
+import { JobLifecycleStatus } from "../events/events";
 import { WhisperX } from "../whisperx/whisperx";
 import {
   analyzeTranscript,
@@ -13,7 +14,9 @@ import {
   type RemovalSpan,
 } from "./hypercut-transcript-analyzer";
 import { parseWhisperX } from "./whisperx-parser";
-import { generateHyperframesHtml, type TimelineMediaElement } from "@hyperframes/core";
+import { generateHyperframesHtml, toFps, type TimelineMediaElement } from "@hyperframes/core";
+import { createRenderJob, executeRenderJob } from "@hyperframes/producer";
+import { AgenticEditor } from "./agentic-editor";
 
 export interface HyperCutJobInput {
   original_prompt?: string;
@@ -32,7 +35,7 @@ export namespace HyperCutWorkflow {
   }
 
   export async function processUpload(jobId: string, videoPath: string) {
-    await DB.Jobs.updateStatus(jobId, "active" as any);
+    await DB.Jobs.updateStatus(jobId, JobLifecycleStatus.Active);
 
     const job = await DB.Jobs.findById(jobId);
     if (!job.source_video_path) {
@@ -70,6 +73,9 @@ export namespace HyperCutWorkflow {
 
     Logger.info("HyperCut: generating initial composition", { jobId });
     await generateInitialComposition(jobId, removals, duration);
+
+    await DB.Jobs.updateStatus(jobId, JobLifecycleStatus.Complete);
+    AgenticEditor.clearHistory(jobId);
 
     Logger.info("HyperCut: upload processing complete", {
       jobId,
@@ -143,21 +149,21 @@ export namespace HyperCutWorkflow {
     jobId: string,
     outputDir: string,
     suggestionId?: string,
-    clip?: Record<string, unknown>,
-  ): Promise<{ ok: boolean }> {
-    const compPath = `${outputDir}/hypercut-${jobId}.html`;
-    const file = Bun.file(compPath);
-
-    if (!(await file.exists())) {
-      await generateInitialComposition(jobId);
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (!suggestionId) {
+      return { ok: false, error: "suggestionId required" };
     }
 
-    Logger.info("HyperCut: suggestion added to composition", {
+    Logger.info("HyperCut: suggestion composition request", {
       jobId,
       suggestionId,
     });
 
-    return { ok: true };
+    return {
+      ok: false,
+      error:
+        "Use the AI Editor (right sidebar) to apply suggestions to the composition. The Add-to-Timeline button is deprecated.",
+    };
   }
 
   export async function render(jobId: string, outputDir: string) {
@@ -170,12 +176,16 @@ export namespace HyperCutWorkflow {
       );
     }
 
-    if (!MCPVideo.isReady()) {
-      throw new Error("MCP-video is not available");
-    }
-
     const outputPath = path.join(outputDir, `hypercut-${jobId}.mp4`);
-    await MCPVideo.hyperframesRender(compPath, outputPath);
+
+    const job = createRenderJob({
+      fps: 30,
+      quality: "standard",
+      entryFile: `hypercut-${jobId}.html`,
+      format: "mp4",
+    });
+
+    await executeRenderJob(job, outputDir, outputPath);
 
     return outputPath;
   }

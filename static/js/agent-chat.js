@@ -157,12 +157,6 @@
               removeToolIndicator();
               addToolIndicator(data.name || "unknown");
               break;
-            case "composition-edited":
-              if (data.jobId) {
-                window.sendToStudio &&
-                  window.sendToStudio("hypercut-reload-composition");
-              }
-              break;
             case "done":
               removeToolIndicator();
               if (streamingMsg) streamingMsg.finalize();
@@ -237,12 +231,4 @@
     }
   });
 
-  window.handleAgentSubmit = function (event) {
-    event.preventDefault();
-    var form = event.target;
-    var input = form.querySelector("input[name='message']");
-    if (!input || !input.value.trim()) return false;
-    sendMessage(input.value.trim());
-    return false;
-  };
 })();

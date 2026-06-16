@@ -9,7 +9,11 @@
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
     "module": "es2022",
-    "target": "ES2022"
+    "target": "ES2022",
+    "baseUrl": ".",
+    "paths": {
+      "@hyperframes/engine": ["./src/@types/hyperframes-engine.d.ts"]
+    }
   },
   "exclude": ["node_modules", "migrations", "static", "studio"]
 }

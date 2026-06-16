@@ -86,7 +86,7 @@ CRITICAL RULES:
   loaded = true;
 }
 
-function createTools(jobId: string) {
+function createTools(jobId: string, compositionEditedRef: { current: boolean }) {
   return [
     tool({
       name: "read_composition",
@@ -115,6 +115,7 @@ function createTools(jobId: string) {
         if (!outputDir) return "Error: OUTPUT_DIR not configured";
         const compPath = `${outputDir}/hypercut-${jobId}.html`;
         await Bun.write(compPath, args.html);
+        compositionEditedRef.current = true;
         Logger.info("Agent: composition written", { jobId });
         return "Composition saved successfully. The studio will reload.";
       },
@@ -239,13 +240,13 @@ export namespace AgenticEditor {
   ): Promise<Response> {
     await initAgent();
 
-    const agentTools = createTools(jobId);
+    const compositionEditedRef = { current: false };
+    const agentTools = createTools(jobId, compositionEditedRef);
     const history: HistoryMsg[] = getOrCreateConversation(jobId);
 
     history.push({ role: "user", content: message });
 
     let finalText = "";
-    let compositionEdited = false;
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -271,19 +272,15 @@ export namespace AgenticEditor {
           history.push({ role: "assistant", content: finalText });
           trimHistory(history);
 
-          if (finalText.includes("Composition saved successfully")) {
-            compositionEdited = true;
-          }
-
           sendEvent("done", JSON.stringify({
             text: finalText,
-            compositionEdited,
+            compositionEdited: compositionEditedRef.current,
           }));
         } catch (error) {
           const msg = error instanceof Error ? error.message : String(error);
           Logger.error("Agent: chat failed", { jobId, error: msg });
           sendEvent("error", JSON.stringify({ message: msg }));
-          sendEvent("done", JSON.stringify({ text: "Error processing message", compositionEdited: false }));
+          sendEvent("done", JSON.stringify({ text: "Error processing message", compositionEdited: compositionEditedRef.current }));
         } finally {
           try { controller.close(); } catch { /* ignore */ }
         }

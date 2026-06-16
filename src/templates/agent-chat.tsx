@@ -21,7 +21,6 @@ export function AgentChat(props: { jobId: string }) {
         <form
           id="agent-chat-form"
           class="flex gap-2"
-          onsubmit="return handleAgentSubmit(event, this)"
         >
           <input
             type="text"

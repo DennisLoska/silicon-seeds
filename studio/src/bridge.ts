@@ -23,9 +23,11 @@ export function sendError(message: string) {
 export function onParentMessage(
   handler: (msg: { type: string; payload?: Record<string, unknown> }) => void,
 ) {
-  window.addEventListener("message", (event) => {
+  const listener = (event: MessageEvent) => {
     if (event.data?.type?.startsWith("hypercut-")) {
       handler(event.data);
     }
-  });
+  };
+  window.addEventListener("message", listener);
+  return () => window.removeEventListener("message", listener);
 }

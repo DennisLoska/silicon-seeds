@@ -112,7 +112,6 @@ export async function add_suggestion_to_composition(
       jobId,
       outputDir,
       body.suggestion_id,
-      body.clip,
     );
     return Response.json(result);
   } catch (error) {

@@ -1,9 +1,17 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test, beforeEach, afterEach } from "bun:test";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { parseWhisperX } from "./whisperx-parser";
 
-const TEST_PATH = "/tmp/test-whisperx.json";
+let TEST_PATH: string;
 
 describe("parseWhisperX", () => {
+  beforeEach(() => {
+    const dir = mkdtempSync(join(tmpdir(), "whisperx-test-"));
+    TEST_PATH = join(dir, "test.json");
+  });
+
   test("reads timed words from JSON file", async () => {
     await Bun.write(
       TEST_PATH,
@@ -43,5 +51,14 @@ describe("parseWhisperX", () => {
 
     const words = await parseWhisperX(TEST_PATH);
     expect(words).toHaveLength(1);
+  });
+
+  afterEach(() => {
+    try {
+      const dir = require("node:path").dirname(TEST_PATH);
+      require("node:fs").rmSync(dir, { recursive: true, force: true });
+    } catch {
+      // ignore cleanup errors
+    }
   });
 });
