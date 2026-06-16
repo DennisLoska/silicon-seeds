@@ -10,6 +10,7 @@ import { WhisperX } from "../whisperx/whisperx";
 import {
   analyzeTranscript,
   type TimedWord,
+  type RemovalSpan,
 } from "./hypercut-transcript-analyzer";
 import { parseWhisperX } from "./whisperx-parser";
 import { generateHyperframesHtml, type TimelineMediaElement } from "@hyperframes/core";
@@ -64,12 +65,16 @@ export namespace HyperCutWorkflow {
     Logger.info("HyperCut: generating content suggestions", { jobId });
     await generateContentSuggestions(jobId, words);
 
+    Logger.info("HyperCut: getting video duration", { jobId });
+    const duration = await Metadata.getMediaDurationFromPath(videoPath);
+
     Logger.info("HyperCut: generating initial composition", { jobId });
-    await generateInitialComposition(jobId);
+    await generateInitialComposition(jobId, removals, duration);
 
     Logger.info("HyperCut: upload processing complete", {
       jobId,
       removals: removals.length,
+      duration,
     });
   }
 
@@ -103,35 +108,35 @@ export namespace HyperCutWorkflow {
     }
   }
 
-  export async function generateInitialComposition(jobId: string) {
+  export async function generateInitialComposition(
+    jobId: string,
+    removals: RemovalSpan[] = [],
+    duration: number = 10,
+  ) {
     const outputDir = Bun.env.OUTPUT_DIR;
     if (!outputDir) return;
 
     const job = await DB.Jobs.findById(jobId);
     const resolution = (job.resolution ?? "landscape") as any;
+    const src = job.source_video_path
+      ? `/assets/source/${jobId}`
+      : "";
 
-    const elements: TimelineMediaElement[] = [
-      {
-        id: "source-video",
-        type: "video",
-        name: "Source Video",
-        startTime: 0,
-        duration: 10,
-        zIndex: 0,
-        src: job.source_video_path
-          ? `/assets/source/${jobId}`
-          : "",
-      },
-    ];
+    const elements = buildChunkedClips(src, jobId, removals, duration);
+    const totalDuration = elements.reduce((sum, el) => sum + el.duration, 0);
 
-    const html = generateHyperframesHtml(elements, 10, {
+    const html = generateHyperframesHtml(elements, totalDuration, {
       resolution,
       compositionId: `hypercut-${jobId}`,
     });
 
     const compPath = `${outputDir}/hypercut-${jobId}.html`;
     await Bun.write(compPath, html);
-    Logger.info("HyperCut: initial composition generated", { jobId });
+    Logger.info("HyperCut: initial composition generated", {
+      jobId,
+      clips: elements.length,
+      duration: totalDuration,
+    });
   }
 
   export async function addSuggestionToComposition(
@@ -174,6 +179,79 @@ export namespace HyperCutWorkflow {
 
     return outputPath;
   }
+}
+
+function buildChunkedClips(
+  src: string,
+  jobId: string,
+  removals: RemovalSpan[],
+  duration: number,
+): TimelineMediaElement[] {
+  const sorted = [...removals]
+    .filter((r) => r.start >= 0 && r.end <= duration && r.end > r.start)
+    .sort((a, b) => a.start - b.start);
+
+  const clips: TimelineMediaElement[] = [];
+  let cursor = 0;
+  let clipIndex = 0;
+
+  function addClip(segStart: number, segEnd: number, label: string) {
+    const segDuration = roundTo(segEnd - segStart, 3);
+    if (segDuration < 0.08) return; // skip sub-frame segments
+
+    clips.push({
+      id: `seg-${clipIndex}`,
+      type: "video",
+      name: label,
+      startTime: cursor,
+      duration: segDuration,
+      zIndex: 0,
+      src,
+      mediaStartTime: roundTo(segStart, 3),
+      sourceDuration: segDuration,
+    });
+    cursor += segDuration;
+    clipIndex++;
+  }
+
+  for (const removal of sorted) {
+    // Good segment before this removal (if any)
+    if (cursor < removal.start) {
+      addClip(cursor, removal.start, `Segment ${clipIndex + 1}`);
+    }
+
+    // Bad segment for the removal itself — label by reason
+    const label = labelForRemoval(removal);
+    addClip(removal.start, removal.end, label);
+
+    // Merge overlapping removals by advancing cursor past current end
+    cursor = Math.max(cursor, removal.end);
+  }
+
+  // Final good segment (if any)
+  if (cursor < duration) {
+    addClip(cursor, duration, `Segment ${clipIndex + 1}`);
+  }
+
+  return clips;
+}
+
+function labelForRemoval(removal: RemovalSpan): string {
+  switch (removal.reason) {
+    case "filler":
+      return `[FILLER] ${removal.text}`;
+    case "pause":
+      return `[PAUSE] ${roundTo(removal.end - removal.start, 2)}s gap`;
+    case "restart":
+      return `[RESTART] ${removal.text}`;
+    default:
+      return `[EDIT] ${removal.text}`;
+  }
+}
+
+function roundTo(value: number, decimals: number): number {
+  const factor = Math.pow(10, decimals);
+  return Math.round(value * factor) / factor;
 }
 
 async function dbUpdateJobSourceVideoPath(jobId: string, videoPath: string) {
