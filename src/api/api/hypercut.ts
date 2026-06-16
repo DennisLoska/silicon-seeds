@@ -33,7 +33,7 @@ export async function post_hypercut(body: PostHypercut) {
 }
 
 export async function get_suggestions(jobId: string) {
-  const suggestions = await DB.Hypercut.findSuggestionsByJob(jobId);
+  const suggestions = await DB.Hypercut.findContentSuggestionsByJob(jobId);
   return Response.json({ suggestions });
 }
 

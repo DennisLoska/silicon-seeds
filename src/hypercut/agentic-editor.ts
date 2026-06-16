@@ -136,10 +136,10 @@ function createTools(jobId: string, compositionEditedRef: { current: boolean }) 
 
     tool({
       name: "get_suggestions",
-      description: "Get all AI-generated suggestions for this job. Returns autocut cuts (filler/pauses to remove) and content suggestions (media to add).",
+      description: "Get content suggestions for this job — additional media assets (images/video/text) from the content library that could be added to the composition.",
       parameters: {},
       implementation: async () => {
-        const suggestions = await DB.Hypercut.findSuggestionsByJob(jobId);
+        const suggestions = await DB.Hypercut.findContentSuggestionsByJob(jobId);
         return JSON.stringify(suggestions);
       },
     }),

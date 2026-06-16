@@ -79,6 +79,7 @@ export namespace Metadata {
     const tags = tagsRes?.parsed;
 
     const metaJson = {
+      id,
       job_id,
       created_at,
       filename,
@@ -100,7 +101,7 @@ export namespace Metadata {
     );
 
     Chroma.saveEmbedding({
-      id: filename.split(".")[0],
+      id,
       title: title ?? "",
       description: description ?? "",
       tags: tags ?? [],

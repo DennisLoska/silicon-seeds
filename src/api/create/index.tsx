@@ -136,7 +136,7 @@ app.get("/hypercut/suggestions", async (c) => {
     return c.html(<div>Missing job_id</div>);
   }
 
-  const suggestions = await DB.Hypercut.findSuggestionsByJob(jobId);
+  const suggestions = await DB.Hypercut.findContentSuggestionsByJob(jobId);
   return c.html(<HypercutSuggestions jobId={jobId} suggestions={suggestions} />);
 });
 

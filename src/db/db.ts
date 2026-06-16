@@ -107,6 +107,8 @@ export type AutoCutCutClipSchema = Omit<DbSchema["autocut_cut_clips"], "created_
 };
 export type HypercutSuggestionSchema = Omit<DbSchema["hypercut_suggestions"], "created_at"> & {
   created_at: string;
+  meta_filename?: string | null;
+  meta_subfolder?: string | null;
 };
 export type HypercutClipSchema = Omit<DbSchema["hypercut_clips"], "created_at"> & {
   created_at: string;
@@ -860,9 +862,47 @@ export namespace DB {
     export async function findSuggestionsByJob(jobId: string) {
       return await db
         .selectFrom("hypercut_suggestions")
+        .leftJoin("meta", "meta.event_id", "hypercut_suggestions.asset_id")
         .where("job_id", "=", jobId)
         .orderBy("transcript_anchor_start", "asc")
-        .selectAll()
+        .select([
+          "hypercut_suggestions.id",
+          "hypercut_suggestions.created_at",
+          "hypercut_suggestions.job_id",
+          "hypercut_suggestions.source_type",
+          "hypercut_suggestions.asset_id",
+          "hypercut_suggestions.text_content",
+          "hypercut_suggestions.transcript_anchor_start",
+          "hypercut_suggestions.transcript_anchor_end",
+          "hypercut_suggestions.score",
+          "hypercut_suggestions.status",
+          "meta.filename as meta_filename",
+          "meta.subfolder as meta_subfolder",
+        ])
+        .execute();
+    }
+
+    export async function findContentSuggestionsByJob(jobId: string) {
+      return await db
+        .selectFrom("hypercut_suggestions")
+        .leftJoin("meta", "meta.event_id", "hypercut_suggestions.asset_id")
+        .where("job_id", "=", jobId)
+        .where("source_type", "!=", "autocut_cut")
+        .orderBy("transcript_anchor_start", "asc")
+        .select([
+          "hypercut_suggestions.id",
+          "hypercut_suggestions.created_at",
+          "hypercut_suggestions.job_id",
+          "hypercut_suggestions.source_type",
+          "hypercut_suggestions.asset_id",
+          "hypercut_suggestions.text_content",
+          "hypercut_suggestions.transcript_anchor_start",
+          "hypercut_suggestions.transcript_anchor_end",
+          "hypercut_suggestions.score",
+          "hypercut_suggestions.status",
+          "meta.filename as meta_filename",
+          "meta.subfolder as meta_subfolder",
+        ])
         .execute();
     }
 
