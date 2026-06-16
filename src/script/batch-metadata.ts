@@ -44,6 +44,9 @@ async function getCreated(fp: string): Promise<string> {
   }
 }
 
+let _processed = 0;
+let _total = 0;
+
 async function genMetadata(fp: string): Promise<void> {
   const fn = fp.split("/").pop()!;
   const stem = fn.split(".")[0];
@@ -56,9 +59,14 @@ async function genMetadata(fp: string): Promise<void> {
   const imgDir = join(contentDir, "image");
   const out = join(imgDir, `.${stem}.metadata.json`);
 
-  if (await Bun.file(out).exists()) return;
+  const idx = ++_processed;
 
-  Logger.info(`→ ${fn}`);
+  if (await Bun.file(out).exists()) {
+    Logger.info(`→ [${idx}/${_total}] ${fn} (skip)`);
+    return;
+  }
+
+  Logger.info(`→ [${idx}/${_total}] ${fn}`);
 
   const buf = await Bun.file(fp).arrayBuffer();
   const b64 = Buffer.from(buf).toString("base64");
@@ -93,7 +101,7 @@ async function genMetadata(fp: string): Promise<void> {
   // ensures re-run reprocesses rather than leaving orphan metadata.
   await Bun.write(join(imgDir, fn), buf);
   await Bun.write(out, JSON.stringify(meta, null, 2));
-  Logger.info(`✓ .${stem}.metadata.json + ${fn}`);
+  Logger.info(`✓ [${_processed}/${_total}] .${stem}.metadata.json + ${fn}`);
 }
 
 async function main() {
@@ -117,6 +125,7 @@ async function main() {
     return;
   }
 
+  _total = files.length;
   const BATCH_SIZE = 5;
   Logger.info(`${files.length} images → ${imgDir}, batch ${BATCH_SIZE}`);
 
