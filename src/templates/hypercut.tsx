@@ -54,34 +54,62 @@ export function HypercutWorkspace(props: {
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">HyperCut Workspace</h1>
-        <button
-          id="render-btn"
-          class="btn btn-primary btn-sm"
-          onclick={`
-            var btn = document.getElementById('render-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class=\\"loading loading-spinner loading-xs\\"></span> Rendering...';
-            fetch('/api/jobs/hypercut/${props.jobId}/render', { method: 'POST' })
-              .then(function(r) { return r.json(); })
-              .then(function(data) {
-                if (data.error) {
-                  btn.innerHTML = 'Render Failed';
-                  document.getElementById('render-result').innerHTML = '<div class=\\"alert alert-error text-sm mb-4\\">' + data.error + '</div>';
-                } else {
-                  btn.innerHTML = 'Render Complete';
-                  document.getElementById('render-result').innerHTML = '<div class=\\"alert alert-success text-sm mb-4\\">Rendered: ' + data.output_path.split('/').pop() + '</div>';
-                }
-                setTimeout(function() { btn.disabled = false; }, 3000);
-              })
-              .catch(function(err) {
-                btn.innerHTML = 'Render';
-                btn.disabled = false;
-                document.getElementById('render-result').innerHTML = '<div class=\\"alert alert-error text-sm mb-4\\">Request failed</div>';
-              });
-          `}
-        >
-          Render
-        </button>
+        <div class="flex gap-2">
+          <button
+            id="regenerate-btn"
+            class="btn btn-ghost btn-sm"
+            onclick={`
+              var btn = document.getElementById('regenerate-btn');
+              btn.disabled = true;
+              btn.innerHTML = '<span class="loading loading-spinner loading-xs"></span> Regenerating...';
+              fetch('/api/jobs/hypercut/${props.jobId}/regenerate-composition', { method: 'POST' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                  if (data.error) {
+                    btn.innerHTML = 'Failed';
+                  } else {
+                    btn.innerHTML = 'Regenerated';
+                    location.reload();
+                  }
+                  setTimeout(function() { btn.disabled = false; btn.innerHTML = 'Regenerate'; }, 3000);
+                })
+                .catch(function() {
+                  btn.innerHTML = 'Regenerate';
+                  btn.disabled = false;
+                });
+            `}
+          >
+            Regenerate
+          </button>
+          <button
+            id="render-btn"
+            class="btn btn-primary btn-sm"
+            onclick={`
+              var btn = document.getElementById('render-btn');
+              btn.disabled = true;
+              btn.innerHTML = '<span class=\\"loading loading-spinner loading-xs\\"></span> Rendering...';
+              fetch('/api/jobs/hypercut/${props.jobId}/render', { method: 'POST' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                  if (data.error) {
+                    btn.innerHTML = 'Render Failed';
+                    document.getElementById('render-result').innerHTML = '<div class=\\"alert alert-error text-sm mb-4\\">' + data.error + '</div>';
+                  } else {
+                    btn.innerHTML = 'Render Complete';
+                    document.getElementById('render-result').innerHTML = '<div class=\\"alert alert-success text-sm mb-4\\">Rendered: ' + data.output_path.split('/').pop() + '</div>';
+                  }
+                  setTimeout(function() { btn.disabled = false; }, 3000);
+                })
+                .catch(function(err) {
+                  btn.innerHTML = 'Render';
+                  btn.disabled = false;
+                  document.getElementById('render-result').innerHTML = '<div class=\\"alert alert-error text-sm mb-4\\">Request failed</div>';
+                });
+            `}
+          >
+            Render
+          </button>
+        </div>
       </div>
       <div id="render-result" />
       <div className="flex gap-4 h-[calc(100vh-12rem)]">

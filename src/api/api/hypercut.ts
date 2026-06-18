@@ -1,6 +1,7 @@
 import { DB } from "../../db/db";
 import { HyperCutWorkflow } from "../../hypercut/hypercut-workflow";
 import { Logger } from "../../logger/logger";
+import { Metadata } from "../../meta/meta";
 import type { PostHypercut } from "../schemas";
 
 export async function post_hypercut(body: PostHypercut) {
@@ -105,6 +106,34 @@ export async function accept_suggestion(id: string) {
 export async function reject_suggestion(id: string) {
   await DB.Hypercut.updateSuggestionStatus(id, "rejected");
   return new Response(null, { status: 204 });
+}
+
+export async function regenerate_composition(jobId: string) {
+  const job = await DB.Jobs.findById(jobId);
+  if (!job || !job.source_video_path) {
+    return Response.json({ error: "Job or source video not found" }, { status: 404 });
+  }
+
+  const suggestions = await DB.Hypercut.findSuggestionsByJob(jobId);
+  const fillers = new Set(["um", "uh", "ah", "er", "hmm", "like"]);
+  const removals = suggestions
+    .filter((s) => s.source_type === "autocut_cut")
+    .map((s) => ({
+      start: s.transcript_anchor_start,
+      end: s.transcript_anchor_end,
+      text: s.text_content ?? "",
+      reason: (!s.text_content || s.text_content.trim() === ""
+        ? "pause"
+        : fillers.has(s.text_content.toLowerCase().trim())
+          ? "filler"
+          : "restart") as "filler" | "pause" | "restart",
+    }));
+
+  const duration = await Metadata.getMediaDurationFromPath(job.source_video_path);
+  await HyperCutWorkflow.generateInitialComposition(jobId, removals, duration);
+
+  Logger.info("HyperCut: composition regenerated", { jobId, clips: removals.length });
+  return Response.json({ ok: true, clips: removals.length });
 }
 
 export async function render_job(jobId: string) {

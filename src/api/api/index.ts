@@ -27,6 +27,7 @@ import {
   accept_suggestion,
   reject_suggestion,
   render_job,
+  regenerate_composition,
 } from "./hypercut";
 import { handleAgentChat } from "./agent";
 
@@ -145,6 +146,10 @@ app.post("/jobs/hypercut/suggestions/:id/reject", async (c) => {
 
 app.post("/jobs/hypercut/:job_id/render", async (c) => {
   return render_job(c.req.param("job_id"));
+});
+
+app.post("/jobs/hypercut/:job_id/regenerate-composition", async (c) => {
+  return regenerate_composition(c.req.param("job_id"));
 });
 
 // Agent chat endpoint — SSE stream
