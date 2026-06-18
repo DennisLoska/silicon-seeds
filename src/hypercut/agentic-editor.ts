@@ -6,7 +6,6 @@ import { ChatLike } from "@lmstudio/sdk";
 import { DB } from "../db/db";
 import { Chroma } from "../chroma/chroma";
 import { Logger } from "../logger/logger";
-import { HyperCutWorkflow } from "./hypercut-workflow";
 
 let systemPrompt = "";
 let loaded = false;
