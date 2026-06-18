@@ -2,7 +2,6 @@ import { Icons } from "./icons";
 import type { HypercutSuggestionSchema } from "../db/db";
 import { AgentChat } from "./agent-chat";
 import { getAssetPath } from "./utils";
-
 export function HypercutPage() {
   return (
     <div className="p-4 max-w-2xl">
@@ -273,5 +272,3 @@ export async function HypercutJobStatus({ jobId }: { jobId: string }) {
     </div>
   );
 }
-
-export const HypercutIcon = Icons.Video;

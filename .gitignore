@@ -164,4 +164,3 @@ chroma-data/
 # Studio build artifacts
 static/studio/
 studio/main.js
-.oneshot-state

@@ -114,9 +114,6 @@ export type HypercutSuggestionSchema = Omit<DbSchema["hypercut_suggestions"], "c
   asset_filename?: string | null;
   asset_subfolder?: string | null;
 };
-export type HypercutClipSchema = Omit<DbSchema["hypercut_clips"], "created_at"> & {
-  created_at: string;
-};
 export type EventRow = Omit<DbSchema["events"], "created_at"> & {
   created_at: string;
 };
@@ -855,14 +852,6 @@ export namespace DB {
       return suggestion;
     }
 
-    export async function insertSuggestions(
-      suggestions: HypercutSuggestionSchema[],
-    ) {
-      if (suggestions.length === 0) return [];
-      await db.insertInto("hypercut_suggestions").values(suggestions).execute();
-      return suggestions;
-    }
-
     export async function findSuggestionsByJob(jobId: string) {
       return await db
         .selectFrom("hypercut_suggestions")
@@ -922,37 +911,6 @@ export namespace DB {
         .updateTable("hypercut_suggestions")
         .set({ status })
         .where("id", "=", id)
-        .execute();
-    }
-
-    export async function insertClip(clip: HypercutClipSchema) {
-      await db.insertInto("hypercut_clips").values(clip).execute();
-      return clip;
-    }
-
-    export async function findClipsByJob(jobId: string) {
-      return await db
-        .selectFrom("hypercut_clips")
-        .where("job_id", "=", jobId)
-        .orderBy("start_time", "asc")
-        .selectAll()
-        .execute();
-    }
-
-    export async function deleteClip(id: string) {
-      await db.deleteFrom("hypercut_clips").where("id", "=", id).execute();
-    }
-
-    export async function updateClip(clip: HypercutClipSchema) {
-      await db
-        .updateTable("hypercut_clips")
-        .set({
-          start_time: clip.start_time,
-          end_time: clip.end_time,
-          track: clip.track,
-          layer_data: clip.layer_data,
-        })
-        .where("id", "=", clip.id)
         .execute();
     }
   }

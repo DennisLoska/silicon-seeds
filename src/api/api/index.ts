@@ -27,8 +27,6 @@ import {
   accept_suggestion,
   reject_suggestion,
   render_job,
-  get_composition,
-  save_composition,
 } from "./hypercut";
 import { handleAgentChat } from "./agent";
 
@@ -147,21 +145,6 @@ app.post("/jobs/hypercut/suggestions/:id/reject", async (c) => {
 
 app.post("/jobs/hypercut/:job_id/render", async (c) => {
   return render_job(c.req.param("job_id"));
-});
-
-// Composition HTML endpoints (used by @hyperframes/studio iframe)
-app.get("/composition/:job_id", async (c) => {
-  return get_composition(c.req.param("job_id"));
-});
-
-app.post("/composition/:job_id", async (c) => {
-  const body = await c.req.json();
-  return save_composition(c.req.param("job_id"), body);
-});
-
-// @hyperframes/studio expects composition at /api/projects/:id/preview
-app.get("/projects/:job_id/preview", async (c) => {
-  return get_composition(c.req.param("job_id"));
 });
 
 // Agent chat endpoint — SSE stream

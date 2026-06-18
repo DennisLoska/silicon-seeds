@@ -16,6 +16,7 @@
   "main": "src/main.ts",
   "scripts": {
     "start": "bun src/main.ts",
+    "prestart": "tsc --noEmit",
     "start:based": "bun src/main.ts",
     "start:hot": "bun --hot src/main.ts",
     "build:css": "npx @tailwindcss/cli -i src/templates/app.css -o static/style.css",
