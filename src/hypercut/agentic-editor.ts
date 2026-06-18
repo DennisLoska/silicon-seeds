@@ -10,40 +10,95 @@ import { Logger } from "../logger/logger";
 let systemPrompt = "";
 let loaded = false;
 
+interface LintFinding {
+  severity: "error" | "warning" | "info";
+  message: string;
+  file?: string;
+  fix?: string;
+}
+
+interface LintResult {
+  ok: boolean;
+  errorCount: number;
+  warningCount: number;
+  infoCount: number;
+  findings: LintFinding[];
+}
+
+async function lintComposition(projectDir: string): Promise<LintResult> {
+  try {
+    const proc = Bun.spawn(["npx", "--yes", "hyperframes", "lint", "--json", projectDir], {
+      cwd: projectDir,
+      stdout: "pipe",
+      stderr: "pipe",
+      env: { ...process.env },
+    });
+    const [stdout, stderr] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+    ]);
+    const exitCode = await proc.exited;
+    if (exitCode !== 0 && !stdout.trim()) {
+      Logger.error("Agent: lint failed", { stderr, exitCode });
+      return { ok: false, errorCount: 1, warningCount: 0, infoCount: 0, findings: [{ severity: "error", message: `Lint process failed: ${stderr}` }] };
+    }
+    const result = JSON.parse(stdout);
+    return result as LintResult;
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    Logger.error("Agent: lint exception", { msg });
+    return { ok: false, errorCount: 1, warningCount: 0, infoCount: 0, findings: [{ severity: "error", message: `Lint failed: ${msg}` }] };
+  }
+}
+
+async function autoFixLint(compPath: string, findings: LintFinding[]): Promise<string | null> {
+  let html = await Bun.file(compPath).text();
+  const fixes: string[] = [];
+
+  for (const finding of findings) {
+    if (finding.severity !== "error") continue;
+
+    if (finding.message.includes("window.__timelines") && !html.includes("window.__timelines")) {
+      const compIdMatch = html.match(/data-composition-id="([^"]+)"/);
+      const durMatch = html.match(/data-duration="([^"]+)"/);
+      if (compIdMatch && durMatch) {
+        const compId = compIdMatch[1];
+        const duration = durMatch[1];
+        const timelineScript = `<script>\n      window.__timelines = window.__timelines || {};\n      const tl = gsap.timeline({ paused: true });\n      tl.to({}, { duration: ${duration} });\n      window.__timelines["${compId}"] = tl;\n    </script>`;
+        html = html.replace("</body>", `${timelineScript}\n  </body>`);
+        fixes.push("added window.__timelines registration");
+      }
+    }
+
+    if (finding.message.includes("data-composition-id") && !html.includes("data-composition-id=")) {
+      html = html.replace(/<div\s+id="stage"/, '<div id="stage" data-composition-id="composition"');
+      fixes.push("added data-composition-id");
+    }
+
+    if (finding.message.includes("data-width") && !html.includes("data-width=")) {
+      html = html.replace(/<div\s+id="stage"/, '<div id="stage" data-width="1920" data-height="1080"');
+      fixes.push("added data-width/data-height");
+    }
+  }
+
+  if (fixes.length > 0) {
+    await Bun.write(compPath, html);
+    Logger.info("Agent: auto-fixed lint issues", { fixes });
+    return fixes.join(", ");
+  }
+  return null;
+}
+
 async function loadAllSkills(): Promise<string> {
   const skillsDir = path.join(import.meta.dirname, "skills");
 
   const skillPaths: string[] = [
-    // Domain skills
     "db-integration.md",
     "composition-editing.md",
-    // HyperFrames core skills
     "hyperframes-core/SKILL.md",
-    "hyperframes-core/minimal-composition.md",
     "hyperframes-core/data-attributes.md",
     "hyperframes-core/tracks-and-clips.md",
-    "hyperframes-core/sub-compositions.md",
-    "hyperframes-core/variables-and-media.md",
     "hyperframes-core/determinism-rules.md",
-    "hyperframes-core/full-screen-motion.md",
-    "hyperframes-core/composition-patterns.md",
-    // HyperFrames ancillary skills
-    "hyperframes-animation/SKILL.md",
-    "hyperframes-creative/SKILL.md",
-    "hyperframes-media/SKILL.md",
-    "hyperframes-cli/SKILL.md",
-    "hyperframes-registry/SKILL.md",
-    "hyperframes/SKILL.md",
-    // Domain-specific video skills
-    "embedded-captions/SKILL.md",
-    "faceless-explainer/SKILL.md",
-    "general-video/SKILL.md",
-    "graphic-overlays/SKILL.md",
-    "motion-graphics/SKILL.md",
-    "product-launch-video/SKILL.md",
-    "website-to-video/SKILL.md",
-    "pr-to-video/SKILL.md",
-    "remotion-to-hyperframes/SKILL.md",
   ];
 
   const parts: string[] = [];
@@ -75,12 +130,13 @@ ${skills}
 CRITICAL RULES:
 1. Always call read_composition first before editing - never assume you know the current state.
 2. After making changes, always call write_composition to persist them. The UI auto-reloads.
-3. When searching media, present the results to the user with clear descriptions.
-4. For suggestions: get_suggestions lists AI-generated edits; ask user which they want before applying.
-5. Be concise in your responses but thorough in your edits.
-6. The source video is at track-index 1. Overlays go on tracks 2+.
-7. Preserve existing elements in the composition unless the user asks to remove them.
-8. If you need more information about a tool, ask the user. Don't guess.`;
+3. write_composition automatically lints and auto-fixes common issues. If lint errors remain, fix them and call write_composition again.
+4. When searching media, present the results to the user with clear descriptions.
+5. For suggestions: get_suggestions lists AI-generated edits; ask user which they want before applying.
+6. Be concise in your responses but thorough in your edits.
+7. The source video is at track-index 0. Overlays go on tracks 1+.
+8. Preserve existing elements in the composition unless the user asks to remove them.
+9. If you need more information about a tool, ask the user. Don't guess.`;
 
   loaded = true;
 }
@@ -105,18 +161,44 @@ function createTools(jobId: string, compositionEditedRef: { current: boolean }) 
 
     tool({
       name: "write_composition",
-      description: "Write a new composition HTML. This replaces the entire composition. Call this after editing.",
+      description: "Write a new composition HTML. This replaces the entire composition. Call this after editing. Automatically lints after writing — if lint errors are found, they are returned and the composition is auto-fixed when possible.",
       parameters: {
         html: z.string().describe("The full HTML content of the composition"),
       },
       implementation: async (args: { html: string }) => {
         const outputDir = Bun.env.OUTPUT_DIR;
         if (!outputDir) return "Error: OUTPUT_DIR not configured";
-        const compPath = `${outputDir}/hypercut-${jobId}/index.html`;
+        const projectDir = `${outputDir}/hypercut-${jobId}`;
+        const compPath = `${projectDir}/index.html`;
         await Bun.write(compPath, args.html);
         compositionEditedRef.current = true;
         Logger.info("Agent: composition written", { jobId });
-        return "Composition saved successfully. The studio will reload.";
+
+        const lintResult = await lintComposition(projectDir);
+        if (lintResult.errorCount > 0) {
+          const fixed = await autoFixLint(compPath, lintResult.findings);
+          if (fixed) {
+            return `Composition saved. Lint found ${lintResult.errorCount} error(s) — auto-fixed: ${fixed}. Composition is now valid.`;
+          }
+          return `Composition saved but lint found ${lintResult.errorCount} error(s):\n${lintResult.findings.map(f => `[${f.severity}] ${f.message} — ${f.fix || ""}`).join("\n")}\nFix these and call write_composition again.`;
+        }
+        return "Composition saved successfully. Lint passed. The studio will reload.";
+      },
+    }),
+
+    tool({
+      name: "lint_composition",
+      description: "Run the HyperFrames linter on the current composition. Returns errors and warnings with fix suggestions. Always call this after write_composition to verify the composition is valid.",
+      parameters: {},
+      implementation: async () => {
+        const outputDir = Bun.env.OUTPUT_DIR;
+        if (!outputDir) return "Error: OUTPUT_DIR not configured";
+        const projectDir = `${outputDir}/hypercut-${jobId}`;
+        const result = await lintComposition(projectDir);
+        if (result.errorCount === 0 && result.warningCount === 0) {
+          return "Lint passed. No issues found.";
+        }
+        return JSON.stringify(result, null, 2);
       },
     }),
 

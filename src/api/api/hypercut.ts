@@ -74,8 +74,8 @@ export async function accept_suggestion(id: string) {
   if (!filename) return new Response(null, { status: 204 });
 
   const assetPath = subfolder
-    ? `http://localhost:3000/assets/${subfolder}/${filename}`
-    : `http://localhost:3000/assets/${filename}`;
+    ? `/assets/${subfolder}/${filename}`
+    : `/assets/${filename}`;
 
   const start = suggestion.transcript_anchor_start;
   const duration = suggestion.transcript_anchor_end - suggestion.transcript_anchor_start;
@@ -95,12 +95,12 @@ export async function accept_suggestion(id: string) {
     clipHtml = `      <img id="${clipId}" class="clip" data-start="${start}" data-duration="${duration}" data-track-index="${trackIndex}" data-name="${suggestion.source_type}" src="${assetPath}" />`;
   }
 
-  html = html.replace(/(\s*<\/div>\s*<script>)/, `\n${clipHtml}\n$1`);
+  html = html.replace(/(\s*<\/div>\s*(?:<script>|<\/body>))/, `\n${clipHtml}\n$1`);
 
   await Bun.write(compPath, html);
   Logger.info("HyperCut: suggestion added to composition", { suggestionId: id, clipId });
 
-  return new Response(null, { status: 204 });
+  return new Response(null, { status: 204, headers: { "HX-Trigger": "suggestion-accepted" } });
 }
 
 export async function reject_suggestion(id: string) {

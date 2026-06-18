@@ -172,11 +172,12 @@ export namespace HyperCutWorkflow {
     const job = createRenderJob({
       fps: 30,
       quality: "standard",
-      entryFile: `hypercut-${jobId}/index.html`,
+      entryFile: "index.html",
       format: "mp4",
+      workers: 2,
     });
 
-    await executeRenderJob(job, outputDir, outputPath);
+    await executeRenderJob(job, projectDir, outputPath);
 
     return outputPath;
   }

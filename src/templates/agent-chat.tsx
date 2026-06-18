@@ -1,9 +1,27 @@
 export function AgentChat(props: { jobId: string }) {
+  const quickActions = [
+    { label: "Cut filler", prompt: "Remove all filler words (um, uh, like) from the timeline" },
+    { label: "Tighten pacing", prompt: "Tighten the pacing by removing long pauses" },
+    { label: "Add B-roll", prompt: "Add relevant B-roll images from the content library to cover the cuts" },
+  ];
+
   return (
-    <div id="agent-chat-panel" class="flex flex-col h-full">
+    <div id="agent-chat-panel" data-job-id={props.jobId} class="flex flex-col h-full">
       <div class="flex items-center gap-2 px-3 py-2 border-b border-base-300">
-        <div class="w-2 h-2 rounded-full bg-primary" />
+        <div class="w-2 h-2 rounded-full bg-primary animate-pulse" />
         <h3 class="text-sm font-semibold">AI Editor</h3>
+      </div>
+
+      <div class="flex gap-1 px-2 py-2 border-b border-base-300 flex-wrap" id="quick-actions">
+        {quickActions.map((qa) => (
+          <button
+            type="button"
+            class="badge badge-outline badge-sm cursor-pointer hover:badge-primary"
+            data-quick-prompt={qa.prompt}
+          >
+            {qa.label}
+          </button>
+        ))}
       </div>
 
       <div
@@ -12,17 +30,13 @@ export function AgentChat(props: { jobId: string }) {
       >
         <div class="chat chat-start">
           <div class="chat-bubble chat-bubble-primary text-xs">
-            I'm your AI editing assistant. I can help you edit your video, search
-            your media library, and manage suggestions. What would you like to do?
+            I'm your AI editing assistant. I can help you cut filler, add B-roll, and manage the timeline. What would you like to do?
           </div>
         </div>
       </div>
 
       <div class="border-t border-base-300 p-3">
-        <form
-          id="agent-chat-form"
-          class="join w-full"
-        >
+        <form id="agent-chat-form" class="join w-full">
           <input
             type="text"
             name="message"
@@ -35,13 +49,6 @@ export function AgentChat(props: { jobId: string }) {
           </button>
         </form>
       </div>
-
-      <script>
-        {/*
-        Chat SSE streaming via fetch() — the script is the same regardless
-        of jobId because it reads `data-job-id` from the panel element.
-        */}
-      </script>
     </div>
   );
 }

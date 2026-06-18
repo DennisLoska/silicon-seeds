@@ -51,90 +51,90 @@ export function HypercutWorkspace(props: {
   sourceVideoUrl: string;
 }) {
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">HyperCut Workspace</h1>
+    <div id="hypercut-workspace" data-job-id={props.jobId} class="p-4 flex flex-col h-[calc(100vh-3.5rem)]">
+      <div class="flex items-center justify-between mb-3 gap-2">
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-bold">HyperCut</h1>
+          <span class="badge badge-ghost badge-sm font-mono">{props.jobId.slice(0, 8)}</span>
+        </div>
         <div class="flex gap-2">
-          <button
-            id="regenerate-btn"
-            class="btn btn-ghost btn-sm"
-            onclick={`
-              var btn = document.getElementById('regenerate-btn');
-              btn.disabled = true;
-              btn.innerHTML = '<span class="loading loading-spinner loading-xs"></span> Regenerating...';
-              fetch('/api/jobs/hypercut/${props.jobId}/regenerate-composition', { method: 'POST' })
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                  if (data.error) {
-                    btn.innerHTML = 'Failed';
-                  } else {
-                    btn.innerHTML = 'Regenerated';
-                    location.reload();
-                  }
-                  setTimeout(function() { btn.disabled = false; btn.innerHTML = 'Regenerate'; }, 3000);
-                })
-                .catch(function() {
-                  btn.innerHTML = 'Regenerate';
-                  btn.disabled = false;
-                });
-            `}
-          >
+          <button id="regenerate-btn" class="btn btn-ghost btn-sm gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             Regenerate
           </button>
-          <button
-            id="render-btn"
-            class="btn btn-primary btn-sm"
-            onclick={`
-              var btn = document.getElementById('render-btn');
-              btn.disabled = true;
-              btn.innerHTML = '<span class=\\"loading loading-spinner loading-xs\\"></span> Rendering...';
-              fetch('/api/jobs/hypercut/${props.jobId}/render', { method: 'POST' })
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                  if (data.error) {
-                    btn.innerHTML = 'Render Failed';
-                    document.getElementById('render-result').innerHTML = '<div class=\\"alert alert-error text-sm mb-4\\">' + data.error + '</div>';
-                  } else {
-                    btn.innerHTML = 'Render Complete';
-                    document.getElementById('render-result').innerHTML = '<div class=\\"alert alert-success text-sm mb-4\\">Rendered: ' + data.output_path.split('/').pop() + '</div>';
-                  }
-                  setTimeout(function() { btn.disabled = false; }, 3000);
-                })
-                .catch(function(err) {
-                  btn.innerHTML = 'Render';
-                  btn.disabled = false;
-                  document.getElementById('render-result').innerHTML = '<div class=\\"alert alert-error text-sm mb-4\\">Request failed</div>';
-                });
-            `}
-          >
+          <button id="render-btn" class="btn btn-primary btn-sm gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Render
           </button>
         </div>
       </div>
+
       <div id="render-result" />
-      <div className="flex gap-4 h-[calc(100vh-12rem)]">
+
+      <div class="flex gap-3 flex-1 min-h-0">
         <aside
           id="suggestions-panel"
-          class="w-72 overflow-y-auto p-2 space-y-2 shrink-0 scrollbar-thin"
+          class="w-72 shrink-0 overflow-y-auto space-y-2 scrollbar-thin"
           hx-get={`/create/hypercut/suggestions?job_id=${props.jobId}`}
           hx-trigger="load, every 5s"
           hx-swap="innerHTML"
         >
-          <span class="loading loading-spinner loading-sm" />
+          <div class="flex items-center justify-center h-20">
+            <span class="loading loading-spinner loading-sm" />
+          </div>
         </aside>
-        <iframe
-          data-job-id={props.jobId}
-          class="flex-1 border-0 rounded-box bg-base-200"
-          id="hyperframes-studio-iframe"
-        />
+
+        <div class="flex-1 flex flex-col min-w-0 relative">
+          <div
+            id="iframe-loading"
+            class="absolute inset-0 flex items-center justify-center bg-base-200 rounded-box z-10"
+          >
+            <div class="flex flex-col items-center gap-2">
+              <span class="loading loading-spinner loading-md text-primary" />
+              <p class="text-sm opacity-70">Loading studio...</p>
+            </div>
+          </div>
+          <div class="flex items-center justify-between mb-1 px-1">
+            <span class="text-xs opacity-50">Preview</span>
+            <button id="fullscreen-btn" class="btn btn-ghost btn-xs" title="Fullscreen">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l4 4m8-4h4m0 0v4m0-4l-4 4M4 16v4m0 0h4m-4 0l4-4m8 4h4m0-4v4m0 0l-4-4"/></svg>
+            </button>
+          </div>
+          <iframe
+            data-job-id={props.jobId}
+            class="flex-1 border-0 rounded-box bg-base-200 w-full"
+            id="hyperframes-studio-iframe"
+          />
+        </div>
+
         <aside
           data-job-id={props.jobId}
-          class="w-80 overflow-y-auto shrink-0 flex flex-col bg-base-200 rounded-box scrollbar-thin"
+          class="w-80 shrink-0 flex flex-col bg-base-200 rounded-box overflow-hidden"
         >
           <AgentChat jobId={props.jobId} />
         </aside>
       </div>
+
+      <dialog id="regenerate-modal" class="modal">
+        <div class="modal-box">
+          <h3 class="font-bold text-lg">Regenerate composition?</h3>
+          <p class="py-4 text-sm opacity-80">
+            This rebuilds the timeline from the database, discarding any manual
+            edits made in the studio. Suggestions you've already accepted will
+            be re-applied.
+          </p>
+          <div class="modal-action">
+            <form method="dialog" class="flex gap-2">
+              <button id="regenerate-cancel" class="btn btn-ghost">Cancel</button>
+              <button id="regenerate-confirm" class="btn btn-warning">Regenerate</button>
+            </form>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+      </dialog>
+
       <script defer src="/static/js/hypercut-bridge.js" />
+      <script defer src="/static/js/hypercut-workspace.js" />
       <script defer src="/static/js/agent-chat.js" />
     </div>
   );
@@ -144,88 +144,111 @@ export function HypercutSuggestions(props: {
   jobId: string;
   suggestions: HypercutSuggestionSchema[];
 }) {
+  const counts = {
+    total: props.suggestions.length,
+    cuts: props.suggestions.filter((s) => s.source_type === "autocut_cut").length,
+    broll: props.suggestions.filter(
+      (s) => s.source_type === "video" || s.source_type === "image",
+    ).length,
+  };
+
   return (
     <div class="space-y-2">
-      <h2 class="text-lg font-bold">Suggestions</h2>
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="text-sm font-bold">Suggestions</h2>
+        <div class="flex gap-1">
+          <span class="badge badge-ghost badge-xs">{counts.total}</span>
+        </div>
+      </div>
+
+      <div role="tablist" class="tabs tabs-boxed tabs-xs mb-2" id="suggestion-filters">
+        <input type="radio" name="sug-filter" role="tab" class="tab" aria-label="All" checked />
+        <input type="radio" name="sug-filter" role="tab" class="tab" aria-label={`Cuts (${counts.cuts})`} data-filter="autocut_cut" />
+        <input type="radio" name="sug-filter" role="tab" class="tab" aria-label={`B-roll (${counts.broll})`} data-filter="broll" />
+      </div>
+
       {props.suggestions.length === 0 && (
-        <p class="text-sm opacity-70">No suggestions yet.</p>
+        <div class="text-center py-8">
+          <p class="text-sm opacity-50">No suggestions yet.</p>
+          <p class="text-xs opacity-30 mt-1">Processing may still be running.</p>
+        </div>
       )}
+
       {props.suggestions.map((s) => {
         const displayFilename = s.asset_filename ?? s.meta_filename;
         const displaySubfolder = s.asset_subfolder ?? s.meta_subfolder ?? "";
         const isVideo = displayFilename
           ? /\.(mp4|webm|mov|avi|mkv)$/i.test(displayFilename)
           : false;
+        const isCut = s.source_type === "autocut_cut";
+        const filterTag = isCut ? "autocut_cut" : "broll";
 
         return (
           <div
             key={s.id}
-            class="relative bg-base-200 rounded-box overflow-hidden"
+            class="relative bg-base-200 rounded-box overflow-hidden border border-base-300/50 hover:border-primary/30 transition-colors"
+            data-suggestion-type={filterTag}
           >
-            {s.source_type !== "autocut_cut" && displayFilename ? (
+            {isCut ? (
+              <div class="flex items-center justify-between p-2 gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="badge badge-error badge-xs shrink-0">CUT</span>
+                  {s.text_content && (
+                    <p class="text-xs truncate opacity-70">"{s.text_content}"</p>
+                  )}
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <span class="text-[10px] opacity-40 font-mono">
+                    {s.transcript_anchor_start.toFixed(1)}s
+                  </span>
+                </div>
+              </div>
+            ) : displayFilename ? (
               <>
-                {isVideo ? (
-                  <video
-                    src={getAssetPath(displaySubfolder, displayFilename!)}
-                    class="w-full h-auto object-contain"
-                    muted
-                  />
-                ) : (
-                  <img
-                    src={getAssetPath(displaySubfolder, displayFilename!)}
-                    class="w-full h-auto object-contain"
-                  />
-                )}
-                <div class="absolute inset-0 flex flex-col justify-between pointer-events-none p-2">
-                  <div class="flex justify-between items-start pointer-events-auto">
-                    <span
-                      class={`badge badge-xs ${
-                        isVideo ? "badge-accent" : "badge-primary"
-                      }`}
+                <div class="relative">
+                  {isVideo ? (
+                    <video
+                      src={getAssetPath(displaySubfolder, displayFilename!)}
+                      class="w-full h-24 object-cover"
+                      muted
+                    />
+                  ) : (
+                    <img
+                      src={getAssetPath(displaySubfolder, displayFilename!)}
+                      class="w-full h-24 object-cover"
+                    />
+                  )}
+                  <span class={`badge badge-xs absolute top-1 left-1 ${isVideo ? "badge-accent" : "badge-primary"}`}>
+                    {s.source_type}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between p-1.5">
+                  <span class="text-[10px] opacity-50 font-mono">
+                    {s.transcript_anchor_start.toFixed(1)}s - {s.transcript_anchor_end.toFixed(1)}s
+                  </span>
+                  <div class="flex gap-1">
+                    <button
+                      class="btn btn-xs btn-ghost btn-square suggestion-skip"
+                      title="Skip"
+                      data-suggestion-id={s.id}
+                      hx-post={`/api/jobs/hypercut/suggestions/${s.id}/reject`}
+                      hx-swap="none"
                     >
-                      {s.source_type}
-                    </span>
-                    <div class="flex gap-1">
-                      <button
-                        class="btn btn-xs btn-ghost"
-                        style="cursor:pointer"
-                        hx-post={`/api/jobs/hypercut/suggestions/${s.id}/reject`}
-                        hx-swap="none"
-                      >
-                        Skip
-                      </button>
-                      <button
-                        class="btn btn-xs btn-success"
-                        style="cursor:pointer"
-                        hx-post={`/api/jobs/hypercut/suggestions/${s.id}/accept`}
-                        hx-swap="none"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  </div>
-                  <div class="pointer-events-auto">
-                    <p class="text-xs opacity-80 bg-base-100/70 px-1.5 py-0.5 rounded inline-block">
-                      {s.transcript_anchor_start.toFixed(2)}s -{" "}
-                      {s.transcript_anchor_end.toFixed(2)}s
-                    </p>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                    <button
+                      class="btn btn-xs btn-success btn-square suggestion-add"
+                      title="Add to timeline"
+                      data-suggestion-id={s.id}
+                      hx-post={`/api/jobs/hypercut/suggestions/${s.id}/accept`}
+                      hx-swap="none"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    </button>
                   </div>
                 </div>
               </>
-            ) : (
-              <div class="flex items-center justify-between p-2">
-                <div class="flex items-center gap-2">
-                  <span class="badge badge-sm badge-primary">{s.source_type}</span>
-                  {s.text_content && (
-                    <p class="text-sm truncate max-w-[120px]">{s.text_content}</p>
-                  )}
-                </div>
-                <p class="text-xs opacity-60">
-                  {s.transcript_anchor_start.toFixed(2)}s -{" "}
-                  {s.transcript_anchor_end.toFixed(2)}s
-                </p>
-              </div>
-            )}
+            ) : null}
           </div>
         );
       })}

@@ -211,4 +211,15 @@
     });
   }
 
+  // Quick action chips
+  var quickBtns = document.querySelectorAll("[data-quick-prompt]");
+  quickBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var prompt = btn.getAttribute("data-quick-prompt");
+      if (prompt && !streaming) {
+        sendMessage(prompt);
+      }
+    });
+  });
+
 })();
