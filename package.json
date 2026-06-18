@@ -23,7 +23,6 @@
     "db:migrate": "bun src/db/migrate.ts",
     "db:rollback": "bun src/db/rollback.ts",
     "db:chroma": "bunx chroma run --path ./chroma-data --port 8000",
-    "postinstall": "bun run scripts/patch-core-beats.js",
     "lint": "eslint .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
