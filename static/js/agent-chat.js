@@ -160,12 +160,6 @@
             case "done":
               removeToolIndicator();
               if (streamingMsg) streamingMsg.finalize();
-
-              // Reload if composition was edited
-              if (data.compositionEdited) {
-                window.sendToStudio &&
-                  window.sendToStudio("hypercut-reload-composition");
-              }
               streaming = false;
               break;
             case "error":

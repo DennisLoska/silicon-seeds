@@ -168,10 +168,10 @@ export function HypercutSuggestions(props: {
                         Skip
                       </button>
                       <button
-                        class="btn btn-xs btn-success add-to-timeline"
+                        class="btn btn-xs btn-success"
                         style="cursor:pointer"
-                        data-suggestion-id={s.id}
-                        data-job-id={props.jobId}
+                        hx-post={`/api/jobs/hypercut/suggestions/${s.id}/accept`}
+                        hx-swap="none"
                       >
                         Add
                       </button>
