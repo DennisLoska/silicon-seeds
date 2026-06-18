@@ -73,9 +73,10 @@ export async function accept_suggestion(id: string) {
   const subfolder = suggestion.asset_subfolder ?? suggestion.meta_subfolder ?? "";
   if (!filename) return new Response(null, { status: 204 });
 
+  const baseUrl = `http://localhost:${process.env.PORT ?? 3000}`;
   const assetPath = subfolder
-    ? `/assets/${subfolder}/${filename}`
-    : `/assets/${filename}`;
+    ? `${baseUrl}/assets/${subfolder}/${filename}`
+    : `${baseUrl}/assets/${filename}`;
 
   const start = suggestion.transcript_anchor_start;
   const duration = suggestion.transcript_anchor_end - suggestion.transcript_anchor_start;

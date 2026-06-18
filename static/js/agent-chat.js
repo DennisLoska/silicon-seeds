@@ -1,4 +1,3 @@
-// Agent chat — fetch-based SSE streaming
 (function () {
   "use strict";
 
@@ -12,56 +11,79 @@
     var panel = document.getElementById("agent-chat-panel");
     if (!panel) return;
 
-    // Extract jobId from panel or its closest parent
     jobId = panel.getAttribute("data-job-id") || panel.closest("[data-job-id]")?.getAttribute("data-job-id");
     if (!jobId) return;
 
     messagesEl = document.getElementById("agent-chat-messages");
     formEl = document.getElementById("agent-chat-form");
-    inputEl = formEl ? formEl.querySelector("input[name='message']") : null;
+    inputEl = document.getElementById("agent-chat-input");
+    if (!inputEl) inputEl = formEl ? formEl.querySelector("textarea[name='message']") : null;
+
+    initAutoResize();
   }
 
-  function addMessage(role, text) {
-    if (!messagesEl) return;
+  function initAutoResize() {
+    if (!inputEl) return;
+    inputEl.addEventListener("input", function () {
+      inputEl.style.height = "auto";
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 128) + "px";
+    });
 
-    var div = document.createElement("div");
-    div.className = "chat " + (role === "user" ? "chat-end" : "chat-start");
-
-    var bubble = document.createElement("div");
-    bubble.className =
-      "chat-bubble text-sm " +
-      (role === "user"
-        ? "chat-bubble-accent"
-        : "chat-bubble-primary");
-
-    bubble.textContent = text;
-    div.appendChild(bubble);
-    messagesEl.appendChild(div);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    inputEl.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        if (formEl) formEl.requestSubmit();
+      }
+    });
   }
 
-  function addAssistantMessage() {
+  function addUserMessage(text) {
     if (!messagesEl) return;
 
     var wrapper = document.createElement("div");
-    wrapper.className = "chat chat-start";
-    wrapper.id = "agent-streaming-msg";
+    wrapper.className = "chat chat-end";
 
     var bubble = document.createElement("div");
-    bubble.className = "chat-bubble chat-bubble-primary text-sm";
-    bubble.textContent = "";
+    bubble.className = "chat-bubble chat-bubble-primary text-xs";
+    bubble.textContent = text;
+
     wrapper.appendChild(bubble);
     messagesEl.appendChild(wrapper);
     messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function addStreamingResponse() {
+    if (!messagesEl) return null;
+
+    var wrapper = document.createElement("div");
+    wrapper.className = "ai-response text-xs leading-relaxed";
+    wrapper.id = "agent-streaming-msg";
+
+    var content = document.createElement("div");
+    content.className = "prose prose-sm max-w-none opacity-80";
+    content.innerHTML = '<span class="loading loading-dots loading-sm"></span>';
+
+    wrapper.appendChild(content);
+    messagesEl.appendChild(wrapper);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    var rawText = "";
 
     return {
       append: function (text) {
-        bubble.textContent += text;
+        rawText += text;
+        if (rawText.trim()) {
+          content.innerHTML = renderMarkdown(rawText);
+        }
         messagesEl.scrollTop = messagesEl.scrollHeight;
       },
       finalize: function () {
         wrapper.removeAttribute("id");
+        if (rawText.trim()) {
+          content.innerHTML = renderMarkdown(rawText);
+        }
       },
+      getRaw: function () { return rawText; },
     };
   }
 
@@ -73,14 +95,10 @@
 
     var div = document.createElement("div");
     div.id = "agent-tool-indicator";
-    div.className = "chat chat-start opacity-60";
+    div.className = "text-xs opacity-40 flex items-center gap-1 py-1";
 
-    var bubble = document.createElement("div");
-    bubble.className = "chat-bubble text-xs";
-    bubble.textContent = "Tool: " + name + "...";
-    div.appendChild(bubble);
+    div.innerHTML = '<span class="loading loading-spinner loading-xs"></span> Calling tool: ' + escapeHtml(name);
 
-    // Insert before the streaming message
     var streamingMsg = document.getElementById("agent-streaming-msg");
     if (streamingMsg) {
       messagesEl.insertBefore(div, streamingMsg);
@@ -95,13 +113,53 @@
     if (el) el.remove();
   }
 
+  function escapeHtml(text) {
+    var div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function renderMarkdown(text) {
+    var html = escapeHtml(text);
+
+    html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, function (m, lang, code) {
+      return '<pre class="bg-base-300 rounded p-2 overflow-x-auto text-xs mt-1 mb-1"><code>' + escapeHtml(code.trim()) + "</code></pre>";
+    });
+
+    html = html.replace(/`([^`]+)`/g, '<code class="bg-base-300 px-1 rounded text-xs">$1</code>');
+
+    html = html.replace(/^### (.+)$/gm, '<h4 class="font-bold text-sm mt-2 mb-1">$1</h4>');
+    html = html.replace(/^## (.+)$/gm, '<h3 class="font-bold text-sm mt-2 mb-1">$1</h3>');
+    html = html.replace(/^# (.+)$/gm, '<h3 class="font-bold text-sm mt-2 mb-1">$1</h3>');
+
+    html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    html = html.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+
+    html = html.replace(/^\s*[-*] (.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
+    html = html.replace(/^\s*(\d+)\. (.+)$/gm, '<li class="ml-4 list-decimal">$2</li>');
+
+    html = html.replace(/\n\n/g, "</p><p>");
+    html = "<p>" + html + "</p>";
+
+    html = html.replace(/<p><li/g, "<ul><li");
+    html = html.replace(/<\/li><\/p>/g, "</li></ul>");
+    html = html.replace(/<p><\/p>/g, "");
+    html = html.replace(/<p>(<ul>)/g, "$1");
+    html = html.replace(/(<\/ul>)<\/p>/g, "$1");
+
+    return html;
+  }
+
   function sendMessage(message) {
     if (streaming || !jobId) return;
     streaming = true;
 
-    addMessage("user", message);
-    if (inputEl) inputEl.value = "";
-    var streamingMsg = addAssistantMessage();
+    addUserMessage(message);
+    if (inputEl) {
+      inputEl.value = "";
+      inputEl.style.height = "auto";
+    }
+    var streamingMsg = addStreamingResponse();
 
     var url = "/api/hypercut/" + encodeURIComponent(jobId) + "/chat";
 
@@ -113,8 +171,10 @@
       .then(async function (response) {
         if (!response.ok) {
           var errText = await response.text();
-          streamingMsg.append("[Error: " + errText + "]");
-          streamingMsg.finalize();
+          if (streamingMsg) {
+            streamingMsg.append("[Error: " + errText + "]");
+            streamingMsg.finalize();
+          }
           streaming = false;
           return;
         }
@@ -150,6 +210,8 @@
           switch (eventType) {
             case "token":
               if (data.text && streamingMsg) {
+                var loading = streamingMsg.querySelector ? streamingMsg.querySelector(".loading-dots") : null;
+                if (loading) loading.remove();
                 streamingMsg.append(data.text);
               }
               break;
@@ -177,7 +239,6 @@
 
           buffer += decoder.decode(result.value, { stream: true });
           var lines = buffer.split("\n");
-          // Keep last partial line in buffer
           buffer = lines.pop() || "";
 
           for (var i = 0; i < lines.length; i++) {
@@ -185,7 +246,6 @@
           }
         }
 
-        // Process any remaining data in buffer
         if (buffer.trim()) {
           processLine(buffer);
         }
@@ -201,7 +261,6 @@
       });
   }
 
-  // Init immediately — runs on page load and after HTMX swaps (HTMX execs scripts sync)
   init();
   if (formEl) {
     formEl.addEventListener("submit", function (e) {
@@ -211,7 +270,6 @@
     });
   }
 
-  // Quick action chips
   var quickBtns = document.querySelectorAll("[data-quick-prompt]");
   quickBtns.forEach(function (btn) {
     btn.addEventListener("click", function () {
