@@ -80,16 +80,23 @@ describe("generateStandaloneHtml", () => {
     expect(html).toContain('data-name="[FILLER] um"');
   });
 
-  it("does NOT include window.__timelines script", () => {
+  it("includes window.__timelines registration with compositionId", () => {
     const html = generateStandaloneHtml(elements, 8.3, opts);
 
-    expect(html).not.toContain("__timelines");
+    expect(html).toContain('window.__timelines["hypercut-test"] = tl');
+  });
+
+  it("timeline has no tweens targeting clip elements (Studio drag/resize compatible)", () => {
+    const html = generateStandaloneHtml(elements, 8.3, opts);
+
+    expect(html).toContain("gsap.timeline({ paused: true })");
+    expect(html).not.toMatch(/tl\.(set|to|from|fromTo)\("#seg/);
   });
 
   it("clips are direct children of #stage (no wrapper div)", () => {
     const html = generateStandaloneHtml(elements, 8.3, opts);
 
-    const stageMatch = html.match(/<div id="stage"[^>]*>([\s\S]*?)<\/div>\s*<\/body>/);
+    const stageMatch = html.match(/<div id="stage"[^>]*>([\s\S]*?)<\/div>\s*<script>/);
     expect(stageMatch).toBeTruthy();
     const stageContent = stageMatch![1].trim();
     expect(stageContent).toContain('<video id="seg-0"');
@@ -117,10 +124,16 @@ describe("generateStandaloneHtml", () => {
     expect(html).toContain('data-height="1080"');
   });
 
-  it("includes muted and playsinline on video elements", () => {
+  it("does NOT include muted on video elements (audio plays)", () => {
     const html = generateStandaloneHtml(elements, 8.3, opts);
 
-    expect(html).toContain("muted");
+    expect(html).not.toContain("muted");
+  });
+
+  it("includes data-has-audio and playsinline on video elements", () => {
+    const html = generateStandaloneHtml(elements, 8.3, opts);
+
+    expect(html).toContain('data-has-audio="true"');
     expect(html).toContain("playsinline");
   });
 });

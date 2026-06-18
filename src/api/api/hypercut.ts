@@ -38,7 +38,67 @@ export async function get_suggestions(jobId: string) {
 }
 
 export async function accept_suggestion(id: string) {
+  const suggestion = await DB.db
+    .selectFrom("hypercut_suggestions")
+    .leftJoin("meta", "meta.event_id", "hypercut_suggestions.asset_id")
+    .where("hypercut_suggestions.id", "=", id)
+    .select([
+      "hypercut_suggestions.id",
+      "hypercut_suggestions.job_id",
+      "hypercut_suggestions.source_type",
+      "hypercut_suggestions.asset_filename",
+      "hypercut_suggestions.asset_subfolder",
+      "hypercut_suggestions.transcript_anchor_start",
+      "hypercut_suggestions.transcript_anchor_end",
+      "meta.filename as meta_filename",
+      "meta.subfolder as meta_subfolder",
+    ])
+    .executeTakeFirst();
+
   await DB.Hypercut.updateSuggestionStatus(id, "accepted");
+
+  if (!suggestion || suggestion.source_type === "autocut_cut") {
+    return new Response(null, { status: 204 });
+  }
+
+  const outputDir = Bun.env.OUTPUT_DIR;
+  if (!outputDir) return new Response(null, { status: 204 });
+
+  const compPath = `${outputDir}/hypercut-${suggestion.job_id}/index.html`;
+  const file = Bun.file(compPath);
+  if (!(await file.exists())) return new Response(null, { status: 204 });
+
+  const filename = suggestion.asset_filename ?? suggestion.meta_filename;
+  const subfolder = suggestion.asset_subfolder ?? suggestion.meta_subfolder ?? "";
+  if (!filename) return new Response(null, { status: 204 });
+
+  const assetPath = subfolder
+    ? `http://localhost:3000/assets/${subfolder}/${filename}`
+    : `http://localhost:3000/assets/${filename}`;
+
+  const start = suggestion.transcript_anchor_start;
+  const duration = suggestion.transcript_anchor_end - suggestion.transcript_anchor_start;
+  const clipId = `sugg-${id.slice(0, 8)}`;
+
+  let html = await file.text();
+
+  if (html.includes(`id="${clipId}"`)) {
+    return new Response(null, { status: 204 });
+  }
+
+  const trackIndex = 1;
+  let clipHtml: string;
+  if (suggestion.source_type === "video") {
+    clipHtml = `      <video id="${clipId}" class="clip" data-start="${start}" data-duration="${duration}" data-track-index="${trackIndex}" data-name="${suggestion.source_type}" src="${assetPath}" playsinline></video>`;
+  } else {
+    clipHtml = `      <img id="${clipId}" class="clip" data-start="${start}" data-duration="${duration}" data-track-index="${trackIndex}" data-name="${suggestion.source_type}" src="${assetPath}" />`;
+  }
+
+  html = html.replace(/(\s*<\/div>\s*<script>)/, `\n${clipHtml}\n$1`);
+
+  await Bun.write(compPath, html);
+  Logger.info("HyperCut: suggestion added to composition", { suggestionId: id, clipId });
+
   return new Response(null, { status: 204 });
 }
 

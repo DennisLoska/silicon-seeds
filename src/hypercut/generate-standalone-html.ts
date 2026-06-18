@@ -32,7 +32,7 @@ export function generateStandaloneHtml(
         `data-name="${el.name}"`,
       ].join(" ");
 
-      return `      <video ${attrs} src="${sourceVideoFilename}" muted playsinline></video>`;
+      return `      <video ${attrs} src="${sourceVideoFilename}" data-has-audio="true" playsinline></video>`;
     })
     .join("\n");
 
@@ -47,7 +47,9 @@ export function generateStandaloneHtml(
       #stage { position: relative; width: ${width}px; height: ${height}px; overflow: hidden; }
       .clip { position: absolute; inset: 0; }
       video.clip { width: 100%; height: 100%; object-fit: contain; }
+      img.clip { width: 100%; height: 100%; object-fit: contain; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
   </head>
   <body>
     <div id="stage"
@@ -59,6 +61,12 @@ export function generateStandaloneHtml(
     >
 ${clipsHtml}
     </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.to({}, { duration: ${totalDuration} });
+      window.__timelines["${compositionId}"] = tl;
+    </script>
   </body>
 </html>`;
 }
