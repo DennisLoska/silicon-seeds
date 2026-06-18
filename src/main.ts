@@ -102,4 +102,15 @@ async function main() {
   });
 }
 
-main();
+process.on("uncaughtException", (err) => {
+  Logger.error("Uncaught exception", err);
+});
+
+process.on("unhandledRejection", (reason) => {
+  Logger.error("Unhandled rejection", reason);
+});
+
+main().catch((err) => {
+  Logger.error("Fatal: main() failed", err);
+  process.exit(1);
+});

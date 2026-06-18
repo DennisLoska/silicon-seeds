@@ -21,6 +21,16 @@ const { Layout, App, Dashboard, OobHeader } = Templates;
 
 const app = new Hono();
 
+declare global {
+  var __apiFetch:
+    | ((
+        req: Request,
+        server: Bun.Server<undefined>,
+      ) => Response | Promise<Response>)
+    | undefined;
+}
+globalThis.__apiFetch = app.fetch;
+
 export namespace ApiServer {
   let server: Bun.Server<undefined>;
   const MAX_REQUEST_BODY_SIZE = 1024 * 1024 * 1024;
@@ -30,7 +40,7 @@ export namespace ApiServer {
       port: 3000,
       idleTimeout: Metadata.TIMEOUT,
       maxRequestBodySize: MAX_REQUEST_BODY_SIZE,
-      fetch: app.fetch,
+      fetch: (req, s) => globalThis.__apiFetch!(req, s),
     });
   }
   export function stop() {
@@ -221,7 +231,7 @@ app.onError((error, c) => {
   );
 });
 
-app.notFound((c) => {
+app.notFound(() => {
   return not_found();
 });
 
@@ -233,3 +243,5 @@ app.route("/settings", settingsRoutes);
 app.route("/gallery", galleryRoutes);
 app.route("/create", createRoutes);
 app.route("/api/fragments", fragmentRoutes);
+
+globalThis.__apiFetch = app.fetch;

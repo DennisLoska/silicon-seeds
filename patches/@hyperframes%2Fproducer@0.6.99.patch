@@ -1,0 +1,48 @@
+diff --git a/dist/index.js b/dist/index.js
+index 20300a24b3af1463ec9256fe96bc70d6efc66ddb..b1b33ea190a646405b22866d31abfaebb238cd65 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -140134,6 +140134,18 @@ var init_dist2 = __esm({
+       return server;
+     };
+     serve = (options, listeningListener) => {
++      if (typeof Bun !== "undefined" && Bun.serve) {
++        const bunServer = Bun.serve({
++          fetch: options.fetch,
++          port: options?.port ?? 3e3,
++          hostname: options.hostname,
++        });
++        if (listeningListener) {
++          listeningListener({ port: bunServer.port });
++        }
++        bunServer.close = bunServer.stop;
++        return bunServer;
++      }
+       const server = createAdaptorServer(options);
+       server.listen(options?.port ?? 3e3, options.hostname, () => {
+         const serverInfo = server.address();
+@@ -145577,6 +145589,24 @@ function createFileServer2(options) {
+   });
+   return new Promise((resolve19) => {
+     const connections = /* @__PURE__ */ new Set();
++    if (typeof Bun !== "undefined" && Bun.serve) {
++      const bunServer = Bun.serve({
++        fetch: app.fetch,
++        port,
++        hostname: "127.0.0.1",
++      });
++      resolve19({
++        url: `http://localhost:${bunServer.port}`,
++        port: bunServer.port,
++        addPreHeadScript: (script) => {
++          preHeadScripts.push(script);
++        },
++        close: () => {
++          bunServer.stop();
++        }
++      });
++      return;
++    }
+     const server = serve({ fetch: app.fetch, port, hostname: "127.0.0.1" }, (info) => {
+       resolve19({
+         url: `http://localhost:${info.port}`,
