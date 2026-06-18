@@ -96,31 +96,8 @@ export async function save_composition(jobId: string, body: { html?: string }) {
     return Response.json({ error: "OUTPUT_DIR not configured" }, { status: 500 });
   }
 
-  const compPath = `${outputDir}/hypercut-${jobId}.html`;
+  const compPath = `${outputDir}/hypercut-${jobId}/index.html`;
   await Bun.write(compPath, body.html);
   Logger.info("HyperCut composition saved", { jobId });
   return Response.json({ ok: true });
-}
-
-export async function add_suggestion_to_composition(
-  jobId: string,
-  body: { suggestion_id?: string; clip?: Record<string, unknown> },
-) {
-  const outputDir = Bun.env.OUTPUT_DIR;
-  if (!outputDir) {
-    return Response.json({ error: "OUTPUT_DIR not configured" }, { status: 500 });
-  }
-
-  try {
-    const result = await HyperCutWorkflow.addSuggestionToComposition(
-      jobId,
-      outputDir,
-      body.suggestion_id,
-    );
-    return Response.json(result);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    Logger.error("Failed to add suggestion to composition", { jobId, message });
-    return Response.json({ error: message }, { status: 500 });
-  }
 }

@@ -29,7 +29,6 @@ import {
   render_job,
   get_composition,
   save_composition,
-  add_suggestion_to_composition,
 } from "./hypercut";
 import { handleAgentChat } from "./agent";
 
@@ -158,11 +157,6 @@ app.get("/composition/:job_id", async (c) => {
 app.post("/composition/:job_id", async (c) => {
   const body = await c.req.json();
   return save_composition(c.req.param("job_id"), body);
-});
-
-app.post("/composition/:job_id/add-suggestion", async (c) => {
-  const body = await c.req.json();
-  return add_suggestion_to_composition(c.req.param("job_id"), body);
 });
 
 // @hyperframes/studio expects composition at /api/projects/:id/preview

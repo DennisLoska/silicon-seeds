@@ -14,7 +14,8 @@ import {
   type RemovalSpan,
 } from "./hypercut-transcript-analyzer";
 import { parseWhisperX } from "./whisperx-parser";
-import { generateHyperframesHtml, toFps, type TimelineMediaElement } from "@hyperframes/core";
+import type { TimelineMediaElement } from "@hyperframes/core";
+import { generateStandaloneHtml } from "./generate-standalone-html";
 import { createRenderJob, executeRenderJob } from "@hyperframes/producer";
 import { AgenticEditor } from "./agentic-editor";
 
@@ -127,9 +128,8 @@ export namespace HyperCutWorkflow {
     if (!outputDir) return;
 
     const job = await DB.Jobs.findById(jobId);
-    const resolution = (job.resolution ?? "landscape") as any;
+    const resolution = (job.resolution ?? "landscape") as "landscape" | "portrait" | "square";
 
-    // Copy source video into project dir so hyperframes preview can serve it
     const projectDir = `${outputDir}/hypercut-${jobId}`;
     const videoFilename = job.source_video_path
       ? `source_${jobId}.mp4`
@@ -137,22 +137,16 @@ export namespace HyperCutWorkflow {
     if (job.source_video_path) {
       await Bun.write(`${projectDir}/${videoFilename}`, Bun.file(job.source_video_path));
     }
-    const src = videoFilename ? videoFilename : "";
+    const src = videoFilename;
 
     const elements = buildChunkedClips(src, jobId, removals, duration);
     const totalDuration = elements.reduce((sum, el) => sum + el.duration, 0);
 
-    let html = generateHyperframesHtml(elements, totalDuration, {
-      resolution,
+    const html = generateStandaloneHtml(elements, totalDuration, {
       compositionId: `hypercut-${jobId}`,
-      includeScripts: true,
+      resolution,
+      sourceVideoFilename: src,
     });
-
-    // Post-process: register GSAP timeline so runtime discovers it
-    html = html.replace(
-      'const tl = gsap.timeline({ paused: true });',
-      'const tl = gsap.timeline({ paused: true }); window.__timelines = window.__timelines || {}; window.__timelines["hypercut-' + jobId + '"] = tl;',
-    );
 
     await Bun.write(`${projectDir}/index.html`, html);
     Logger.info("HyperCut: composition generated", {
@@ -160,27 +154,6 @@ export namespace HyperCutWorkflow {
       clips: elements.length,
       duration: totalDuration,
     });
-  }
-
-  export async function addSuggestionToComposition(
-    jobId: string,
-    outputDir: string,
-    suggestionId?: string,
-  ): Promise<{ ok: boolean; error?: string }> {
-    if (!suggestionId) {
-      return { ok: false, error: "suggestionId required" };
-    }
-
-    Logger.info("HyperCut: suggestion composition request", {
-      jobId,
-      suggestionId,
-    });
-
-    return {
-      ok: false,
-      error:
-        "Use the AI Editor (right sidebar) to apply suggestions to the composition. The Add-to-Timeline button is deprecated.",
-    };
   }
 
   export async function render(jobId: string, outputDir: string) {

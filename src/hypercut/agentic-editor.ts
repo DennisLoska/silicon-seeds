@@ -97,7 +97,7 @@ function createTools(jobId: string, compositionEditedRef: { current: boolean }) 
       implementation: async () => {
         const outputDir = Bun.env.OUTPUT_DIR;
         if (!outputDir) return "Error: OUTPUT_DIR not configured";
-        const compPath = `${outputDir}/hypercut-${jobId}.html`;
+        const compPath = `${outputDir}/hypercut-${jobId}/index.html`;
         const file = Bun.file(compPath);
         if (!(await file.exists())) return "Error: composition not found. Generate it first.";
         return await file.text();
@@ -113,7 +113,7 @@ function createTools(jobId: string, compositionEditedRef: { current: boolean }) 
       implementation: async (args: { html: string }) => {
         const outputDir = Bun.env.OUTPUT_DIR;
         if (!outputDir) return "Error: OUTPUT_DIR not configured";
-        const compPath = `${outputDir}/hypercut-${jobId}.html`;
+        const compPath = `${outputDir}/hypercut-${jobId}/index.html`;
         await Bun.write(compPath, args.html);
         compositionEditedRef.current = true;
         Logger.info("Agent: composition written", { jobId });
