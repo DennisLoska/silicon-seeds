@@ -25,12 +25,25 @@
   function initResizers() {
     var style = document.createElement("style");
     style.textContent = [
-      ".resizer { flex: 0 0 4px; cursor: col-resize; background: transparent; position: relative; z-index: 5; }",
-      ".resizer:hover, .resizer.dragging { background: hsl(var(--p) / 0.3); }",
-      ".resizer::before { content: ''; position: absolute; inset: 0 -2px; }",
+      ".resizer { flex: 0 0 8px; cursor: col-resize; background: transparent; position: relative; z-index: 5; }",
+      ".resizer::before { content: ''; position: absolute; inset: 0 -4px; }",
+      ".resizer:hover, .resizer.dragging { background: hsl(var(--p) / 0.15); }",
+      ".resizer-x::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 2px; height: 2rem; background: hsl(var(--bc) / 0.12); border-radius: 1px; pointer-events: none; }",
+      ".resizer:hover::after, .resizer.dragging::after { background: hsl(var(--p) / 0.5); height: 3rem; width: 3px; }",
       "@media (max-width: 768px) { .resizer { display: none; } }",
     ].join("\n");
     document.head.appendChild(style);
+
+    function parseDim(val) {
+      if (!val) return null;
+      var m = val.match(/^([\d.]+)(px|rem)?$/);
+      if (!m) return null;
+      var n = parseFloat(m[1]);
+      if (m[2] === "rem") n *= parseFloat(getComputedStyle(document.documentElement).fontSize);
+      return n;
+    }
+
+    function storageKey(id) { return "hypercut-panel-width-" + id; }
 
     var resizers = document.querySelectorAll(".resizer");
     resizers.forEach(function (resizer) {
@@ -39,8 +52,18 @@
       var target = document.getElementById(targetId);
       if (!target) return;
 
+      // Restore saved width
+      var saved = localStorage.getItem(storageKey(targetId));
+      if (saved) {
+        var minDim = parseDim(target.style.minWidth) || 160;
+        var maxDim = parseDim(target.style.maxWidth) || 640;
+        target.style.width = Math.max(minDim, Math.min(maxDim, parseFloat(saved))) + "px";
+      }
+
       var startX = 0;
       var startWidth = 0;
+
+      function iframeEl() { return document.getElementById("hyperframes-studio-iframe"); }
 
       function onMouseDown(e) {
         e.preventDefault();
@@ -51,19 +74,16 @@
         document.addEventListener("mouseup", onMouseUp);
         document.body.style.cursor = "col-resize";
         document.body.style.userSelect = "none";
+        var ifr = iframeEl();
+        if (ifr) ifr.style.pointerEvents = "none";
       }
 
       function onMouseMove(e) {
         var delta = e.clientX - startX;
-        var newWidth;
-        if (direction === "right") {
-          newWidth = startWidth + delta;
-        } else {
-          newWidth = startWidth - delta;
-        }
-        var minW = parseInt(target.style.minWidth) || 200;
-        var maxW = parseInt(target.style.maxWidth) || 600;
-        newWidth = Math.max(minW, Math.min(maxW, newWidth));
+        var newWidth = direction === "right" ? startWidth + delta : startWidth - delta;
+        var minDim = parseDim(target.style.minWidth) || 160;
+        var maxDim = parseDim(target.style.maxWidth) || 640;
+        newWidth = Math.max(minDim, Math.min(maxDim, newWidth));
         target.style.width = newWidth + "px";
       }
 
@@ -73,6 +93,9 @@
         document.removeEventListener("mouseup", onMouseUp);
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
+        var ifr = iframeEl();
+        if (ifr) ifr.style.pointerEvents = "";
+        localStorage.setItem(storageKey(targetId), target.style.width);
       }
 
       resizer.addEventListener("mousedown", onMouseDown);
@@ -86,20 +109,17 @@
         startWidth = target.offsetWidth;
         document.addEventListener("touchmove", onTouchMove);
         document.addEventListener("touchend", onTouchEnd);
+        var ifr = iframeEl();
+        if (ifr) ifr.style.pointerEvents = "none";
       }
 
       function onTouchMove(e) {
         if (e.touches.length !== 1) return;
         var delta = e.touches[0].clientX - startX;
-        var newWidth;
-        if (direction === "right") {
-          newWidth = startWidth + delta;
-        } else {
-          newWidth = startWidth - delta;
-        }
-        var minW = parseInt(target.style.minWidth) || 200;
-        var maxW = parseInt(target.style.maxWidth) || 600;
-        newWidth = Math.max(minW, Math.min(maxW, newWidth));
+        var newWidth = direction === "right" ? startWidth + delta : startWidth - delta;
+        var minDim = parseDim(target.style.minWidth) || 160;
+        var maxDim = parseDim(target.style.maxWidth) || 640;
+        newWidth = Math.max(minDim, Math.min(maxDim, newWidth));
         target.style.width = newWidth + "px";
       }
 
@@ -107,6 +127,9 @@
         resizer.classList.remove("dragging");
         document.removeEventListener("touchmove", onTouchMove);
         document.removeEventListener("touchend", onTouchEnd);
+        var ifr = iframeEl();
+        if (ifr) ifr.style.pointerEvents = "";
+        localStorage.setItem(storageKey(targetId), target.style.width);
       }
 
       resizer.addEventListener("touchstart", onTouchStart, { passive: false });
