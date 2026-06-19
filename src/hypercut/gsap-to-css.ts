@@ -122,7 +122,7 @@ export function parseGsapFromToCalls(scriptContent: string): GsapTween[] {
 
 function parsePropsBlock(block: string): Record<string, number | string> {
   const props: Record<string, number | string> = {};
-  const re = /([A-Za-z_]+)\s*:\s*([0-9.]+|"[^"]*"|'[^']*')/g;
+  const re = /([A-Za-z_]+)\s*:\s*(-?[0-9.]+|"[^"]*"|'[^']*')/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(block)) !== null) {
     const key = m[1];
