@@ -85,7 +85,7 @@ export async function accept_suggestion(id: string) {
 
   const start = suggestion.transcript_anchor_start;
   const duration = suggestion.transcript_anchor_end - suggestion.transcript_anchor_start;
-  const clipId = `sugg-${id.slice(0, 8)}`;
+  const clipId = `sugg-${id}`;
 
   let html = await file.text();
 

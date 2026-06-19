@@ -7,6 +7,7 @@ import { Logger } from "../logger/logger";
 
 import { Metadata } from "../meta/meta";
 import { JobLifecycleStatus } from "../events/events";
+import { JobUpdates } from "../sse/job-updates";
 import { WhisperX } from "../whisperx/whisperx";
 import {
   analyzeTranscript,
@@ -78,6 +79,7 @@ export namespace HyperCutWorkflow {
     await generateInitialComposition(jobId, removals, duration);
 
     await DB.Jobs.updateStatus(jobId, JobLifecycleStatus.Complete);
+    JobUpdates.publish(jobId);
     AgenticEditor.clearHistory(jobId);
 
     Logger.info("HyperCut: upload processing complete", {

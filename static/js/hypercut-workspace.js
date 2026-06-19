@@ -9,6 +9,7 @@
     jobId = ws.getAttribute("data-job-id");
     if (!jobId) return;
 
+    initResizers();
     initTabs();
     initRegenerate();
     initFullscreen();
@@ -19,6 +20,97 @@
 
   function api(path, opts) {
     return fetch("/api/jobs/hypercut/" + jobId + path, opts);
+  }
+
+  function initResizers() {
+    var style = document.createElement("style");
+    style.textContent = [
+      ".resizer { flex: 0 0 4px; cursor: col-resize; background: transparent; position: relative; z-index: 5; }",
+      ".resizer:hover, .resizer.dragging { background: hsl(var(--p) / 0.3); }",
+      ".resizer::before { content: ''; position: absolute; inset: 0 -2px; }",
+      "@media (max-width: 768px) { .resizer { display: none; } }",
+    ].join("\n");
+    document.head.appendChild(style);
+
+    var resizers = document.querySelectorAll(".resizer");
+    resizers.forEach(function (resizer) {
+      var targetId = resizer.getAttribute("data-target");
+      var direction = resizer.getAttribute("data-direction");
+      var target = document.getElementById(targetId);
+      if (!target) return;
+
+      var startX = 0;
+      var startWidth = 0;
+
+      function onMouseDown(e) {
+        e.preventDefault();
+        resizer.classList.add("dragging");
+        startX = e.clientX;
+        startWidth = target.offsetWidth;
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
+      }
+
+      function onMouseMove(e) {
+        var delta = e.clientX - startX;
+        var newWidth;
+        if (direction === "right") {
+          newWidth = startWidth + delta;
+        } else {
+          newWidth = startWidth - delta;
+        }
+        var minW = parseInt(target.style.minWidth) || 200;
+        var maxW = parseInt(target.style.maxWidth) || 600;
+        newWidth = Math.max(minW, Math.min(maxW, newWidth));
+        target.style.width = newWidth + "px";
+      }
+
+      function onMouseUp() {
+        resizer.classList.remove("dragging");
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+
+      resizer.addEventListener("mousedown", onMouseDown);
+
+      // Touch support
+      function onTouchStart(e) {
+        if (e.touches.length !== 1) return;
+        e.preventDefault();
+        resizer.classList.add("dragging");
+        startX = e.touches[0].clientX;
+        startWidth = target.offsetWidth;
+        document.addEventListener("touchmove", onTouchMove);
+        document.addEventListener("touchend", onTouchEnd);
+      }
+
+      function onTouchMove(e) {
+        if (e.touches.length !== 1) return;
+        var delta = e.touches[0].clientX - startX;
+        var newWidth;
+        if (direction === "right") {
+          newWidth = startWidth + delta;
+        } else {
+          newWidth = startWidth - delta;
+        }
+        var minW = parseInt(target.style.minWidth) || 200;
+        var maxW = parseInt(target.style.maxWidth) || 600;
+        newWidth = Math.max(minW, Math.min(maxW, newWidth));
+        target.style.width = newWidth + "px";
+      }
+
+      function onTouchEnd() {
+        resizer.classList.remove("dragging");
+        document.removeEventListener("touchmove", onTouchMove);
+        document.removeEventListener("touchend", onTouchEnd);
+      }
+
+      resizer.addEventListener("touchstart", onTouchStart, { passive: false });
+    });
   }
 
   function setBtnState(btn, state, label) {

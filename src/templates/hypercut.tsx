@@ -52,10 +52,11 @@ export function HypercutWorkspace(props: {
 }) {
   return (
     <div id="hypercut-workspace" data-job-id={props.jobId} class="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
-      <div class="flex gap-1 flex-1 min-h-0 p-2">
+      <div class="flex flex-1 min-h-0 p-2 gap-0">
         <aside
           id="suggestions-panel"
-          class="w-64 shrink-0 overflow-y-auto space-y-2 scrollbar-thin resize-x min-w-[12rem] max-w-[32rem]"
+          class="shrink-0 overflow-y-auto space-y-2 scrollbar-thin"
+          style="width: 16rem; min-width: 10rem; max-width: 32rem;"
           hx-get={`/create/hypercut/suggestions?job_id=${props.jobId}`}
           hx-trigger="load, every 5s"
           hx-swap="innerHTML"
@@ -64,6 +65,8 @@ export function HypercutWorkspace(props: {
             <span class="loading loading-spinner loading-sm" />
           </div>
         </aside>
+
+        <div class="resizer resizer-x" data-target="suggestions-panel" data-direction="right" />
 
         <div class="flex-1 flex flex-col min-w-0 relative">
           <div
@@ -94,10 +97,13 @@ export function HypercutWorkspace(props: {
           />
         </div>
 
+        <div class="resizer resizer-x" data-target="agent-sidebar" data-direction="left" />
+
         <aside
+          id="agent-sidebar"
           data-job-id={props.jobId}
-          class="w-80 shrink-0 flex flex-col bg-base-200 rounded-box overflow-hidden resize-x min-w-[16rem] max-w-[40rem]"
-          style="resize: horizontal;"
+          class="shrink-0 flex flex-col bg-base-200 rounded-box overflow-hidden"
+          style="width: 20rem; min-width: 14rem; max-width: 40rem;"
         >
           <AgentChat jobId={props.jobId} />
         </aside>
@@ -286,7 +292,7 @@ export async function HypercutJobStatus({ jobId }: { jobId: string }) {
       hx-ext={isProcessing ? "sse" : undefined}
       sse-connect={isProcessing ? `/jobs/stream?job_id=${jobId}` : undefined}
       hx-get={isProcessing ? `/create/hypercut?show_progress=true&job_id=${jobId}` : undefined}
-      hx-trigger={isProcessing ? "sse:job_complete" : undefined}
+      hx-trigger={isProcessing ? "sse:job-update" : undefined}
       hx-swap={isProcessing ? "outerHTML" : undefined}
     >
       <div class="card bg-base-100 shadow-xl">
