@@ -52,10 +52,6 @@ export function HypercutWorkspace(props: {
 }) {
   return (
     <div id="hypercut-workspace" data-job-id={props.jobId} class="p-4 flex flex-col h-[calc(100vh-3.5rem)]">
-      <div class="flex items-center gap-2 mb-3">
-        <h1 class="text-xl font-bold">HyperCut</h1>
-        <span class="badge badge-ghost badge-sm font-mono">{props.jobId.slice(0, 8)}</span>
-      </div>
 
       <div id="render-result" />
 
