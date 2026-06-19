@@ -1,5 +1,6 @@
 import { DB } from "../../db/db";
 import { HyperCutWorkflow } from "../../hypercut/hypercut-workflow";
+import { renderWithValidation, RenderValidationError, RenderOutputError } from "../../hypercut/render-orchestrator";
 import { Logger } from "../../logger/logger";
 import { Metadata } from "../../meta/meta";
 import type { PostHypercut } from "../schemas";
@@ -144,9 +145,23 @@ export async function render_job(jobId: string) {
   }
 
   try {
-    const outputPath = await HyperCutWorkflow.render(jobId, outputDir);
+    const outputPath = await renderWithValidation(jobId, outputDir);
     return Response.json({ output_path: outputPath });
   } catch (error) {
+    if (error instanceof RenderValidationError) {
+      Logger.warn("HyperCut render validation failed", { jobId, findings: error.findings });
+      return Response.json({
+        error: "Composition validation failed",
+        findings: error.findings,
+      }, { status: 400 });
+    }
+    if (error instanceof RenderOutputError) {
+      Logger.error("HyperCut render output invalid", { jobId, message: error.message, diagnostics: error.diagnostics });
+      return Response.json({
+        error: error.message,
+        diagnostics: error.diagnostics,
+      }, { status: 500 });
+    }
     const message = error instanceof Error ? error.message : String(error);
     Logger.error("HyperCut render failed", { jobId, message });
     return Response.json({ error: message }, { status: 500 });
