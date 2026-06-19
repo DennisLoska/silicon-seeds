@@ -9,7 +9,7 @@
     jobId = ws.getAttribute("data-job-id");
     if (!jobId) return;
 
-    initRender();
+    initTabs();
     initRegenerate();
     initFullscreen();
     initIframeError();
@@ -19,13 +19,6 @@
 
   function api(path, opts) {
     return fetch("/api/jobs/hypercut/" + jobId + path, opts);
-  }
-
-  function formatBytes(n) {
-    if (n < 1024) return n + " B";
-    if (n < 1048576) return (n / 1024).toFixed(1) + " KB";
-    if (n < 1073741824) return (n / 1048576).toFixed(1) + " MB";
-    return (n / 1073741824).toFixed(2) + " GB";
   }
 
   function setBtnState(btn, state, label) {
@@ -57,52 +50,25 @@
     if (container) container.innerHTML = "";
   }
 
-  function initRender() {
-    var btn = document.getElementById("render-btn");
-    if (!btn) return;
+  function initTabs() {
+    var tabBtns = document.querySelectorAll("#agent-tabs .tab");
+    if (!tabBtns.length) return;
 
-    btn.addEventListener("click", function () {
-      setBtnState(btn, "loading", "Rendering...");
-      var result = document.getElementById("render-result");
-      showResult(
-        result,
-        "info",
-        '<span class="loading loading-spinner loading-xs"></span> Rendering video — this may take several minutes...',
-      );
+    tabBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var tabName = btn.getAttribute("data-tab");
 
-      api("/render", { method: "POST" })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          if (data.error) {
-            setBtnState(btn, "error", "Render");
-            showResult(result, "error", data.error);
-            setTimeout(function () { setBtnState(btn, "idle", "Render"); }, 2000);
-          } else {
-            setBtnState(btn, "done", "Done");
-            var filename = data.output_path.split("/").pop();
-            var previewUrl = "/assets/" + filename;
-            showResult(
-              result,
-              "success",
-              '<div class="flex items-center gap-3">' +
-                '<div class="text-sm">' +
-                "<strong>" + filename + "</strong><br/>" +
-                "</div>" +
-                "</div>" +
-                '<video src="' + previewUrl + '" controls class="w-full max-h-48 rounded-lg mt-2" preload="metadata"></video>' +
-                '<div class="flex gap-2 mt-2">' +
-                '<a href="' + previewUrl + '" download class="btn btn-xs btn-outline btn-primary">Download</a>' +
-                '<button onclick="this.closest(\'.alert\').remove()" class="btn btn-xs btn-ghost">Dismiss</button>' +
-                "</div>",
-            );
-            setTimeout(function () { setBtnState(btn, "idle", "Render"); }, 3000);
-          }
-        })
-        .catch(function () {
-          setBtnState(btn, "error", "Render");
-          showResult(result, "error", "Request failed — check server logs.");
-          setTimeout(function () { setBtnState(btn, "idle", "Render"); }, 2000);
-        });
+        tabBtns.forEach(function (b) { b.classList.remove("tab-active"); });
+        btn.classList.add("tab-active");
+
+        var chatPanel = document.getElementById("tab-panel-chat");
+        var renderPanel = document.getElementById("tab-panel-render");
+        if (chatPanel) chatPanel.classList.add("hidden");
+        if (renderPanel) renderPanel.classList.add("hidden");
+
+        var target = document.getElementById("tab-panel-" + tabName);
+        if (target) target.classList.remove("hidden");
+      });
     });
   }
 
@@ -137,7 +103,7 @@
 
   function doRegenerate(btn) {
     setBtnState(btn, "loading", "Regenerating...");
-    var result = document.getElementById("render-result");
+    var result = document.getElementById("render-output");
     showResult(
       result,
       "info",

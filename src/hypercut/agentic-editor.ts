@@ -9,10 +9,6 @@ import { Logger } from "../logger/logger";
 import {
   lintCompositionHtml,
 } from "./composition-validator";
-import {
-  gsapFromToToCss,
-  parseGsapFromToCalls,
-} from "./gsap-to-css";
 
 let systemPrompt = "";
 let loaded = false;
@@ -82,18 +78,7 @@ export async function autoFixLint(compPath: string, findings: LintFinding[]): Pr
   const fixes: string[] = [];
 
   for (const finding of findings) {
-    const isError = finding.severity === "error";
-    const isGsapWarning = finding.code === "gsap_studio_edit_blocked";
-    if (!isError && !isGsapWarning) continue;
-
-    if (isGsapWarning) {
-      const fixed = await fixGsapStudioEditBlocked(compPath, html);
-      if (fixed) {
-        html = fixed.newHtml;
-        fixes.push(...fixed.applied);
-      }
-      continue;
-    }
+    if (finding.severity !== "error") continue;
 
     if (finding.message.includes("window.__timelines") && !html.includes("window.__timelines")) {
       const compIdMatch = html.match(/data-composition-id="([^"]+)"/);
@@ -124,82 +109,6 @@ export async function autoFixLint(compPath: string, findings: LintFinding[]): Pr
     return fixes.join(", ");
   }
   return null;
-}
-
-async function fixGsapStudioEditBlocked(
-  compPath: string,
-  html: string,
-): Promise<{ newHtml: string; applied: string[] } | null> {
-  const scriptRe = /<script\b[^>]*>([\s\S]*?)<\/script>/g;
-  let m: RegExpExecArray | null;
-  let workHtml = html;
-  const applied: string[] = [];
-  let anyConverted = false;
-
-  while ((m = scriptRe.exec(html)) !== null) {
-    const scriptContent = m[1] ?? "";
-    if (!/gsap\.timeline/.test(scriptContent)) continue;
-    if (!/window\.__timelines\[/.test(scriptContent)) continue;
-    const fromToCalls = parseGsapFromToCalls(scriptContent);
-    if (fromToCalls.length === 0) continue;
-
-    let newScript = scriptContent;
-    const keyframesBlocks: string[] = [];
-    const elementUpdates: { selector: string; animationDecl: string }[] = [];
-
-    for (const tween of fromToCalls) {
-      if (tween.selector.startsWith("#")) {
-        const id = tween.selector.slice(1);
-        const elRe = new RegExp(`<[^>]*\\bid="${id}"[^>]*>`, "g");
-        const elMatch = elRe.exec(workHtml);
-        if (elMatch) {
-          const elRaw = elMatch[0];
-          const startMatch = elRaw.match(/data-start="([^"]+)"/);
-          if (startMatch) {
-            const dataStart = Number(startMatch[1]);
-            if (Number.isFinite(dataStart) && dataStart > 0) {
-              tween.position = dataStart;
-            }
-          }
-        }
-      }
-      const css = gsapFromToToCss(tween);
-      if (!css) continue;
-      const callRe = new RegExp(
-        `\\.fromTo\\s*\\(\\s*["']${tween.selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["'][\\s\\S]*?\\)\\s*;?`,
-        "g",
-      );
-      newScript = newScript.replace(callRe, "");
-      keyframesBlocks.push(css.keyframes);
-      elementUpdates.push({ selector: css.selector, animationDecl: css.animationDecl });
-      applied.push(`converted ${tween.selector} fromTo to ${css.name}`);
-      anyConverted = true;
-    }
-
-    if (!anyConverted) continue;
-    workHtml = workHtml.replace(scriptContent, newScript);
-    if (keyframesBlocks.length > 0) {
-      const styleBlock = `\n    <style>\n      ${keyframesBlocks.join("\n      ")}\n    </style>\n  </head>`;
-      workHtml = workHtml.replace("</head>", styleBlock);
-    }
-    for (const { selector, animationDecl } of elementUpdates) {
-      const id = selector.slice(1);
-      const elRe = new RegExp(`(<[^>]*\\bid="${id}"[^>]*?)\\sstyle="([^"]*)"`, "g");
-      workHtml = workHtml.replace(elRe, (full, before: string, style: string) => {
-        const cleanedStyle = style
-          .replace(/transform\s*:[^;]+;?/g, "")
-          .replace(/opacity\s*:\s*0\s*;?/g, "")
-          .trim()
-          .replace(/\s+/g, " ");
-        const finalStyle = `${cleanedStyle} ${animationDecl};`.replace(/\s+;/g, ";").trim();
-        return full.replace(`style="${style}"`, `style="${finalStyle}"`);
-      });
-    }
-  }
-
-  if (!anyConverted) return null;
-  await Bun.write(compPath, workHtml);
-  return { newHtml: workHtml, applied };
 }
 
 async function loadAllSkills(): Promise<string> {
@@ -250,7 +159,7 @@ CRITICAL RULES:
 7. The source video is at track-index 0. Overlays go on tracks 1+.
 8. Preserve existing elements in the composition unless the user asks to remove them.
 9. If you need more information about a tool, ask the user. Don't guess.
-10. ANIMATION RULE: When animating overlay elements (images, text, divs), prefer CSS @keyframes animations defined in <style>. Do NOT use tl.fromTo / tl.to / tl.set targeting clip elements — the linter flags this as gsap_studio_edit_blocked and Studio cannot write back edits. Pattern: define @keyframes <name> { from {...} to {...} } in <style>, then add animation: <name> <dur>s <ease> <delay>s 1 both; to the element's inline style. The window.__timelines timeline must remain tween-free except for the duration marker tl.to({}, { duration: <total> }).`;
+10. ANIMATION RULE: Use GSAP tl.fromTo/tl.to for animating overlay elements. The animation MUST be on the registered window.__timelines timeline so the HyperFrames producer can seek it deterministically during rendering. Do NOT use CSS @keyframes — CSS animations run on wall-clock time and will not appear in renders. The gsap_studio_edit_blocked lint warning is expected and acceptable when GSAP owns element positions. Place the duration marker tl.to({}, { duration: <total> }) FIRST, then add fromTo/tweens after it.`;
 
   loaded = true;
 }
@@ -295,13 +204,6 @@ function createTools(jobId: string, compositionEditedRef: { current: boolean }) 
             return `Composition saved. Lint found ${lintResult.errorCount} error(s) — auto-fixed: ${fixed}. Composition is now valid.`;
           }
           return `Composition saved but lint found ${lintResult.errorCount} error(s):\n${lintResult.findings.map(f => `[${f.severity}] ${f.code ?? ""}: ${f.message} — ${f.fixHint ?? f.fix ?? ""}`).join("\n")}\nFix these and call write_composition again.`;
-        }
-        if (lintResult.warningCount > 0) {
-          const fixed = await autoFixLint(compPath, lintResult.findings);
-          if (fixed) {
-            return `Composition saved. Lint passed with ${lintResult.warningCount} warning(s) — auto-fixed: ${fixed}.`;
-          }
-          return `Composition saved. Lint passed with ${lintResult.warningCount} warning(s):\n${lintResult.findings.map(f => `[${f.severity}] ${f.code ?? ""}: ${f.message} — ${f.fixHint ?? ""}`).join("\n")}`;
         }
         return "Composition saved successfully. Lint passed. The studio will reload.";
       },

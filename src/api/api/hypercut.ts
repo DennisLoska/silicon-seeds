@@ -141,29 +141,41 @@ export async function regenerate_composition(jobId: string) {
 export async function render_job(jobId: string) {
   const outputDir = Bun.env.OUTPUT_DIR;
   if (!outputDir) {
-    return Response.json({ error: "OUTPUT_DIR not configured" }, { status: 500 });
+    return new Response(
+      `<div class="alert alert-error text-sm"><span>OUTPUT_DIR not configured</span></div>`,
+      { status: 500, headers: { "Content-Type": "text/html" } },
+    );
   }
 
   try {
     const outputPath = await renderWithValidation(jobId, outputDir);
-    return Response.json({ output_path: outputPath });
+    const filename = outputPath.split("/").pop()!;
+    const previewUrl = `/assets/${filename}`;
+    return new Response(
+      `<video src="${previewUrl}" controls class="w-full rounded-lg" preload="metadata"></video><div class="flex gap-2 mt-2"><a href="${previewUrl}" download class="btn btn-xs btn-outline btn-primary">Download</a></div>`,
+      { status: 200, headers: { "Content-Type": "text/html" } },
+    );
   } catch (error) {
     if (error instanceof RenderValidationError) {
       Logger.warn("HyperCut render validation failed", { jobId, findings: error.findings });
-      return Response.json({
-        error: "Composition validation failed",
-        findings: error.findings,
-      }, { status: 400 });
+      const findingsHtml = error.findings.map(f => `<li>[${f.severity}] ${f.code}: ${f.message}</li>`).join("");
+      return new Response(
+        `<div class="alert alert-error text-sm"><span>Composition validation failed:</span><ul class="text-xs mt-1">${findingsHtml}</ul></div>`,
+        { status: 400, headers: { "Content-Type": "text/html" } },
+      );
     }
     if (error instanceof RenderOutputError) {
-      Logger.error("HyperCut render output invalid", { jobId, message: error.message, diagnostics: error.diagnostics });
-      return Response.json({
-        error: error.message,
-        diagnostics: error.diagnostics,
-      }, { status: 500 });
+      Logger.error("HyperCut render output invalid", { jobId, message: error.message });
+      return new Response(
+        `<div class="alert alert-error text-sm"><span>${error.message}</span></div>`,
+        { status: 500, headers: { "Content-Type": "text/html" } },
+      );
     }
     const message = error instanceof Error ? error.message : String(error);
     Logger.error("HyperCut render failed", { jobId, message });
-    return Response.json({ error: message }, { status: 500 });
+    return new Response(
+      `<div class="alert alert-error text-sm"><span>${message}</span></div>`,
+      { status: 500, headers: { "Content-Type": "text/html" } },
+    );
   }
 }
