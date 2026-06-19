@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { statSync } from "node:fs";
 import { HyperCutWorkflow } from "./hypercut-workflow";
+import { HypercutPreviewManager } from "./preview-manager";
 import {
   lintCompositionHtml,
   type CompositionValidationFinding,
@@ -110,6 +111,9 @@ export async function renderWithValidation(
 ): Promise<string> {
   const projectDir = join(outputDir, `hypercut-${jobId}`);
   const compPath = join(projectDir, "index.html");
+
+  await HypercutPreviewManager.syncFromStudio(jobId, projectDir);
+
   const compFile = Bun.file(compPath);
   if (!(await compFile.exists())) {
     throw new RenderValidationError([{

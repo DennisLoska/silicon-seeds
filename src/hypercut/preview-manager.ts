@@ -10,7 +10,7 @@ interface PreviewProcess {
 const PREVIEWS = new Map<string, PreviewProcess>();
 
 function findFreePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const server = Bun.listen({
       port: 0,
       hostname: "127.0.0.1",
@@ -34,8 +34,7 @@ export namespace HypercutPreviewManager {
     if (cleanupRegistered) return;
     cleanupRegistered = true;
     process.on("SIGINT", () => {
-      for (const [id, p] of PREVIEWS) {
-        Logger.info("HypercutPreview: killing preview for job", { jobId: id });
+      for (const [, p] of PREVIEWS) {
         p.kill();
       }
       PREVIEWS.clear();
@@ -88,6 +87,30 @@ export namespace HypercutPreviewManager {
     throw new Error("Preview server failed to start");
   }
 
+  export function getPort(jobId: string): number | null {
+    const preview = PREVIEWS.get(jobId);
+    return preview ? preview.port : null;
+  }
+
+  export async function syncFromStudio(jobId: string, projectDir: string): Promise<boolean> {
+    const port = getPort(jobId);
+    if (!port) return false;
+    const projectId = `hypercut-${jobId}`;
+    try {
+      const resp = await fetch(`http://127.0.0.1:${port}/api/projects/${projectId}/files/index.html`);
+      if (!resp.ok) return false;
+      const data = await resp.json() as { content?: string };
+      if (!data.content) return false;
+      await Bun.write(`${projectDir}/index.html`, data.content);
+      Logger.info("HypercutPreview: synced composition from Studio", { jobId });
+      return true;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      Logger.warn("HypercutPreview: sync from Studio failed", { jobId, msg });
+      return false;
+    }
+  }
+
   export function stop(jobId: string) {
     const preview = PREVIEWS.get(jobId);
     if (preview) {
@@ -98,7 +121,7 @@ export namespace HypercutPreviewManager {
   }
 
   export function stopAll() {
-    for (const [id, p] of PREVIEWS) {
+    for (const [, p] of PREVIEWS) {
       p.kill();
     }
     PREVIEWS.clear();

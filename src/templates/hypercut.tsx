@@ -51,11 +51,11 @@ export function HypercutWorkspace(props: {
   sourceVideoUrl: string;
 }) {
   return (
-    <div id="hypercut-workspace" data-job-id={props.jobId} class="p-4 flex flex-col h-[calc(100vh-3.5rem)]">
-      <div class="flex gap-3 flex-1 min-h-0">
+    <div id="hypercut-workspace" data-job-id={props.jobId} class="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
+      <div class="flex gap-1 flex-1 min-h-0 p-2">
         <aside
           id="suggestions-panel"
-          class="w-72 shrink-0 overflow-y-auto space-y-2 scrollbar-thin"
+          class="w-64 shrink-0 overflow-y-auto space-y-2 scrollbar-thin resize-x min-w-[12rem] max-w-[32rem]"
           hx-get={`/create/hypercut/suggestions?job_id=${props.jobId}`}
           hx-trigger="load, every 5s"
           hx-swap="innerHTML"
@@ -80,7 +80,7 @@ export function HypercutWorkspace(props: {
             <div class="flex items-center gap-1">
               <button id="regenerate-btn" class="btn btn-ghost btn-xs gap-1" title="Regenerate composition from DB">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                Regenerate
+                <span class="hidden sm:inline">Regenerate</span>
               </button>
               <button id="fullscreen-btn" class="btn btn-ghost btn-xs btn-square" title="Fullscreen">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l4 4m8-4h4m0 0v4m0-4l-4 4M4 16v4m0 0h4m-4 0l4-4m8 4h4m0-4v4m0 0l-4-4"/></svg>
@@ -96,7 +96,8 @@ export function HypercutWorkspace(props: {
 
         <aside
           data-job-id={props.jobId}
-          class="w-80 shrink-0 flex flex-col bg-base-200 rounded-box overflow-hidden"
+          class="w-80 shrink-0 flex flex-col bg-base-200 rounded-box overflow-hidden resize-x min-w-[16rem] max-w-[40rem]"
+          style="resize: horizontal;"
         >
           <AgentChat jobId={props.jobId} />
         </aside>
