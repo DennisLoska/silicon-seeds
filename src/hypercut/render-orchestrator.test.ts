@@ -35,7 +35,7 @@ async function makeTmpDir(prefix: string): Promise<string> {
 
 describe("describeRenderDiagnostics", () => {
   it("returns zeros when project dir does not exist", async () => {
-    const diag = await describeRenderDiagnostics("/tmp/nonexistent-project-dir-xyz-abc");
+    const diag = await describeRenderDiagnostics("/tmp/opencode/nonexistent-output", "/tmp/opencode/nonexistent-project");
     expect(diag.workDir).toBeNull();
     expect(diag.compiledHtmlExists).toBe(false);
     expect(diag.compiledHtmlBytes).toBe(0);
@@ -49,7 +49,7 @@ describe("describeRenderDiagnostics", () => {
     await writeWithDirs(`${workDir}/compiled/index.html`, "<html>compiled</html>");
     await writeWithDirs(`${workDir}/captured-frames/frame_000001.jpg`, "jpeg-bytes");
     await writeWithDirs(`${workDir}/captured-frames/frame_000002.jpg`, "jpeg-bytes");
-    const diag = await describeRenderDiagnostics(projectDir);
+    const diag = await describeRenderDiagnostics("/tmp/opencode/ss-test-output-" + Date.now(), projectDir);
     expect(diag.workDir).toBe(workDir);
     expect(diag.compiledHtmlExists).toBe(true);
     expect(diag.compiledHtmlBytes).toBeGreaterThan(0);
@@ -60,7 +60,7 @@ describe("describeRenderDiagnostics", () => {
     const projectDir = await makeTmpDir("empty-compiled");
     const workDir = `${projectDir}/renders/work-empty`;
     await writeWithDirs(`${workDir}/compiled/index.html`, "");
-    const diag = await describeRenderDiagnostics(projectDir);
+    const diag = await describeRenderDiagnostics("/tmp/opencode/ss-test-output-" + Date.now(), projectDir);
     expect(diag.compiledHtmlExists).toBe(true);
     expect(diag.compiledHtmlBytes).toBe(0);
   });

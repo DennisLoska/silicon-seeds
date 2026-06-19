@@ -1,6 +1,7 @@
 import { DB } from "../../db/db";
 import { HyperCutWorkflow } from "../../hypercut/hypercut-workflow";
 import { renderWithValidation, RenderValidationError, RenderOutputError } from "../../hypercut/render-orchestrator";
+import { HypercutPreviewManager } from "../../hypercut/preview-manager";
 import { Logger } from "../../logger/logger";
 import { Metadata } from "../../meta/meta";
 import type { PostHypercut } from "../schemas";
@@ -66,7 +67,10 @@ export async function accept_suggestion(id: string) {
   const outputDir = Bun.env.OUTPUT_DIR;
   if (!outputDir) return new Response(null, { status: 204 });
 
-  const compPath = `${outputDir}/hypercut-${suggestion.job_id}/index.html`;
+  const projectDir = `${outputDir}/hypercut-${suggestion.job_id}`;
+  await HypercutPreviewManager.syncFromStudio(suggestion.job_id, projectDir);
+
+  const compPath = `${projectDir}/index.html`;
   const file = Bun.file(compPath);
   if (!(await file.exists())) return new Response(null, { status: 204 });
 
@@ -89,7 +93,11 @@ export async function accept_suggestion(id: string) {
     return new Response(null, { status: 204 });
   }
 
-  const trackIndex = 1;
+  const trackMatch = html.match(/data-track-index="(\d+)"/g);
+  const maxTrack = trackMatch
+    ? Math.max(...trackMatch.map(m => parseInt(m.match(/\d+/)![0])))
+    : 0;
+  const trackIndex = maxTrack + 1;
   let clipHtml: string;
   if (suggestion.source_type === "video") {
     clipHtml = `      <video id="${clipId}" class="clip" data-start="${start}" data-duration="${duration}" data-track-index="${trackIndex}" data-name="${suggestion.source_type}" src="${assetPath}" playsinline></video>`;
@@ -102,12 +110,18 @@ export async function accept_suggestion(id: string) {
   await Bun.write(compPath, html);
   Logger.info("HyperCut: suggestion added to composition", { suggestionId: id, clipId });
 
-  return new Response(null, { status: 204, headers: { "HX-Trigger": "suggestion-accepted" } });
+  return new Response(
+    `<div class="bg-base-200 rounded-box border border-success/30 p-2 text-center text-xs opacity-50">Added to timeline</div>`,
+    { status: 200, headers: { "Content-Type": "text/html", "HX-Trigger": "suggestion-accepted" } },
+  );
 }
 
 export async function reject_suggestion(id: string) {
   await DB.Hypercut.updateSuggestionStatus(id, "rejected");
-  return new Response(null, { status: 204 });
+  return new Response("", {
+    status: 200,
+    headers: { "Content-Type": "text/html" },
+  });
 }
 
 export async function regenerate_composition(jobId: string) {

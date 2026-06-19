@@ -38,9 +38,9 @@ export class RenderOutputError extends Error {
 const MIN_OUTPUT_BYTES = 1024;
 
 export async function describeRenderDiagnostics(
+  outputDir: string,
   projectDir: string,
 ): Promise<RenderDiagnostics> {
-  const rendersDir = join(projectDir, "renders");
   const empty: RenderDiagnostics = {
     workDir: null,
     compiledHtmlExists: false,
@@ -50,26 +50,31 @@ export async function describeRenderDiagnostics(
     outputBytes: 0,
   };
 
+  const searchDirs = [
+    join(projectDir, "renders"),
+    outputDir,
+  ];
+
   let workDir: string | null = null;
-  try {
-    const entries: string[] = [];
-    for await (const name of new Bun.Glob("work-*").scan({ cwd: rendersDir, onlyFiles: false })) {
-      entries.push(name);
-    }
-    if (entries.length === 0) return empty;
-    let newestMtime = 0;
-    for (const name of entries) {
-      const fullPath = join(rendersDir, name);
-      try {
-        const stat = statSync(fullPath);
-        if (stat && stat.mtimeMs > newestMtime) {
-          newestMtime = stat.mtimeMs;
-          workDir = fullPath;
-        }
-      } catch {}
-    }
-  } catch {
-    return empty;
+  let newestMtime = 0;
+
+  for (const searchDir of searchDirs) {
+    try {
+      const entries: string[] = [];
+      for await (const name of new Bun.Glob("work-*").scan({ cwd: searchDir, onlyFiles: false })) {
+        entries.push(name);
+      }
+      for (const name of entries) {
+        const fullPath = join(searchDir, name);
+        try {
+          const stat = statSync(fullPath);
+          if (stat && stat.mtimeMs > newestMtime) {
+            newestMtime = stat.mtimeMs;
+            workDir = fullPath;
+          }
+        } catch {}
+      }
+    } catch {}
   }
 
   if (!workDir) return empty;
@@ -136,42 +141,56 @@ export async function renderWithValidation(
     throw new RenderValidationError(validation.findings.filter(f => f.severity === "error"));
   }
 
-  let outputPath: string;
-  try {
-    outputPath = await HyperCutWorkflow.render(jobId, outputDir);
-  } catch (renderError) {
-    const diag = await describeRenderDiagnostics(projectDir);
-    const reason = describeFailureReason(diag);
-    const renderMsg = renderError instanceof Error ? renderError.message : String(renderError);
-    throw new RenderOutputError(
-      `Render stage failed: ${renderMsg}. ${reason}`,
-      diag,
-    );
-  }
-
-  const outputFile = Bun.file(outputPath);
-  let outputExists = false;
-  let outputBytes = 0;
-  try {
-    outputExists = await outputFile.exists();
-    if (outputExists) {
-      const stat = await outputFile.stat();
-      outputBytes = stat?.size ?? 0;
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let outputPath: string;
+    try {
+      outputPath = await HyperCutWorkflow.render(jobId, outputDir);
+    } catch (renderError) {
+      lastError = renderError instanceof Error ? renderError : new Error(String(renderError));
+      if (attempt < 1) {
+        continue;
+      }
+      const diag = await describeRenderDiagnostics(outputDir, projectDir);
+      const reason = describeFailureReason(diag);
+      throw new RenderOutputError(
+        `Render stage failed: ${lastError.message}. ${reason}`,
+        diag,
+      );
     }
-  } catch {}
 
-  if (!outputExists || outputBytes < MIN_OUTPUT_BYTES) {
-    const diag = await describeRenderDiagnostics(projectDir);
-    diag.outputExists = outputExists;
-    diag.outputBytes = outputBytes;
-    const reason = describeFailureReason(diag);
-    throw new RenderOutputError(
-      `Render produced invalid output (exists=${outputExists}, bytes=${outputBytes}). ${reason}`,
-      diag,
-    );
+    const outputFile = Bun.file(outputPath);
+    let outputExists = false;
+    let outputBytes = 0;
+    try {
+      outputExists = await outputFile.exists();
+      if (outputExists) {
+        const stat = await outputFile.stat();
+        outputBytes = stat?.size ?? 0;
+      }
+    } catch {}
+
+    if (!outputExists || outputBytes < MIN_OUTPUT_BYTES) {
+      if (attempt < 1) {
+        continue;
+      }
+      const diag = await describeRenderDiagnostics(outputDir, projectDir);
+      diag.outputExists = outputExists;
+      diag.outputBytes = outputBytes;
+      const reason = describeFailureReason(diag);
+      throw new RenderOutputError(
+        `Render produced invalid output (exists=${outputExists}, bytes=${outputBytes}). ${reason}`,
+        diag,
+      );
+    }
+
+    return outputPath;
   }
 
-  return outputPath;
+  throw new RenderOutputError(
+    `Render failed after retry: ${lastError?.message ?? "unknown error"}`,
+    await describeRenderDiagnostics(outputDir, projectDir),
+  );
 }
 
 function describeFailureReason(diag: RenderDiagnostics): string {

@@ -62,7 +62,7 @@ export function AgentChat(props: { jobId: string }) {
         ></div>
 
         <div class="border-t border-base-300 p-3">
-          <form id="agent-chat-form" class="flex gap-2 items-end w-full">
+          <form id="agent-chat-form" class="flex gap-2 items-center w-full">
             <textarea
               id="agent-chat-input"
               name="message"

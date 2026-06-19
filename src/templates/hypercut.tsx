@@ -51,7 +51,7 @@ export function HypercutWorkspace(props: {
   sourceVideoUrl: string;
 }) {
   return (
-    <div id="hypercut-workspace" data-job-id={props.jobId} class="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
+    <div id="hypercut-workspace" data-job-id={props.jobId} class="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
       <div class="flex gap-1 flex-1 min-h-0 p-2">
         <aside
           id="suggestions-panel"
@@ -216,20 +216,25 @@ export function HypercutSuggestions(props: {
                   </span>
                   <div class="flex gap-1">
                     <button
+                      type="button"
                       class="btn btn-xs btn-ghost btn-square suggestion-skip"
                       title="Skip"
                       data-suggestion-id={s.id}
                       hx-post={`/api/jobs/hypercut/suggestions/${s.id}/reject`}
-                      hx-swap="none"
+                      hx-target="closest [data-suggestion-type]"
+                      hx-swap="outerHTML"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                     <button
+                      type="button"
                       class="btn btn-xs btn-success btn-square suggestion-add"
                       title="Add to timeline"
                       data-suggestion-id={s.id}
                       hx-post={`/api/jobs/hypercut/suggestions/${s.id}/accept`}
-                      hx-swap="none"
+                      hx-target="closest [data-suggestion-type]"
+                      hx-swap="outerHTML"
+                      hx-disabled-elt="this"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     </button>
