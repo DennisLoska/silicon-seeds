@@ -24,6 +24,7 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .addColumn("resolution", "text", (col) => col.defaultTo(null))
     .addColumn("image_model", "text", (col) => col.defaultTo(null))
     .addColumn("video_model", "text", (col) => col.defaultTo(null))
+    .addColumn("audio_model", "text", (col) => col.defaultTo(null))
     .addColumn("style_preset", "text", (col) => col.defaultTo(null))
     .execute();
 

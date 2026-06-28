@@ -41,6 +41,7 @@ export interface Job extends BaseEvent {
   resolution?: string;
   image_model?: string;
   video_model?: string;
+  audio_model?: string;
   style_preset?: string;
 }
 

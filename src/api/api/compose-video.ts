@@ -1,5 +1,6 @@
 import { AudioGenerator } from "../../audio/audio-generator";
 import { JobOrchestrator } from "../../jobs/jobs";
+import { Metadata } from "../../meta/meta";
 import { TextGenerator } from "../../text/text-generator";
 import { Utils } from "../../utils/utils";
 import { PostCompose } from "../schemas";
@@ -41,6 +42,7 @@ export async function compose_video(options: PostCompose) {
     transition_duration,
     image_model,
     video_model,
+    audio_model: Metadata.INSTRUMENTAL_MODEL,
     style_preset,
   });
 
@@ -51,14 +53,11 @@ export async function compose_video(options: PostCompose) {
     prompt: finalScript,
   });
 
-  return new Response(
-    JSON.stringify({ message: "job queued" }),
-    {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "HX-Redirect": `/compose?show_progress=true&job_id=${jobId}`,
-      },
+  return new Response(JSON.stringify({ message: "job queued" }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "HX-Redirect": `/compose?show_progress=true&job_id=${jobId}`,
     },
-  );
+  });
 }

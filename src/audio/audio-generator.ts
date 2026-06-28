@@ -1,18 +1,14 @@
 import { comfyClient, ModelVariant } from "../comfyui/comfyui-client";
 import { AudioPromptEvent, Event, JobMode } from "../events/events";
 import { Metadata } from "../meta/meta";
-import { PromptGenerator } from "../prompts/prompt-generator";
 import { QueueManager } from "../queue/queue-manager";
 import { JobOrchestrator } from "../jobs/jobs";
-import { Presets } from "../styles/presets";
 import { Utils } from "../utils/utils";
 import { DB } from "../db/db";
 
 export namespace AudioGenerator {
   export function init() {
-    Event.on(Event.NewAudioPrompt, (event) => {
-      void QueueManager.pump();
-    });
+    Event.on(Event.NewAudioPrompt, async (event) => {});
   }
 
   export async function schedule_audio(event: {
@@ -24,12 +20,15 @@ export namespace AudioGenerator {
     lyrics?: string;
     audio_settings?: Record<string, unknown>;
   }) {
-    return await JobOrchestrator.schedule_task({
+    const task = await JobOrchestrator.schedule_task({
       ...event,
       type: Event.NewAudioPrompt,
       mode:
         event.mode ?? (event.prompt ? JobMode.Speech : JobMode.Instrumental),
     });
+    await QueueManager.pump();
+
+    return task;
   }
 
   export async function generate_audio(item: AudioPromptEvent) {

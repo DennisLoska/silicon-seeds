@@ -28,6 +28,7 @@ export interface DbSchema {
     resolution?: string;
     image_model?: string;
     video_model?: string;
+    audio_model?: string;
     style_preset?: string;
   };
   events: {
@@ -79,7 +80,10 @@ export type JobsSchema = Omit<DbSchema["jobs"], "created_at"> & {
 };
 export type EventsSchema = DbSchema["events"];
 export type MetaSchema = DbSchema["meta"];
-export type AutoCutCutClipSchema = Omit<DbSchema["autocut_cut_clips"], "created_at"> & {
+export type AutoCutCutClipSchema = Omit<
+  DbSchema["autocut_cut_clips"],
+  "created_at"
+> & {
   created_at: string;
 };
 export type EventRow = Omit<DbSchema["events"], "created_at"> & {
@@ -236,7 +240,8 @@ export namespace DB {
           .execute();
 
         const runningPromptId =
-          events.find((event) => event.status === JobStatus.Running)?.id ?? null;
+          events.find((event) => event.status === JobStatus.Running)?.id ??
+          null;
         const pendingPromptIds = events
           .filter((event) => event.status === JobStatus.Pending)
           .map((event) => event.id);
@@ -554,7 +559,8 @@ export namespace DB {
         .updateTable("events")
         .set({
           status,
-          claimed_at: status === JobStatus.Running ? new Date().toISOString() : null,
+          claimed_at:
+            status === JobStatus.Running ? new Date().toISOString() : null,
           error: status === JobStatus.Failed ? "unknown" : null,
         })
         .where("id", "=", id)
@@ -681,12 +687,7 @@ export namespace DB {
         // not preserve scene chronology. Indexed media events must be read by their
         // explicit sequence first.
         .orderBy((eb) =>
-          eb
-            .case()
-            .when("index", "is not", null)
-            .then(0)
-            .else(1)
-            .end(),
+          eb.case().when("index", "is not", null).then(0).else(1).end(),
         )
         .orderBy("index", "asc")
         .orderBy("created_at", "asc")
@@ -899,7 +900,9 @@ export namespace DB {
           const mediaType = getMediaTypeFromExtension(row.filename);
           if (!mediaType) return null;
 
-          const file = Bun.file(getOutputAssetPath(row.subfolder, row.filename));
+          const file = Bun.file(
+            getOutputAssetPath(row.subfolder, row.filename),
+          );
           if (!(await file.exists())) return null;
 
           return {
@@ -919,10 +922,14 @@ export namespace DB {
       );
 
       return items
-        .filter((row): row is ListItemResult & {
-          mediaType: "image" | "video";
-          created_at: string;
-        } => row !== null)
+        .filter(
+          (
+            row,
+          ): row is ListItemResult & {
+            mediaType: "image" | "video";
+            created_at: string;
+          } => row !== null,
+        )
         .slice(0, limit);
     }
   }

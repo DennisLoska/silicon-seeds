@@ -3,7 +3,7 @@ import { PromptGenerator } from "../prompts/prompt-generator";
 import { QueueManager } from "../queue/queue-manager";
 import { VideoGenerator } from "../video/video-generator";
 import { comfyClient } from "../comfyui/comfyui-client";
-import { Event, JobMode, JobStatus } from "../events/events";
+import { Event, Job, JobEvent, JobMode, JobStatus } from "../events/events";
 import { JobLifecycleStatus } from "../events/events";
 import { AudioGenerator } from "../audio/audio-generator";
 import { JobOrchestrator } from "../jobs/jobs";
@@ -17,6 +17,7 @@ import { LLM } from "../llm/llm";
 
 export namespace SocketServer {
   let ws: WebSocket;
+
   const COMFY_BINARY_TEXT_EVENT = 3;
 
   export async function start() {
@@ -75,7 +76,6 @@ export namespace SocketServer {
 
       const job = await DB.Jobs.findById(event.jobId);
 
-      await comfyClient.free_memory(true, true);
       QueueManager.releaseComfyIdle();
 
       // [STATE: idle] — guard for non-active jobs
@@ -89,8 +89,7 @@ export namespace SocketServer {
       }
 
       const deferCompletion =
-        (event.type === Event.NewImagePrompt && event.mode === JobMode.Video) ||
-        (event.type === Event.NewAudioPrompt && event.mode === JobMode.Speech);
+        event.type === Event.NewImagePrompt && event.mode === JobMode.Video;
 
       if (!deferCompletion) {
         await JobOrchestrator.update_schedule({
@@ -206,38 +205,37 @@ export namespace SocketServer {
             scriptEvent.text,
             clipCount,
           );
-          if (scenes) {
-            const styledImgPrompts = await Promise.all(
-              scenes.map(async (scene, index) => {
-                const res = await PromptGenerator.txt_to_img_prompt(
-                  scene,
-                  1,
-                  job.style_preset as Presets | undefined,
-                );
-                if (!res) return null;
-                const [item] = res;
 
-                return { prompt: item?.prompt, lora: item?.lora, index };
-              }),
+          Utils.assert(scenes, "We didn't get amazing scene prompts");
+
+          let index = 0;
+          for (const scene of scenes) {
+            const res = await PromptGenerator.txt_to_img_prompt(
+              scene,
+              1,
+              job.style_preset as Presets | undefined,
             );
 
-            Logger.info("Generated styled image prompts:", styledImgPrompts);
-            Utils.assert(
-              styledImgPrompts.every((item) => Boolean(item?.prompt)),
-              "One or more scene prompts not defined",
-            );
+            Utils.assert(res, "We didn't get amazing style prompt");
+            const [item] = res;
 
-            await Promise.all(
-              styledImgPrompts.map(async (item) => {
-                await ImageGenerator.schedule_image({
-                  jobId: event.jobId,
-                  mode: JobMode.Video,
-                  prompt: item?.prompt as unknown as string,
-                  lora: item?.lora as unknown as Lora | undefined,
-                  index: item?.index,
-                });
-              }),
-            );
+            const styledPrompt = {
+              prompt: item?.prompt,
+              lora: item?.lora,
+              index,
+            };
+
+            Logger.info("Generated styled image prompt:", styledPrompt);
+
+            await ImageGenerator.schedule_image({
+              jobId: event.jobId,
+              mode: JobMode.Video,
+              prompt: styledPrompt?.prompt as unknown as string,
+              lora: styledPrompt?.lora as unknown as Lora | undefined,
+              index,
+            });
+
+            index++;
           }
         }
       }
@@ -302,7 +300,6 @@ export namespace SocketServer {
           event.type === Event.NewTransitionPrompt
         )
       ) {
-        Logger.info("Not a video or transition event");
         await DB.Jobs.finalizeCompletedJobs();
         void QueueManager.pump();
         return;

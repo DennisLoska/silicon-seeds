@@ -101,15 +101,6 @@ async function runProcess(cmd: string[], context: string) {
 }
 
 export namespace VideoGenerator {
-  export function init() {
-    Event.on(Event.NewVideoPrompt, (event) => {
-      void QueueManager.pump();
-    });
-    Event.on(Event.NewTransitionPrompt, (event) => {
-      void QueueManager.pump();
-    });
-  }
-
   async function create_video_composition_event(jobId: string, path: string) {
     const videoCompEvent: VideoCompostionEvent = {
       id: Metadata.randomId(),
@@ -136,11 +127,14 @@ export namespace VideoGenerator {
     filename: string;
     index?: number;
   }) {
-    return await JobOrchestrator.schedule_task({
+    const task = await JobOrchestrator.schedule_task({
       ...event,
       type: Event.NewVideoPrompt,
       mode: JobMode.Video,
     });
+
+    await QueueManager.pump();
+    return task;
   }
 
   export async function schedule_transition(event: {
@@ -150,11 +144,14 @@ export namespace VideoGenerator {
     endImg: string;
     index?: number;
   }) {
-    return await JobOrchestrator.schedule_task({
+    const task = await JobOrchestrator.schedule_task({
       ...event,
       type: Event.NewTransitionPrompt,
       mode: JobMode.Video,
     });
+
+    await QueueManager.pump();
+    return task;
   }
 
   export async function generate_video(
