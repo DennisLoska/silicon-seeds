@@ -1,12 +1,9 @@
 import { ApiServer } from "./api/api";
-import { AudioGenerator } from "./audio/audio-generator";
 import { DB } from "./db/db";
-import { ImageGenerator } from "./image/image-generator";
 import { JobOrchestrator } from "./jobs/jobs";
 import { Logger } from "./logger/logger";
 import { QueueManager } from "./queue/queue-manager";
 import { SocketServer } from "./socket/socket-server";
-import { VideoGenerator } from "./video/video-generator";
 
 // TODO list:
 //
@@ -87,9 +84,6 @@ async function main() {
   await DB.Jobs.finalizeCompletedJobs();
   await QueueManager.resume();
   JobOrchestrator.init();
-  ImageGenerator.init();
-  VideoGenerator.init();
-  AudioGenerator.init();
 
   ApiServer.start();
   await SocketServer.start();

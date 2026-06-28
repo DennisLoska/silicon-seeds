@@ -4,8 +4,12 @@ import { JobMode } from "../../events/events";
 import { Utils } from "../../utils/utils";
 import { PostDistinctAudio } from "../schemas";
 
-export async function text_to_audio(options: PostDistinctAudio): Promise<Response> {
-  const instrumentalPrompt = Utils.sanitizeInputText(options.instrumental_prompt);
+export async function text_to_audio(
+  options: PostDistinctAudio,
+): Promise<Response> {
+  const instrumentalPrompt = Utils.sanitizeInputText(
+    options.instrumental_prompt,
+  );
   const lyricPrompt = Utils.sanitizeInputText(options.lyric_prompt);
 
   if (!instrumentalPrompt) {
@@ -18,6 +22,7 @@ export async function text_to_audio(options: PostDistinctAudio): Promise<Respons
 
   const { id: jobId } = await JobOrchestrator.create_job({
     original_prompt: instrumentalPrompt,
+    audio_model: "ace-step-1.5",
   });
 
   await AudioGenerator.schedule_audio({

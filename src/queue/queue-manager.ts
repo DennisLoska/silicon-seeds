@@ -40,10 +40,10 @@ export namespace QueueManager {
     try {
       if (await DB.Events.hasRunning()) return;
 
-      const event = await DB.Events.claimNextRunnable();
-      if (!event) return;
+      const nextEvent = await DB.Events.claimNextRunnable();
+      if (!nextEvent) return;
 
-      await dispatch(event);
+      await dispatch(nextEvent);
     } finally {
       pumping = false;
     }
@@ -77,7 +77,10 @@ export namespace QueueManager {
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      Logger.error("Failed to dispatch queued event", { id: event.id, message });
+      Logger.error("Failed to dispatch queued event", {
+        id: event.id,
+        message,
+      });
       await DB.Jobs.failJob(event.jobId);
       queueMicrotask(() => {
         void pump();

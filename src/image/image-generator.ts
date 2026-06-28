@@ -7,12 +7,6 @@ import { Lora } from "../styles/presets";
 import { DB } from "../db/db";
 
 export namespace ImageGenerator {
-  export function init() {
-    Event.on(Event.NewImagePrompt, (event) => {
-      void QueueManager.pump();
-    });
-  }
-
   export async function schedule_image(event: {
     id?: string;
     jobId: string;
@@ -21,10 +15,13 @@ export namespace ImageGenerator {
     lora?: Lora;
     index?: number;
   }) {
-    return await JobOrchestrator.schedule_task({
+    const task = await JobOrchestrator.schedule_task({
       ...event,
       type: Event.NewImagePrompt,
     });
+
+    await QueueManager.pump();
+    return task;
   }
 
   export async function generate_image(item: ImagePromptEvent) {
