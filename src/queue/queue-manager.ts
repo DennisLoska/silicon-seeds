@@ -34,10 +34,6 @@ export namespace QueueManager {
   }
 
   export async function pump() {
-    Logger.info("pumping", pumping);
-    Logger.info("waitingForComfyIdle", waitingForComfyIdle);
-    Logger.info("holdCount", holdCount);
-
     if (pumping) return;
     if (waitingForComfyIdle) return;
     if (holdCount > 0) return;
@@ -57,7 +53,6 @@ export namespace QueueManager {
 
       await dispatch(nextEvent);
     } finally {
-      Logger.warn("Never entered finally it's so over");
       pumping = false;
     }
   }
