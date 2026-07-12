@@ -106,6 +106,7 @@ export interface AudioPromptEvent extends JobBaseEvent {
   duration?: number;
   lyrics?: string;
   audio_settings?: Record<string, unknown>;
+  voice_id?: string;
   type: Event.NewAudioPrompt;
 }
 

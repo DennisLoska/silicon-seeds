@@ -51,6 +51,7 @@ export async function compose_video(options: PostCompose) {
   await AudioGenerator.schedule_audio({
     jobId,
     prompt: finalScript,
+    voice_id: options.voice_id,
   });
 
   return new Response(JSON.stringify({ message: "job queued" }), {

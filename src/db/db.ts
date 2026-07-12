@@ -438,6 +438,9 @@ export namespace DB {
             index: event.index,
           };
         case Event.NewAudioPrompt:
+          const mergedSettings = event.voice_id
+            ? { ...(event.audio_settings ?? {}), voice_id: event.voice_id }
+            : event.audio_settings;
           return {
             ...base,
             filename: null,
@@ -445,8 +448,8 @@ export namespace DB {
             end_img: null,
             duration: event.duration ?? null,
             lyrics: event.lyrics ?? null,
-            audio_settings: event.audio_settings
-              ? JSON.stringify(event.audio_settings)
+            audio_settings: mergedSettings
+              ? JSON.stringify(mergedSettings)
               : null,
           };
       }
@@ -512,13 +515,15 @@ export namespace DB {
             prompt: row.prompt,
           };
         case Event.NewAudioPrompt:
+          const audioSettings = row.audio_settings
+            ? (JSON.parse(row.audio_settings) as Record<string, unknown>)
+            : undefined;
           return {
             ...base,
             duration: row.duration ?? undefined,
             lyrics: row.lyrics ?? undefined,
-            audio_settings: row.audio_settings
-              ? (JSON.parse(row.audio_settings) as Record<string, unknown>)
-              : undefined,
+            audio_settings: audioSettings,
+            voice_id: audioSettings?.voice_id as string | undefined,
             type: Event.NewAudioPrompt,
             prompt: row.prompt ?? "n/a",
           };

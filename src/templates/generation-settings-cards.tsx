@@ -212,6 +212,45 @@ export function VideoSettingsCard({
   );
 }
 
+export function VoiceCard({
+  className = SHARED_CARD_CLASS,
+  disabled = false,
+  disabledExpr,
+  showExpr,
+}: CardProps) {
+  return (
+    <div
+      className={mergeClassName(SHARED_CARD_CLASS, className === SHARED_CARD_CLASS ? undefined : className)}
+      x-show={showExpr}
+    >
+      <div className="card-body flex flex-col">
+        <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3">
+          <Icons.MicIcon />
+          Voice
+        </h2>
+        <div className="form-control">
+          <label className="label cursor-pointer">
+            <span className="label-text font-medium flex items-center gap-2">
+              <Icons.MicIconSmall />
+              TTS Voice
+            </span>
+          </label>
+          <select
+            name="voice_id"
+            className="select select-bordered w-full flex-none"
+            hx-get="/api/tts/profiles-options"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+            {...disabledAttrs(disabled, disabledExpr)}
+          >
+            <option value="preset:kokoro:af_bella">Default (Kokoro)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function StylePresetCard({
   className = SHARED_CARD_CLASS,
   disabled = false,

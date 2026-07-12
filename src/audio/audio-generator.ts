@@ -1,16 +1,12 @@
 import { comfyClient, ModelVariant } from "../comfyui/comfyui-client";
 import { AudioPromptEvent, Event, JobMode } from "../events/events";
-import { Metadata } from "../meta/meta";
 import { QueueManager } from "../queue/queue-manager";
 import { JobOrchestrator } from "../jobs/jobs";
+import { TTS } from "../tts/tts";
 import { Utils } from "../utils/utils";
 import { DB } from "../db/db";
 
 export namespace AudioGenerator {
-  export function init() {
-    Event.on(Event.NewAudioPrompt, async (event) => {});
-  }
-
   export async function schedule_audio(event: {
     id?: string;
     jobId: string;
@@ -19,6 +15,7 @@ export namespace AudioGenerator {
     mode?: JobMode.Speech | JobMode.Song | JobMode.Instrumental;
     lyrics?: string;
     audio_settings?: Record<string, unknown>;
+    voice_id?: string;
   }) {
     const task = await JobOrchestrator.schedule_task({
       ...event,
@@ -31,7 +28,9 @@ export namespace AudioGenerator {
     return task;
   }
 
-  export async function generate_audio(item: AudioPromptEvent) {
+  export async function generate_audio(
+    item: AudioPromptEvent,
+  ): Promise<{ duration?: number }> {
     const job = await DB.Jobs.findById(item.jobId);
     Utils.assert(item.type === Event.NewAudioPrompt, "Incorrect event type!");
 
@@ -39,13 +38,26 @@ export namespace AudioGenerator {
 
     if (mode === JobMode.Speech) {
       Utils.assert(typeof prompt === "string", "'prompt' is not a string");
-      const modelVariant: ModelVariant = {
-        id,
-        kind: "text-to-speech",
-        prompt,
-      };
+      Utils.assert(item.voice_id, "Speech mode requires voice_id");
 
-      await comfyClient.generate(modelVariant, job);
+      const result = await TTS.generate({
+        id,
+        jobId: item.jobId,
+        text: prompt,
+        voiceId: item.voice_id,
+        language: audio_settings?.language as string | undefined,
+      });
+
+      await DB.Meta.create({
+        event_id: id,
+        filename: result.filename,
+        subfolder: "",
+        type: "output",
+      });
+
+      await DB.Events.markComplete(id);
+
+      return { duration: result.duration };
     }
 
     if (mode === JobMode.Instrumental) {
@@ -60,6 +72,7 @@ export namespace AudioGenerator {
       };
 
       await comfyClient.generate(modelVariant, job);
+      return {};
     }
 
     if (mode === JobMode.Song) {
@@ -74,32 +87,9 @@ export namespace AudioGenerator {
       };
 
       await comfyClient.generate(modelVariant, job);
+      return {};
     }
-  }
 
-  export async function handle_tts_complete(event: AudioPromptEvent) {
-    Utils.assert(
-      event.mode === JobMode.Speech,
-      "TTS completion handler requires a speech event",
-    );
-
-    const metadata = await DB.Meta.findByEventId(event.id);
-    const audioBlob = await comfyClient.getAsset(
-      metadata.filename,
-      metadata.subfolder,
-      metadata.type,
-    );
-
-    const duration = await Metadata.getAudioDuration(audioBlob);
-    const job = await DB.Jobs.findById(event.jobId);
-
-    const clipDuration = job.clip_duration || Metadata.CLIP_DURATION;
-    const transitionDuration =
-      job.transition_duration || Metadata.TRANSITION_DURATION;
-    const clipCount = Math.ceil(
-      (duration + transitionDuration) / (clipDuration + transitionDuration),
-    );
-
-    return { duration, clipDuration, transitionDuration, clipCount };
+    return {};
   }
 }

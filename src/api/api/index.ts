@@ -6,13 +6,14 @@ import { script_to_scenes } from "./script-to-scenes";
 import { text_to_image_to_video } from "./text-to-image-to-video";
 import { compose_video } from "./compose-video";
 import { video_transition } from "./video-transition";
-import { text_to_speech } from "./text-to-speech";
+
 import { text_to_instrumental } from "./text-to-instrumental";
 import { text_to_audio } from "./text-to-audio";
 import { autocut_video } from "./autocut-video";
 import { delete_job } from "./delete";
 import { cancel_job } from "./cancel";
 import { regenerate_event } from "./regenerate";
+import { tts_profiles, tts_profiles_options } from "./tts";
 import { zValidator } from "@hono/zod-validator";
 import {
   PostComposeSchema,
@@ -80,12 +81,16 @@ app.post("/jobs/videos/transition", async () => {
   return video_transition();
 });
 
-app.post("/jobs/tts", async () => {
-  return text_to_speech();
-});
-
 app.post("/jobs/instrumental", async () => {
   return text_to_instrumental();
+});
+
+app.get("/tts/profiles", async () => {
+  return tts_profiles();
+});
+
+app.get("/tts/profiles-options", async () => {
+  return tts_profiles_options();
 });
 
 // Delete job endpoint - RESTful: DELETE /api/jobs/:job_id
