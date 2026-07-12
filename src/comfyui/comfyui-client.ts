@@ -8,7 +8,7 @@ import ltx2_3_img2transitionApi from "./api/video_ltx2_3_style_transition.json";
 // import ace_step_1_0_api from "./api/audio_ace_step_1_0_instrumental.json";
 import ace_step_1_5_api from "./api/audio_ace_step1_5_xl_base_instrumental.json";
 import stable_audio_3_api from "./api/audio_stable_audio_3_medium_base.json";
-import kokoro_tts_api from "./api/kokoro-tts.json";
+
 import wan2_2_img2vidWorkflow from "./workflows/video_wan2_2_14B_i2v_720p_5s.json";
 import wan2_2_img2transWorkflow from "./workflows/video_wan2_2_14B_transitions.json";
 import ltx2_3_img2vidWorkflow from "./workflows/video_ltx2_3_i2v.json";
@@ -29,12 +29,6 @@ type Img2VidInput = {
   id: string;
   kind: "image-to-video";
   imagePath: string;
-  prompt: string;
-};
-
-type Text2SpeechInput = {
-  id: string;
-  kind: "text-to-speech";
   prompt: string;
 };
 
@@ -67,7 +61,6 @@ type Img2Transition = {
 export type ModelVariant =
   | Text2ImgInput
   | Img2VidInput
-  | Text2SpeechInput
   | Text2Instrumental
   | Text2Song
   | Img2Transition;
@@ -379,13 +372,6 @@ export class ComfyUIClient {
         api["75"].inputs.filename_prefix = input.id;
         api["269"].inputs.image = input.imagePath;
       }
-    }
-
-    if (input.kind === "text-to-speech") {
-      api = kokoro_tts_api;
-      api["4"].inputs.filename_prefix = input.id;
-      api["2"].inputs.text = input.prompt;
-      // TODO add parameters for: speed, speaker_name
     }
 
     if (input.kind === "text-to-song") {

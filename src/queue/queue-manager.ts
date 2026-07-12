@@ -1,8 +1,10 @@
 import { AudioGenerator } from "../audio/audio-generator";
 import { DB } from "../db/db";
-import { Event, JobEvent } from "../events/events";
+import { AudioPromptEvent, Event, JobEvent, JobMode } from "../events/events";
 import { ImageGenerator } from "../image/image-generator";
 import { Logger } from "../logger/logger";
+import { Metadata } from "../meta/meta";
+import type { Lora, Presets } from "../styles/presets";
 import { VideoGenerator } from "../video/video-generator";
 
 export namespace QueueManager {
@@ -32,19 +34,30 @@ export namespace QueueManager {
   }
 
   export async function pump() {
+    Logger.info("pumping", pumping);
+    Logger.info("waitingForComfyIdle", waitingForComfyIdle);
+    Logger.info("holdCount", holdCount);
+
     if (pumping) return;
     if (waitingForComfyIdle) return;
     if (holdCount > 0) return;
     pumping = true;
 
     try {
-      if (await DB.Events.hasRunning()) return;
+      if (await DB.Events.hasRunning()) {
+        Logger.warn("Event already running, not dispatching.");
+        return;
+      }
 
       const nextEvent = await DB.Events.claimNextRunnable();
-      if (!nextEvent) return;
+      if (!nextEvent) {
+        Logger.warn("No event available for dispatch, not dispatching.");
+        return;
+      }
 
       await dispatch(nextEvent);
     } finally {
+      Logger.warn("Never entered finally it's so over");
       pumping = false;
     }
   }
@@ -59,7 +72,15 @@ export namespace QueueManager {
 
     try {
       if (event.type === Event.NewAudioPrompt) {
-        await AudioGenerator.generate_audio(event);
+        const { duration } = await AudioGenerator.generate_audio(event);
+
+        if (event.mode === JobMode.Speech && event.voice_id) {
+          // super ugly, but this does not get a socket event back from ComfyUI
+          // because request is made to Voicebox for TTS
+          pumping = false;
+          await schedule_tts_pipeline(event, duration);
+        }
+
         return;
       }
 
@@ -85,6 +106,85 @@ export namespace QueueManager {
       queueMicrotask(() => {
         void pump();
       });
+    }
+  }
+
+  async function schedule_tts_pipeline(
+    event: AudioPromptEvent,
+    duration?: number,
+  ) {
+    let speechDuration = duration;
+    if (speechDuration == null || speechDuration <= 0) {
+      const metadata = await DB.Meta.findByEventId(event.id);
+      const outputDir = Bun.env.OUTPUT_DIR;
+      if (!outputDir) throw new Error("OUTPUT_DIR env not set");
+
+      const audioFile = Bun.file(`${outputDir}/${metadata.filename}`);
+      const audioBlob = await audioFile
+        .arrayBuffer()
+        .then((b) => new Blob([b]));
+      speechDuration = await Metadata.getAudioDuration(audioBlob);
+    }
+
+    const job = await DB.Jobs.findById(event.jobId);
+    const clipDuration = job.clip_duration || Metadata.CLIP_DURATION;
+    const transitionDuration =
+      job.transition_duration || Metadata.TRANSITION_DURATION;
+    const clipCount = Math.ceil(
+      (speechDuration + transitionDuration) /
+        (clipDuration + transitionDuration),
+    );
+
+    await AudioGenerator.schedule_audio({
+      jobId: event.jobId,
+      duration: speechDuration,
+      mode: JobMode.Instrumental,
+    });
+
+    await schedule_composition_images(event, clipCount);
+  }
+
+  async function schedule_composition_images(
+    event: AudioPromptEvent,
+    clipCount: number,
+  ) {
+    const job = await DB.Jobs.findById(event.jobId);
+
+    const textEvents = (await DB.Events.findByJobId(event.jobId)).filter(
+      (e) => e.type === Event.NewTextPrompt,
+    );
+    if (textEvents[0]?.type === Event.NewTextPrompt) {
+      const { PromptGenerator } = await import("../prompts/prompt-generator");
+      const scenes = await PromptGenerator.image_scene_prompts(
+        textEvents[0].text,
+        clipCount,
+      );
+
+      if (!scenes) throw new Error("No scene prompts generated");
+
+      let idx = 0;
+      for (const scene of scenes) {
+        const res = await PromptGenerator.txt_to_img_prompt(
+          scene,
+          1,
+          job.style_preset as
+            | (typeof Presets)[keyof typeof Presets]
+            | undefined,
+        );
+        if (!res) throw new Error("No styled prompt generated");
+        const [styleItem] = res;
+        const stylePrompt = styleItem?.prompt;
+        if (!stylePrompt) throw new Error("Styled prompt is empty");
+
+        await ImageGenerator.schedule_image({
+          jobId: event.jobId,
+          mode: JobMode.Video,
+          prompt: stylePrompt,
+          lora: styleItem?.lora as (typeof Lora)[keyof typeof Lora] | undefined,
+          index: idx,
+        });
+        idx++;
+      }
     }
   }
 }

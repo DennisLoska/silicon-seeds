@@ -169,7 +169,7 @@ export namespace JobOrchestrator {
         };
 
       case Event.NewAudioPrompt:
-        const { duration, lyrics, audio_settings } = event;
+        const { duration, lyrics, audio_settings, voice_id } = event;
 
         return {
           ...base,
@@ -178,6 +178,7 @@ export namespace JobOrchestrator {
           duration,
           lyrics,
           audio_settings,
+          voice_id,
         };
 
       default:

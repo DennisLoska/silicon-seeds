@@ -3,16 +3,15 @@ import { PromptGenerator } from "../prompts/prompt-generator";
 import { QueueManager } from "../queue/queue-manager";
 import { VideoGenerator } from "../video/video-generator";
 import { comfyClient } from "../comfyui/comfyui-client";
-import { Event, Job, JobEvent, JobMode, JobStatus } from "../events/events";
+import { Event, JobMode, JobStatus } from "../events/events";
 import { JobLifecycleStatus } from "../events/events";
-import { AudioGenerator } from "../audio/audio-generator";
 import { JobOrchestrator } from "../jobs/jobs";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
 import { DB } from "../db/db";
 import { AutoCutWorkflow } from "../autocut/autocut-workflow";
-import { Lora, Presets } from "../styles/presets";
-import { ImageGenerator } from "../image/image-generator";
+
+
 import { LLM } from "../llm/llm";
 
 export namespace SocketServer {
@@ -175,68 +174,6 @@ export namespace SocketServer {
             event.id,
             scheduledVideo.id,
           );
-        }
-      }
-
-      // [STATE: speech_complete] (deferred) — handle TTS complete → generate scenes → style prompts → schedule images
-      if (
-        event.type === Event.NewAudioPrompt &&
-        event.mode === JobMode.Speech
-      ) {
-        // Extract duration and clip count to schedule instrumental generation and prompts for video scenes
-        const { duration, clipCount } =
-          await AudioGenerator.handle_tts_complete(event);
-
-        // Schedule instrumental generation to overlap with video generation and editing
-        await AudioGenerator.schedule_audio({
-          jobId: event.jobId,
-          duration,
-          mode: JobMode.Instrumental,
-        });
-
-        // Schedule prompts for video scenes
-        const textEvents = (await DB.Events.findByJobId(event.jobId)).filter(
-          (item) => item.type === Event.NewTextPrompt,
-        );
-        const scriptEvent = textEvents[0];
-
-        if (scriptEvent?.type === Event.NewTextPrompt) {
-          const scenes = await PromptGenerator.image_scene_prompts(
-            scriptEvent.text,
-            clipCount,
-          );
-
-          Utils.assert(scenes, "We didn't get amazing scene prompts");
-
-          let index = 0;
-          for (const scene of scenes) {
-            const res = await PromptGenerator.txt_to_img_prompt(
-              scene,
-              1,
-              job.style_preset as Presets | undefined,
-            );
-
-            Utils.assert(res, "We didn't get amazing style prompt");
-            const [item] = res;
-
-            const styledPrompt = {
-              prompt: item?.prompt,
-              lora: item?.lora,
-              index,
-            };
-
-            Logger.info("Generated styled image prompt:", styledPrompt);
-
-            await ImageGenerator.schedule_image({
-              jobId: event.jobId,
-              mode: JobMode.Video,
-              prompt: styledPrompt?.prompt as unknown as string,
-              lora: styledPrompt?.lora as unknown as Lora | undefined,
-              index,
-            });
-
-            index++;
-          }
         }
       }
 

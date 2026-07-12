@@ -5,6 +5,7 @@ import {
   AIModelsCard,
   StylePresetCard,
   VideoSettingsCard,
+  VoiceCard,
 } from "./generation-settings-cards";
 import { Icons } from "./icons";
 import { ErrorToast } from "./toast";
@@ -30,9 +31,6 @@ function ComposeActionCardBody({ isJobRunning }: { isJobRunning: boolean }) {
         <Icons.LightningBoltIcon />
         Action!
       </h2>
-      <p className="text-sm text-base-content/70 mb-4 flex-none">
-        Schedule the job to generate the video with the selected settings.
-      </p>
       <div className="card-actions justify-between flex flex-row gap-2 mt-auto">
         <button type="reset" className="btn btn-ghost">
           Reset
@@ -80,20 +78,25 @@ function getJobStatusUi(status?: JobLifecycleStatus) {
   }
 }
 
-export const Compose = async ({ showProgress = false, jobId = "" }: ComposeProps) => {
+export const Compose = async ({
+  showProgress = false,
+  jobId = "",
+}: ComposeProps) => {
   return (
-  <div className="flex flex-col sm:px-6 py-6 xl:h-full bg-base-200">
-    <ErrorToast />
-    {/* Kanban-style Card Container */}
-    <form
-      className="flex flex-col xl:flex-row gap-4 xl:h-full"
-      hx-post="/api/jobs/videos/compose"
-      hx-encoding="multipart/form-data"
-      hx-swap="none"
-      hx-disable-element="#submit-btn"
-      hx-ext={showProgress && jobId ? "sse" : undefined}
-      sse-connect={showProgress && jobId ? `/jobs/stream?job_id=${jobId}` : undefined}
-      hx-on={`
+    <div className="flex flex-col sm:px-6 py-6 xl:h-full bg-base-200">
+      <ErrorToast />
+      {/* Kanban-style Card Container */}
+      <form
+        className="flex flex-col xl:flex-row gap-4 xl:h-full"
+        hx-post="/api/jobs/videos/compose"
+        hx-encoding="multipart/form-data"
+        hx-swap="none"
+        hx-disable-element="#submit-btn"
+        hx-ext={showProgress && jobId ? "sse" : undefined}
+        sse-connect={
+          showProgress && jobId ? `/jobs/stream?job_id=${jobId}` : undefined
+        }
+        hx-on={`
         before-request(this) {
           this.querySelector('.submit-toggle').checked = true;
         }
@@ -101,56 +104,57 @@ export const Compose = async ({ showProgress = false, jobId = "" }: ComposeProps
           this.querySelector('.submit-toggle').checked = false;
         }
       `}
-    >
-      {/* Card 1: Video Script Input - Takes half width and full height */}
-      <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex flex-col overflow-hidden resize-none 2xl:resize-x 2xl:min-w-[500px]">
-        <div className="card-body flex flex-col flex-grow p-4">
-          <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
-            <Icons.DocumentIcon />
-            Video Script
-          </h2>
-          <textarea
-            name="script"
-            id="type-script-tab"
-            className="textarea textarea-ghost w-full flex-grow resize-none mb-4 min-h-[420px] focus:outline-none"
-            placeholder="Write your video script here..."
-          ></textarea>
+      >
+        {/* Card 1: Video Script Input - Takes half width and full height */}
+        <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex flex-col overflow-hidden resize-none 2xl:resize-x 2xl:min-w-[500px]">
+          <div className="card-body flex flex-col flex-grow p-4">
+            <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
+              <Icons.DocumentIcon />
+              Video Script
+            </h2>
+            <textarea
+              name="script"
+              id="type-script-tab"
+              className="textarea textarea-ghost w-full flex-grow resize-none mb-4 min-h-[420px] focus:outline-none"
+              placeholder="Write your video script here..."
+            ></textarea>
 
-          {/* Divider */}
-          <div className="divider my-2 flex-none">OR</div>
+            {/* Divider */}
+            <div className="divider my-2 flex-none">OR</div>
 
-          {/* File upload input */}
-          <input
-            type="file"
-            name="script_file"
-            accept=".txt,.md"
-            className="file-input file-input-bordered w-full flex-none"
-          />
+            {/* File upload input */}
+            <input
+              type="file"
+              name="script_file"
+              accept=".txt,.md"
+              className="file-input file-input-bordered w-full flex-none"
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Container for Cards 2-4 - Stacked vertically, takes half width and full height */}
-      <div className="flex flex-col w-full xl:w-1/2 gap-4 flex-grow">
-        <AIModelsCard />
-        <VideoSettingsCard />
-        <StylePresetCard />
+        {/* Container for Cards 2-4 - Stacked vertically, takes half width and full height */}
+        <div className="flex flex-col w-full xl:w-1/2 gap-4 flex-grow">
+          <AIModelsCard />
+          <VideoSettingsCard />
+          <StylePresetCard />
 
-        {/* Card 5: Action Buttons */}
-        {await (
-          <ComposeActionCardFragment
-            showProgress={showProgress}
-            jobId={jobId}
-          />
-        )}
-      </div>
+          {/* Card: Voice Selection */}
+          <VoiceCard />
 
-      {/* Card 6: Progress - Only shown when showProgress=true */}
-      {showProgress && jobId && (
-        <ComposeProgressFragment jobId={jobId} />
-      )}
-    </form>
-    <dialog id="job-action-modal" className="modal"></dialog>
-  </div>
+          {/* Card 5: Action Buttons */}
+          {await (
+            <ComposeActionCardFragment
+              showProgress={showProgress}
+              jobId={jobId}
+            />
+          )}
+        </div>
+
+        {/* Card 6: Progress - Only shown when showProgress=true */}
+        {showProgress && jobId && <ComposeProgressFragment jobId={jobId} />}
+      </form>
+      <dialog id="job-action-modal" className="modal"></dialog>
+    </div>
   );
 };
 
@@ -174,8 +178,12 @@ export const ComposeProgressCard = async ({ jobId }: ComposeProgressProps) => {
           ) : null}
         </div>
         <div className="mb-4 flex-none space-y-1">
-          <p className="text-base font-semibold text-base-content">{job?.name}</p>
-          <p className="text-sm text-base-content/70">Monitoring job: {jobId}</p>
+          <p className="text-base font-semibold text-base-content">
+            {job?.name}
+          </p>
+          <p className="text-sm text-base-content/70">
+            Monitoring job: {jobId}
+          </p>
         </div>
         <div id="events-container" className="flex-grow min-h-[300px]">
           {await (<EventList jobId={jobId} source="compose-progress" />)}
@@ -206,9 +214,10 @@ export const ComposeActionCard = async ({
   showProgress = false,
   jobId = "",
 }: ComposeActionCardProps) => {
-  const activeJob = showProgress && jobId
-    ? await DB.Jobs.findById(jobId).catch(() => null)
-    : null;
+  const activeJob =
+    showProgress && jobId
+      ? await DB.Jobs.findById(jobId).catch(() => null)
+      : null;
   const isJobRunning = activeJob?.status === JobLifecycleStatus.Active;
 
   return (
@@ -222,13 +231,16 @@ export const ComposeActionCardFragment = async ({
   showProgress = false,
   jobId = "",
 }: ComposeActionCardProps) => {
-  const activeJob = showProgress && jobId
-    ? await DB.Jobs.findById(jobId).catch(() => null)
-    : null;
+  const activeJob =
+    showProgress && jobId
+      ? await DB.Jobs.findById(jobId).catch(() => null)
+      : null;
   const isJobRunning = activeJob?.status === JobLifecycleStatus.Active;
 
   if (!showProgress || !jobId) {
-    return await <ComposeActionCard showProgress={showProgress} jobId={jobId} />;
+    return await (
+      <ComposeActionCard showProgress={showProgress} jobId={jobId} />
+    );
   }
 
   return (
@@ -244,7 +256,9 @@ export const ComposeActionCardFragment = async ({
   );
 };
 
-export const ComposeProgressFragment = async ({ jobId }: ComposeProgressProps) => {
+export const ComposeProgressFragment = async ({
+  jobId,
+}: ComposeProgressProps) => {
   return (
     <div
       id="compose-progress-fragment"
