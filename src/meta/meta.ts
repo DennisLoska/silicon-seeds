@@ -100,17 +100,24 @@ export namespace Metadata {
       JSON.stringify(metaJson),
     );
 
-    Chroma.saveEmbedding({
-      id: filename.split(".")[0],
-      title: title ?? "",
-      description: description ?? "",
-      tags: tags ?? [],
-      prompt,
-      filename,
-      filetype,
-      resolution,
-      style,
-    });
+    try {
+      await Chroma.saveEmbedding({
+        id: filename.split(".")[0],
+        title: title ?? "",
+        description: description ?? "",
+        tags: tags ?? [],
+        prompt,
+        filename,
+        filetype,
+        resolution,
+        style,
+      });
+    } catch (e) {
+      Logger.error("Chroma embedding failed — metadata saved without vector", {
+        filename,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
   }
 
   export async function getAsset(promptId: string) {
