@@ -102,6 +102,25 @@ app.get("/events", async (c) => {
   );
 });
 
+app.get("/media-items", async (c) => {
+  const jobId = c.req.query("job_id");
+  const type = c.req.query("type") as "image" | "video" | "audio" | null;
+  if (!jobId || !type || !["image", "video", "audio"].includes(type)) {
+    return c.text("job_id and type=image|video|audio required", 400);
+  }
+  const offset = parseInt(c.req.query("offset") ?? "0", 10);
+  const limit = parseInt(c.req.query("limit") ?? "12", 10);
+  const { renderMediaItems } = await import("../../templates/media");
+  return c.html(
+    await renderMediaItems(
+      jobId,
+      type,
+      Number.isNaN(offset) ? 0 : offset,
+      Number.isNaN(limit) ? 12 : Math.min(limit, 24),
+    ),
+  );
+});
+
 app.get("/compose-progress", async (c) => {
   const jobId = c.req.query("job_id");
   if (!jobId) {

@@ -162,9 +162,11 @@ export const JobDetails = async ({ jobId, activeTab }: JobDetailsProps) => {
     case "status":
       contentFragment = Templates.StatusFragment(job);
       break;
-    case "media":
-      contentFragment = Templates.MediaFragment(await buildMediaData(jobId));
+    case "media": {
+      const mediaData = await buildMediaData(jobId);
+      contentFragment = Templates.MediaFragment({ ...mediaData, jobId });
       break;
+    }
     case "events":
       contentFragment = Templates.EventsFragment(job);
       break;
@@ -406,9 +408,11 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
     case "status":
       tabFragment = Templates.StatusFragment(job);
       break;
-    case "media":
-      tabFragment = Templates.MediaFragment(await buildMediaData(jobId));
+    case "media": {
+      const mediaData = await buildMediaData(jobId);
+      tabFragment = Templates.MediaFragment({ ...mediaData, jobId });
       break;
+    }
     case "events":
       tabFragment = Templates.EventsFragment(job);
       break;
@@ -441,6 +445,7 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
 
         {/* Main Content Area */}
         <main
+          id="jobs-main-scroll"
           className="p-6 flex-1 overflow-y-auto"
           style={{ maxHeight: "calc(100vh - 4rem)" }}
         >

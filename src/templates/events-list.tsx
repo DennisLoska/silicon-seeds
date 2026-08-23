@@ -38,7 +38,7 @@ function renderSentinel(jobId: string, offset: number, source: string) {
       id="events-sentinel"
       className="py-6 text-center"
       hx-get={`/jobs/events?job_id=${jobId}&offset=${offset}&limit=${limit}&source=${source}`}
-      hx-trigger="revealed"
+      hx-trigger="intersect once threshold:0.1 root:#jobs-main-scroll"
       hx-swap="outerHTML"
     >
       <span className="loading loading-spinner loading-sm"></span>
