@@ -31,20 +31,47 @@ export namespace Chroma {
   let client: ChromaClient;
   let collection: Collection;
 
+  let initPromise: Promise<void> | null = null;
+
   async function init() {
-    const port = Number(Bun.env.CHROMADB_PORT);
-    client = new ChromaClient({ port });
-    try {
-      await client.heartbeat();
-    } catch (e) {
+    if (initPromise) return initPromise;
+    initPromise = (async () => {
+      const port = Number(Bun.env.CHROMADB_PORT ?? 8000);
+      if (!Number.isFinite(port)) {
+        throw new Error(`Invalid CHROMADB_PORT: ${Bun.env.CHROMADB_PORT}`);
+      }
+      // Try hosts in order: CHROMADB_HOST -> 127.0.0.1 -> localhost
+      // Server started via `bun run db:chroma` now binds 0.0.0.0, but
+      // older default was localhost (::1 only). Try both to stay compatible.
+      const primaryHost = Bun.env.CHROMADB_HOST ?? "localhost";
+      const hosts = [...new Set([primaryHost, "127.0.0.1", "localhost"])];
+      let lastError: unknown;
+      for (const host of hosts) {
+        client = new ChromaClient({ host, port });
+        try {
+          await client.heartbeat();
+          collection = await client.getOrCreateCollection({ name: COLLECTION_NAME });
+          Logger.info("ChromaDB ready", { collection: COLLECTION_NAME, host, port });
+          return;
+        } catch (e) {
+          lastError = e;
+          Logger.warn(`Chroma heartbeat failed on ${host}:${port}, trying next`, {
+            error: e instanceof Error ? e.message : String(e),
+          });
+        }
+      }
       Logger.error(
         "ChromaDB healthcheck failed — is the server running on i.e. port 8000?",
-        { error: e instanceof Error ? e.message : String(e) },
+        { hosts, port, error: lastError instanceof Error ? lastError.message : String(lastError) },
       );
-      process.exit(1);
+      throw lastError;
+    })();
+    try {
+      await initPromise;
+    } catch (e) {
+      initPromise = null;
+      throw e;
     }
-    collection = await client.getOrCreateCollection({ name: COLLECTION_NAME });
-    Logger.info("ChromaDB ready", { collection: COLLECTION_NAME });
   }
 
   function isReady() {
