@@ -157,7 +157,7 @@ async function resolveProfileId(voiceId: string): Promise<string> {
 }
 
 async function waitForAudio(generationId: string): Promise<Blob> {
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 300; i++) {
     const res = await fetch(`${VOICEBOX_URL}/audio/${generationId}`);
     if (res.ok) {
       const blob = await res.blob();
@@ -165,5 +165,5 @@ async function waitForAudio(generationId: string): Promise<Blob> {
     }
     await new Promise((r) => setTimeout(r, 1000));
   }
-  throw new Error("Voicebox audio not ready after 120s");
+  throw new Error("Voicebox audio not ready after 300s");
 }
