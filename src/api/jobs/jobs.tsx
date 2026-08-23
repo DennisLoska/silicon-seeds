@@ -49,17 +49,16 @@ app.get("/details/:jobId", async (c) => {
     // This allows innerHTML swap to replace the entire div while keeping sidebar
     return c.html(
       <>
-        <div id="job-tabs-container">
-          <div
-            id="job-tabs-container"
-            data-job-id={jobId}
-            hx-get={`/jobs/details/${jobId}?tab=${tab}&filter=${filter}`}
-            hx-trigger={tab === "media" || tab === "events" ? "sse:job-update" : undefined}
-            hx-swap="outerHTML"
-          >
-            <JobTabsFragment jobId={jobId} filter={filter} tab={tab} />
+        <div
+          id="job-tabs-container"
+          data-job-id={jobId}
+          hx-get={`/jobs/details/${jobId}?tab=${tab}&filter=${filter}`}
+          hx-trigger={tab === "media" || tab === "events" ? "sse:job-update throttle:400ms" : undefined}
+          hx-swap="outerHTML"
+          hx-sync="this:replace"
+        >
+          <JobTabsFragment jobId={jobId} filter={filter} tab={tab} />
           {await (<JobContentAreaFragment jobId={jobId} activeTab={tab} />)}
-          </div>
         </div>
         <div id="header-title" hx-swap-oob="true">
           <h1 className="text-xl font-bold">Jobs</h1>

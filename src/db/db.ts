@@ -30,6 +30,7 @@ export interface DbSchema {
     video_model?: string;
     audio_model?: string;
     style_preset?: string;
+    source_video_path?: string | null;
   };
   events: {
     id: string;
@@ -73,6 +74,30 @@ export interface DbSchema {
     filename: string;
     subfolder: string;
   };
+  hypercut_suggestions: {
+    id: string;
+    created_at: Generated<string> | string;
+    job_id: string;
+    source_type: "image" | "video" | "text" | "autocut_cut";
+    asset_id: string | null;
+    text_content: string | null;
+    transcript_anchor_start: number;
+    transcript_anchor_end: number;
+    score: number | null;
+    status: "pending" | "accepted" | "rejected";
+    asset_filename: string | null;
+    asset_subfolder: string | null;
+  };
+  hypercut_clips: {
+    id: string;
+    created_at: Generated<string> | string;
+    job_id: string;
+    suggestion_id: string | null;
+    start_time: number;
+    end_time: number;
+    track: number;
+    layer_data: string;
+  };
 }
 
 export type JobsSchema = Omit<DbSchema["jobs"], "created_at"> & {
@@ -85,6 +110,13 @@ export type AutoCutCutClipSchema = Omit<
   "created_at"
 > & {
   created_at: string;
+};
+export type HypercutSuggestionSchema = Omit<DbSchema["hypercut_suggestions"], "created_at"> & {
+  created_at: string;
+  meta_filename?: string | null;
+  meta_subfolder?: string | null;
+  asset_filename?: string | null;
+  asset_subfolder?: string | null;
 };
 export type EventRow = Omit<DbSchema["events"], "created_at"> & {
   created_at: string;
@@ -147,11 +179,12 @@ export namespace DB {
       return job;
     }
 
-    export async function list() {
+    export async function list(limit = 100) {
       return await DB.db
         .selectFrom("jobs")
         .selectAll()
         .orderBy("created_at", "desc")
+        .limit(limit)
         .execute();
     }
 
@@ -818,6 +851,77 @@ export namespace DB {
     }
   }
 
+  export namespace Hypercut {
+    export async function insertSuggestion(
+      suggestion: HypercutSuggestionSchema,
+    ) {
+      await db.insertInto("hypercut_suggestions").values(suggestion).execute();
+      return suggestion;
+    }
+
+    export async function findSuggestionsByJob(jobId: string) {
+      return await db
+        .selectFrom("hypercut_suggestions")
+        .leftJoin("meta", "meta.event_id", "hypercut_suggestions.asset_id")
+        .where("job_id", "=", jobId)
+        .orderBy("transcript_anchor_start", "asc")
+        .select([
+          "hypercut_suggestions.id",
+          "hypercut_suggestions.created_at",
+          "hypercut_suggestions.job_id",
+          "hypercut_suggestions.source_type",
+          "hypercut_suggestions.asset_id",
+          "hypercut_suggestions.text_content",
+          "hypercut_suggestions.transcript_anchor_start",
+          "hypercut_suggestions.transcript_anchor_end",
+          "hypercut_suggestions.score",
+          "hypercut_suggestions.status",
+          "meta.filename as meta_filename",
+          "meta.subfolder as meta_subfolder",
+          "hypercut_suggestions.asset_filename",
+          "hypercut_suggestions.asset_subfolder",
+        ])
+        .execute();
+    }
+
+    export async function findContentSuggestionsByJob(jobId: string) {
+      return await db
+        .selectFrom("hypercut_suggestions")
+        .leftJoin("meta", "meta.event_id", "hypercut_suggestions.asset_id")
+        .where("job_id", "=", jobId)
+        .where("source_type", "!=", "autocut_cut")
+        .orderBy("transcript_anchor_start", "asc")
+        .select([
+          "hypercut_suggestions.id",
+          "hypercut_suggestions.created_at",
+          "hypercut_suggestions.job_id",
+          "hypercut_suggestions.source_type",
+          "hypercut_suggestions.asset_id",
+          "hypercut_suggestions.text_content",
+          "hypercut_suggestions.transcript_anchor_start",
+          "hypercut_suggestions.transcript_anchor_end",
+          "hypercut_suggestions.score",
+          "hypercut_suggestions.status",
+          "meta.filename as meta_filename",
+          "meta.subfolder as meta_subfolder",
+          "hypercut_suggestions.asset_filename",
+          "hypercut_suggestions.asset_subfolder",
+        ])
+        .execute();
+    }
+
+    export async function updateSuggestionStatus(
+      id: string,
+      status: HypercutSuggestionSchema["status"],
+    ) {
+      await db
+        .updateTable("hypercut_suggestions")
+        .set({ status })
+        .where("id", "=", id)
+        .execute();
+    }
+  }
+
   export namespace Gallery {
     type ListItemResult = {
       meta_id: string;
@@ -897,45 +1001,43 @@ export namespace DB {
 
       const results = await query
         .orderBy("meta.id", "desc") // UUID7 is sortable chronologically!
-        .limit(limit * 3)
+        .limit(limit * 2)
         .execute();
 
-      const items = await Promise.all(
-        results.map(async (row) => {
-          const mediaType = getMediaTypeFromExtension(row.filename);
-          if (!mediaType) return null;
+      const concurrency = 10;
+      const items: Array<ListItemResult & { mediaType: "image" | "video"; created_at: string }> = [];
+      for (let i = 0; i < results.length; i += concurrency) {
+        const chunk = results.slice(i, i + concurrency);
+        const chunkItems = await Promise.all(
+          chunk.map(async (row) => {
+            const mediaType = getMediaTypeFromExtension(row.filename);
+            if (!mediaType) return null;
 
-          const file = Bun.file(
-            getOutputAssetPath(row.subfolder, row.filename),
-          );
-          if (!(await file.exists())) return null;
+            const file = Bun.file(
+              getOutputAssetPath(row.subfolder, row.filename),
+            );
+            if (!(await file.exists())) return null;
 
-          return {
-            meta_id: row.meta_id,
-            event_id: row.event_id,
-            filename: row.filename,
-            subfolder: row.subfolder,
-            type: row.meta_type,
-            created_at: row.event_created_at,
-            job_id: row.job_id,
-            mediaType,
-          } as ListItemResult & {
-            mediaType: "image" | "video";
-            created_at: string;
-          };
-        }),
-      );
+            return {
+              meta_id: row.meta_id,
+              event_id: row.event_id,
+              filename: row.filename,
+              subfolder: row.subfolder,
+              type: row.meta_type,
+              created_at: row.event_created_at,
+              job_id: row.job_id,
+              mediaType,
+            } as ListItemResult & {
+              mediaType: "image" | "video";
+              created_at: string;
+            };
+          }),
+        );
+        for (const it of chunkItems) if (it) items.push(it);
+        if (items.length >= limit) break;
+      }
 
-      return items
-        .filter(
-          (
-            row,
-          ): row is ListItemResult & {
-            mediaType: "image" | "video";
-            created_at: string;
-          } => row !== null,
-        )
-        .slice(0, limit);
+      return items.slice(0, limit);
     }
   }
 }
