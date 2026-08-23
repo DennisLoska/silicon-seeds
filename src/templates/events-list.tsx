@@ -7,6 +7,8 @@ import { getAssetPath } from "./utils";
 export interface EventListProps {
   jobId: string;
   source?: "jobs-events" | "compose-progress" | "image-progress" | "audio-progress";
+  offset?: number;
+  limit?: number;
 }
 
 const EVENT_LABELS = {
@@ -27,10 +29,40 @@ const EVENT_ICONS = {
   [Event.NewAudioPrompt]: "🎵",
 };
 
-export const EventList = async ({ jobId, source = "jobs-events" }: EventListProps) => {
-  const jobEvents = await DB.Events.findByJobIdChronological(jobId);
+const PAGE_SIZE = 20;
 
-  if (jobEvents.length === 0) {
+function renderSentinel(jobId: string, offset: number, source: string) {
+  const limit = PAGE_SIZE;
+  return (
+    <div
+      id="events-sentinel"
+      className="py-6 text-center"
+      hx-get={`/jobs/events?job_id=${jobId}&offset=${offset}&limit=${limit}&source=${source}`}
+      hx-trigger="revealed"
+      hx-swap="outerHTML"
+    >
+      <span className="loading loading-spinner loading-sm"></span>
+    </div>
+  );
+}
+
+export const EventList = async ({
+  jobId,
+  source = "jobs-events",
+  offset = 0,
+  limit = PAGE_SIZE,
+}: EventListProps & { offset?: number; limit?: number }) => {
+  // Fetch one extra to detect hasMore without extra count query
+  const fetchLimit = limit + 1;
+  const jobEvents = await DB.Events.findByJobIdChronological(jobId, {
+    limit: fetchLimit,
+    offset,
+  });
+
+  const hasMore = jobEvents.length > limit;
+  const pageEvents = hasMore ? jobEvents.slice(0, limit) : jobEvents;
+
+  if (pageEvents.length === 0 && offset === 0) {
     return (
       <div className="p-6 text-center text-base-content/60">
         Events will appear here once the job runs.
@@ -38,12 +70,20 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
     );
   }
 
-  // Batch fetch meta for all complete events — avoids N+1 queries
-  const completeIds = jobEvents.filter((e) => e.status === JobStatus.Complete).map((e) => e.id);
+  if (pageEvents.length === 0) {
+    return (
+      <div id="events-sentinel" className="py-6 text-center text-base-content/40 text-sm">
+        No more events
+      </div>
+    );
+  }
+
+  // Batch fetch meta for all complete events in this page — avoids N+1 queries
+  const completeIds = pageEvents.filter((e) => e.status === JobStatus.Complete).map((e) => e.id);
   const metas = await DB.Meta.findManyByEventIds(completeIds);
   const metaById = new Map(metas.map((m) => [m.event_id, m]));
 
-  const eventItems = jobEvents.map(async (evt, index) => {
+  const eventItems = pageEvents.map(async (evt, index) => {
     const timestamp = new Date(evt.created_at!).toLocaleString();
     const isComplete = evt.status === JobStatus.Complete;
     const assetMeta = isComplete ? (metaById.get(evt.id) ?? null) : null;
@@ -203,6 +243,8 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
                 src={assetPath!}
                 alt="Generated image"
                 className="w-full h-auto rounded-lg border border-base-300 mb-2"
+                loading="lazy"
+                decoding="async"
               />
               {downloadBtn}
             </div>
@@ -232,6 +274,7 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
               </p>
               <video
                 controls
+                preload="metadata"
                 className="w-full rounded-lg border border-base-300 mb-2"
               >
                 <source
@@ -248,9 +291,13 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
       }
     };
 
+    const isFirstOverall = offset === 0 && index === 0;
+    const isLastPageItem = index === pageEvents.length - 1;
+    const showBottomHr = hasMore || !isLastPageItem;
+
     return (
-      <li key={evt.id}>
-        {index > 0 && <hr className={lineClass} />}
+      <li key={evt.id} style="content-visibility:auto; contain-intrinsic-size: 200px 300px;">
+        {!isFirstOverall && <hr className={lineClass} />}
         <div className="timeline-end timeline-box scrollbar-hide w-[98%] resize both overflow-auto border border-base-300 min-w-72 max-w-full">
           <details className="w-full bg-base-100 open:bg-base-100">
             <summary className="cursor-pointer list-none p-4 hover:bg-base-200 rounded-lg transition-colors">
@@ -373,15 +420,39 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
             {EVENT_ICONS[evt.type]}
           </div>
         </div>
-        {index < jobEvents.length - 1 && <hr className={lineClass} />}
+        {showBottomHr && <hr className={lineClass} />}
       </li>
     );
   });
 
+  const items = await Promise.all(eventItems);
+
+  // Paginated request (offset > 0): append via OOB + replace sentinel
+  if (offset > 0) {
+    return (
+      <>
+        <div id="events-timeline" hx-swap-oob="beforeend">
+          {items}
+        </div>
+        {hasMore ? (
+          renderSentinel(jobId, offset + limit, source)
+        ) : (
+          <div id="events-sentinel" className="py-6 text-center text-base-content/40 text-sm">
+            No more events
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // Initial load (offset === 0): render timeline + sentinel
   return (
-    <ul className="timeline timeline-compact timeline-vertical">
-      {await Promise.all(eventItems)}
-    </ul>
+    <>
+      <ul id="events-timeline" className="timeline timeline-compact timeline-vertical">
+        {items}
+      </ul>
+      {hasMore ? renderSentinel(jobId, offset + limit, source) : null}
+    </>
   );
 };
 

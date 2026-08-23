@@ -703,16 +703,36 @@ export namespace DB {
       return res.map(rowToEvent);
     }
 
-    export async function findByJobIdChronological(jobId: string) {
-      const res = await db
+    export async function findByJobIdChronological(
+      jobId: string,
+      opts?: { limit?: number; offset?: number },
+    ) {
+      let query = db
         .selectFrom("events")
         .selectAll()
         .where("job_id", "=", jobId)
         .orderBy("created_at", "asc")
-        .orderBy("id", "asc")
-        .execute();
+        .orderBy("id", "asc");
+
+      if (opts?.limit !== undefined) {
+        query = query.limit(opts.limit);
+      }
+      if (opts?.offset !== undefined) {
+        query = query.offset(opts.offset);
+      }
+
+      const res = await query.execute();
 
       return res.map(rowToEvent);
+    }
+
+    export async function countByJobId(jobId: string): Promise<number> {
+      const res = await db
+        .selectFrom("events")
+        .select((eb) => eb.fn.countAll().as("cnt"))
+        .where("job_id", "=", jobId)
+        .executeTakeFirstOrThrow();
+      return Number((res as unknown as { cnt: number }).cnt);
     }
 
     export async function deleteByIds(ids: string[]) {

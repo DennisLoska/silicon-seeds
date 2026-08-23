@@ -86,7 +86,20 @@ app.get("/events", async (c) => {
     );
   }
 
-  return c.html(await (<EventListFragment jobId={jobId} />));
+  const offset = parseInt(c.req.query("offset") ?? "0", 10);
+  const limit = parseInt(c.req.query("limit") ?? "20", 10);
+  const source = (c.req.query("source") as "jobs-events" | "compose-progress" | "image-progress" | "audio-progress") ?? "jobs-events";
+
+  return c.html(
+    await (
+      <EventListFragment
+        jobId={jobId}
+        source={source}
+        offset={Number.isNaN(offset) ? 0 : offset}
+        limit={Number.isNaN(limit) ? 20 : Math.min(limit, 50)}
+      />
+    ),
+  );
 });
 
 app.get("/compose-progress", async (c) => {
