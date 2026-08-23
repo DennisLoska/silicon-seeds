@@ -7,7 +7,7 @@ export const Events = async (job: Job) => (
       id="events-container"
       className="card-body px-0 2xl:w-1/2"
       hx-get={`/jobs/events?job_id=${job.id}`}
-      hx-trigger="load, sse:job-update"
+      hx-trigger="load"
       hx-swap="innerHTML"
     >
       <span className="skeleton skeleton-text">Melting some GPUs...</span>

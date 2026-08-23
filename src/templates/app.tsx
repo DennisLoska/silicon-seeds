@@ -34,6 +34,8 @@ const SidebarItem = ({ href, label, id, icon }: SidebarItemProps) => (
       hx-target="#job-content-container"
       hx-swap="innerHTML"
       hx-push-url={href}
+      hx-sync="#job-content-container:replace"
+      hx-indicator="this"
       id={id}
       className="is-drawer-close:justify-center py-2"
     >
@@ -62,6 +64,7 @@ export const App = ({ children, page }: AppProps) => (
               {page === "compose" && "Compose"}
               {page === "audio" && "Audio"}
               {page === "autocut" && "AutoCut"}
+              {page === "hypercut" && "HyperCut"}
               {page === "image" && "Image"}
               {page === "video" && "Video"}
               {page === "text" && "Text"}
@@ -86,6 +89,7 @@ export const App = ({ children, page }: AppProps) => (
             hx-target="#job-content-container"
             hx-swap="innerHTML"
             hx-push-url="/"
+            hx-sync="#job-content-container:replace"
             className="flex items-center is-drawer-close:justify-center gap-3 p-4 w-full hover:bg-base-300 transition-colors"
           >
             <Icons.Logo />
@@ -125,6 +129,12 @@ export const App = ({ children, page }: AppProps) => (
               label="AutoCut"
               id="sidebar-autocut"
               icon={<Icons.AutoCutSmall />}
+            />
+            <SidebarItem
+              href="/create/hypercut"
+              label="HyperCut"
+              id="sidebar-hypercut"
+              icon={<Icons.Video />}
             />
             <SidebarItem
               href="/create/image"

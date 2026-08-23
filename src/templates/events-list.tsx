@@ -38,12 +38,15 @@ export const EventList = async ({ jobId, source = "jobs-events" }: EventListProp
     );
   }
 
+  // Batch fetch meta for all complete events — avoids N+1 queries
+  const completeIds = jobEvents.filter((e) => e.status === JobStatus.Complete).map((e) => e.id);
+  const metas = await DB.Meta.findManyByEventIds(completeIds);
+  const metaById = new Map(metas.map((m) => [m.event_id, m]));
+
   const eventItems = jobEvents.map(async (evt, index) => {
     const timestamp = new Date(evt.created_at!).toLocaleString();
     const isComplete = evt.status === JobStatus.Complete;
-    const assetMeta = isComplete
-      ? await DB.Meta.findByEventId(evt.id).catch(() => null)
-      : null;
+    const assetMeta = isComplete ? (metaById.get(evt.id) ?? null) : null;
 
     const promptText = evt.prompt || "Instrumental";
     const lineClass = isComplete ? "bg-success" : "";
