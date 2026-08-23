@@ -192,13 +192,20 @@ const GalleryItemCard = ({ item }: { item: GalleryItem }) => {
   const mediaType = item.mediaType;
 
   return (
-    <div className="card bg-base-200 hover:scale-105 transition-transform duration-200 break-inside-avoid rounded-box">
+    <div
+      className="card bg-base-200 hover:scale-105 transition-transform duration-200 break-inside-avoid rounded-box"
+      style="content-visibility:auto; contain-intrinsic-size: 300px 300px;"
+    >
       <figure className="bg-base-300 flex items-center justify-center overflow-hidden rounded-box">
         {mediaType === "image" && (
           <img
             src={assetPath}
             alt={item.filename}
             className="w-full"
+            loading="lazy"
+            decoding="async"
+            // @ts-ignore fetchPriority is valid but not in JSX types
+            fetchpriority="low"
             onError={() => {
               // Hide broken images gracefully - handled by CSS instead
             }}
