@@ -49,17 +49,15 @@ app.get("/details/:jobId", async (c) => {
     // This allows innerHTML swap to replace the entire div while keeping sidebar
     return c.html(
       <>
-        <div id="job-tabs-container">
-          <div
-            id="job-tabs-container"
-            data-job-id={jobId}
-            hx-get={`/jobs/details/${jobId}?tab=${tab}&filter=${filter}`}
-            hx-trigger={tab === "media" || tab === "events" ? "sse:job-update" : undefined}
-            hx-swap="outerHTML"
-          >
-            <JobTabsFragment jobId={jobId} filter={filter} tab={tab} />
+        <div
+          id="job-tabs-container"
+          data-job-id={jobId}
+          hx-get={`/jobs/details/${jobId}?tab=${tab}&filter=${filter}`}
+          hx-trigger={tab === "media" || tab === "events" ? "sse:job-update throttle:400ms" : undefined}
+          hx-swap="outerHTML"
+        >
+          <JobTabsFragment jobId={jobId} filter={filter} tab={tab} />
           {await (<JobContentAreaFragment jobId={jobId} activeTab={tab} />)}
-          </div>
         </div>
         <div id="header-title" hx-swap-oob="true">
           <h1 className="text-xl font-bold">Jobs</h1>
@@ -88,7 +86,39 @@ app.get("/events", async (c) => {
     );
   }
 
-  return c.html(await (<EventListFragment jobId={jobId} />));
+  const offset = parseInt(c.req.query("offset") ?? "0", 10);
+  const limit = parseInt(c.req.query("limit") ?? "20", 10);
+  const source = (c.req.query("source") as "jobs-events" | "compose-progress" | "image-progress" | "audio-progress") ?? "jobs-events";
+
+  return c.html(
+    await (
+      <EventListFragment
+        jobId={jobId}
+        source={source}
+        offset={Number.isNaN(offset) ? 0 : offset}
+        limit={Number.isNaN(limit) ? 20 : Math.min(limit, 50)}
+      />
+    ),
+  );
+});
+
+app.get("/media-items", async (c) => {
+  const jobId = c.req.query("job_id");
+  const type = c.req.query("type") as "image" | "video" | "audio" | null;
+  if (!jobId || !type || !["image", "video", "audio"].includes(type)) {
+    return c.text("job_id and type=image|video|audio required", 400);
+  }
+  const offset = parseInt(c.req.query("offset") ?? "0", 10);
+  const limit = parseInt(c.req.query("limit") ?? "12", 10);
+  const { renderMediaItems } = await import("../../templates/media");
+  return c.html(
+    await renderMediaItems(
+      jobId,
+      type,
+      Number.isNaN(offset) ? 0 : offset,
+      Number.isNaN(limit) ? 12 : Math.min(limit, 24),
+    ),
+  );
 });
 
 app.get("/compose-progress", async (c) => {

@@ -147,11 +147,12 @@ export namespace DB {
       return job;
     }
 
-    export async function list() {
+    export async function list(limit = 100) {
       return await DB.db
         .selectFrom("jobs")
         .selectAll()
         .orderBy("created_at", "desc")
+        .limit(limit)
         .execute();
     }
 
@@ -702,16 +703,36 @@ export namespace DB {
       return res.map(rowToEvent);
     }
 
-    export async function findByJobIdChronological(jobId: string) {
-      const res = await db
+    export async function findByJobIdChronological(
+      jobId: string,
+      opts?: { limit?: number; offset?: number },
+    ) {
+      let query = db
         .selectFrom("events")
         .selectAll()
         .where("job_id", "=", jobId)
         .orderBy("created_at", "asc")
-        .orderBy("id", "asc")
-        .execute();
+        .orderBy("id", "asc");
+
+      if (opts?.limit !== undefined) {
+        query = query.limit(opts.limit);
+      }
+      if (opts?.offset !== undefined) {
+        query = query.offset(opts.offset);
+      }
+
+      const res = await query.execute();
 
       return res.map(rowToEvent);
+    }
+
+    export async function countByJobId(jobId: string): Promise<number> {
+      const res = await db
+        .selectFrom("events")
+        .select((eb) => eb.fn.countAll().as("cnt"))
+        .where("job_id", "=", jobId)
+        .executeTakeFirstOrThrow();
+      return Number((res as unknown as { cnt: number }).cnt);
     }
 
     export async function deleteByIds(ids: string[]) {
@@ -897,45 +918,43 @@ export namespace DB {
 
       const results = await query
         .orderBy("meta.id", "desc") // UUID7 is sortable chronologically!
-        .limit(limit * 3)
+        .limit(limit * 2)
         .execute();
 
-      const items = await Promise.all(
-        results.map(async (row) => {
-          const mediaType = getMediaTypeFromExtension(row.filename);
-          if (!mediaType) return null;
+      const concurrency = 10;
+      const items: Array<ListItemResult & { mediaType: "image" | "video"; created_at: string }> = [];
+      for (let i = 0; i < results.length; i += concurrency) {
+        const chunk = results.slice(i, i + concurrency);
+        const chunkItems = await Promise.all(
+          chunk.map(async (row) => {
+            const mediaType = getMediaTypeFromExtension(row.filename);
+            if (!mediaType) return null;
 
-          const file = Bun.file(
-            getOutputAssetPath(row.subfolder, row.filename),
-          );
-          if (!(await file.exists())) return null;
+            const file = Bun.file(
+              getOutputAssetPath(row.subfolder, row.filename),
+            );
+            if (!(await file.exists())) return null;
 
-          return {
-            meta_id: row.meta_id,
-            event_id: row.event_id,
-            filename: row.filename,
-            subfolder: row.subfolder,
-            type: row.meta_type,
-            created_at: row.event_created_at,
-            job_id: row.job_id,
-            mediaType,
-          } as ListItemResult & {
-            mediaType: "image" | "video";
-            created_at: string;
-          };
-        }),
-      );
+            return {
+              meta_id: row.meta_id,
+              event_id: row.event_id,
+              filename: row.filename,
+              subfolder: row.subfolder,
+              type: row.meta_type,
+              created_at: row.event_created_at,
+              job_id: row.job_id,
+              mediaType,
+            } as ListItemResult & {
+              mediaType: "image" | "video";
+              created_at: string;
+            };
+          }),
+        );
+        for (const it of chunkItems) if (it) items.push(it);
+        if (items.length >= limit) break;
+      }
 
-      return items
-        .filter(
-          (
-            row,
-          ): row is ListItemResult & {
-            mediaType: "image" | "video";
-            created_at: string;
-          } => row !== null,
-        )
-        .slice(0, limit);
+      return items.slice(0, limit);
     }
   }
 }

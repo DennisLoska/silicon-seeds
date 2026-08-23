@@ -92,20 +92,25 @@ async function buildMediaData(jobId: string): Promise<MediaData> {
     pending: [],
   };
 
-  for (const event of events) {
-    if (event.status === "pending") {
-      mediaData.pending.push({
-        eventId: event.id,
-        jobId: event.jobId,
-        eventType: event.type,
-        mode: event.mode,
-        filename: "filename" in event ? event.filename ?? null : null,
-        status: event.status,
-      });
-      continue;
-    }
+  const pendingEvents = events.filter((e) => e.status === "pending");
+  for (const event of pendingEvents) {
+    mediaData.pending.push({
+      eventId: event.id,
+      jobId: event.jobId,
+      eventType: event.type,
+      mode: event.mode,
+      filename: "filename" in event ? (event as unknown as { filename?: string | null }).filename ?? null : null,
+      status: event.status,
+    });
+  }
 
-    const meta = await DB.Meta.findByEventId(event.id).catch(() => null);
+  const completedEvents = events.filter((e) => e.status !== "pending");
+  const ids = completedEvents.map((e) => e.id);
+  const metas = await DB.Meta.findManyByEventIds(ids);
+  const metaById = new Map(metas.map((m) => [m.event_id, m]));
+
+  for (const event of completedEvents) {
+    const meta = metaById.get(event.id);
     if (!meta) continue;
 
     const asset: MediaAsset = {
@@ -157,9 +162,11 @@ export const JobDetails = async ({ jobId, activeTab }: JobDetailsProps) => {
     case "status":
       contentFragment = Templates.StatusFragment(job);
       break;
-    case "media":
-      contentFragment = Templates.MediaFragment(await buildMediaData(jobId));
+    case "media": {
+      const mediaData = await buildMediaData(jobId);
+      contentFragment = Templates.MediaFragment({ ...mediaData, jobId });
       break;
+    }
     case "events":
       contentFragment = Templates.EventsFragment(job);
       break;
@@ -224,9 +231,10 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
             <li>
               <a
                 hx-get="/jobs?filter=all"
-                hx-target="#job-details"
-                hx-swap="outerHTML"
+                hx-target="#job-content-container"
+                hx-swap="innerHTML"
                 hx-push-url="/jobs?filter=all"
+                hx-sync="#job-content-container:replace"
               >
                 All
               </a>
@@ -234,9 +242,10 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
             <li>
               <a
                 hx-get="/jobs?filter=recent"
-                hx-target="#job-details"
-                hx-swap="outerHTML"
+                hx-target="#job-content-container"
+                hx-swap="innerHTML"
                 hx-push-url="/jobs?filter=recent"
+                hx-sync="#job-content-container:replace"
               >
                 Recent
               </a>
@@ -244,9 +253,10 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
             <li>
                 <a
                   hx-get="/jobs?filter=active"
-                  hx-target="#job-details"
-                  hx-swap="outerHTML"
+                  hx-target="#job-content-container"
+                  hx-swap="innerHTML"
                   hx-push-url="/jobs?filter=active"
+                  hx-sync="#job-content-container:replace"
                 >
                   Active
                 </a>
@@ -254,9 +264,10 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
               <li>
                 <a
                   hx-get="/jobs?filter=complete"
-                  hx-target="#job-details"
-                  hx-swap="outerHTML"
+                  hx-target="#job-content-container"
+                  hx-swap="innerHTML"
                   hx-push-url="/jobs?filter=complete"
+                  hx-sync="#job-content-container:replace"
                 >
                   Complete
                 </a>
@@ -264,9 +275,10 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
               <li>
                 <a
                   hx-get="/jobs?filter=failed"
-                  hx-target="#job-details"
-                  hx-swap="outerHTML"
+                  hx-target="#job-content-container"
+                  hx-swap="innerHTML"
                   hx-push-url="/jobs?filter=failed"
+                  hx-sync="#job-content-container:replace"
                 >
                   Failed
                 </a>
@@ -274,9 +286,10 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
               <li>
                 <a
                   hx-get="/jobs?filter=cancelled"
-                  hx-target="#job-details"
-                  hx-swap="outerHTML"
+                  hx-target="#job-content-container"
+                  hx-swap="innerHTML"
                   hx-push-url="/jobs?filter=cancelled"
+                  hx-sync="#job-content-container:replace"
                 >
                   Cancelled
                 </a>
@@ -306,6 +319,7 @@ const jobSidebar = async (activeJobId: string, filter: string, tab: string) => {
                 hx-target="#job-content-container"
                 hx-swap="innerHTML"
                 hx-push-url={`/jobs?job_id=${jobItem.id}&filter=${filter}&tab=${tab}`}
+                hx-sync="#job-content-container:replace"
               >
                 <span
                   className={`badge ${statusUi.badge}`}
@@ -372,7 +386,7 @@ export const JobTabs = ({ jobId, filter, tab }: JobTabsProps) => (
           }`}
           hx-get={`/jobs/details/${jobId}?tab=${t.value}`}
           hx-target="#job-tabs-container"
-          hx-swap="innerHTML"
+          hx-swap="outerHTML"
           hx-push-url={`/jobs?job_id=${jobId}&filter=${filter}&tab=${t.value}`}
         >
           {t.label}
@@ -394,9 +408,11 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
     case "status":
       tabFragment = Templates.StatusFragment(job);
       break;
-    case "media":
-      tabFragment = Templates.MediaFragment(await buildMediaData(jobId));
+    case "media": {
+      const mediaData = await buildMediaData(jobId);
+      tabFragment = Templates.MediaFragment({ ...mediaData, jobId });
       break;
+    }
     case "events":
       tabFragment = Templates.EventsFragment(job);
       break;
@@ -429,6 +445,7 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
 
         {/* Main Content Area */}
         <main
+          id="jobs-main-scroll"
           className="p-6 flex-1 overflow-y-auto"
           style={{ maxHeight: "calc(100vh - 4rem)" }}
         >
@@ -436,7 +453,7 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
             id="job-tabs-container"
             data-job-id={jobId}
             hx-get={`/jobs/details/${jobId}?tab=${tab}&filter=${filter}`}
-            hx-trigger={tab === "media" || tab === "events" ? "sse:job-update" : undefined}
+            hx-trigger={tab === "media" || tab === "events" ? "sse:job-update throttle:400ms" : undefined}
             hx-swap="outerHTML"
           >
             {/* Tabs Section - Dedicated section with background and border, snaps to header/sidebar */}

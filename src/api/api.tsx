@@ -4,7 +4,6 @@ import { Metadata } from "../meta/meta";
 import { Templates } from "../templates/templates";
 import { not_found } from "./not_found";
 import { Logger } from "../logger/logger";
-import { serveStatic } from "hono/bun";
 import apiRoutes from "./api/index";
 import fragmentRoutes from "./fragments";
 import dashboardRoutes from "./dashboard";
@@ -68,22 +67,68 @@ export namespace Api {
   }
 }
 
-app.use("/static/*", async (c, next) => {
-  await next();
-  if (c.res.ok) {
-    // c.res.headers.set("Cache-Control", "public, max-age=3600");
-  }
-});
+function isCompressibleContentType(ct: string): boolean {
+  return (
+    ct.startsWith("text/") ||
+    ct === "application/json" ||
+    ct === "application/javascript" ||
+    ct === "text/css" ||
+    ct === "image/svg+xml"
+  );
+}
 
-app.use(
-  "/static/*",
-  serveStatic({
-    root: "./",
-    onNotFound: (path, c) => {
-      Logger.warn(`${path} is not found, you access ${c.req.path}`);
-    },
-  }),
-);
+// Serve static files with caching, ETag, and compression
+app.use("/static/*", async (c) => {
+  const filePath = `.${c.req.path}`;
+  const file = Bun.file(filePath);
+  if (await file.exists()) {
+    const contentType =
+      filePath.endsWith(".css")
+        ? "text/css; charset=utf-8"
+        : filePath.endsWith(".js")
+          ? "application/javascript; charset=utf-8"
+          : Utils.getContentType(filePath);
+    const stats = await file.stat();
+    const etag = `"${stats.size}-${stats.mtime.getTime()}"`;
+    const ifNoneMatch = c.req.header("If-None-Match");
+    if (ifNoneMatch === etag) {
+      return new Response(null, {
+        status: 304,
+        headers: { ETag: etag, "Cache-Control": "public, max-age=3600, must-revalidate", Vary: "Accept-Encoding" },
+      });
+    }
+    const acceptEnc = c.req.header("Accept-Encoding") || "";
+    const shouldCompress = acceptEnc.includes("gzip") && isCompressibleContentType(contentType) && stats.size > 1024;
+    if (shouldCompress) {
+      const buf = await file.arrayBuffer();
+      const compressed = Bun.gzipSync(Buffer.from(buf));
+      return new Response(compressed as unknown as BodyInit, {
+        status: 200,
+        headers: {
+          "Content-Type": contentType,
+          "Content-Length": compressed.length.toString(),
+          "Cache-Control": "public, max-age=3600, must-revalidate",
+          ETag: etag,
+          Vary: "Accept-Encoding",
+          "Content-Encoding": "gzip",
+          "Accept-Ranges": "bytes",
+        },
+      });
+    }
+    return new Response(file as unknown as BodyInit, {
+      status: 200,
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "public, max-age=3600, must-revalidate",
+        ETag: etag,
+        Vary: "Accept-Encoding",
+        "Accept-Ranges": "bytes",
+      },
+    });
+  }
+  Logger.warn(`${filePath} is not found, you access ${c.req.path}`);
+  return c.text("Not found", 404);
+});
 
 // Serve media files under /assets/*
 // Files are stored in OUTPUT_DIR/<filename>, so we serve them at /assets/<filename>
@@ -126,17 +171,42 @@ app.use("/assets/*", async (c) => {
             "Content-Range": `bytes ${start}-${end}/${stats.size}`,
             "Cache-Control": "public, max-age=31536000, immutable",
             ETag: etag,
+            "Accept-Ranges": "bytes",
+            Vary: "Accept-Encoding",
           },
         });
       }
     }
 
-    // Full content
-    return c.body(await file.arrayBuffer(), 200, {
-      "Content-Type": contentType,
-      "Content-Length": stats.size.toString(),
-      "Cache-Control": "public, max-age=31536000, immutable", // Cache for 1 year
-      ETag: etag,
+    // Full content — compress only compressible types and when no Range
+    const acceptEnc = c.req.header("Accept-Encoding") || "";
+    if (acceptEnc.includes("gzip") && isCompressibleContentType(contentType)) {
+      const buf = await file.arrayBuffer();
+      if (buf.byteLength > 1024) {
+        const compressed = Bun.gzipSync(Buffer.from(buf));
+        return new Response(compressed as unknown as BodyInit, {
+          status: 200,
+          headers: {
+            "Content-Type": contentType,
+            "Content-Length": compressed.length.toString(),
+            "Cache-Control": "public, max-age=31536000, immutable",
+            ETag: etag,
+            "Accept-Ranges": "bytes",
+            Vary: "Accept-Encoding",
+            "Content-Encoding": "gzip",
+          },
+        });
+      }
+    }
+    return new Response(file as unknown as BodyInit, {
+      status: 200,
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "public, max-age=31536000, immutable",
+        ETag: etag,
+        "Accept-Ranges": "bytes",
+        Vary: "Accept-Encoding",
+      },
     });
   }
 

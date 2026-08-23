@@ -38,7 +38,7 @@ export namespace Templates {
   export const App = appComponent;
   export const Layout = layoutComponent;
   export const StatusFragment = (job: Job) => Status(job);
-  export const MediaFragment = (mediaData: MediaData) => Media(mediaData);
+  export const MediaFragment = (mediaData: MediaData & { jobId?: string }) => Media(mediaData as Parameters<typeof Media>[0]);
   export const EventsFragment = (job: Job) => Events(job);
   export const NotSelectedFragment = NotSelected;
   export const JobDetailsFragment = JobDetails;

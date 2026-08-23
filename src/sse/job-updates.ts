@@ -4,11 +4,35 @@ type Subscriber = (eventName: string, data?: string) => void;
 
 export namespace JobUpdates {
   const subscribers = new Map<string, Set<Subscriber>>();
+  const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  const pendingJobs = new Set<string>();
 
   export function publish(jobId: string) {
+    if (debounceTimers.has(jobId)) {
+      pendingJobs.add(jobId);
+      return;
+    }
+    pendingJobs.add(jobId);
+    const timer = setTimeout(() => {
+      debounceTimers.delete(jobId);
+      if (!pendingJobs.has(jobId)) return;
+      pendingJobs.delete(jobId);
+      const listeners = subscribers.get(jobId);
+      if (!listeners) return;
+      for (const send of listeners) {
+        send("job-update", JSON.stringify({ jobId }));
+      }
+    }, 300);
+    debounceTimers.set(jobId, timer);
+  }
+
+  export function flush(jobId: string) {
+    const t = debounceTimers.get(jobId);
+    if (t) clearTimeout(t);
+    debounceTimers.delete(jobId);
+    pendingJobs.delete(jobId);
     const listeners = subscribers.get(jobId);
     if (!listeners) return;
-
     for (const send of listeners) {
       send("job-update", JSON.stringify({ jobId }));
     }

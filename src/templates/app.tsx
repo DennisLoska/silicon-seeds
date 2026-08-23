@@ -34,6 +34,8 @@ const SidebarItem = ({ href, label, id, icon }: SidebarItemProps) => (
       hx-target="#job-content-container"
       hx-swap="innerHTML"
       hx-push-url={href}
+      hx-sync="#job-content-container:replace"
+      hx-indicator="this"
       id={id}
       className="is-drawer-close:justify-center py-2"
     >
@@ -86,6 +88,7 @@ export const App = ({ children, page }: AppProps) => (
             hx-target="#job-content-container"
             hx-swap="innerHTML"
             hx-push-url="/"
+            hx-sync="#job-content-container:replace"
             className="flex items-center is-drawer-close:justify-center gap-3 p-4 w-full hover:bg-base-300 transition-colors"
           >
             <Icons.Logo />
