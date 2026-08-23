@@ -386,10 +386,8 @@ export const JobTabs = ({ jobId, filter, tab }: JobTabsProps) => (
           hx-target="#job-tabs-container"
           hx-swap="outerHTML"
           hx-push-url={`/jobs?job_id=${jobId}&filter=${filter}&tab=${t.value}`}
-          hx-indicator="this"
         >
           {t.label}
-          <span className="htmx-indicator loading loading-spinner loading-xs ml-1"></span>
         </button>
       ))}
     </div>
