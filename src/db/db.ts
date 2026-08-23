@@ -881,6 +881,18 @@ export namespace DB {
       return `${outputDir}/${cleanSubfolder}/${filename}`;
     }
 
+    function getAssetPath(subfolder: string, filename: string) {
+      // Prefer CONTENT_LIBRARY_DIR, fallback to OUTPUT_DIR for compat
+      // Checks are done by caller via exists(); this returns primary path
+      const contentDir = Bun.env.CONTENT_LIBRARY_DIR?.replace(/\/$/, "") ?? "";
+      if (contentDir) {
+        const cleanSubfolder = subfolder.replace(/^\/+|\/+$/g, "").trim();
+        if (!cleanSubfolder) return `${contentDir}/${filename}`;
+        return `${contentDir}/${cleanSubfolder}/${filename}`;
+      }
+      return getOutputAssetPath(subfolder, filename);
+    }
+
     export async function listItems(options: ListItemsOptions = {}) {
       const { cursor, type, limit = 20 } = options;
 
@@ -930,10 +942,17 @@ export namespace DB {
             const mediaType = getMediaTypeFromExtension(row.filename);
             if (!mediaType) return null;
 
-            const file = Bun.file(
-              getOutputAssetPath(row.subfolder, row.filename),
+            // Content library is primary (~/content_library), fallback to OUTPUT_DIR
+            const primaryPath = getAssetPath(row.subfolder, row.filename);
+            const fallbackPath = getOutputAssetPath(
+              row.subfolder,
+              row.filename,
             );
-            if (!(await file.exists())) return null;
+            let exists = await Bun.file(primaryPath).exists();
+            if (!exists && primaryPath !== fallbackPath) {
+              exists = await Bun.file(fallbackPath).exists();
+            }
+            if (!exists) return null;
 
             return {
               meta_id: row.meta_id,
