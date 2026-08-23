@@ -384,9 +384,8 @@ export const JobTabs = ({ jobId, filter, tab }: JobTabsProps) => (
           }`}
           hx-get={`/jobs/details/${jobId}?tab=${t.value}`}
           hx-target="#job-tabs-container"
-          hx-swap="innerHTML"
+          hx-swap="outerHTML"
           hx-push-url={`/jobs?job_id=${jobId}&filter=${filter}&tab=${t.value}`}
-          hx-sync="#job-tabs-container:replace"
           hx-indicator="this"
         >
           {t.label}
@@ -453,7 +452,6 @@ export const Jobs = async ({ jobId, filter, tab }: JobsProps) => {
             hx-get={`/jobs/details/${jobId}?tab=${tab}&filter=${filter}`}
             hx-trigger={tab === "media" || tab === "events" ? "sse:job-update throttle:400ms" : undefined}
             hx-swap="outerHTML"
-            hx-sync="this:replace"
           >
             {/* Tabs Section - Dedicated section with background and border, snaps to header/sidebar */}
             <JobTabs jobId={jobId} filter={filter} tab={tab} />

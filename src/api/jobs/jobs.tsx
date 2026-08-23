@@ -55,7 +55,6 @@ app.get("/details/:jobId", async (c) => {
           hx-get={`/jobs/details/${jobId}?tab=${tab}&filter=${filter}`}
           hx-trigger={tab === "media" || tab === "events" ? "sse:job-update throttle:400ms" : undefined}
           hx-swap="outerHTML"
-          hx-sync="this:replace"
         >
           <JobTabsFragment jobId={jobId} filter={filter} tab={tab} />
           {await (<JobContentAreaFragment jobId={jobId} activeTab={tab} />)}
