@@ -107,7 +107,7 @@ export namespace DB {
     }),
   });
 
-  async function ensureStyleGuideColumn() {
+  export async function ensureStyleGuideColumn() {
     try {
       await sql`ALTER TABLE jobs ADD COLUMN style_guide TEXT`.execute(db);
     } catch (e: unknown) {
@@ -115,15 +115,13 @@ export namespace DB {
       if (
         msg.includes("duplicate column") ||
         msg.includes("already exists") ||
-        msg.includes("no such table")
+        msg.includes("duplicate column name")
       ) {
         return;
       }
       throw e;
     }
   }
-
-  void ensureStyleGuideColumn();
 
   function notifyJob(jobId: string) {
     JobUpdates.publish(jobId);
@@ -366,6 +364,18 @@ export namespace DB {
         .execute();
 
       for (const job of settledActiveJobs) {
+        const failedEvent = await db
+          .selectFrom("events")
+          .select("id")
+          .where("job_id", "=", job.id)
+          .where("status", "=", JobStatus.Failed)
+          .executeTakeFirst();
+
+        if (failedEvent) {
+          await updateStatus(job.id, JobLifecycleStatus.Failed);
+          continue;
+        }
+
         if (job.workflow === "autocut") {
           const compositionEvent = await db
             .selectFrom("events")
@@ -390,18 +400,6 @@ export namespace DB {
           if (!imageEvent) {
             continue;
           }
-        }
-
-        const failedEvent = await db
-          .selectFrom("events")
-          .select("id")
-          .where("job_id", "=", job.id)
-          .where("status", "=", JobStatus.Failed)
-          .executeTakeFirst();
-
-        if (failedEvent) {
-          await updateStatus(job.id, JobLifecycleStatus.Failed);
-          continue;
         }
 
         await completeJob(job.id);

@@ -35,9 +35,10 @@ export const PostComposeSchema = z
     voice_id: z.string().optional(),
     style_guide: z
       .string()
+      .trim()
       .max(2000)
       .optional()
-      .transform((v) => (v?.trim() ? v.trim() : undefined)),
+      .transform((v) => (v && v.length > 0 ? v : undefined)),
   })
   .refine(
     (data) => {

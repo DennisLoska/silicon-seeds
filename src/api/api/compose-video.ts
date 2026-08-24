@@ -36,7 +36,7 @@ export async function compose_video(options: PostCompose) {
   }
 
   let sanitizedStyleGuide: string | undefined = style_guide
-    ? Utils.sanitizeInputText(style_guide)
+    ? Utils.sanitizeInputText(style_guide).slice(0, 2000).trim()
     : undefined;
   if (sanitizedStyleGuide !== undefined && sanitizedStyleGuide.length === 0) {
     sanitizedStyleGuide = undefined;
