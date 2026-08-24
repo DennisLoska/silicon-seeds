@@ -107,22 +107,6 @@ export namespace DB {
     }),
   });
 
-  export async function ensureStyleGuideColumn() {
-    try {
-      await sql`ALTER TABLE jobs ADD COLUMN style_guide TEXT`.execute(db);
-    } catch (e: unknown) {
-      const msg = String((e as Error)?.message ?? e);
-      if (
-        msg.includes("duplicate column") ||
-        msg.includes("already exists") ||
-        msg.includes("duplicate column name")
-      ) {
-        return;
-      }
-      throw e;
-    }
-  }
-
   function notifyJob(jobId: string) {
     JobUpdates.publish(jobId);
   }

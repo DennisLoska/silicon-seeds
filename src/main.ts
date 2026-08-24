@@ -79,7 +79,6 @@ import { SocketServer } from "./socket/socket-server";
 async function main() {
   await Logger.init();
 
-  await DB.ensureStyleGuideColumn();
   await DB.Jobs.failBrokenJobs();
   await DB.Jobs.failJobsWithNoEvents();
   await DB.Jobs.finalizeCompletedJobs();
