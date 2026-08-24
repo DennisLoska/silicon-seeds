@@ -133,7 +133,7 @@ export const Compose = async ({
             </div>
           </div>
 
-          <div className="card bg-base-100 shadow-xl">
+          <div className="card bg-base-100 shadow-xl flex-none">
             <div className="card-body flex flex-col p-4">
               <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
                 <Icons.PaintBrushIcon />
@@ -143,7 +143,9 @@ export const Compose = async ({
                 name="style_guide"
                 id="style-guide"
                 maxLength={2000}
-                className="textarea textarea-bordered w-full min-h-[180px] max-h-[320px] resize-y"
+                rows={7}
+                style={{ minHeight: "180px", maxHeight: "320px" }}
+                className="textarea textarea-bordered w-full resize-y"
                 placeholder={`Define consistent style across all images...\n• warm ochre palette\n• watercolor texture\n• ancient Egypt only - no modern items\n• consistent character appearance`}
               ></textarea>
               <p className="text-xs text-base-content/60 mt-2">

@@ -433,9 +433,6 @@ ${text}
 `;
 
       if (styleGuide?.trim()) {
-        Logger.info("Applying style_guide", {
-          styleGuide: styleGuide.trim().slice(0, 2000),
-        });
         list_prompt += `\n\nGlobal Style Guide (must apply to every scene, takes precedence for visual coherence):\n${styleGuide.trim().slice(0, 2000)}\nEnsure every generated scene prompt respects this guide while keeping scenes unique and chronological.`;
       }
       const res = await LLM.image_prompt_list(list_prompt, amount);
