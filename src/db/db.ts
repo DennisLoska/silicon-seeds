@@ -1,4 +1,4 @@
-import { Kysely } from "kysely";
+import { Kysely, sql } from "kysely";
 import { BunSqliteDialect } from "kysely-bun-sqlite";
 import { Database } from "bun:sqlite";
 import { Generated } from "kysely";
@@ -30,6 +30,7 @@ export interface DbSchema {
     video_model?: string;
     audio_model?: string;
     style_preset?: string;
+    style_guide?: string | null;
   };
   events: {
     id: string;
@@ -105,6 +106,24 @@ export namespace DB {
       database: new Database("silicon-seeds.sqlite"),
     }),
   });
+
+  async function ensureStyleGuideColumn() {
+    try {
+      await sql`ALTER TABLE jobs ADD COLUMN style_guide TEXT`.execute(db);
+    } catch (e: unknown) {
+      const msg = String((e as Error)?.message ?? e);
+      if (
+        msg.includes("duplicate column") ||
+        msg.includes("already exists") ||
+        msg.includes("no such table")
+      ) {
+        return;
+      }
+      throw e;
+    }
+  }
+
+  void ensureStyleGuideColumn();
 
   function notifyJob(jobId: string) {
     JobUpdates.publish(jobId);
