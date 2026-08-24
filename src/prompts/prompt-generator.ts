@@ -405,9 +405,10 @@ Your response should only include the actual essay including it's title and noth
   export async function image_scene_prompts(
     text: string,
     amount: number,
+    styleGuide?: string,
   ): Promise<string[] | null> {
     {
-      const list_prompt = `Image Prompt Instructions:
+      let list_prompt = `Image Prompt Instructions:
 
 - Generate a list of ${amount} stylistic, holistically coherent image prompts
 - Ensure each prompt is not longer than ~25-50 words
@@ -430,6 +431,10 @@ start to finish:
 
 ${text}
 `;
+
+      if (styleGuide?.trim()) {
+        list_prompt += `\n\nGlobal Style Guide (must apply to every scene, takes precedence for visual coherence):\n${styleGuide.trim().slice(0, 2000)}\nEnsure every generated scene prompt respects this guide while keeping scenes unique and chronological.`;
+      }
       const res = await LLM.image_prompt_list(list_prompt, amount);
       if (!res?.parsed) return null;
 

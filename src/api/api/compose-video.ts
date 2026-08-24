@@ -16,6 +16,7 @@ export async function compose_video(options: PostCompose) {
     transition_duration,
     image_model,
     video_model,
+    style_guide,
   } = options;
 
   // Determine the final script: file takes precedence over text input
@@ -34,6 +35,13 @@ export async function compose_video(options: PostCompose) {
     });
   }
 
+  let sanitizedStyleGuide: string | undefined = style_guide
+    ? Utils.sanitizeInputText(style_guide).slice(0, 2000).trim()
+    : undefined;
+  if (sanitizedStyleGuide !== undefined && sanitizedStyleGuide.length === 0) {
+    sanitizedStyleGuide = undefined;
+  }
+
   const { id: jobId } = await JobOrchestrator.create_job({
     original_prompt: finalScript,
     fps,
@@ -44,6 +52,7 @@ export async function compose_video(options: PostCompose) {
     video_model,
     audio_model: Metadata.INSTRUMENTAL_MODEL,
     style_preset,
+    style_guide: sanitizedStyleGuide,
   });
 
   await TextGenerator.create_text_event(jobId, finalScript);

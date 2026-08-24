@@ -1,4 +1,4 @@
-import { Kysely } from "kysely";
+import { Kysely, sql } from "kysely";
 import { BunSqliteDialect } from "kysely-bun-sqlite";
 import { Database } from "bun:sqlite";
 import { Generated } from "kysely";
@@ -30,6 +30,7 @@ export interface DbSchema {
     video_model?: string;
     audio_model?: string;
     style_preset?: string;
+    style_guide?: string | null;
   };
   events: {
     id: string;
@@ -347,6 +348,18 @@ export namespace DB {
         .execute();
 
       for (const job of settledActiveJobs) {
+        const failedEvent = await db
+          .selectFrom("events")
+          .select("id")
+          .where("job_id", "=", job.id)
+          .where("status", "=", JobStatus.Failed)
+          .executeTakeFirst();
+
+        if (failedEvent) {
+          await updateStatus(job.id, JobLifecycleStatus.Failed);
+          continue;
+        }
+
         if (job.workflow === "autocut") {
           const compositionEvent = await db
             .selectFrom("events")
@@ -360,16 +373,17 @@ export namespace DB {
           }
         }
 
-        const failedEvent = await db
-          .selectFrom("events")
-          .select("id")
-          .where("job_id", "=", job.id)
-          .where("status", "=", JobStatus.Failed)
-          .executeTakeFirst();
+        if (job.workflow === "compose") {
+          const imageEvent = await db
+            .selectFrom("events")
+            .select("id")
+            .where("job_id", "=", job.id)
+            .where("type", "=", Event.NewImagePrompt)
+            .executeTakeFirst();
 
-        if (failedEvent) {
-          await updateStatus(job.id, JobLifecycleStatus.Failed);
-          continue;
+          if (!imageEvent) {
+            continue;
+          }
         }
 
         await completeJob(job.id);

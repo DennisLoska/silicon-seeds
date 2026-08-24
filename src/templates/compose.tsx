@@ -105,30 +105,53 @@ export const Compose = async ({
         }
       `}
       >
-        {/* Card 1: Video Script Input - Takes half width and full height */}
-        <div className="card bg-base-100 shadow-xl w-full xl:w-1/2 2xl:w-1/3 flex flex-col overflow-hidden resize-none 2xl:resize-x 2xl:min-w-[500px]">
-          <div className="card-body flex flex-col flex-grow p-4">
-            <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
-              <Icons.DocumentIcon />
-              Video Script
-            </h2>
-            <textarea
-              name="script"
-              id="type-script-tab"
-              className="textarea textarea-ghost w-full flex-grow resize-none mb-4 min-h-[420px] focus:outline-none"
-              placeholder="Write your video script here..."
-            ></textarea>
+        {/* First column: Video Script + Style Guide - together fill full height like original single card */}
+        <div className="flex flex-col gap-4 w-full xl:w-1/2 2xl:w-1/3 2xl:min-w-[500px] 2xl:resize-x xl:h-full min-h-0 overflow-hidden">
+          <div className="card bg-base-100 shadow-xl flex flex-col overflow-hidden resize-none flex-1 min-h-0">
+            <div className="card-body flex flex-col flex-grow p-4 min-h-0">
+              <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
+                <Icons.DocumentIcon />
+                Video Script
+              </h2>
+              <textarea
+                name="script"
+                id="type-script-tab"
+                className="textarea textarea-ghost w-full flex-grow resize-none mb-4 min-h-[420px] focus:outline-none"
+                placeholder="Write your video script here..."
+              ></textarea>
 
-            {/* Divider */}
-            <div className="divider my-2 flex-none">OR</div>
+              {/* Divider */}
+              <div className="divider my-2 flex-none">OR</div>
 
-            {/* File upload input */}
-            <input
-              type="file"
-              name="script_file"
-              accept=".txt,.md"
-              className="file-input file-input-bordered w-full flex-none"
-            />
+              {/* File upload input */}
+              <input
+                type="file"
+                name="script_file"
+                accept=".txt,.md"
+                className="file-input file-input-bordered w-full flex-none"
+              />
+            </div>
+          </div>
+
+          <div className="card bg-base-100 shadow-xl flex-none">
+            <div className="card-body flex flex-col p-4">
+              <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
+                <Icons.PaintBrushIcon />
+                Style Guide
+              </h2>
+              <textarea
+                name="style_guide"
+                id="style-guide"
+                maxLength={2000}
+                rows={7}
+                style={{ minHeight: "180px", maxHeight: "320px" }}
+                className="textarea textarea-bordered w-full resize-y"
+                placeholder={`Define consistent style across all images...\n• warm ochre palette\n• watercolor texture\n• ancient Egypt only - no modern items\n• consistent character appearance`}
+              ></textarea>
+              <p className="text-xs text-base-content/60 mt-2">
+                Defines stylistic coherence across all generated images. Applied in addition to Style Preset.
+              </p>
+            </div>
           </div>
         </div>
 
