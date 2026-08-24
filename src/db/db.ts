@@ -379,6 +379,19 @@ export namespace DB {
           }
         }
 
+        if (job.workflow === "compose") {
+          const imageEvent = await db
+            .selectFrom("events")
+            .select("id")
+            .where("job_id", "=", job.id)
+            .where("type", "=", Event.NewImagePrompt)
+            .executeTakeFirst();
+
+          if (!imageEvent) {
+            continue;
+          }
+        }
+
         const failedEvent = await db
           .selectFrom("events")
           .select("id")
