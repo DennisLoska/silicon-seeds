@@ -33,6 +33,11 @@ export const PostComposeSchema = z
     transition_duration: z.coerce.number().min(1).max(10),
     style_preset: z.enum(Presets),
     voice_id: z.string().optional(),
+    style_guide: z
+      .string()
+      .max(2000)
+      .optional()
+      .transform((v) => (v?.trim() ? v.trim() : undefined)),
   })
   .refine(
     (data) => {
