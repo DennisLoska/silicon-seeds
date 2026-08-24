@@ -105,10 +105,10 @@ export const Compose = async ({
         }
       `}
       >
-        {/* First column: Video Script + Style Guide */}
-        <div className="flex flex-col gap-4 w-full xl:w-1/2 2xl:w-1/3 2xl:min-w-[500px]">
-          <div className="card bg-base-100 shadow-xl flex flex-col overflow-hidden resize-none">
-            <div className="card-body flex flex-col flex-grow p-4">
+        {/* First column: Video Script + Style Guide - together fill full height like original single card */}
+        <div className="flex flex-col gap-4 w-full xl:w-1/2 2xl:w-1/3 2xl:min-w-[500px] xl:h-full min-h-0">
+          <div className="card bg-base-100 shadow-xl flex flex-col overflow-hidden resize-none flex-1 min-h-0">
+            <div className="card-body flex flex-col flex-grow p-4 min-h-0">
               <h2 className="card-title text-lg font-semibold flex items-center gap-2 mb-3 flex-none">
                 <Icons.DocumentIcon />
                 Video Script
