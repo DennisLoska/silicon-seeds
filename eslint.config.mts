@@ -4,7 +4,7 @@ import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
   tseslint.configs.recommended,
-  globalIgnores(["**/node_modules/**", "**/static/**", "**/*.min.*"]),
+  globalIgnores(["**/node_modules/**", "**/static/*.min.*", "**/static/style.css"]),
   {
     files: ["**/*.{ts,tsx}"],
     languageOptions: { globals: globals.bunBuiltin },

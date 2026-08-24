@@ -5,7 +5,7 @@ export const Layout = ({ children }: { children: Child }) => (
     <head>
       <script
         dangerouslySetInnerHTML={{
-          __html: `(function(){try{var k="theme",l="bumblebee",d="dracula",t=localStorage.getItem(k);if(!t)t=window.matchMedia("(prefers-color-scheme: dark)").matches?d:l;document.documentElement.setAttribute("data-theme",t)}catch(e){}})();`,
+          __html: `(function(){var k="theme",l="bumblebee",d="dracula",t=null;try{t=localStorage.getItem(k)}catch(e){}if(t!==d&&t!==l){try{t=window.matchMedia("(prefers-color-scheme: dark)").matches?d:l}catch(e){t=l}}document.documentElement.setAttribute("data-theme",t)})();`,
         }}
       />
       <meta charset="UTF-8" />
