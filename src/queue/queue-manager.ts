@@ -150,9 +150,11 @@ export namespace QueueManager {
     );
     if (textEvents[0]?.type === Event.NewTextPrompt) {
       const { PromptGenerator } = await import("../prompts/prompt-generator");
+      const styleGuide = (job as { style_guide?: string | null })?.style_guide;
       const scenes = await PromptGenerator.image_scene_prompts(
         textEvents[0].text,
         clipCount,
+        styleGuide ?? undefined,
       );
 
       if (!scenes) throw new Error("No scene prompts generated");
