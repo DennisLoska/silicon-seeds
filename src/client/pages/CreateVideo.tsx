@@ -252,7 +252,7 @@ export default function CreateVideo() {
                 <h3 class="font-semibold mb-2 flex items-center gap-2"><Icons.Video /> Generated Video</h3>
                 <Show when={videoItems().length === 0 && imageItems().length === 0}>
                   <div class="flex flex-1 flex-col items-center justify-center gap-3 py-16 min-h-[200px]">
-                    <p class="text-lg font-medium text-base-content/60">Generating video from prompt</p>
+                    <p class="text-lg font-medium text-base-content/60">Generating video</p>
                     <span class="loading loading-dots loading-lg text-primary"></span>
                   </div>
                 </Show>
