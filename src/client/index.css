@@ -1,0 +1,22 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes:
+    light --default,
+    dark --prefersdark,
+    night,
+    forest,
+    dracula,
+    luxury,
+    cyberbunk,
+    cupcake,
+    bumblebee;
+}
+
+/* Hide scrollbar while keeping content scrollable */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

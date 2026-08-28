@@ -130,6 +130,32 @@ app.use("/static/*", async (c) => {
   return c.text("Not found", 404);
 });
 
+// Serve Vite client assets first (dist/client/assets/*) before falling back to OUTPUT_DIR
+app.use("/assets/*", async (c, next) => {
+  // Try Vite built assets at dist/client/assets
+  const vitePath = `dist/client${c.req.path}`;
+  const viteFile = Bun.file(vitePath);
+  if (await viteFile.exists()) {
+    const contentType = Utils.getContentType(vitePath);
+    const stats = await viteFile.stat();
+    const etag = `"${stats.size}-${stats.mtime.getTime()}"`;
+    const ifNoneMatch = c.req.header("If-None-Match");
+    if (ifNoneMatch === etag) {
+      return new Response(null, { status: 304, headers: { ETag: etag, "Cache-Control": "public, max-age=31536000, immutable" } });
+    }
+    return new Response(viteFile as unknown as BodyInit, {
+      status: 200,
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "public, max-age=31536000, immutable",
+        ETag: etag,
+        "Accept-Ranges": "bytes",
+      },
+    });
+  }
+  await next();
+});
+
 // Serve media files under /assets/*
 // Files are stored in OUTPUT_DIR/<filename>, so we serve them at /assets/<filename>
 // Custom handler strips the /assets/ prefix before serving
@@ -240,10 +266,6 @@ app.onError((error, c) => {
   );
 });
 
-app.notFound((c) => {
-  return not_found();
-});
-
 app.route("/api", apiRoutes);
 app.route("/jobs", jobsRoutes);
 app.route("/dashboard", dashboardRoutes);
@@ -252,3 +274,21 @@ app.route("/settings", settingsRoutes);
 app.route("/gallery", galleryRoutes);
 app.route("/create", createRoutes);
 app.route("/api/fragments", fragmentRoutes);
+
+// SPA fallback: serve built SolidJS index.html for non-API, non-asset routes when it exists
+app.use("/*", async (c, next) => {
+  const accept = c.req.header("Accept") || "";
+  const isApi = c.req.path.startsWith("/api/") || c.req.path.startsWith("/assets/") || c.req.path.startsWith("/static/") || c.req.path.startsWith("/jobs/stream");
+  if (!isApi) {
+    const viteIndex = Bun.file("dist/client/index.html");
+    if (await viteIndex.exists() && (accept.includes("text/html") || c.req.path === "/" || !c.req.path.includes("."))) {
+      const html = await viteIndex.text();
+      return c.html(html);
+    }
+  }
+  await next();
+});
+
+app.notFound((c) => {
+  return not_found();
+});
