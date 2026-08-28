@@ -157,17 +157,11 @@ export default function CreateVideo() {
         </div>
 
         <div class="flex flex-col w-full xl:w-[26rem] gap-4 xl:flex-none">
-          {/* AI Models */}
+          {/* Video Model */}
           <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col">
             <div class="card-body flex flex-col flex-grow">
-              <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.SparkleIcon />AI Models</h2>
+              <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.SparkleIcon />Video Model</h2>
               <div class="form-control flex-grow">
-                <label class="label cursor-pointer"><span class="label-text font-medium flex items-center gap-2"><Icons.PhotoCameraSmall />Image Generation Model</span></label>
-                <select name="image_model" class="select select-bordered w-full">
-                  <option value="z-image-turbo">Z-Image-Turbo</option>
-                </select>
-              </div>
-              <div class="form-control flex-grow mt-2">
                 <label class="label cursor-pointer"><span class="label-text font-medium flex items-center gap-2"><Icons.VideoCameraSmall />Video Generation Model</span></label>
                 <select name="video_model" class="select select-bordered w-full">
                   <option value="wan2.2">Wan 2.2</option>
