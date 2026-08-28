@@ -95,10 +95,14 @@ export default function CreateVideo() {
           <div class="card bg-base-100 shadow-xl flex flex-col overflow-hidden flex-1 min-h-0 xl:min-h-0">
             <div class="card-body flex flex-col flex-1 p-4 min-h-0 xl:min-h-0">
               <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.PromptIcon />Prompt</h2>
-              <textarea name="prompt" id="video-prompt" class="textarea textarea-ghost w-full flex-1 resize-none mb-4 min-h-[280px] xl:min-h-[240px] focus:outline-none" placeholder="Describe the video you want to generate... e.g. A serene mountain lake at sunrise, gentle mist, slow camera push in"></textarea>
-              <p class="text-xs text-base-content/60 mb-2">Describe motion and camera if needed: pan left, tilt up, dolly in, static shot, etc.</p>
-              <div class="divider my-2">Style Guide (optional)</div>
-              <textarea name="style_guide" maxLength={2000} rows={3} style="min-height:90px;max-height:160px" class="textarea textarea-bordered w-full resize-y" placeholder="Extra style coherence (optional) — e.g. watercolor texture, muted palette"></textarea>
+              <textarea name="prompt" id="video-prompt" class="textarea textarea-ghost w-full flex-1 resize-none mb-4 min-h-[520px] xl:min-h-[372px] focus:outline-none" placeholder="Describe the video you want to generate... e.g. A serene mountain lake at sunrise, gentle mist, slow camera push in"></textarea>
+            </div>
+          </div>
+          <div class="card bg-base-100 shadow-xl flex-none">
+            <div class="card-body flex flex-col p-4">
+              <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.PaintBrushIcon />Style Guide</h2>
+              <textarea name="style_guide" id="style-guide" maxLength={2000} rows={7} style="min-height:180px;max-height:320px" class="textarea textarea-bordered w-full resize-y" placeholder={"Define consistent style across all clips...\n• warm ochre palette\n• watercolor texture\n• consistent character appearance"}></textarea>
+              <p class="text-xs text-base-content/60 mt-2">Defines stylistic coherence across all generated images. Applied in addition to Style Preset.</p>
             </div>
           </div>
           <Show when={showProgress() && jobId()}>
