@@ -16,8 +16,13 @@ function getInitial(): Theme {
   return "bumblebee";
 }
 
-export function createTheme() {
-  const [theme, setTheme] = createSignal<Theme>(getInitial());
+// singleton - module scope
+const [theme, setTheme] = createSignal<Theme>(getInitial());
+let initialized = false;
+
+function initThemeEffect() {
+  if (initialized) return;
+  initialized = true;
   createEffect(() => {
     const t = theme();
     document.documentElement.setAttribute("data-theme", t);
@@ -25,6 +30,10 @@ export function createTheme() {
       localStorage.setItem("theme", t);
     } catch {}
   });
+}
+
+export function createTheme() {
+  initThemeEffect();
   onMount(() => {
     const handler = (e: StorageEvent) => {
       if (e.key === "theme" && isTheme(e.newValue)) setTheme(e.newValue);
@@ -49,3 +58,7 @@ export function createTheme() {
     toggle: () => setTheme((t) => (t === "bumblebee" ? "dracula" : "bumblebee")),
   };
 }
+
+// direct singleton exports for Layout etc
+export { theme, setTheme };
+export const toggleTheme = () => setTheme((t) => (t === "bumblebee" ? "dracula" : "bumblebee"));

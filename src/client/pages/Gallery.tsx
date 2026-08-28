@@ -1,32 +1,20 @@
-import { createSignal, createResource, For, Show, onMount, createEffect } from "solid-js";
+import { createSignal, For, Show, onMount, createEffect, onCleanup } from "solid-js";
 import { apiGet, type GalleryItem, getAssetPath } from "../api/client";
-
-function splitIntoColumns(items: GalleryItem[], count: number) {
-  const cols = Array.from({ length: count }, () => [] as GalleryItem[]);
-  items.forEach((item, i) => cols[i % count].push(item));
-  return cols;
-}
 
 function GalleryCard(props: { item: GalleryItem }) {
   const path = () => getAssetPath(props.item.subfolder, props.item.filename);
   return (
-    <div
-      class="card bg-base-200 hover:scale-105 transition-transform duration-200 break-inside-avoid rounded-box"
-      style="content-visibility:auto; contain-intrinsic-size: 300px 300px;"
-    >
-      <figure class="bg-base-300 flex items-center justify-center overflow-hidden rounded-box">
+    <div class="card bg-base-100 border border-base-300 overflow-hidden rounded-box break-inside-avoid shadow-sm">
+      <figure class="bg-base-300 overflow-hidden">
         <Show
           when={props.item.mediaType === "image"}
           fallback={
-            <video src={path()} controls preload="metadata" class="w-full h-auto" loading="lazy" />
+            <video src={path()} controls preload="none" class="w-full aspect-[4/3] object-cover" />
           }
         >
-          <img src={path()} alt={props.item.filename} class="w-full h-auto" loading="lazy" decoding="async" />
+          <img src={path()} alt={props.item.filename} class="w-full aspect-[4/3] object-cover" loading="lazy" decoding="async" />
         </Show>
       </figure>
-      <div class="card-body p-3">
-        <p class="text-xs truncate opacity-60">{props.item.filename}</p>
-      </div>
     </div>
   );
 }
@@ -37,10 +25,14 @@ export default function Gallery() {
   const [items, setItems] = createSignal<GalleryItem[]>([]);
   const [hasMore, setHasMore] = createSignal(true);
   const [loading, setLoading] = createSignal(false);
+  let abort: AbortController | null = null;
 
   const fetchItems = async (reset = false) => {
     if (loading()) return;
+    if (!hasMore() && !reset) return;
     setLoading(true);
+    if (abort) abort.abort();
+    abort = new AbortController();
     const c = reset ? undefined : cursor();
     const t = type();
     const q = new URLSearchParams();
@@ -57,99 +49,90 @@ export default function Gallery() {
       }
       if (fetched.length > 0) setCursor(fetched[fetched.length - 1].meta_id);
       if (fetched.length < 20) setHasMore(false);
+      else setHasMore(true);
       if (fetched.length === 0) setHasMore(false);
     } catch (e) {
-      console.error(e);
-      setHasMore(false);
+      if ((e as Error)?.name !== "AbortError") {
+        console.error(e);
+        setHasMore(false);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // initial + type change
+  // reset on type change
   createEffect(() => {
-    type(); // track
+    const _t = type();
+    void _t;
     setItems([]);
     setCursor(undefined);
     setHasMore(true);
-    fetchItems(true);
+    void fetchItems(true);
   });
 
   let sentinelRef: HTMLDivElement | undefined;
-  onMount(() => {
-    const obs = new IntersectionObserver(
+  let observer: IntersectionObserver | null = null;
+
+  const observeSentinel = () => {
+    if (observer) observer.disconnect();
+    observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore() && !loading()) fetchItems(false);
+        if (entries[0].isIntersecting && hasMore() && !loading()) void fetchItems(false);
       },
       { rootMargin: "200px" },
     );
-    if (sentinelRef) obs.observe(sentinelRef);
-    return () => obs.disconnect();
-  });
-
-  const columns = () => splitIntoColumns(items(), 5);
-  const colClass = (i: number) => {
-    switch (i) {
-      case 0: return "block";
-      case 1: return "hidden sm:block";
-      case 2: return "hidden lg:block";
-      case 3: return "hidden xl:block";
-      default: return "hidden 2xl:block";
-    }
+    if (sentinelRef) observer.observe(sentinelRef);
   };
 
+  onMount(() => {
+    observeSentinel();
+  });
+
+  createEffect(() => {
+    // re-observe when sentinel ref changes
+    void sentinelRef;
+    void items().length;
+    observeSentinel();
+  });
+
+  onCleanup(() => {
+    if (observer) observer.disconnect();
+    if (abort) abort.abort();
+  });
+
   return (
-    <div class="flex flex-col" id="gallery-content">
-      <div class="sticky top-0 z-10 p-6 bg-base-100 mb-4 rounded-lg shadow-sm">
-        <div class="flex items-center gap-4">
+    <div class="flex flex-col bg-base-200 min-h-[calc(100vh-4rem)]" id="gallery-content">
+      <div class="flex items-center gap-6 px-6 py-4 bg-base-100 border-b border-base-300 sticky top-0 z-10">
+        <h1 class="text-xl font-bold">Gallery</h1>
+        <div class="flex items-center gap-4" role="radiogroup" aria-label="Filter">
           <label class="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={type() === "all" || type() === ""}
-              onChange={() => setType("all")}
-              class="checkbox checkbox-sm checkbox-accent"
-            />
+            <input type="radio" name="gallery-type" value="all" checked={type() === "all"} onChange={() => setType("all")} class="radio radio-sm radio-primary" />
             <span class="text-sm font-semibold">All</span>
           </label>
           <label class="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={type() === "image"}
-              onChange={() => setType(type() === "image" ? "all" : "image")}
-              class="checkbox checkbox-sm checkbox-accent"
-            />
+            <input type="radio" name="gallery-type" value="image" checked={type() === "image"} onChange={() => setType("image")} class="radio radio-sm radio-primary" />
             <span class="text-sm font-semibold">Images</span>
           </label>
           <label class="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={type() === "video"}
-              onChange={() => setType(type() === "video" ? "all" : "video")}
-              class="checkbox checkbox-sm checkbox-accent"
-            />
+            <input type="radio" name="gallery-type" value="video" checked={type() === "video"} onChange={() => setType("video")} class="radio radio-sm radio-primary" />
             <span class="text-sm font-semibold">Videos</span>
           </label>
         </div>
       </div>
       <div id="gallery-grid" class="p-6" aria-live="polite">
+        <Show when={items().length === 0 && !loading() && !hasMore()}>
+          <div class="text-center py-16 text-base-content/60">No items</div>
+        </Show>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 items-start">
-          <For each={columns()}>
-            {(col, idx) => (
-              <div id={`gallery-column-${idx()}`} class={`${colClass(idx())} space-y-4`}>
-                <For each={col}>{(item) => <GalleryCard item={item} />}</For>
-              </div>
-            )}
-          </For>
+          <For each={items()}>{(item) => <GalleryCard item={item} />}</For>
         </div>
         <div ref={sentinelRef} id="gallery-sentinel" class="py-8 text-center">
           <Show when={loading()}>
             <span class="loading loading-spinner" />
           </Show>
           <Show when={!hasMore() && items().length > 0}>
-            <div class="text-center py-8 text-base-content/60" style="column-span:all">No more items</div>
-          </Show>
-          <Show when={!loading() && items().length === 0 && !hasMore()}>
-            <div class="text-base-content/60">No items</div>
+            <div class="text-center py-8 text-base-content/60">No more items</div>
           </Show>
         </div>
       </div>
