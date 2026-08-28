@@ -7,6 +7,10 @@ import { SocketServer } from "./socket/socket-server";
 
 // TODO list:
 //
+// Super Critical
+// - reconnecting websockets
+// - restart comfyui after it crashes when running out of memory
+//
 // Critical
 // - SHIP IT
 // - Asset compression + caching
