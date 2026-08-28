@@ -359,6 +359,12 @@ export default function Jobs() {
                         const isComplete = () => evt.status === "complete";
                         const label = () => {
                           const map: Record<string, string> = {
+                            new_text_prompt: "Text Prompt",
+                            new_image_prompt: "Image Prompt",
+                            new_video_prompt: "Video Prompt",
+                            new_video_composition: "Final Composition",
+                            new_transition_prompt: "Transition Prompt",
+                            new_audio_prompt: "Audio Prompt",
                             NewTextPrompt: "Text Prompt",
                             NewImagePrompt: "Image Prompt",
                             NewVideoPrompt: "Video Prompt",
@@ -370,6 +376,12 @@ export default function Jobs() {
                         };
                         const icon = () => {
                           const map: Record<string, string> = {
+                            new_text_prompt: "🖊️",
+                            new_image_prompt: "🖼️",
+                            new_video_prompt: "🎬",
+                            new_video_composition: "🏁",
+                            new_transition_prompt: "🔄",
+                            new_audio_prompt: "🎵",
                             NewTextPrompt: "🖊️",
                             NewImagePrompt: "🖼️",
                             NewVideoPrompt: "🎬",

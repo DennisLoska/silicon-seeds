@@ -54,6 +54,9 @@ export default function Compose() {
     setIsSubmitting(true);
     const form = e.currentTarget as HTMLFormElement;
     const fd = new FormData(form);
+    // Don't send empty file that would override script text
+    const f = fd.get("script_file") as File | null;
+    if (f && f.size === 0 && f.name === "") fd.delete("script_file");
     try {
       const res = await fetch("/api/jobs/videos/compose", { method: "POST", body: fd });
       if (!res.ok) {
@@ -112,9 +115,9 @@ export default function Compose() {
           </div>
         </div>
 
-        <div class="flex flex-col w-full xl:w-1/2 gap-4 flex-grow">
+        <div class="flex flex-col w-full xl:w-[26rem] gap-4 xl:flex-none">
           {/* AI Models */}
-          <div class="card bg-base-100 shadow-xl w-full flex-grow flex flex-col">
+          <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col">
             <div class="card-body flex flex-col flex-grow">
               <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.SparkleIcon />AI Models</h2>
               <div class="form-control flex-grow">
@@ -134,8 +137,8 @@ export default function Compose() {
           </div>
 
           {/* Video Settings */}
-          <div class="card bg-base-100 shadow-xl w-full flex-grow flex flex-col">
-            <div class="card-body flex flex-col flex-grow">
+          <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col">
+            <div class="card-body flex flex-col">
               <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.CogSettingsIcon />Video Settings</h2>
               <div class="form-control flex-grow">
                 <label class="label cursor-pointer">
@@ -205,8 +208,8 @@ export default function Compose() {
           </div>
 
           {/* Action */}
-          <div class="card bg-base-100 shadow-xl w-full flex-grow flex flex-col">
-            <div class="card-body flex flex-col h-full">
+          <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col">
+            <div class="card-body flex flex-col">
               <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.LightningBoltIcon />Action!</h2>
               <div class="card-actions justify-between flex flex-row gap-2 mt-auto">
                 <button type="reset" class="btn btn-ghost">Reset</button>
@@ -220,7 +223,7 @@ export default function Compose() {
         </div>
 
         <Show when={showProgress() && jobId()}>
-          <div class="w-full xl:w-1/2 2xl:w-1/3 min-w-0 min-h-0 flex flex-col">
+          <div class="w-full xl:w-[26rem] xl:flex-none min-w-0 min-h-0 flex flex-col">
             <div class="card bg-base-100 shadow-xl w-full max-h-[calc(100vh-7rem)] overflow-y-auto flex flex-col">
               <div class="card-body flex flex-col">
                 <div class="flex items-start justify-between gap-4 mb-3">
@@ -228,19 +231,41 @@ export default function Compose() {
                   <span class="badge badge-warning">Active</span>
                 </div>
                 <p class="text-sm opacity-70 mb-4">Monitoring job: {jobId()}</p>
-                <div class="space-y-2">
-                  <For each={(eventsData()?.events as unknown as { id: string; type: string; status: string; prompt?: string }[]) ?? []}>
-                    {(ev) => (
-                      <div class="card bg-base-200 p-3 text-sm">
-                        <div class="flex justify-between"><span class="font-mono">{ev.type}</span><span class={`badge ${ev.status === "complete" ? "badge-success" : ev.status === "failed" ? "badge-error" : "badge-warning"}`}>{ev.status}</span></div>
-                        <Show when={ev.prompt}><div class="truncate opacity-70">{ev.prompt}</div></Show>
-                      </div>
-                    )}
-                  </For>
-                  <Show when={(eventsData()?.events?.length ?? 0) === 0}>
-                    <div class="text-sm opacity-60">Waiting for events…</div>
-                  </Show>
-                </div>
+                <Show when={(eventsData()?.events?.length ?? 0) === 0}>
+                  <div class="text-sm opacity-60">Waiting for events…</div>
+                </Show>
+                <Show when={(eventsData()?.events?.length ?? 0) > 0}>
+                  <ul class="timeline timeline-compact timeline-vertical">
+                    <For each={(eventsData()?.events as unknown as { id: string; type: string; status: string; prompt?: string | null; created_at: string }[]) ?? []}>
+                      {(evt, idx) => {
+                        const isComplete = () => evt.status === "complete";
+                        const label = () => ({ new_text_prompt: "Text Prompt", new_image_prompt: "Image Prompt", new_video_prompt: "Video Prompt", new_video_composition: "Final Composition", new_transition_prompt: "Transition Prompt", new_audio_prompt: "Audio Prompt", NewTextPrompt: "Text Prompt", NewImagePrompt: "Image Prompt", NewVideoPrompt: "Video Prompt", NewVideoComposition: "Final Composition", NewTransitionPrompt: "Transition Prompt", NewAudioPrompt: "Audio Prompt" }[evt.type] ?? evt.type);
+                        const icon = () => ({ new_text_prompt: "🖊️", new_image_prompt: "🖼️", new_video_prompt: "🎬", new_video_composition: "🏁", new_transition_prompt: "🔄", new_audio_prompt: "🎵", NewTextPrompt: "🖊️", NewImagePrompt: "🖼️", NewVideoPrompt: "🎬", NewVideoComposition: "🏁", NewTransitionPrompt: "🔄", NewAudioPrompt: "🎵" }[evt.type] ?? "📌");
+                        return (
+                          <li style="content-visibility:auto; contain-intrinsic-size: 200px 300px;">
+                            {idx() !== 0 && <hr class={isComplete() ? "bg-success" : ""} />}
+                            <div class="timeline-end timeline-box w-[98%] border border-base-300 bg-base-100 min-w-64 max-w-full">
+                              <details class="w-full bg-base-100 open:bg-base-100">
+                                <summary class="cursor-pointer list-none p-3 hover:bg-base-200 rounded-lg transition-colors">
+                                  <div class="flex items-center justify-between gap-2">
+                                    <span class="text-sm font-bold text-base-content/60">{label()}</span>
+                                    <span class={isComplete() ? "badge badge-success text-xs" : "badge badge-warning text-xs"}>{isComplete() ? <Icons.StatusCompleteSmall /> : <Icons.StatusPendingSmall />}</span>
+                                  </div>
+                                </summary>
+                                <div class="p-3 pt-0 mt-2 space-y-2">
+                                  <Show when={evt.prompt}><div class="text-sm whitespace-pre-wrap break-words bg-base-200 p-2 rounded">{evt.prompt}</div></Show>
+                                  <div class="text-xs opacity-50">{new Date(evt.created_at).toLocaleString()}</div>
+                                </div>
+                              </details>
+                            </div>
+                            <div class="timeline-middle"><div class={`w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-sm ${isComplete() ? "bg-success text-success-content" : "bg-base-200"}`}>{icon()}</div></div>
+                            {idx() !== (eventsData()?.events?.length ?? 0) - 1 && <hr class={isComplete() ? "bg-success" : ""} />}
+                          </li>
+                        );
+                      }}
+                    </For>
+                  </ul>
+                </Show>
                 <div class="card-actions justify-end mt-4 gap-2">
                   <a href={`/jobs?job_id=${jobId()}&filter=all&tab=status`} class="btn btn-primary btn-sm">View Job</a>
                 </div>

@@ -166,8 +166,8 @@ export default function CreateImage() {
                     <For each={(eventsData()?.events as unknown as { id: string; type: string; status: string; prompt?: string | null; created_at: string }[]) ?? []}>
                       {(evt, idx) => {
                         const isComplete = () => evt.status === "complete";
-                        const label = () => ({ NewImagePrompt: "Image Prompt", NewVideoPrompt: "Video Prompt", NewTextPrompt: "Text Prompt", NewAudioPrompt: "Audio Prompt", NewTransitionPrompt: "Transition Prompt", NewVideoComposition: "Final Composition" }[evt.type] ?? evt.type);
-                        const icon = () => ({ NewImagePrompt: "🖼️", NewVideoPrompt: "🎬", NewTextPrompt: "🖊️", NewAudioPrompt: "🎵", NewTransitionPrompt: "🔄", NewVideoComposition: "🏁" }[evt.type] ?? "📌");
+                        const label = () => ({ new_image_prompt: "Image Prompt", new_video_prompt: "Video Prompt", new_text_prompt: "Text Prompt", new_audio_prompt: "Audio Prompt", new_transition_prompt: "Transition Prompt", new_video_composition: "Final Composition", NewImagePrompt: "Image Prompt", NewVideoPrompt: "Video Prompt", NewTextPrompt: "Text Prompt", NewAudioPrompt: "Audio Prompt", NewTransitionPrompt: "Transition Prompt", NewVideoComposition: "Final Composition" }[evt.type] ?? evt.type);
+                        const icon = () => ({ new_image_prompt: "🖼️", new_video_prompt: "🎬", new_text_prompt: "🖊️", new_audio_prompt: "🎵", new_transition_prompt: "🔄", new_video_composition: "🏁", NewImagePrompt: "🖼️", NewVideoPrompt: "🎬", NewTextPrompt: "🖊️", NewAudioPrompt: "🎵", NewTransitionPrompt: "🔄", NewVideoComposition: "🏁" }[evt.type] ?? "📌");
                         return (
                           <li style="content-visibility:auto; contain-intrinsic-size: 200px 300px;">
                             {idx() !== 0 && <hr class={isComplete() ? "bg-success" : ""} />}
