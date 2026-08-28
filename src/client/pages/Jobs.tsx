@@ -40,7 +40,6 @@ export default function Jobs() {
   const jobIdParam = () => (params.jobId as string | undefined) || (search.job_id as string | undefined);
   const [selectedId, setSelectedId] = createSignal<string | undefined>(jobIdParam());
 
-  // sync URL -> selectedId (one-way, no loop)
   createEffect(() => {
     const id = jobIdParam();
     if (id && id !== selectedId()) setSelectedId(id);
@@ -59,10 +58,9 @@ export default function Jobs() {
     if (f === "failed") return list.filter((j) => j.status === "failed");
     if (f === "cancelled") return list.filter((j) => j.status === "cancelled");
     if (f === "recent") return [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5);
-    return list;
+    return [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   };
 
-  // auto-select first filtered job when none selected and list loaded
   createEffect(() => {
     const list = filteredJobs();
     if (list.length > 0 && !selectedId()) {
@@ -72,8 +70,7 @@ export default function Jobs() {
     }
   });
 
-  // job detail (job + events) for selectedId
-  const [jobDetail] = createResource(
+  const [jobDetail, { refetch: refetchJobDetail }] = createResource(
     () => selectedId(),
     async (id) => {
       if (!id) return null;
@@ -102,20 +99,32 @@ export default function Jobs() {
 
   useJobUpdates(selectedId, () => {
     refetchJobs();
+    refetchJobDetail();
     const t = tab();
     if (t === "media") refetchMedia();
     else refetchEvents();
-    // keep detail in sync by refetching jobs/events (jobDetail uses same endpoint, will update on next read if needed)
   });
 
   const job = () => jobDetail()?.job;
   const events = () => jobDetail()?.events ?? eventsData()?.events ?? [];
   const completedCount = () => events().filter((e) => e.status === "complete").length;
+  const runningCount = () => events().filter((e) => e.status === "running").length;
+  const pendingCount = () => events().filter((e) => e.status === "pending").length;
+  const failedCount = () => events().filter((e) => e.status === "failed").length;
   const progress = () => (events().length === 0 ? 0 : Math.round((completedCount() / events().length) * 100));
+  const pipelineCounts = () => {
+    const evs = events();
+    return {
+      image: evs.filter((e) => e.type === "NewImagePrompt").length,
+      video: evs.filter((e) => e.type === "NewVideoPrompt").length,
+      transition: evs.filter((e) => e.type === "NewTransitionPrompt").length,
+      audio: evs.filter((e) => e.type === "NewAudioPrompt").length,
+    };
+  };
+  const currentStep = () => events().find((e) => e.status === "running")?.type ?? (completedCount() === events().length && events().length > 0 ? "Complete" : "Queued");
 
   return (
     <div class="flex flex-col lg:flex-row min-h-[calc(100vh-4rem)] bg-base-100">
-      {/* Sidebar list */}
       <div class="w-full lg:w-80 xl:w-[420px] bg-base-100 border-r border-base-300 flex flex-col shrink-0">
         <div class="sticky top-0 z-10 bg-base-100 flex gap-2 px-4 py-3 border-b border-base-300">
           <A href="/compose" class="btn btn-primary btn-sm">New Job <Icons.NewJobIcon /></A>
@@ -146,10 +155,7 @@ export default function Jobs() {
             <For each={filteredJobs()}>
               {(j) => (
                 <li class={`list-row p-0 flex items-center justify-between rounded-sm shadow-sm mb-1 hover:shadow-md transition-all ${selectedId() === j.id ? "bg-primary text-primary-content" : "hover:bg-base-200 bg-base-100"}`}>
-                  <A
-                    href={`/jobs/${j.id}?tab=${tab()}&filter=${filter()}`}
-                    class="flex items-center gap-3 flex-1 px-4 py-3 min-w-0"
-                  >
+                  <A href={`/jobs/${j.id}?tab=${tab()}&filter=${filter()}`} class="flex items-center gap-3 flex-1 px-4 py-3 min-w-0">
                     <StatusBadge status={j.status} />
                     <div class="flex flex-col items-start min-w-0">
                       <span class="font-semibold text-sm leading-tight truncate max-w-[14ch] lg:max-w-[18ch]">{j.name}</span>
@@ -165,7 +171,6 @@ export default function Jobs() {
         </div>
       </div>
 
-      {/* Detail area */}
       <div class="flex-1 flex flex-col min-h-0 bg-base-200">
         <Show when={!selectedId()}>
           <div class="flex flex-col items-center justify-center min-h-[400px] text-base-content/60">
@@ -215,9 +220,44 @@ export default function Jobs() {
                         <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Job Status</div><div class="stat-value text-sm capitalize">{j().status}</div></div></div>
                         <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Events</div><div class="stat-value text-sm">{completedCount()} / {events().length}</div></div></div>
                         <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Duration</div><div class="stat-value text-sm">{calculateDuration(j().created_at, events())}</div></div></div>
-                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">FPS</div><div class="stat-value text-sm">{formatLabel(j().fps)}</div></div></div>
-                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Resolution</div><div class="stat-value text-sm">{formatLabel(j().resolution)}</div></div></div>
-                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Style Preset</div><div class="stat-value text-sm">{formatLabel(j().style_preset)}</div></div></div>
+                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Running</div><div class="stat-value text-sm">{runningCount()}</div></div></div>
+                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Pending</div><div class="stat-value text-sm">{pendingCount()}</div></div></div>
+                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Failed</div><div class="stat-value text-sm">{failedCount()}</div></div></div>
+                      </div>
+                      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="card bg-base-100 shadow-sm">
+                          <div class="card-body">
+                            <h3 class="card-title text-sm uppercase tracking-widest font-bold opacity-60">Render Settings</h3>
+                            <div class="grid grid-cols-2 gap-3 text-sm mt-2">
+                              <div><div class="opacity-60">Resolution</div><div class="font-semibold">{formatLabel(j().resolution)}</div></div>
+                              <div><div class="opacity-60">FPS</div><div class="font-semibold">{formatLabel(j().fps)}</div></div>
+                              <div><div class="opacity-60">Clip Duration</div><div class="font-semibold">{j().clip_duration ? `${j().clip_duration}s` : "Not set"}</div></div>
+                              <div><div class="opacity-60">Transition</div><div class="font-semibold">{j().transition_duration ? `${j().transition_duration}s` : "Not set"}</div></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="card bg-base-100 shadow-sm">
+                          <div class="card-body">
+                            <h3 class="card-title text-sm uppercase tracking-widest font-bold opacity-60">Models</h3>
+                            <div class="grid grid-cols-1 gap-3 text-sm mt-2">
+                              <div><div class="opacity-60">Image Model</div><div class="font-semibold">{formatLabel(j().image_model)}</div></div>
+                              <div><div class="opacity-60">Video Model</div><div class="font-semibold">{formatLabel(j().video_model)}</div></div>
+                              <div><div class="opacity-60">Style Preset</div><div class="font-semibold">{formatLabel(j().style_preset)}</div></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="card bg-base-100 shadow-sm">
+                          <div class="card-body">
+                            <h3 class="card-title text-sm uppercase tracking-widest font-bold opacity-60">Pipeline</h3>
+                            <div class="grid grid-cols-2 gap-3 text-sm mt-2">
+                              <div><div class="opacity-60">Images</div><div class="font-semibold">{pipelineCounts().image}</div></div>
+                              <div><div class="opacity-60">Videos</div><div class="font-semibold">{pipelineCounts().video}</div></div>
+                              <div><div class="opacity-60">Transitions</div><div class="font-semibold">{pipelineCounts().transition}</div></div>
+                              <div><div class="opacity-60">Audio</div><div class="font-semibold">{pipelineCounts().audio}</div></div>
+                              <div class="col-span-2"><div class="opacity-60">Current Step</div><div class="font-semibold">{currentStep()}</div></div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -227,29 +267,75 @@ export default function Jobs() {
                 <Show when={mediaData.loading}>
                   <div class="flex justify-center py-8"><span class="loading loading-spinner" /></div>
                 </Show>
-                <Show when={!mediaData.loading && (mediaData()?.items?.length ?? 0) === 0}>
-                  <div class="text-base-content/60">No media yet for this job.</div>
-                </Show>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <For each={mediaData()?.items ?? []}>
-                    {(m) => (
-                      <div class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
-                        <figure class="bg-base-300">
-                          <Show when={m.mediaType === "video"} fallback={<img src={getAssetPath(m.subfolder, m.filename)} alt={m.filename} class="w-full aspect-video object-cover" loading="lazy" />}>
-                            <video src={getAssetPath(m.subfolder, m.filename)} controls class="w-full aspect-video object-cover" preload="metadata" />
-                          </Show>
-                        </figure>
-                        <div class="card-body p-3"><p class="text-xs truncate opacity-60">{m.filename}</p></div>
+                <Show when={!mediaData.loading}>
+                  {( ) => {
+                    const items = () => mediaData()?.items ?? [];
+                    const images = () => items().filter((i) => i.mediaType === "image");
+                    const videos = () => items().filter((i) => i.mediaType === "video");
+                    const audios = () => items().filter((i) => i.mediaType !== "image" && i.mediaType !== "video" && i.mediaType !== null);
+                    const pending = () => items().length === 0;
+                    return (
+                      <div class="space-y-8">
+                        <Show when={pending()}>
+                          <div class="text-base-content/60">No media yet for this job.</div>
+                        </Show>
+                        <Show when={images().length > 0}>
+                          <div>
+                            <h3 class="font-bold uppercase tracking-widest text-sm opacity-60 mb-3">Images</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <For each={images()}>
+                                {(m) => (
+                                  <div class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
+                                    <figure class="bg-base-300"><img src={getAssetPath(m.subfolder, m.filename)} alt={m.filename} class="w-full aspect-video object-cover" loading="lazy" /></figure>
+                                    <div class="card-body p-3"><p class="text-xs truncate opacity-60">{m.filename}</p></div>
+                                  </div>
+                                )}
+                              </For>
+                            </div>
+                          </div>
+                        </Show>
+                        <Show when={videos().length > 0}>
+                          <div>
+                            <h3 class="font-bold uppercase tracking-widest text-sm opacity-60 mb-3">Videos</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <For each={videos()}>
+                                {(m) => (
+                                  <div class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
+                                    <figure class="bg-base-300"><video src={getAssetPath(m.subfolder, m.filename)} controls class="w-full aspect-video object-cover" preload="metadata" /></figure>
+                                    <div class="card-body p-3"><p class="text-xs truncate opacity-60">{m.filename}</p></div>
+                                  </div>
+                                )}
+                              </For>
+                            </div>
+                          </div>
+                        </Show>
+                        <Show when={audios().length > 0}>
+                          <div>
+                            <h3 class="font-bold uppercase tracking-widest text-sm opacity-60 mb-3">Audio</h3>
+                            <div class="grid grid-cols-1 gap-4">
+                              <For each={audios()}>
+                                {(m) => (
+                                  <div class="card bg-base-100 shadow-sm border border-base-300 p-3 flex flex-row items-center gap-3">
+                                    <Icons.Audio />
+                                    <span class="text-xs truncate opacity-60 flex-1">{m.filename}</span>
+                                    <audio controls src={getAssetPath(m.subfolder, m.filename)} class="h-8" />
+                                  </div>
+                                )}
+                              </For>
+                            </div>
+                          </div>
+                        </Show>
                       </div>
-                    )}
-                  </For>
-                </div>
+                    );
+                  }}
+                </Show>
               </Show>
               <Show when={tab() === "events"}>
-                <div class="space-y-2">
+                <div class="relative border-l-2 border-base-300 ml-2 pl-6 space-y-4">
                   <For each={events()}>
                     {(ev) => (
-                      <div class="card bg-base-100 p-4 shadow-sm">
+                      <div class="relative card bg-base-100 p-4 shadow-sm">
+                        <div class="absolute -left-[25px] top-5 w-3 h-3 rounded-full bg-primary border-2 border-base-100" />
                         <div class="flex gap-2 items-center">
                           <span class="badge badge-sm">{ev.mode}</span>
                           <span class="font-mono text-sm">{ev.type}</span>
