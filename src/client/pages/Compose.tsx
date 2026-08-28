@@ -101,7 +101,7 @@ export default function Compose() {
           <div class="card bg-base-100 shadow-xl flex flex-col overflow-hidden flex-1 min-h-0 xl:min-h-0">
             <div class="card-body flex flex-col flex-1 p-4 min-h-0 xl:min-h-0">
               <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.DocumentIcon />Video Script</h2>
-              <textarea name="script" id="type-script-tab" class="textarea textarea-ghost w-full flex-1 resize-none mb-4 min-h-[520px] xl:min-h-[372px] focus:outline-none" placeholder="Write your video script here..."></textarea>
+              <textarea name="script" id="type-script-tab" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none" placeholder="Write your video script here..."></textarea>
               <div class="divider my-2">OR</div>
               <input type="file" name="script_file" accept=".txt,.md" class="file-input file-input-bordered w-full" />
             </div>

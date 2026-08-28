@@ -95,7 +95,7 @@ export default function CreateVideo() {
           <div class="card bg-base-100 shadow-xl flex flex-col overflow-hidden flex-1 min-h-0 xl:min-h-0">
             <div class="card-body flex flex-col flex-1 p-4 min-h-0 xl:min-h-0">
               <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.PromptIcon />Prompt</h2>
-              <textarea name="prompt" id="video-prompt" class="textarea textarea-ghost w-full flex-1 resize-none mb-4 min-h-[520px] xl:min-h-[372px] focus:outline-none" placeholder="Describe the video you want to generate... e.g. A serene mountain lake at sunrise, gentle mist, slow camera push in"></textarea>
+              <textarea name="prompt" id="video-prompt" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none" placeholder="Describe the video you want to generate... e.g. A serene mountain lake at sunrise, gentle mist, slow camera push in"></textarea>
             </div>
           </div>
           <div class="card bg-base-100 shadow-xl flex-none">
