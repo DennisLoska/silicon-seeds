@@ -252,9 +252,9 @@ export default function CreateVideo() {
                 <h3 class="font-semibold mb-2 flex items-center gap-2"><Icons.Video /> Generated Video</h3>
                 <Show when={videoItems().length === 0 && imageItems().length === 0}>
                   <div class="flex flex-col items-center justify-center gap-2 py-16">
-                    <p class="text-lg font-medium text-base-content/60">Generating — first an image, then video…</p>
+                    <p class="text-lg font-medium text-base-content/60">Generating video from prompt…</p>
                     <span class="loading loading-dots loading-lg text-primary"></span>
-                    <p class="text-xs opacity-50">This uses Z-Image-Turbo → Wan/LTX I2V. Check View Job for timeline.</p>
+                    <p class="text-xs opacity-50">Pure T2V (no intermediate image) — Wan local / LTX local. Check View Job for timeline.</p>
                   </div>
                 </Show>
                 <Show when={videoItems().length > 0}>
