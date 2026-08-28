@@ -1,7 +1,7 @@
 import { createSignal, createResource, Show, For } from "solid-js";
 import { useSearchParams, useNavigate } from "@solidjs/router";
 import { useJobUpdates } from "../lib/sse";
-import { apiGet } from "../api/client";
+import { apiGet } from "../lib/api-client";
 import { Icons } from "../components/Icons";
 
 export default function CreateImage() {

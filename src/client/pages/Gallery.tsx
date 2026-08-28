@@ -1,10 +1,10 @@
-import { createSignal, For, Show, onMount, createEffect, onCleanup } from "solid-js";
-import { apiGet, type GalleryItem, getAssetPath } from "../api/client";
+import { createSignal, For, Show, onMount, createEffect, onCleanup, on, untrack } from "solid-js";
+import { apiGet, type GalleryItem, getAssetPath } from "../lib/api-client";
 
 function GalleryCard(props: { item: GalleryItem }) {
   const path = () => getAssetPath(props.item.subfolder, props.item.filename);
   return (
-    <div class="card bg-base-100 border border-base-300 overflow-hidden rounded-box break-inside-avoid shadow-sm">
+    <div class="card bg-base-100 border border-base-300 overflow-hidden rounded-box shadow-sm">
       <figure class="bg-base-300 overflow-hidden">
         <Show
           when={props.item.mediaType === "image"}
@@ -28,13 +28,13 @@ export default function Gallery() {
   let abort: AbortController | null = null;
 
   const fetchItems = async (reset = false) => {
-    if (loading()) return;
-    if (!hasMore() && !reset) return;
+    if (untrack(() => loading())) return;
+    if (untrack(() => !hasMore() && !reset)) return;
     setLoading(true);
     if (abort) abort.abort();
     abort = new AbortController();
-    const c = reset ? undefined : cursor();
-    const t = type();
+    const c = reset ? undefined : untrack(() => cursor());
+    const t = untrack(() => type());
     const q = new URLSearchParams();
     if (c) q.set("cursor", c);
     if (t && t !== "all") q.set("type", t);
@@ -61,13 +61,16 @@ export default function Gallery() {
     }
   };
 
-  // reset on type change
-  createEffect(() => {
-    const _t = type();
-    void _t;
+  // reset on type change - only track type, not loading/hasMore/cursor
+  createEffect(on(type, () => {
     setItems([]);
     setCursor(undefined);
     setHasMore(true);
+    void fetchItems(true);
+  }));
+
+  // initial load
+  onMount(() => {
     void fetchItems(true);
   });
 
@@ -78,7 +81,7 @@ export default function Gallery() {
     if (observer) observer.disconnect();
     observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore() && !loading()) void fetchItems(false);
+        if (entries[0].isIntersecting && untrack(() => hasMore() && !loading())) void fetchItems(false);
       },
       { rootMargin: "200px" },
     );
@@ -90,8 +93,7 @@ export default function Gallery() {
   });
 
   createEffect(() => {
-    // re-observe when sentinel ref changes
-    void sentinelRef;
+    // re-observe when items change (length)
     void items().length;
     observeSentinel();
   });

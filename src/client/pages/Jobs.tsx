@@ -1,6 +1,6 @@
 import { createResource, createSignal, For, Show, createEffect } from "solid-js";
 import { useParams, useSearchParams, A } from "@solidjs/router";
-import { apiGet, type EventRow, getAssetPath } from "../api/client";
+import { apiGet, type EventRow, getAssetPath } from "../lib/api-client";
 import { useJobUpdates } from "../lib/sse";
 import { Icons } from "../components/Icons";
 
