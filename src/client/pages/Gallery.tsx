@@ -10,7 +10,7 @@ function GalleryCard(props: { item: GalleryItem }) {
           when={props.item.mediaType === "image"}
           fallback={
             <Show when={props.item.mediaType === "video"} fallback={<audio controls src={path()} class="w-full" />}>
-              <video src={path()} controls preload="none" class="w-full aspect-[4/3] object-cover" />
+              <video src={path()} autoplay muted loop playsinline preload="metadata" controls class="w-full aspect-[4/3] object-cover" />
             </Show>
           }
         >
