@@ -412,6 +412,11 @@ Your response should only include the newly generated prompt!
       return;
     }
 
+    if (outputEvents.length <= 1) {
+      Logger.info(`Single clip video, skipping composition for job ${jobId}`);
+      return;
+    }
+
     const fps = job.fps || Metadata.FPS;
     const { width, height } = resolutionForJob(job);
 
