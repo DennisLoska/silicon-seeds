@@ -21,6 +21,24 @@ export const PostTextToImageSchema = z.object({
 
 export type PostTextToImage = z.infer<typeof PostTextToImageSchema>;
 
+export const PostTextToVideoSchema = z.object({
+  prompt: z.string().min(1, "Prompt is required"),
+  resolution: z.string().max(7),
+  video_model: z.string().max(50),
+  image_model: z.string().max(50).optional(),
+  fps: z.coerce.number().min(1).max(24),
+  clip_duration: z.coerce.number().min(1).max(10),
+  style_preset: z.enum(Presets),
+  style_guide: z
+    .string()
+    .trim()
+    .max(2000)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : undefined)),
+});
+
+export type PostTextToVideo = z.infer<typeof PostTextToVideoSchema>;
+
 export const PostComposeSchema = z
   .object({
     script: z.string().optional(),
