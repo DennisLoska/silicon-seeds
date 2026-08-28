@@ -32,7 +32,7 @@ export default function CreateImage() {
     async (id) => {
       if (!id) return { items: [] as { filename: string; subfolder: string }[] };
       try {
-        const data = await apiGet<{ items: { filename: string; subfolder: string; mediaType: string | null }[] }>(`/api/jobs/${id}/media?limit=24`);
+        const data = await apiGet<{ items: { filename: string; subfolder: string; mediaType: string | null }[] }>(`/api/jobs/${id}/media?limit=100`);
         return data;
       } catch {
         return { items: [] };

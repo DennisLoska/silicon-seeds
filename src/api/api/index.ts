@@ -151,21 +151,60 @@ app.get("/jobs/:jobId/media", async (c) => {
   const type = c.req.query("type") as string | undefined;
   const offset = parseInt(c.req.query("offset") ?? "0", 10);
   const limit = parseInt(c.req.query("limit") ?? "12", 10);
-  // Gallery-like: fetch via meta join, filter by job
-  const items = await DB.Gallery.listItems({ limit: 5000, type: type as "image" | "video" | "audio" | undefined });
-  const filtered = items.filter((i) => i.job_id === jobId);
-  const slice = filtered.slice(
-    Number.isNaN(offset) ? 0 : offset,
-    (Number.isNaN(offset) ? 0 : offset) + (Number.isNaN(limit) ? 12 : Math.min(limit, 24)),
-  );
-  return c.json({ items: slice, total: filtered.length });
+  const offsetVal = Number.isNaN(offset) ? 0 : offset;
+  const limitVal = Number.isNaN(limit) ? 12 : Math.min(limit, 100);
+  const effectiveType = type && type !== "all" ? (type as "image" | "video" | "audio") : undefined;
+  function getMediaTypeFromExtension(filename: string): "image" | "video" | "audio" | null {
+    const ext = filename.split(".").pop()?.toLowerCase();
+    if (!ext) return null;
+    if (["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"].includes(ext)) return "image";
+    if (["mp4", "mov", "avi", "mkv", "webm"].includes(ext)) return "video";
+    if (["mp3", "wav", "flac", "ogg", "m4a", "aac", "wma", "opus", "aiff"].includes(ext)) return "audio";
+    return null;
+  }
+  function getOutputAssetPath(subfolder: string, filename: string) {
+    const outputDir = Bun.env.OUTPUT_DIR?.replace(/\/$/, "") ?? "";
+    const cleanSubfolder = subfolder.replace(/^\/+|\/+$/g, "").trim();
+    if (!cleanSubfolder) return `${outputDir}/${filename}`;
+    return `${outputDir}/${cleanSubfolder}/${filename}`;
+  }
+  function getAssetPathInternal(subfolder: string, filename: string) {
+    const contentDir = Bun.env.CONTENT_LIBRARY_DIR?.replace(/\/$/, "") ?? "";
+    if (contentDir) {
+      const cleanSubfolder = subfolder.replace(/^\/+|\/+$/g, "").trim();
+      if (!cleanSubfolder) return `${contentDir}/${filename}`;
+      return `${contentDir}/${cleanSubfolder}/${filename}`;
+    }
+    return getOutputAssetPath(subfolder, filename);
+  }
+  let query = DB.db.selectFrom("meta").innerJoin("events", "events.id", "meta.event_id").innerJoin("jobs", "jobs.id", "events.job_id").select(["meta.id as meta_id", "meta.event_id", "meta.filename", "meta.subfolder", "meta.type as meta_type", "events.created_at as event_created_at", "events.id as event_id", "jobs.id as job_id"]).where("meta.type", "=", "output").where("jobs.id", "=", jobId);
+  if (effectiveType) {
+    const extList = effectiveType === "image" ? ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"] : effectiveType === "video" ? ["mp4", "mov", "avi", "mkv", "webm"] : ["mp3", "wav", "flac", "ogg", "m4a", "aac", "wma", "opus", "aiff"];
+    query = query.where((eb) => eb.or(extList.map((ext) => eb("meta.filename", "like", `%.${ext}`))));
+  }
+  const results = await query.orderBy("meta.id", "desc").limit(limitVal * 2 + offsetVal).execute();
+  const items: Array<{ meta_id: string; event_id: string; filename: string; subfolder: string; type: string; created_at: string; job_id: string; mediaType: "image" | "video" | "audio" }> = [];
+  for (const row of results) {
+    const mediaType = getMediaTypeFromExtension(row.filename);
+    if (!mediaType) continue;
+    if (effectiveType && mediaType !== effectiveType) continue;
+    const primaryPath = getAssetPathInternal(row.subfolder, row.filename);
+    const fallbackPath = getOutputAssetPath(row.subfolder, row.filename);
+    let exists = await Bun.file(primaryPath).exists();
+    if (!exists && primaryPath !== fallbackPath) exists = await Bun.file(fallbackPath).exists();
+    if (!exists) continue;
+    items.push({ meta_id: row.meta_id, event_id: row.event_id, filename: row.filename, subfolder: row.subfolder, type: row.meta_type, created_at: row.event_created_at, job_id: row.job_id, mediaType });
+    if (items.length >= limitVal + offsetVal) break;
+  }
+  const slice = items.slice(offsetVal, offsetVal + limitVal);
+  return c.json({ items: slice, total: items.length });
 });
 
 app.get("/gallery/items", async (c) => {
   const cursor = c.req.query("cursor") as string | undefined;
   const type = c.req.query("type") as string | undefined;
   const limit = parseInt(c.req.query("limit") || "20", 10);
-  const effectiveType = type && type !== "all" ? (type as "image" | "video") : undefined;
+  const effectiveType = type && type !== "all" ? (type as "image" | "video" | "audio") : undefined;
   const items = await DB.Gallery.listItems({
     cursor,
     limit: Number.isNaN(limit) ? 20 : limit,
