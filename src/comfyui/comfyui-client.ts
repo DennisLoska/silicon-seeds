@@ -5,6 +5,8 @@ import wan2_2_img2vidApi from "./api/video_wan2_2_14B_i2v_720p_5s.json";
 import wan2_2_img2transitionApi from "./api/video_wan2_2_14B_transitions.json";
 import ltx2_3_img2vidApi from "./api/video_ltx2_3_i2v.json";
 import ltx2_3_img2transitionApi from "./api/video_ltx2_3_style_transition.json";
+import wan_t2v_api from "./api/video_wan2_2_t2v.json";
+import ltx_t2v_api from "./api/video_ltx2_3_t2v.json";
 // import ace_step_1_0_api from "./api/audio_ace_step_1_0_instrumental.json";
 import ace_step_1_5_api from "./api/audio_ace_step1_5_xl_base_instrumental.json";
 import stable_audio_3_api from "./api/audio_stable_audio_3_medium_base.json";
@@ -13,6 +15,8 @@ import wan2_2_img2vidWorkflow from "./workflows/video_wan2_2_14B_i2v_720p_5s.jso
 import wan2_2_img2transWorkflow from "./workflows/video_wan2_2_14B_transitions.json";
 import ltx2_3_img2vidWorkflow from "./workflows/video_ltx2_3_i2v.json";
 import ltx2_3_img2transWorkflow from "./workflows/video_ltx2_3_style_transition.json";
+import wan_t2v_workflow from "./workflows/video_wan2_2_t2v.json";
+import ltx_t2v_workflow from "./workflows/video_ltx2_3_t2v.json";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
 import { Lora } from "../styles/presets";
@@ -58,9 +62,16 @@ type Img2Transition = {
   prompt: string;
 };
 
+type Text2VideoInput = {
+  id: string;
+  kind: "text-to-video";
+  prompt: string;
+};
+
 export type ModelVariant =
   | Text2ImgInput
   | Img2VidInput
+  | Text2VideoInput
   | Text2Instrumental
   | Text2Song
   | Img2Transition;
@@ -250,8 +261,6 @@ export class ComfyUIClient {
     api: Record<string, unknown>,
     job: JobsSchema,
   ) {
-    // This is super important and nowhere documented in ComfyUI :(
-    // Without this you won't see all the websocket events...
     const clientId = Metadata.clientId;
     const base = {
       prompt: api,
@@ -259,8 +268,22 @@ export class ComfyUIClient {
       client_id: clientId,
     };
 
-    let workflow;
-    if (input.kind === "image-to-video") {
+    let workflow: unknown | undefined;
+    if (input.kind === "text-to-video") {
+      if (job.video_model === "wan2.2") {
+        workflow = wan2_2_img2vidWorkflow;
+      } else if (job.video_model === "ltx2.3") {
+        workflow = ltx_t2v_workflow;
+      } else {
+        throw new Error(`Unsupported video_model for T2V: ${job.video_model}`);
+      }
+      return JSON.stringify({
+        ...base,
+        extra_data: {
+          extra_pnginfo: workflow,
+        },
+      });
+    } else if (input.kind === "image-to-video") {
       if (job.video_model === "wan2.2") {
         workflow = wan2_2_img2vidWorkflow;
       }
@@ -332,45 +355,71 @@ export class ComfyUIClient {
       // api["57:3"].inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
 
       if (job.image_model === "z-image-turbo") {
-        api = zImageTurboWithLoraApi;
-        api["9"].inputs.filename_prefix = input.id;
-        api["41"].inputs.width = resolution.width;
-        api["41"].inputs.height = resolution.height;
-        api["45"].inputs.text = input.prompt;
-        api["44"].inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
-        api["51"].inputs.strength_model = 0.7;
+        api = structuredClone(zImageTurboWithLoraApi as unknown as Record<string, any>);
+        (api["9"] as any).inputs.filename_prefix = input.id;
+        (api["41"] as any).inputs.width = resolution.width;
+        (api["41"] as any).inputs.height = resolution.height;
+        (api["45"] as any).inputs.text = input.prompt;
+        (api["44"] as any).inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
+        (api["51"] as any).inputs.strength_model = 0.7;
 
         if (input.lora) {
-          api["51"].inputs.lora_name = `${input.lora}.safetensors`;
+          (api["51"] as any).inputs.lora_name = `${input.lora}.safetensors`;
         }
+      }
+    }
+
+    if (input.kind === "text-to-video") {
+      if (job.video_model === "wan2.2") {
+        // Use local Wan I2V workflow with dummy image for pure T2V (no cloud)
+        api = structuredClone(wan2_2_img2vidApi as Record<string, any>);
+        api["93"].inputs.text = input.prompt;
+        api["98"].inputs.width = resolution.width;
+        api["98"].inputs.height = resolution.height;
+        api["98"].inputs.length =
+          (job.clip_duration || 5) * (job.fps || 8) + 1;
+        api["108"].inputs.filename_prefix = input.id;
+        api["97"].inputs.image = "dummy_t2v.png";
+      }
+      if (job.video_model === "ltx2.3") {
+        api = structuredClone(ltx_t2v_api as Record<string, any>);
+        // LTX T2V reuses I2V 45-node graph with switch true and dummy image
+        api["267:266"].inputs.value = input.prompt;
+        api["267:257"].inputs.value = resolution.width;
+        api["267:258"].inputs.value = resolution.height;
+        api["267:225"].inputs.value =
+          (job.clip_duration || 5) * (job.fps || 25) + 1;
+        if (api["267:201"]) api["267:201"].inputs.value = true;
+        if (api["269"]) api["269"].inputs.image = "dummy_t2v.png";
+        api["75"].inputs.filename_prefix = input.id;
       }
     }
 
     if (input.kind === "image-to-video") {
       if (job.video_model === "wan2.2") {
-        api = wan2_2_img2vidApi;
-        api["93"].inputs.text = input.prompt;
-        api["98"].inputs.width = resolution.width;
-        api["98"].inputs.height = resolution.height;
-        api["98"].inputs.length =
+        api = structuredClone(wan2_2_img2vidApi as unknown as Record<string, any>);
+        (api["93"] as any).inputs.text = input.prompt;
+        (api["98"] as any).inputs.width = resolution.width;
+        (api["98"] as any).inputs.height = resolution.height;
+        (api["98"] as any).inputs.length =
           (job.clip_duration || Metadata.CLIP_DURATION) *
             (job.fps || Metadata.FPS) +
           1;
-        api["108"].inputs.filename_prefix = input.id;
-        api["97"].inputs.image = input.imagePath;
+        (api["108"] as any).inputs.filename_prefix = input.id;
+        (api["97"] as any).inputs.image = input.imagePath;
       }
 
       if (job.video_model === "ltx2.3") {
-        api = ltx2_3_img2vidApi;
-        api["267:266"].inputs.value = input.prompt;
-        api["267:257"].inputs.value = resolution.width;
-        api["267:258"].inputs.value = resolution.height;
-        api["267:225"].inputs.value =
+        api = structuredClone(ltx2_3_img2vidApi as unknown as Record<string, any>);
+        (api["267:266"] as any).inputs.value = input.prompt;
+        (api["267:257"] as any).inputs.value = resolution.width;
+        (api["267:258"] as any).inputs.value = resolution.height;
+        (api["267:225"] as any).inputs.value =
           (job.clip_duration || Metadata.CLIP_DURATION) *
             (job.fps || Metadata.FPS) +
           1;
-        api["75"].inputs.filename_prefix = input.id;
-        api["269"].inputs.image = input.imagePath;
+        (api["75"] as any).inputs.filename_prefix = input.id;
+        (api["269"] as any).inputs.image = input.imagePath;
       }
     }
 

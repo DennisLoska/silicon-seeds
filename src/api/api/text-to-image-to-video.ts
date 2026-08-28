@@ -1,7 +1,6 @@
 import { DB } from "../../db/db";
-import { JobMode } from "../../events/events";
 import { JobOrchestrator } from "../../jobs/jobs";
-import { PromptGenerator } from "../../prompts/prompt-generator";
+import { VideoGenerator } from "../../video/video-generator";
 import { Utils } from "../../utils/utils";
 import { PostTextToVideo } from "../schemas";
 import { Metadata } from "../../meta/meta";
@@ -17,10 +16,9 @@ export async function text_to_image_to_video(options: PostTextToVideo) {
     });
   }
 
-  // Incorporate style_guide into prompt via styled generator if present, otherwise just prompt
-  // PromptGenerator.styled_img_to_event handles style_preset; style_guide is extra context
-  // We prepend style_guide to prompt for stronger adherence when needed
-  const finalPrompt = style_guide ? `${prompt}\n\nStyle guide: ${style_guide}` : prompt;
+  // Sanitize style_guide same as prompt before concat
+  const sanitizedGuide = style_guide ? Utils.sanitizeInputText(style_guide) : undefined;
+  const finalPrompt = sanitizedGuide ? `${prompt}\n\nStyle guide: ${sanitizedGuide}` : prompt;
 
   const { id: jobId } = await JobOrchestrator.create_job({
     original_prompt: prompt,
@@ -31,21 +29,19 @@ export async function text_to_image_to_video(options: PostTextToVideo) {
     image_model: image_model ?? "z-image-turbo",
     video_model,
     style_preset,
-    style_guide: style_guide ?? null,
+    style_guide: sanitizedGuide ?? null,
     workflow: "video",
   });
 
-  const scheduled = await PromptGenerator.styled_img_to_event(
+  const scheduled = await VideoGenerator.schedule_text_to_video({
     jobId,
-    JobMode.Video,
-    finalPrompt,
-    style_preset as any,
-    0,
-  );
+    prompt: finalPrompt,
+    index: 0,
+  });
 
   if (!scheduled) {
     await DB.Jobs.failJob(jobId);
-    return new Response(JSON.stringify({ error: "Failed to schedule image event" }), {
+    return new Response(JSON.stringify({ error: "Failed to schedule video event" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
@@ -60,15 +56,4 @@ export async function text_to_image_to_video(options: PostTextToVideo) {
   });
 }
 
-// Backwards compat for old stub without params (not used by validated route)
-export async function text_to_image_to_video_legacy() {
-  return text_to_image_to_video({
-    prompt: "A sermon about the parable of the Sower.",
-    resolution: "480p",
-    video_model: "wan2.2",
-    fps: 8,
-    clip_duration: 1,
-    style_preset: "system" as any,
-    style_guide: undefined,
-  });
-}
+

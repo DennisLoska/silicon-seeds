@@ -1,0 +1,32 @@
+{
+  "10": {
+    "inputs": {
+      "model": "wan2.6-t2v",
+      "prompt": "a serene mountain lake at sunrise",
+      "size": "720p: 16:9 (1280x720)",
+      "duration": 5,
+      "negative_prompt": "",
+      "seed": 0,
+      "generate_audio": false
+    },
+    "class_type": "WanTextToVideoApi",
+    "_meta": {
+      "title": "Wan Text to Video"
+    }
+  },
+  "11": {
+    "inputs": {
+      "filename_prefix": "video_wan_t2v",
+      "format": "auto",
+      "codec": "auto",
+      "video": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "SaveVideo",
+    "_meta": {
+      "title": "Save Video"
+    }
+  }
+}
