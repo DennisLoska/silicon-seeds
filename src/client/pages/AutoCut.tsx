@@ -10,10 +10,6 @@ export default function AutoCut() {
   const showProgress = () => search.show_progress === "true" && !!search.job_id;
   const jobId = () => search.job_id as string | undefined;
 
-  const [generateInsertClips, setGenerateInsertClips] = createSignal(false);
-  const [fps, setFps] = createSignal(16);
-  const [clipDuration, setClipDuration] = createSignal(5);
-  const [transitionDuration, setTransitionDuration] = createSignal(3);
   const [fileName, setFileName] = createSignal("No file chosen");
   const [isSubmitting, setIsSubmitting] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
@@ -38,8 +34,6 @@ export default function AutoCut() {
     setIsSubmitting(true);
     const form = e.currentTarget as HTMLFormElement;
     const fd = new FormData(form);
-    // ensure generate_insert_clips boolean string
-    fd.set("generate_insert_clips", generateInsertClips() ? "true" : "false");
     try {
       const res = await fetch("/api/jobs/videos/autocut", { method: "POST", body: fd });
       if (!res.ok) {
@@ -72,7 +66,7 @@ export default function AutoCut() {
         <div class="card bg-base-100 shadow-xl">
           <div class="card-body">
             <h2 class="card-title flex items-center gap-2 text-lg"><Icons.AutoCutSmall />AutoCut</h2>
-            <p class="text-sm text-base-content/70">Upload a video, transcribe with WhisperX, AI-remove filler/restarts/pauses, optionally insert AI clips.</p>
+              <p class="text-sm text-base-content/70">Upload a video, transcribe with WhisperX and auto-remove filler, restarts and dead air.</p>
             <form class="flex flex-col gap-4 mt-4" onSubmit={onSubmit} enctype="multipart/form-data">
               <label class="flex flex-col gap-1">
                 <span class="label-text font-medium">Source Video</span>
@@ -85,7 +79,7 @@ export default function AutoCut() {
                       accept="video/*,.mp4,.mov,.mkv,.webm"
                       required
                       class="hidden"
-                      onChange={(e) => setFileName(e.currentTarget.files[0]?.name ?? "No file chosen")}
+                      onChange={(e) => setFileName((e.currentTarget as HTMLInputElement).files?.[0]?.name ?? "No file chosen")}
                     />
                   </label>
                   <span class="text-sm opacity-70 break-all">{fileName()}</span>
@@ -93,74 +87,14 @@ export default function AutoCut() {
                 <span class="text-xs opacity-60">Supported formats: .mp4, .mov, .mkv, .webm</span>
               </label>
 
-              <label class="label rounded-box border border-base-300 p-3 cursor-pointer flex items-start gap-3">
-                <input type="checkbox" checked={generateInsertClips()} onChange={(e) => setGenerateInsertClips(e.currentTarget.checked)} class="checkbox checkbox-primary mt-1" />
-                <span class="flex flex-col">
-                  <span class="font-semibold">Generate AI Inserts</span>
-                  <span class="text-xs opacity-60">Enable to customize AI models and rendering for inserts</span>
-                </span>
-              </label>
-
-              <Show when={generateInsertClips()}>
-                <div class="space-y-4 border border-base-300 rounded-box p-4 bg-base-100">
-                  <h3 class="font-semibold flex items-center gap-2"><Icons.SparkleIcon />AI Models</h3>
-                  <div class="form-control">
-                    <label class="label"><span class="label-text font-medium flex items-center gap-2"><Icons.PhotoCameraSmall />Image Generation Model</span></label>
-                    <select name="image_model" class="select select-bordered w-full">
-                      <option value="z-image-turbo">Z-Image-Turbo</option>
-                    </select>
-                  </div>
-                  <div class="form-control">
-                    <label class="label"><span class="label-text font-medium flex items-center gap-2"><Icons.VideoCameraSmall />Video Generation Model</span></label>
-                    <select name="video_model" class="select select-bordered w-full">
-                      <option value="wan2.2">Wan 2.2</option>
-                      <option value="ltx2.3">LTX 2.3</option>
-                    </select>
-                  </div>
-                  <h3 class="font-semibold flex items-center gap-2 mt-4"><Icons.CogSettingsIcon />Video Settings</h3>
-                  <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">FPS</span><output class="label-text-alt text-primary font-bold text-lg">{fps()}</output></label>
-                    <input type="range" name="fps" value={String(fps())} min="1" max="24" step="1" class="range range-primary w-full" onInput={(e) => setFps(parseInt(e.currentTarget.value))} />
-                  </div>
-                  <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">Clip Duration</span><output class="label-text-alt text-secondary font-bold text-lg">{clipDuration()}s</output></label>
-                    <input type="range" name="clip_duration" value={String(clipDuration())} min="1" max="10" step="1" class="range range-secondary w-full" onInput={(e) => setClipDuration(parseInt(e.currentTarget.value))} />
-                  </div>
-                  <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">Transition Duration</span><output class="label-text-alt text-accent font-bold text-lg">{transitionDuration()}s</output></label>
-                    <input type="range" name="transition_duration" value={String(transitionDuration())} min="1" max="10" step="1" class="range range-accent w-full" onInput={(e) => setTransitionDuration(parseInt(e.currentTarget.value))} />
-                  </div>
-                  <div class="form-control mt-2">
-                    <label class="label"><span class="label-text font-medium flex items-center gap-2"><Icons.SquaresGridIcon />Resolution</span></label>
-                    <select name="resolution" class="select select-bordered w-full">
-                      <option value="480p">480p</option>
-                      <option value="720p">720p</option>
-                      <option value="1080p">1080p</option>
-                      <option value="9_16_SD">9:16 (SD)</option>
-                      <option value="9_16_HD">9:16 (HD)</option>
-                    </select>
-                  </div>
-                  <div class="form-control mt-2">
-                    <label class="label"><span class="label-text font-medium flex items-center gap-2"><Icons.PaintBrushIcon />Style Preset</span></label>
-                    <select name="style_preset" class="select select-bordered w-full">
-                      <option value="system">Default</option>
-                      <option value="watercolor">Watercolor</option>
-                      <option value="pencil_watercolor">Pencil Watercolor</option>
-                    </select>
-                  </div>
-                </div>
-              </Show>
-
               <div class="alert alert-soft alert-info text-sm">
-                <Icons.InfoIcon /><span>AutoCut uses WhisperX to transcribe, then removes fillers and dead air. Insert clips are optional.</span>
+                <Icons.InfoIcon /><span>AutoCut uses WhisperX to transcribe, then removes fillers and dead air for a cleaner cut.</span>
               </div>
 
               <div class="flex gap-2 justify-between">
-                <button type="reset" class="btn btn-ghost" onClick={() => { setFileName("No file chosen"); setGenerateInsertClips(false); }}>Reset</button>
+                <button type="reset" class="btn btn-ghost" onClick={() => setFileName("No file chosen")}>Reset</button>
                 <button type="submit" class="btn btn-primary" disabled={isSubmitting()}>
-                  <Show when={!isSubmitting()} fallback={<span class="loading loading-spinner loading-sm" />}>
-                    {generateInsertClips() ? "Start AutoCut" : "Upload & Cut"}
-                  </Show>
+                  <Show when={!isSubmitting()} fallback={<span class="loading loading-spinner loading-sm" />}>Upload & Cut</Show>
                 </button>
               </div>
             </form>

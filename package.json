@@ -51,7 +51,6 @@
     "@logtape/pretty": "^2.0.4",
     "@modelcontextprotocol/client": "^2.0.0-alpha.2",
     "@modelcontextprotocol/server": "^2.0.0-alpha.2",
-    "@playwright/test": "^1.60.0",
     "@solidjs/router": "^1.0.0",
     "@tailwindcss/cli": "^4.2.2",
     "chromadb": "^3.4.3",

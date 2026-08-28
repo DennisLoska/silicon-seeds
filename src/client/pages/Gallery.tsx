@@ -9,8 +9,22 @@ function GalleryCard(props: { item: GalleryItem }) {
         <Show
           when={props.item.mediaType === "image"}
           fallback={
-            <Show when={props.item.mediaType === "video"} fallback={<audio controls src={path()} class="w-full" />}>
-              <video src={path()} controls preload="none" class="w-full aspect-[4/3] object-cover" />
+            <Show
+              when={props.item.mediaType === "video"}
+              fallback={
+                <div class="w-full p-4 flex flex-col gap-3 bg-base-200">
+                  <div class="flex items-center gap-2 text-sm font-medium">
+                    <span class="badge badge-sm badge-primary">audio</span>
+                    <span class="truncate">{props.item.filename}</span>
+                  </div>
+                  <audio controls src={path()} class="w-full" preload="metadata" />
+                  <div class="text-xs opacity-60 truncate">
+                    {props.item.subfolder || "root"} • {new Date(props.item.created_at).toLocaleString()} • {props.item.type}
+                  </div>
+                </div>
+              }
+            >
+              <video src={path()} autoplay muted loop playsinline preload="metadata" controls class="w-full aspect-[4/3] object-cover" />
             </Show>
           }
         >

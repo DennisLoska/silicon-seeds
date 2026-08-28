@@ -1,35 +1,19 @@
-import { Router, Route } from "@solidjs/router";
+import { Navigate, Router, Route } from "@solidjs/router";
 import { lazy, Suspense } from "solid-js";
 import Layout from "./components/Layout";
 
-const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Jobs = lazy(() => import("./pages/Jobs"));
 const Gallery = lazy(() => import("./pages/Gallery"));
 const Compose = lazy(() => import("./pages/Compose"));
 const AutoCut = lazy(() => import("./pages/AutoCut"));
 const CreateImage = lazy(() => import("./pages/CreateImage"));
 const CreateAudio = lazy(() => import("./pages/CreateAudio"));
-const Settings = lazy(() => import("./pages/Settings"));
 
 export default function App() {
   return (
     <Router root={Layout}>
-      <Route
-        path="/"
-        component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
-            <Dashboard />
-          </Suspense>
-        )}
-      />
-      <Route
-        path="/dashboard"
-        component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
-            <Dashboard />
-          </Suspense>
-        )}
-      />
+      <Route path="/" component={() => <Navigate href="/jobs" />} />
+      <Route path="/dashboard" component={() => <Navigate href="/jobs" />} />
       <Route
         path="/jobs"
         component={() => (
@@ -91,22 +75,6 @@ export default function App() {
         component={() => (
           <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
             <div class="p-6 text-center opacity-60">Video creation — use Image flow or Compose for now.</div>
-          </Suspense>
-        )}
-      />
-      <Route
-        path="/create/text"
-        component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
-            <div class="p-6 text-center opacity-60">Text creation — use Compose for script-to-video.</div>
-          </Suspense>
-        )}
-      />
-      <Route
-        path="/settings"
-        component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
-            <Settings />
           </Suspense>
         )}
       />

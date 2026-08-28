@@ -155,7 +155,7 @@ export default function Jobs() {
             </Show>
           </div>
         </div>
-        <div class="flex-1 overflow-y-auto p-2">
+        <div class="flex-1 overflow-y-auto p-2 pb-20 lg:pb-2">
           <Show when={jobsData.loading}>
             <div class="flex justify-center py-8"><span class="loading loading-spinner" /></div>
           </Show>
@@ -185,7 +185,7 @@ export default function Jobs() {
         </div>
       </div>
 
-      <div class="flex-1 flex flex-col bg-base-200">
+      <div class="flex-1 flex flex-col bg-base-200 relative">
         <Show when={!selectedId()}>
           <div class="flex flex-col items-center justify-center min-h-[400px] text-base-content/60">
             <p>No job selected.</p>
@@ -454,6 +454,29 @@ export default function Jobs() {
                 </Show>
               </Show>
             </div>
+          </div>
+        </Show>
+
+        {/* Mobile FAB: view selected job details — fixed bottom, lg:hidden. Shadcn alternative would be Sheet/Drawer for detail, but spec asks for FAB navigating to detail page. */}
+        <Show when={selectedId()}>
+          <div class="lg:hidden fixed bottom-0 inset-x-0 z-30 p-4 bg-base-100/95 backdrop-blur border-t border-base-300">
+            <A
+              href={`/jobs/${selectedId()}?tab=${tab()}&filter=${filter()}`}
+              onClick={(e) => {
+                // on mobile stacked view, smooth-scroll to details pane instead of just staying at list
+                const el = document.getElementById("job-tabs-container");
+                if (el) {
+                  e.preventDefault();
+                  el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  // also push URL so back button works
+                  history.pushState(null, "", `/jobs/${selectedId()}?tab=${tab()}&filter=${filter()}`);
+                }
+              }}
+              class="btn btn-primary w-full shadow-lg"
+            >
+              View Job Details — {selectedId()?.slice(0, 8)}…
+              <Icons.StatusCompleteSmall />
+            </A>
           </div>
         </Show>
       </div>
