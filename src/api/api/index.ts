@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { DB } from "../../db/db";
 import { health } from "../health";
 import { text_to_text } from "./text-to-text";
 import { text_to_image } from "./text-to-image";
@@ -116,6 +117,70 @@ app.post("/jobs/:job_id/events/:event_id/regenerate", async (c) => {
   const jobId = c.req.param("job_id");
   const eventId = c.req.param("event_id");
   return regenerate_event(c, jobId, eventId);
+});
+
+// --- JSON list/detail endpoints for SolidJS SPA ---
+
+app.get("/jobs", async (c) => {
+  const jobs = await DB.Jobs.list();
+  return c.json({ jobs });
+});
+
+app.get("/jobs/:jobId", async (c) => {
+  const jobId = c.req.param("jobId");
+  const job = await DB.Jobs.findById(jobId);
+  if (!job) return c.json({ error: "job not found" }, 404);
+  const events = await DB.Events.findByJobIdChronological(jobId);
+  return c.json({ job, events });
+});
+
+app.get("/jobs/:jobId/events", async (c) => {
+  const jobId = c.req.param("jobId");
+  const offset = parseInt(c.req.query("offset") ?? "0", 10);
+  const limit = parseInt(c.req.query("limit") ?? "20", 10);
+  const events = await DB.Events.findByJobIdChronological(jobId);
+  const slice = events.slice(
+    Number.isNaN(offset) ? 0 : offset,
+    (Number.isNaN(offset) ? 0 : offset) + (Number.isNaN(limit) ? 20 : Math.min(limit, 50)),
+  );
+  return c.json({ events: slice, total: events.length });
+});
+
+app.get("/jobs/:jobId/media", async (c) => {
+  const jobId = c.req.param("jobId");
+  const type = c.req.query("type") as string | undefined;
+  const offset = parseInt(c.req.query("offset") ?? "0", 10);
+  const limit = parseInt(c.req.query("limit") ?? "12", 10);
+  // Gallery-like: fetch via meta join, filter by job
+  const items = await DB.Gallery.listItems({ limit: 100, type: type as "image" | "video" | undefined });
+  const filtered = items.filter((i) => i.job_id === jobId);
+  const slice = filtered.slice(
+    Number.isNaN(offset) ? 0 : offset,
+    (Number.isNaN(offset) ? 0 : offset) + (Number.isNaN(limit) ? 12 : Math.min(limit, 24)),
+  );
+  return c.json({ items: slice, total: filtered.length });
+});
+
+app.get("/gallery/items", async (c) => {
+  const cursor = c.req.query("cursor") as string | undefined;
+  const type = c.req.query("type") as string | undefined;
+  const limit = parseInt(c.req.query("limit") || "20", 10);
+  const effectiveType = type && type !== "all" ? (type as "image" | "video") : undefined;
+  const items = await DB.Gallery.listItems({
+    cursor,
+    limit: Number.isNaN(limit) ? 20 : limit,
+    type: effectiveType,
+  });
+  // ETag + Cache-Control for gallery (Solid client respects 304)
+  const etag = `"${items.length}-${cursor ?? ""}-${type ?? ""}"`;
+  const ifNoneMatch = c.req.header("If-None-Match");
+  if (ifNoneMatch === etag) {
+    return new Response(null, { status: 304, headers: { ETag: etag } });
+  }
+  return c.json({ items }, 200, {
+    "Cache-Control": "public, max-age=60, must-revalidate",
+    ETag: etag,
+  });
 });
 
 export default app;

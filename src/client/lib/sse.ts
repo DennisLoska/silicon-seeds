@@ -4,7 +4,7 @@ export function sseUrl(jobId: string) {
   return `/jobs/stream?job_id=${encodeURIComponent(jobId)}`;
 }
 
-export function useJobUpdates(jobId: () => string | null, onUpdate: () => void) {
+export function useJobUpdates(jobId: () => string | null | undefined, onUpdate: () => void) {
   let es: EventSource | null = null;
   createEffect(() => {
     const id = jobId();
