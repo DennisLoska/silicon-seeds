@@ -40,7 +40,7 @@ export type GalleryItem = {
   type: "input" | "output" | "temp";
   created_at: string;
   job_id: string;
-  mediaType: "image" | "video" | null;
+  mediaType: "image" | "video" | "audio" | null;
 };
 
 export type EventRow = {

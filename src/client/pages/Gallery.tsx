@@ -5,11 +5,13 @@ function GalleryCard(props: { item: GalleryItem }) {
   const path = () => getAssetPath(props.item.subfolder, props.item.filename);
   return (
     <div class="card bg-base-100 border border-base-300 overflow-hidden rounded-box shadow-sm">
-      <figure class="bg-base-300 overflow-hidden">
+      <figure class="bg-base-300 overflow-hidden flex items-center justify-center">
         <Show
           when={props.item.mediaType === "image"}
           fallback={
-            <video src={path()} controls preload="none" class="w-full aspect-[4/3] object-cover" />
+            <Show when={props.item.mediaType === "video"} fallback={<audio controls src={path()} class="w-full" />}>
+              <video src={path()} controls preload="none" class="w-full aspect-[4/3] object-cover" />
+            </Show>
           }
         >
           <img src={path()} alt={props.item.filename} class="w-full aspect-[4/3] object-cover" loading="lazy" decoding="async" />
@@ -119,6 +121,10 @@ export default function Gallery() {
           <label class="flex items-center gap-2 cursor-pointer">
             <input type="radio" name="gallery-type" value="video" checked={type() === "video"} onChange={() => setType("video")} class="radio radio-sm radio-primary" />
             <span class="text-sm font-semibold">Videos</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="gallery-type" value="audio" checked={type() === "audio"} onChange={() => setType("audio")} class="radio radio-sm radio-primary" />
+            <span class="text-sm font-semibold">Audio</span>
           </label>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { createSignal, createResource, Show, For } from "solid-js";
 import { useSearchParams, useNavigate } from "@solidjs/router";
 import { useJobUpdates } from "../lib/sse";
-import { apiGet } from "../lib/api-client";
+import { apiGet, getAssetPath } from "../lib/api-client";
 import { Icons } from "../components/Icons";
 
 export default function CreateImage() {
@@ -27,7 +27,20 @@ export default function CreateImage() {
     },
   );
 
-  useJobUpdates(jobId, () => refetch());
+  const [mediaData, { refetch: refetchMedia }] = createResource(
+    () => (showProgress() ? jobId() : undefined),
+    async (id) => {
+      if (!id) return { items: [] as { filename: string; subfolder: string }[] };
+      try {
+        const data = await apiGet<{ items: { filename: string; subfolder: string; mediaType: string | null }[] }>(`/api/jobs/${id}/media?limit=24`);
+        return data;
+      } catch {
+        return { items: [] };
+      }
+    },
+  );
+
+  useJobUpdates(jobId, () => { refetch(); refetchMedia(); });
 
   const onSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
@@ -145,13 +158,41 @@ export default function CreateImage() {
                   <span class="badge badge-warning">Active</span>
                 </div>
                 <p class="text-sm opacity-70 mb-2">Monitoring job: {jobId()}</p>
-                <div class="space-y-2">
-                  <For each={(eventsData()?.events as unknown as { type: string; status: string; prompt?: string }[]) ?? []} fallback={<div class="text-sm opacity-60">Waiting for events…</div>}>
-                    {(ev) => (
-                      <div class="card bg-base-200 p-2 text-sm flex justify-between"><span class="font-mono">{ev.type}</span><span class={`badge badge-sm ${ev.status === "complete" ? "badge-success" : ev.status === "failed" ? "badge-error" : "badge-warning"}`}>{ev.status}</span></div>
-                    )}
-                  </For>
-                </div>
+                <Show when={(eventsData()?.events?.length ?? 0) === 0}>
+                  <div class="text-sm opacity-60">Waiting for events…</div>
+                </Show>
+                <Show when={(eventsData()?.events?.length ?? 0) > 0}>
+                  <ul class="timeline timeline-compact timeline-vertical">
+                    <For each={(eventsData()?.events as unknown as { id: string; type: string; status: string; prompt?: string | null; created_at: string }[]) ?? []}>
+                      {(evt, idx) => {
+                        const isComplete = () => evt.status === "complete";
+                        const label = () => ({ NewImagePrompt: "Image Prompt", NewVideoPrompt: "Video Prompt", NewTextPrompt: "Text Prompt", NewAudioPrompt: "Audio Prompt", NewTransitionPrompt: "Transition Prompt", NewVideoComposition: "Final Composition" }[evt.type] ?? evt.type);
+                        const icon = () => ({ NewImagePrompt: "🖼️", NewVideoPrompt: "🎬", NewTextPrompt: "🖊️", NewAudioPrompt: "🎵", NewTransitionPrompt: "🔄", NewVideoComposition: "🏁" }[evt.type] ?? "📌");
+                        return (
+                          <li style="content-visibility:auto; contain-intrinsic-size: 200px 300px;">
+                            {idx() !== 0 && <hr class={isComplete() ? "bg-success" : ""} />}
+                            <div class="timeline-end timeline-box w-[98%] border border-base-300 bg-base-100 min-w-64 max-w-full">
+                              <details class="w-full bg-base-100 open:bg-base-100">
+                                <summary class="cursor-pointer list-none p-3 hover:bg-base-200 rounded-lg transition-colors">
+                                  <div class="flex items-center justify-between gap-2">
+                                    <span class="text-sm font-bold text-base-content/60">{label()}</span>
+                                    <span class={isComplete() ? "badge badge-success text-xs" : "badge badge-warning text-xs"}>{isComplete() ? <Icons.StatusCompleteSmall /> : <Icons.StatusPendingSmall />}</span>
+                                  </div>
+                                </summary>
+                                <div class="p-3 pt-0 mt-2 space-y-2">
+                                  <Show when={evt.prompt}><div class="text-sm whitespace-pre-wrap break-words bg-base-200 p-2 rounded">{evt.prompt}</div></Show>
+                                  <div class="text-xs opacity-50">{new Date(evt.created_at).toLocaleString()}</div>
+                                </div>
+                              </details>
+                            </div>
+                            <div class="timeline-middle"><div class={`w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-sm ${isComplete() ? "bg-success text-success-content" : "bg-base-200"}`}>{icon()}</div></div>
+                            {idx() !== (eventsData()?.events?.length ?? 0) - 1 && <hr class={isComplete() ? "bg-success" : ""} />}
+                          </li>
+                        );
+                      }}
+                    </For>
+                  </ul>
+                </Show>
                 <div class="card-actions justify-end mt-4 gap-2">
                   <a href={`/jobs?job_id=${jobId()}&filter=all&tab=status`} class="btn btn-primary btn-sm">View Job</a>
                 </div>
@@ -169,15 +210,28 @@ export default function CreateImage() {
           </div>
         </Show>
         <Show when={showProgress() && jobId()}>
-          <div class="card bg-base-100 shadow-xl w-full xl:flex-1 flex-grow min-h-[calc(100vh-7rem)] flex flex-col">
-            <div class="card-body">
+          <div class="card bg-base-100 shadow-xl w-full xl:flex-1 flex-grow min-h-[calc(100vh-7rem)] flex flex-col overflow-hidden">
+            <div class="card-body flex flex-col">
               <h3 class="font-semibold mb-2">Generated Images</h3>
-              <p class="text-sm opacity-60">Images will appear in Gallery and Job Media. Monitoring via SSE.</p>
-              <div class="mt-4 space-y-2">
-                <For each={(eventsData()?.events as unknown as { type: string; status: string }[]) ?? []}>
-                  {(ev) => <div class="text-sm">{ev.type} — {ev.status}</div>}
-                </For>
-              </div>
+              <Show when={(mediaData()?.items?.length ?? 0) === 0}>
+                <div class="flex flex-col items-center justify-center gap-2 py-16">
+                  <p class="text-lg font-large text-base-content/60">Generating images</p>
+                  <span class="loading loading-dots loading-lg text-primary"></span>
+                </div>
+              </Show>
+              <Show when={(mediaData()?.items?.length ?? 0) > 0}>
+                <div class="columns-1 sm:columns-1 lg:columns-2 xl:columns-2 gap-3 space-y-3 max-w-full">
+                  <For each={mediaData()?.items ?? []}>
+                    {(img) => (
+                      <div class="card bg-base-200 break-inside-avoid rounded-box mb-3">
+                        <figure class="bg-base-300 overflow-hidden rounded-box">
+                          <img src={getAssetPath(img.subfolder, img.filename)} alt="Generated image" class="w-full h-auto" loading="lazy" />
+                        </figure>
+                      </div>
+                    )}
+                  </For>
+                </div>
+              </Show>
             </div>
           </div>
         </Show>

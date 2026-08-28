@@ -1,4 +1,4 @@
-import { createResource, createSignal, For, Show, createEffect } from "solid-js";
+import { createResource, createSignal, For, Show, createEffect, onCleanup } from "solid-js";
 import { useParams, useSearchParams, A } from "@solidjs/router";
 import { apiGet, type EventRow, getAssetPath } from "../lib/api-client";
 import { useJobUpdates } from "../lib/sse";
@@ -37,8 +37,20 @@ export default function Jobs() {
   const [search, setSearch] = useSearchParams();
   const tab = () => (search.tab as string) || "status";
   const filter = () => (search.filter as string) || "all";
+  const [filterOpen, setFilterOpen] = createSignal(false);
   const jobIdParam = () => (params.jobId as string | undefined) || (search.job_id as string | undefined);
   const [selectedId, setSelectedId] = createSignal<string | undefined>(jobIdParam());
+
+  // close filter dropdown on outside click
+  createEffect(() => {
+    if (!filterOpen()) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("#job-filter-dropdown")) setFilterOpen(false);
+    };
+    document.addEventListener("click", handler);
+    onCleanup(() => document.removeEventListener("click", handler));
+  });
 
   createEffect(() => {
     const id = jobIdParam();
@@ -125,21 +137,21 @@ export default function Jobs() {
 
   return (
     <div class="flex flex-col lg:flex-row min-h-[calc(100vh-4rem)] bg-base-100">
-      <div class="w-full lg:w-80 xl:w-[420px] bg-base-100 border-r border-base-300 flex flex-col shrink-0">
+      <div class="w-full lg:w-80 xl:w-[420px] bg-base-100 border-r border-base-300 flex flex-col shrink-0 max-h-[calc(100vh-4rem)]">
         <div class="sticky top-0 z-10 bg-base-100 flex gap-2 px-4 py-3 border-b border-base-300">
           <A href="/compose" class="btn btn-primary btn-sm">New Job <Icons.NewJobIcon /></A>
-          <details class="dropdown">
-            <summary class="btn btn-sm">{filter() === "all" ? "All" : filter().charAt(0).toUpperCase() + filter().slice(1)}</summary>
-            <ul class="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-52 mt-1.5">
+          <div id="job-filter-dropdown" class="dropdown" classList={{ "dropdown-open": filterOpen() }}>
+            <div tabindex="0" role="button" class="btn btn-sm" onClick={() => setFilterOpen(!filterOpen())}>{filter() === "all" ? "All" : filter().charAt(0).toUpperCase() + filter().slice(1)}</div>
+            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-52 mt-1.5">
               <For each={["all", "recent", "active", "complete", "failed", "cancelled"]}>
                 {(f) => (
                   <li>
-                    <a onClick={() => setSearch({ filter: f, job_id: selectedId(), tab: tab() })}>{f.charAt(0).toUpperCase() + f.slice(1)}</a>
+                    <a onClick={() => { setSearch({ filter: f, job_id: selectedId(), tab: tab() }); setFilterOpen(false); }}>{f.charAt(0).toUpperCase() + f.slice(1)}</a>
                   </li>
                 )}
               </For>
             </ul>
-          </details>
+          </div>
         </div>
         <div class="flex-1 overflow-y-auto p-2">
           <Show when={jobsData.loading}>
@@ -171,7 +183,7 @@ export default function Jobs() {
         </div>
       </div>
 
-      <div class="flex-1 flex flex-col min-h-0 bg-base-200">
+      <div class="flex-1 flex flex-col bg-base-200">
         <Show when={!selectedId()}>
           <div class="flex flex-col items-center justify-center min-h-[400px] text-base-content/60">
             <p>No job selected.</p>
@@ -184,7 +196,7 @@ export default function Jobs() {
               <A href={`/jobs/${selectedId()}?tab=media&filter=${filter()}`} class={`tab ${tab() === "media" ? "tab-active border-b-2 border-primary font-medium" : ""}`}>Media</A>
               <A href={`/jobs/${selectedId()}?tab=events&filter=${filter()}`} class={`tab ${tab() === "events" ? "tab-active border-b-2 border-primary font-medium" : ""}`}>Events</A>
             </div>
-            <div class="flex-1 p-6 overflow-y-auto">
+            <div class="flex-1 p-6">
               <Show when={tab() === "status"}>
                 <Show when={jobDetail.loading}>
                   <div class="flex justify-center py-12"><span class="loading loading-spinner" /></div>
@@ -272,22 +284,22 @@ export default function Jobs() {
                   <div class="flex justify-center py-8"><span class="loading loading-spinner" /></div>
                 </Show>
                 <Show when={!mediaData.loading}>
-                  {( ) => {
-                    const items = () => mediaData()?.items ?? [];
-                    const images = () => items().filter((i) => i.mediaType === "image");
-                    const videos = () => items().filter((i) => i.mediaType === "video");
-                    const audios = () => items().filter((i) => i.mediaType !== "image" && i.mediaType !== "video" && i.mediaType !== null);
-                    const pending = () => items().length === 0;
+                  {(() => {
+                    const items = mediaData()?.items ?? [];
+                    const images = items.filter((i) => i.mediaType === "image");
+                    const videos = items.filter((i) => i.mediaType === "video");
+                    const audios = items.filter((i) => i.mediaType === "audio");
+                    const pending = items.length === 0;
                     return (
                       <div class="space-y-8">
-                        <Show when={pending()}>
+                        <Show when={pending}>
                           <div class="text-base-content/60">No media yet for this job.</div>
                         </Show>
-                        <Show when={images().length > 0}>
+                        <Show when={images.length > 0}>
                           <div>
                             <h3 class="font-bold uppercase tracking-widest text-sm opacity-60 mb-3">Images</h3>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                              <For each={images()}>
+                              <For each={images}>
                                 {(m) => (
                                   <div class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
                                     <figure class="bg-base-300"><img src={getAssetPath(m.subfolder, m.filename)} alt={m.filename} class="w-full aspect-video object-cover" loading="lazy" /></figure>
@@ -298,11 +310,11 @@ export default function Jobs() {
                             </div>
                           </div>
                         </Show>
-                        <Show when={videos().length > 0}>
+                        <Show when={videos.length > 0}>
                           <div>
                             <h3 class="font-bold uppercase tracking-widest text-sm opacity-60 mb-3">Videos</h3>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                              <For each={videos()}>
+                              <For each={videos}>
                                 {(m) => (
                                   <div class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
                                     <figure class="bg-base-300"><video src={getAssetPath(m.subfolder, m.filename)} controls class="w-full aspect-video object-cover" preload="metadata" /></figure>
@@ -313,11 +325,11 @@ export default function Jobs() {
                             </div>
                           </div>
                         </Show>
-                        <Show when={audios().length > 0}>
+                        <Show when={audios.length > 0}>
                           <div>
                             <h3 class="font-bold uppercase tracking-widest text-sm opacity-60 mb-3">Audio</h3>
                             <div class="grid grid-cols-1 gap-4">
-                              <For each={audios()}>
+                              <For each={audios}>
                                 {(m) => (
                                   <div class="card bg-base-100 shadow-sm border border-base-300 p-3 flex flex-row items-center gap-3">
                                     <Icons.Audio />
@@ -331,28 +343,101 @@ export default function Jobs() {
                         </Show>
                       </div>
                     );
-                  }}
+                  })()}
                 </Show>
               </Show>
               <Show when={tab() === "events"}>
-                <div class="relative border-l-2 border-base-300 ml-2 pl-6 space-y-4">
-                  <For each={events()}>
-                    {(ev) => (
-                      <div class="relative card bg-base-100 p-4 shadow-sm">
-                        <div class="absolute -left-[25px] top-5 w-3 h-3 rounded-full bg-primary border-2 border-base-100" />
-                        <div class="flex gap-2 items-center">
-                          <span class="badge badge-sm">{ev.mode}</span>
-                          <span class="font-mono text-sm">{ev.type}</span>
-                          <span class={`ml-auto badge badge-sm ${ev.status === "complete" ? "badge-success" : ev.status === "failed" ? "badge-error" : ev.status === "pending" ? "badge-ghost" : "badge-warning"}`}>{ev.status}</span>
-                        </div>
-                        <Show when={ev.prompt}><div class="mt-2 text-sm whitespace-pre-wrap break-words opacity-80">{ev.prompt}</div></Show>
-                        <Show when={ev.text}><pre class="mt-2 text-xs whitespace-pre-wrap bg-base-200 p-2 rounded">{ev.text}</pre></Show>
-                        <Show when={ev.error}><div class="mt-2 text-sm text-error">{ev.error}</div></Show>
-                        <div class="text-xs opacity-50 mt-2">{new Date(ev.created_at).toLocaleString()}</div>
-                      </div>
-                    )}
-                  </For>
-                </div>
+                <Show when={events().length === 0}>
+                  <div class="p-6 text-center text-base-content/60">Events will appear here once the job runs.</div>
+                </Show>
+                <Show when={events().length > 0}>
+                  <ul class="timeline timeline-compact timeline-vertical">
+                    <For each={events()}>
+                      {(evt, idx) => {
+                        const isComplete = () => evt.status === "complete";
+                        const label = () => {
+                          const map: Record<string, string> = {
+                            NewTextPrompt: "Text Prompt",
+                            NewImagePrompt: "Image Prompt",
+                            NewVideoPrompt: "Video Prompt",
+                            NewVideoComposition: "Final Composition",
+                            NewTransitionPrompt: "Transition Prompt",
+                            NewAudioPrompt: "Audio Prompt",
+                          };
+                          return map[evt.type] ?? evt.type;
+                        };
+                        const icon = () => {
+                          const map: Record<string, string> = {
+                            NewTextPrompt: "🖊️",
+                            NewImagePrompt: "🖼️",
+                            NewVideoPrompt: "🎬",
+                            NewVideoComposition: "🏁",
+                            NewTransitionPrompt: "🔄",
+                            NewAudioPrompt: "🎵",
+                          };
+                          return map[evt.type] ?? "📌";
+                        };
+                        const timestamp = () => new Date(evt.created_at).toLocaleString();
+                        return (
+                          <li style="content-visibility:auto; contain-intrinsic-size: 200px 300px;">
+                            {idx() !== 0 && <hr class={isComplete() ? "bg-success" : ""} />}
+                            <div class="timeline-end timeline-box w-[98%] border border-base-300 bg-base-100 min-w-72 max-w-full">
+                              <details class="w-full bg-base-100 open:bg-base-100">
+                                <summary class="cursor-pointer list-none p-4 hover:bg-base-200 rounded-lg transition-colors">
+                                  <div class="flex items-center justify-between gap-4">
+                                    <div class="flex items-center gap-1">
+                                      <span class="text-sm font-bold text-base-content/60">{label()}</span>
+                                      <span class="text-xs text-base-content/40 whitespace-nowrap">{timestamp()}</span>
+                                    </div>
+                                    <span class={isComplete() ? "badge badge-success text-xs" : "badge badge-warning text-xs"}>
+                                      {isComplete() ? <Icons.StatusCompleteSmall /> : <Icons.StatusPendingSmall />}
+                                    </span>
+                                  </div>
+                                </summary>
+                                <div class="p-4 pt-0 mt-4 space-y-3 rounded-b-lg">
+                                  <div class="flex flex-wrap gap-2">
+                                    <span class="badge badge-secondary text-xs">{evt.mode}</span>
+                                    <span class="badge badge-ghost text-xs">{evt.type}</span>
+                                    <Show when={evt.prompt}>
+                                      <span class="badge badge-primary text-xs">has prompt</span>
+                                    </Show>
+                                  </div>
+                                  <Show when={evt.prompt}>
+                                    <div>
+                                      <p class="text-sm font-medium mb-1 text-base-content/60">Prompt:</p>
+                                      <div class="prompt-text overflow-y-auto p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words whitespace-pre-wrap">{evt.prompt}</div>
+                                    </div>
+                                  </Show>
+                                  <Show when={evt.text}>
+                                    <div>
+                                      <p class="text-sm font-medium mb-1 text-base-content/60">Text:</p>
+                                      <div class="prompt-text overflow-y-auto p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words whitespace-pre-wrap">{evt.text}</div>
+                                    </div>
+                                  </Show>
+                                  <Show when={evt.lyrics}>
+                                    <div>
+                                      <p class="text-sm font-medium mb-1 text-base-content/60">Lyrics:</p>
+                                      <div class="prompt-text overflow-y-auto p-3 bg-base-200 rounded-lg text-sm line-clamp-16 break-words whitespace-pre-wrap">{evt.lyrics}</div>
+                                    </div>
+                                  </Show>
+                                  <Show when={evt.error}>
+                                    <div class="text-sm text-error">{evt.error}</div>
+                                  </Show>
+                                </div>
+                              </details>
+                            </div>
+                            <div class="timeline-middle">
+                              <div class={`w-8 h-8 rounded-full flex items-center justify-center text-lg shadow-sm ${isComplete() ? "bg-gradient-to-br from-success to-success/70" : "bg-base-200"}`}>
+                                {icon()}
+                              </div>
+                            </div>
+                            {idx() !== events().length - 1 && <hr class={isComplete() ? "bg-success" : ""} />}
+                          </li>
+                        );
+                      }}
+                    </For>
+                  </ul>
+                </Show>
               </Show>
             </div>
           </div>
