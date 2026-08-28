@@ -140,17 +140,19 @@ export default function Jobs() {
       <div class="w-full lg:w-80 xl:w-[420px] bg-base-100 border-r border-base-300 flex flex-col shrink-0 max-h-[calc(100vh-4rem)]">
         <div class="sticky top-0 z-10 bg-base-100 flex gap-2 px-4 py-3 border-b border-base-300">
           <A href="/compose" class="btn btn-primary btn-sm">New Job <Icons.NewJobIcon /></A>
-          <div id="job-filter-dropdown" class="dropdown" classList={{ "dropdown-open": filterOpen() }}>
-            <div tabindex="0" role="button" class="btn btn-sm" onClick={() => setFilterOpen(!filterOpen())}>{filter() === "all" ? "All" : filter().charAt(0).toUpperCase() + filter().slice(1)}</div>
-            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-52 mt-1.5">
-              <For each={["all", "recent", "active", "complete", "failed", "cancelled"]}>
-                {(f) => (
-                  <li>
-                    <a onClick={() => { setSearch({ filter: f, job_id: selectedId(), tab: tab() }); setFilterOpen(false); }}>{f.charAt(0).toUpperCase() + f.slice(1)}</a>
-                  </li>
-                )}
-              </For>
-            </ul>
+          <div id="job-filter-dropdown" class="dropdown">
+            <div tabindex="0" role="button" class="btn btn-sm" onClick={(e) => { e.stopPropagation(); setFilterOpen(!filterOpen()); }}>{filter() === "all" ? "All" : filter().charAt(0).toUpperCase() + filter().slice(1)}</div>
+            <Show when={filterOpen()}>
+              <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-52 mt-1.5">
+                <For each={["all", "recent", "active", "complete", "failed", "cancelled"]}>
+                  {(f) => (
+                    <li>
+                      <a onClick={() => { setSearch({ filter: f, job_id: selectedId(), tab: tab() }); setFilterOpen(false); }}>{f.charAt(0).toUpperCase() + f.slice(1)}</a>
+                    </li>
+                  )}
+                </For>
+              </ul>
+            </Show>
           </div>
         </div>
         <div class="flex-1 overflow-y-auto p-2">
