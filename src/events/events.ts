@@ -84,7 +84,7 @@ export interface ImagePromptEvent extends JobBaseEvent {
 export interface VideoPromptEvent extends JobBaseEvent {
   prompt: string;
   type: Event.NewVideoPrompt;
-  filename: string;
+  filename?: string | null;
   index?: number;
 }
 

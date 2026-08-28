@@ -386,6 +386,20 @@ export namespace DB {
           }
         }
 
+        if (job.workflow === "video") {
+          const videoEvent = await db
+            .selectFrom("events")
+            .select("id")
+            .where("job_id", "=", job.id)
+            .where("type", "=", Event.NewVideoPrompt)
+            .where("status", "=", JobStatus.Complete)
+            .executeTakeFirst();
+
+          if (!videoEvent) {
+            continue;
+          }
+        }
+
         await completeJob(job.id);
       }
     }
@@ -507,7 +521,7 @@ export namespace DB {
           Utils.assert(row.prompt, "'prompt' is null");
           return {
             ...base,
-            filename: row.filename!,
+            filename: row.filename ?? null,
             index: row.index ?? undefined,
             type: Event.NewVideoPrompt,
             prompt: row.prompt,

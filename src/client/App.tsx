@@ -8,6 +8,7 @@ const Compose = lazy(() => import("./pages/Compose"));
 const AutoCut = lazy(() => import("./pages/AutoCut"));
 const CreateImage = lazy(() => import("./pages/CreateImage"));
 const CreateAudio = lazy(() => import("./pages/CreateAudio"));
+const CreateVideo = lazy(() => import("./pages/CreateVideo"));
 
 export default function App() {
   return (
@@ -74,7 +75,7 @@ export default function App() {
         path="/create/video"
         component={() => (
           <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
-            <div class="p-6 text-center opacity-60">Video creation — use Image flow or Compose for now.</div>
+            <CreateVideo />
           </Suspense>
         )}
       />

@@ -137,6 +137,24 @@ export namespace VideoGenerator {
     return task;
   }
 
+  export async function schedule_text_to_video(event: {
+    jobId: string;
+    prompt: string;
+    index?: number;
+  }) {
+    const task = await JobOrchestrator.schedule_task({
+      jobId: event.jobId,
+      prompt: event.prompt,
+      filename: null as any,
+      index: event.index,
+      type: Event.NewVideoPrompt,
+      mode: JobMode.Video,
+    });
+
+    await QueueManager.pump();
+    return task;
+  }
+
   export async function schedule_transition(event: {
     jobId: string;
     prompt: string;
@@ -180,14 +198,22 @@ export namespace VideoGenerator {
     }
 
     if (item.type === Event.NewVideoPrompt) {
-      const modelVariant: ModelVariant = {
-        id,
-        kind: "image-to-video",
-        prompt,
-        imagePath: item.filename,
-      };
-
-      await comfyClient.generate(modelVariant, job);
+      if (item.filename) {
+        const modelVariant: ModelVariant = {
+          id,
+          kind: "image-to-video",
+          prompt,
+          imagePath: item.filename,
+        };
+        await comfyClient.generate(modelVariant, job);
+      } else {
+        const modelVariant: ModelVariant = {
+          id,
+          kind: "text-to-video",
+          prompt,
+        };
+        await comfyClient.generate(modelVariant, job);
+      }
     }
   }
 
@@ -383,6 +409,11 @@ Your response should only include the newly generated prompt!
 
     if (outputEvents.length === 0) {
       Logger.warn(`No complete media events found for job ${jobId}`);
+      return;
+    }
+
+    if (outputEvents.length <= 1) {
+      Logger.info(`Single clip video, skipping composition for job ${jobId}`);
       return;
     }
 

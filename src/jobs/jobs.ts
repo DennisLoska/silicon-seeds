@@ -129,20 +129,16 @@ export namespace JobOrchestrator {
         };
 
       case Event.NewVideoPrompt:
-        const { filename } = event;
+        const { filename } = event as { filename?: string | null };
         Utils.assert(prompt, "Must provide 'prompt' to define an video task!");
-        Utils.assert(
-          filename,
-          "Must provide 'filename' to define a videotask!",
-        );
-
+        // filename is optional for pure text-to-video (no image)
         return {
           ...base,
           type: Event.NewVideoPrompt,
           prompt,
-          filename,
+          filename: filename ?? null,
           index: event.index,
-        };
+        } as any;
 
       case Event.NewTransitionPrompt:
         const { startImg, endImg } = event;

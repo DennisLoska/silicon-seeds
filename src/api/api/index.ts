@@ -21,6 +21,7 @@ import {
   PostDistinctAudioSchema,
   PostAutoCutSchema,
   PostTextToImageSchema,
+  PostTextToVideoSchema,
 } from "../schemas";
 
 const app = new Hono();
@@ -55,9 +56,14 @@ app.post("/jobs/scenes", async () => {
   return script_to_scenes();
 });
 
-app.post("/jobs/videos", async () => {
-  return text_to_image_to_video();
-});
+app.post(
+  "/jobs/videos",
+  zValidator("form", PostTextToVideoSchema),
+  async (c) => {
+    const body = c.req.valid("form");
+    return text_to_image_to_video(body);
+  },
+);
 
 app.post(
   "/jobs/videos/autocut",
