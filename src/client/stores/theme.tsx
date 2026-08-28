@@ -1,4 +1,4 @@
-import { createSignal, createEffect, onMount } from "solid-js";
+import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
 
 const THEMES = ["bumblebee", "dracula"] as const;
 type Theme = (typeof THEMES)[number];
@@ -47,10 +47,10 @@ export function createTheme() {
       } catch {}
     };
     mq.addEventListener?.("change", mqHandler);
-    return () => {
+    onCleanup(() => {
       window.removeEventListener("storage", handler);
       mq.removeEventListener?.("change", mqHandler);
-    };
+    });
   });
   return {
     theme,

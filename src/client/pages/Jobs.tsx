@@ -194,7 +194,7 @@ export default function Jobs() {
                     <div class="space-y-8">
                       <header class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div>
-                          <h2 class="text-3xl font-extrabold tracking-tight">Status <span class={`badge badge-xl ${j().status === "complete" ? "badge-success" : j().status === "failed" ? "badge-error" : j().status === "cancelled" ? "badge-neutral" : "badge-warning"}`}>{j().status}</span></h2>
+                          <h2 class="text-3xl font-extrabold tracking-tight">Status <span class={`badge badge-lg ${j().status === "complete" ? "badge-success" : j().status === "failed" ? "badge-error" : j().status === "cancelled" ? "badge-neutral" : "badge-warning"}`}>{j().status}</span></h2>
                           <p class="text-base-content/60 mt-1">Detailed overview of job execution and configuration.</p>
                         </div>
                       </header>
@@ -214,15 +214,19 @@ export default function Jobs() {
                           <div class="text-sm leading-6 whitespace-pre-wrap break-words opacity-90">{j().original_prompt?.trim() ? j().original_prompt : "Not set"}</div>
                         </div>
                       </div>
-                      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Job ID</div><div class="stat-value text-sm truncate">{j().id}</div></div></div>
-                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Created At</div><div class="stat-value text-sm">{new Date(j().created_at).toLocaleString()}</div></div></div>
-                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Job Status</div><div class="stat-value text-sm capitalize">{j().status}</div></div></div>
-                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Events</div><div class="stat-value text-sm">{completedCount()} / {events().length}</div></div></div>
-                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Duration</div><div class="stat-value text-sm">{calculateDuration(j().created_at, events())}</div></div></div>
-                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Running</div><div class="stat-value text-sm">{runningCount()}</div></div></div>
-                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Pending</div><div class="stat-value text-sm">{pendingCount()}</div></div></div>
-                        <div class="stats shadow bg-base-100"><div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Failed</div><div class="stat-value text-sm">{failedCount()}</div></div></div>
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="stats stats-vertical lg:stats-horizontal shadow bg-base-100">
+                          <div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Job ID</div><div class="stat-value text-sm truncate">{j().id}</div></div>
+                          <div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Created At</div><div class="stat-value text-sm">{new Date(j().created_at).toLocaleString()}</div></div>
+                          <div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Job Status</div><div class="stat-value text-sm capitalize">{j().status}</div></div>
+                          <div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Events</div><div class="stat-value text-sm">{completedCount()} / {events().length}</div></div>
+                        </div>
+                        <div class="stats stats-vertical lg:stats-horizontal shadow bg-base-100">
+                          <div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Duration</div><div class="stat-value text-sm">{calculateDuration(j().created_at, events())}</div></div>
+                          <div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Running</div><div class="stat-value text-sm">{runningCount()}</div></div>
+                          <div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Pending</div><div class="stat-value text-sm">{pendingCount()}</div></div>
+                          <div class="stat"><div class="stat-title text-xs uppercase opacity-60 font-bold">Failed</div><div class="stat-value text-sm">{failedCount()}</div></div>
+                        </div>
                       </div>
                       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="card bg-base-100 shadow-sm">

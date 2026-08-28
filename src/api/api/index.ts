@@ -152,7 +152,7 @@ app.get("/jobs/:jobId/media", async (c) => {
   const offset = parseInt(c.req.query("offset") ?? "0", 10);
   const limit = parseInt(c.req.query("limit") ?? "12", 10);
   // Gallery-like: fetch via meta join, filter by job
-  const items = await DB.Gallery.listItems({ limit: 100, type: type as "image" | "video" | undefined });
+  const items = await DB.Gallery.listItems({ limit: 500, type: type as "image" | "video" | undefined });
   const filtered = items.filter((i) => i.job_id === jobId);
   const slice = filtered.slice(
     Number.isNaN(offset) ? 0 : offset,

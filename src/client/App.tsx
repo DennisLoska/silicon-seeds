@@ -90,7 +90,7 @@ export default function App() {
         path="/create/video"
         component={() => (
           <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
-            <CreateImage />
+            <div class="p-6 text-center opacity-60">Video creation — use Image flow or Compose for now.</div>
           </Suspense>
         )}
       />
@@ -98,7 +98,7 @@ export default function App() {
         path="/create/text"
         component={() => (
           <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
-            <CreateImage />
+            <div class="p-6 text-center opacity-60">Text creation — use Compose for script-to-video.</div>
           </Suspense>
         )}
       />
