@@ -78,14 +78,6 @@ export default function App() {
           </Suspense>
         )}
       />
-      <Route
-        path="/create/text"
-        component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
-            <div class="p-6 text-center opacity-60">Text creation — use Compose for script-to-video.</div>
-          </Suspense>
-        )}
-      />
     </Router>
   );
 }
