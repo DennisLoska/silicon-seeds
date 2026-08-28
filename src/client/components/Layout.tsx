@@ -4,10 +4,8 @@ import { Icons } from "./Icons";
 import { createTheme } from "../stores/theme";
 
 function getPageTitle(path: string) {
-  if (path === "/" || path.startsWith("/dashboard")) return "Dashboard";
-  if (path.startsWith("/jobs")) return "Jobs";
+  if (path.startsWith("/jobs") || path === "/" || path.startsWith("/dashboard")) return "Jobs";
   if (path.startsWith("/gallery")) return "Gallery";
-  if (path.startsWith("/settings")) return "Settings";
   if (path.startsWith("/compose")) return "Compose";
   if (path.startsWith("/create/audio")) return "Audio";
   if (path.startsWith("/create/autocut")) return "AutoCut";
@@ -47,17 +45,11 @@ export default function Layout(props: ParentProps) {
       <aside class="drawer-side z-20 is-drawer-close:overflow-visible">
         <label for="main-drawer" class="drawer-overlay" />
         <div class="is-drawer-close:w-20 is-drawer-open:w-64 bg-base-200 border-r border-base-300 flex flex-col items-start min-h-full">
-          <A href="/" class="flex items-center is-drawer-close:justify-center gap-3 p-4 w-full hover:bg-base-300 transition-colors">
+          <A href="/jobs" class="flex items-center is-drawer-close:justify-center gap-3 p-4 w-full hover:bg-base-300 transition-colors">
             <Icons.Logo />
             <span class="text-xl font-bold text-primary is-drawer-close:hidden whitespace-nowrap">Silicon Seeds</span>
           </A>
           <ul class="menu menu-md w-full grow px-2 py-4">
-            <li class="w-full">
-              <A href="/dashboard" id="sidebar-dashboard-link" class="is-drawer-close:justify-center py-2">
-                <Icons.Dashboard />
-                <span class="is-drawer-close:hidden">Dashboard</span>
-              </A>
-            </li>
             <li class="w-full">
               <A href="/jobs" id="sidebar-jobs-summary" class="is-drawer-close:justify-center py-2">
                 <Icons.Jobs />
@@ -105,13 +97,6 @@ export default function Layout(props: ParentProps) {
               <A href="/create/text" id="sidebar-text" class="is-drawer-close:justify-center py-2">
                 <Icons.Text />
                 <span class="is-drawer-close:hidden">Text</span>
-              </A>
-            </li>
-            <li class="menu-title">System</li>
-            <li class="w-full">
-              <A href="/settings" id="sidebar-settings-link" class="is-drawer-close:justify-center py-2">
-                <Icons.Settings />
-                <span class="is-drawer-close:hidden">Settings</span>
               </A>
             </li>
           </ul>
