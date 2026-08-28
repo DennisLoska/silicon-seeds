@@ -10,8 +10,8 @@ export default function CreateVideo() {
   const showProgress = () => search.show_progress === "true" && !!search.job_id;
   const jobId = () => search.job_id as string | undefined;
 
-  const [fps, setFps] = createSignal(8);
-  const [clipDuration, setClipDuration] = createSignal(1);
+  const [fps, setFps] = createSignal(16);
+  const [clipDuration, setClipDuration] = createSignal(3);
   const [isSubmitting, setIsSubmitting] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
 
