@@ -866,21 +866,23 @@ export namespace DB {
 
     type ListItemsOptions = {
       cursor?: string; // meta.id (UUID7) for pagination
-      type?: "image" | "video";
+      type?: "image" | "video" | "audio";
       limit?: number;
     };
 
     function getMediaTypeFromExtension(
       filename: string,
-    ): "image" | "video" | null {
+    ): "image" | "video" | "audio" | null {
       const ext = filename.split(".").pop()?.toLowerCase();
       if (!ext) return null;
 
       const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
       const videoExts = ["mp4", "mov", "avi", "mkv", "webm"];
+      const audioExts = ["mp3", "wav", "flac", "ogg", "m4a", "aac", "wma", "opus", "aiff"];
 
       if (imageExts.includes(ext)) return "image";
       if (videoExts.includes(ext)) return "video";
+      if (audioExts.includes(ext)) return "audio";
       return null;
     }
 
@@ -935,8 +937,9 @@ export namespace DB {
       if (type) {
         const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
         const videoExts = ["mp4", "mov", "avi", "mkv", "webm"];
+        const audioExts = ["mp3", "wav", "flac", "ogg", "m4a", "aac", "wma", "opus", "aiff"];
 
-        const extList = type === "image" ? imageExts : videoExts;
+        const extList = type === "image" ? imageExts : type === "video" ? videoExts : audioExts;
         query = query.where((eb) =>
           eb.or(extList.map((ext) => eb("meta.filename", "like", `%.${ext}`))),
         );
@@ -948,7 +951,7 @@ export namespace DB {
         .execute();
 
       const concurrency = 10;
-      const items: Array<ListItemResult & { mediaType: "image" | "video"; created_at: string }> = [];
+      const items: Array<ListItemResult & { mediaType: "image" | "video" | "audio"; created_at: string }> = [];
       for (let i = 0; i < results.length; i += concurrency) {
         const chunk = results.slice(i, i + concurrency);
         const chunkItems = await Promise.all(
@@ -978,7 +981,7 @@ export namespace DB {
               job_id: row.job_id,
               mediaType,
             } as ListItemResult & {
-              mediaType: "image" | "video";
+              mediaType: "image" | "video" | "audio";
               created_at: string;
             };
           }),

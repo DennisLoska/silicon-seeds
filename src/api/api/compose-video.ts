@@ -19,13 +19,14 @@ export async function compose_video(options: PostCompose) {
     style_guide,
   } = options;
 
-  // Determine the final script: file takes precedence over text input
+  // Determine the final script: file takes precedence over text input, but ignore empty file
   let finalScript = script ? Utils.sanitizeInputText(script) : undefined;
 
-  if (script_file) {
-    // Read the uploaded file content
+  if (script_file && script_file.size > 0) {
+    // Read the uploaded file content (only if file actually selected)
     const fileContent = await script_file.text();
-    finalScript = Utils.sanitizeInputText(fileContent);
+    const sanitizedFile = Utils.sanitizeInputText(fileContent);
+    if (sanitizedFile.length >= 3) finalScript = sanitizedFile;
   }
 
   if (!finalScript || finalScript.length < 3) {

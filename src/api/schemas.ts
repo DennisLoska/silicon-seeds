@@ -24,7 +24,10 @@ export type PostTextToImage = z.infer<typeof PostTextToImageSchema>;
 export const PostComposeSchema = z
   .object({
     script: z.string().optional(),
-    script_file: z.instanceof(File).optional(),
+    script_file: z.preprocess((v) => {
+      if (v instanceof File && v.size === 0 && v.name === "") return undefined;
+      return v;
+    }, z.instanceof(File).optional()),
     image_model: z.string().max(50),
     video_model: z.string().max(50),
     resolution: z.string().max(7),

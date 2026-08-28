@@ -11,5 +11,5 @@
     "module": "es2022",
     "target": "ES2022"
   },
-  "exclude": ["node_modules", "migrations", "static"]
+  "exclude": ["node_modules", "migrations", "static", "dist", "src/client"]
 }
