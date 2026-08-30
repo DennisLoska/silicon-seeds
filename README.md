@@ -1,10 +1,143 @@
-# Silicon Seeds
+<p align="center">
+  <img src="readme/hero.png" alt="Silicon Seeds — silicon wafer sprouting seedlings, techno-organic fusion" width="100%" />
+</p>
 
-> **License:** GPL-3.0-or-later — see [LICENSE](LICENSE). Any derivative or service that includes this code must remain open source under the same license.
+<h1 align="center">Silicon Seeds</h1>
 
-Local generative media studio. Orchestrates LM Studio (text), ComfyUI (image/video/audio), SQLite (jobs) and a SolidJS + DaisyUI frontend to produce images, videos and composed films from scripts.
+<p align="center">
+  <em>Whoever has ears, let them hear.</em><br/>
+  Local generative media studio — script to screen, fully offline, fully yours.
+</p>
 
-## Prerequisites
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-orange?style=flat-square" alt="License: GPL-3.0-or-later" /></a>
+  <img src="https://img.shields.io/badge/Bun-%3E%3D1.3-black?style=flat-square&logo=bun&logoColor=white" alt="Bun >=1.3" />
+  <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/SolidJS-1.x-2C4F7C?style=flat-square&logo=solid&logoColor=white" alt="SolidJS" />
+  <img src="https://img.shields.io/badge/DaisyUI-5.x-1AD1A5?style=flat-square" alt="DaisyUI" />
+  <img src="https://img.shields.io/badge/Kysely%20%2B%20SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="Kysely + SQLite" />
+  <img src="https://img.shields.io/badge/ComfyUI-Z--Image--Turbo%20%7C%20Wan%202.2%20%7C%20LTX%202.3-111111?style=flat-square" alt="ComfyUI" />
+  <img src="https://img.shields.io/badge/LM%20Studio-Qwen%203-6A5ACD?style=flat-square" alt="LM Studio" />
+  <img src="https://img.shields.io/badge/HTMX%2BSSE%20%2B%20WebSockets-3366CC?style=flat-square" alt="HTMX SSE" />
+  <img src="https://img.shields.io/badge/version-1.0.0-blue?style=flat-square" alt="version 1.0.0" />
+</p>
+
+<p align="center">
+  <a href="#-showcase">Showcase</a> •
+  <a href="#-features">Features</a> •
+  <a href="#-architecture">Architecture</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-service-dependencies">Services</a> •
+  <a href="#-troubleshooting">Troubleshooting</a>
+</p>
+
+---
+
+> **License:** GPL-3.0-or-later — see [LICENSE](LICENSE). Any derivative or service that includes this code must remain open under the same license.
+
+Local generative media studio. Orchestrates **LM Studio** (text), **ComfyUI** (image / video / audio), **SQLite + Kysely** (jobs), and a **SolidJS + DaisyUI** frontend to turn scripts into images, videos, and fully composed films. Queue is DB-backed, UI is SSE-driven, everything runs on your hardware.
+
+---
+
+## ✨ Showcase
+
+<table>
+<tr>
+<td width="50%">
+
+**Compose — script to film**
+
+Script + style guide + voice + LoRAs → speech → scenes → images → videos → transitions → concat. End-to-end pipeline in one click.
+
+<img src="readme/compose.png" alt="Compose view — script, style guide, models, LoRAs, voice" width="100%" />
+
+</td>
+<td width="50%">
+
+**Settings — defaults, LoRAs, presets**
+
+Defaults prefill new jobs. LoRAs synced from ComfyUI (drag to reorder, toggle active). 14 style presets curated from mflux-forge.
+
+<img src="readme/settings.png" alt="Settings view — defaults, LoRAs, style presets" width="100%" />
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**Jobs — live SSE timeline**
+
+Real-time job tracker with event stream, status tabs, and cancel / regenerate controls.
+
+<img src="readme/jobs.png" alt="Jobs view — live job status and event stream" width="100%" />
+
+</td>
+<td width="50%">
+
+**Create Image — prompt to still**
+
+Prompt + style preset + LoRA stack (0.1–2.0) + resolution. Z-Image-Turbo, 9 steps, instant preview.
+
+<img src="readme/create-image.png" alt="Create Image view — prompt, style, LoRAs" width="100%" />
+
+</td>
+</tr>
+<tr>
+<td colspan="2" align="center">
+
+**Gallery — content library**
+
+Persistent gallery backed by `CONTENT_LIBRARY_DIR` + ChromaDB vector search. Every generation archived, searchable, reusable.
+
+<img src="readme/gallery.png" alt="Gallery view — content library" width="90%" />
+<br/>
+<sub>Additional capture: <code>readme/library.png</code> — earlier gallery snapshot retained for history</sub>
+
+</td>
+</tr>
+</table>
+
+> Hero banner generated locally with **Z-Image-Turbo** (`z_image_turbo_bf16.safetensors` + `qwen_3_4b` CLIP) on RTX 5090 — same pipeline the app uses.
+
+---
+
+## 🚀 Features
+
+| Area | What you get |
+|------|--------------|
+| **Compose** | Script (paste or `.txt`) + style guide + voice → full film: TTS (Voicebox) → LLM scene expansion → Z-Image-Turbo stills → Wan 2.2 / LTX 2.3 i2v + transitions → ffmpeg concat. Progress streamed via SSE/WS. |
+| **Image** | Z-Image-Turbo text-to-image with style presets + optional LoRA chain (0–N, 0.1–2.0, ordered stacking). 480p / 720p / 1080p + 9:16 variants. |
+| **Video** | Image-to-video and text-to-video via Wan 2.2 14B and LTX 2.3, including style transitions between scenes. |
+| **Audio** | Text-to-instrumental / song via Stable Audio 3 Medium + ACE Step 1.5 XL. Single-slot queue, Voicebox voice cloning support. |
+| **Jobs** | DB-backed queue (`prio 300 audio > 200 image > 100 video`), live SSE updates, per-event status, cancel & retry. Survives restarts via `failBrokenJobs`. |
+| **Gallery** | Content library on disk (`CONTENT_LIBRARY_DIR`) with ChromaDB embeddings for semantic search. |
+| **Settings** | Generation defaults (fps, clip/transition duration, resolution, models), LoRA manager (sync from ComfyUI, drag-reorder), style preset editor. |
+| **Frontend** | SolidJS SPA + DaisyUI + Tailwind, Vite dev proxy, Hono API, WebSockets for ComfyUI queue events, HTMX-style SSE for job streams. |
+| **Local-first** | No cloud. No API keys. Bring your own ComfyUI + LM Studio. Optional services degrade gracefully. |
+
+---
+
+## 🧭 Architecture
+
+```mermaid
+flowchart LR
+  UI[SolidJS + DaisyUI<br/>Jobs / Compose / Gallery / Settings] -- SSE / WS --> API[Hono API<br/>:3000]
+  API -- Kysely --> DB[(SQLite<br/>jobs + events + style_presets)]
+  API -- queue --> Q[QueueManager<br/>prio 300/200/100<br/>single-slot]
+  Q --> LLM[LM Studio<br/>scene expansion]
+  Q --> COMFY[ComfyUI<br/>Z-Image-Turbo<br/>Wan 2.2 / LTX 2.3<br/>Stable Audio]
+  Q --> TTS[Voicebox<br/>TTS / cloning]
+  COMFY --> OUT[(OUTPUT_DIR)]
+  TTS --> OUT
+  OUT --> LIB[(CONTENT_LIBRARY_DIR<br/>+ ChromaDB)]
+  LIB --> UI
+```
+
+**Request flow:** `Create → POST /api/jobs/*` → DB `jobs` + `events` rows → `QueueManager.pump()` picks next event by priority → driver (LLM / ComfyUI / TTS) executes → writes artifact to `OUTPUT_DIR` → copies to `CONTENT_LIBRARY_DIR` → SSE pushes update → UI re-renders. ComfyUI progress arrives via WebSocket (`COMFYUI_BASE_WS`).
+
+---
+
+## 📋 Prerequisites
 
 - **Bun** ≥1.3 (`curl -fsSL https://bun.sh/install | bash`)
 - **ComfyUI** running locally (default `http://127.0.0.1:8188`)
@@ -12,9 +145,10 @@ Local generative media studio. Orchestrates LM Studio (text), ComfyUI (image/vid
 - **ffmpeg + ffprobe** (`sudo pacman -S ffmpeg` / `brew install ffmpeg`)
 - **Voicebox** (optional, for TTS in Compose) — default `http://127.0.0.1:17493`
 - **ChromaDB** (optional, for gallery search) — default `http://127.0.0.1:8000`
-- **SearXNG** (optional, for LLM web search via MCP) — default `http://localhost:8888`
 
-## Service dependencies
+---
+
+## 🔌 Service dependencies
 
 | Service | Default URL | Required | What it does |
 |---------|-------------|----------|--------------|
@@ -22,11 +156,12 @@ Local generative media studio. Orchestrates LM Studio (text), ComfyUI (image/vid
 | LM Studio | `http://127.0.0.1:1234` | yes | LLM text, scene prompts, style expansion, job naming |
 | Voicebox | `http://127.0.0.1:17493` | for Compose | TTS for script → speech |
 | ChromaDB | `http://127.0.0.1:8000` | no | Vector search for gallery |
-| SearXNG | `http://localhost:8888` | no | `searxng_web_search` tool for LLM via `mcp-searxng` |
 
-If Voicebox/Chroma/SearXNG are not running, the app still starts — related features just fail at runtime with a clear error.
+If Voicebox / Chroma are not running, the app still starts — related features just fail at runtime with a clear error.
 
-## Environment variables
+---
+
+## ⚙️ Environment variables
 
 Copy `.env.example` to `.env` and edit paths. All vars are read via `Bun.env`.
 
@@ -61,7 +196,11 @@ CHROMADB_PORT=8000
 LOG_LEVEL=info
 ```
 
-## Installation
+---
+
+## 🛠️ Quick Start
+
+### Installation
 
 ```bash
 git clone https://github.com/DennisLoska/silicon-seeds.git
@@ -81,7 +220,7 @@ curl http://127.0.0.1:1234/v1/models     # LM Studio API
 curl http://127.0.0.1:17493/profiles     # Voicebox (if used)
 ```
 
-## Running
+### Running
 
 ```bash
 # backend + frontend (hot reload)
@@ -111,11 +250,13 @@ bun run db:rollback      # last migration
 bun run db:chroma        # start local Chroma at content_library/chroma-data
 ```
 
-## First run
+---
+
+## 🎬 First run
 
 1. Open `http://localhost:3000` → `Jobs`.
 2. Go to `Settings` → `Sync from ComfyUI` to import LoRAs, edit `Defaults` (fps, resolution, preset) and `Style Presets` (from `mflux-forge`).
-3. **Image:** `Create → Image` → prompt + style preset + optional LoRAs (drag to reorder, 0.1-2.0) → `Generate`.
+3. **Image:** `Create → Image` → prompt + style preset + optional LoRAs (drag to reorder, 0.1–2.0) → `Generate`.
 4. **Compose:** `Create → Compose` → script or `.txt` + style guide + voice → `Generate Video`. Pipeline: speech → scenes → images → videos → transitions → concat.
 5. **Gallery / Jobs:** track progress via SSE, view media, cancel or regenerate failed events.
 
@@ -129,7 +270,53 @@ curl -X POST http://localhost:3000/api/jobs/images \
   -F "resolution=720p"
 ```
 
-## Troubleshooting
+---
+
+## 🗂️ Project layout
+
+```
+src/
+  api/        Hono routes (jobs, settings, loras, comfyui)
+  client/     SolidJS SPA + DaisyUI (Compose, CreateImage, Settings, Jobs)
+  comfyui/    ComfyUI client + workflow JSON (api/ + workflows/)
+  db/         Kysely + SQLite migrations
+  llm/        LM Studio
+  queue/      single-slot DB queue (prio 300 audio > 200 image > 100 video)
+  tts/        Voicebox client
+  styles/     style presets (from mflux-forge)
+  events/     SSE event stream
+  socket/     WebSocket server (ComfyUI bridge)
+static/      built CSS (static/style.css)
+dist/client  Vite production build
+readme/      hero + screenshots for this README
+  hero.png        Z-Image-Turbo techno-organic banner (1536×864)
+  compose.png     Compose view
+  settings.png    Settings view
+  jobs.png        Jobs view
+  create-image.png Create Image view
+  gallery.png     Gallery view
+  library.png     earlier gallery capture
+```
+
+---
+
+## 🧰 Tech Stack
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Runtime | **Bun** 1.3 | Native TS, fast startup, `Bun.env` + `Bun.file` |
+| Frontend | **SolidJS** + **DaisyUI** + Tailwind | Fine-grained reactivity, no VDOM tax, themeable components |
+| Realtime | **SSE** + **WebSockets** | SSE for job progress (one-way, reconnect-friendly), WS for ComfyUI queue |
+| DB | **SQLite** + **Kysely** | Single file, zero ops, type-safe queries, migrations in `migrations/` |
+| Image | **ComfyUI + Z-Image-Turbo** | 9-step turbo, CLIP `qwen_3_4b`, LoRA stacking |
+| Video | **Wan 2.2 14B** / **LTX 2.3** | i2v + transition models, selectable per job |
+| Audio | **Stable Audio 3** + **ACE Step 1.5** | Instrumental / song, Voicebox for TTS |
+| LLM | **LM Studio** (Qwen 3) | Local OpenAI-compatible API, scene expansion |
+| Search | **ChromaDB** | Embeddings (`text-embedding-qwen3-embedding-8b`) for gallery RAG |
+
+---
+
+## 🔧 Troubleshooting
 
 - **ComfyUI not reachable** → check `COMFYUI_BASE_URL`/`WS`, `curl /system_stats`, ensure ComfyUI started with `--listen`.
 - **LLM_MODEL missing** → `LLM_MODEL variable missing` at startup — set in `.env` and load model in LM Studio with API server on.
@@ -138,20 +325,13 @@ curl -X POST http://localhost:3000/api/jobs/images \
 - **Queue stuck at audio** → audio is single-threaded (`hasRunning` gate). Check `voicebox` logs, `GET /history` in ComfyUI, or `SELECT * FROM events WHERE status='running'`.
 - **Styles not appearing** → `POST /api/style-presets` requires DB; run `bun run db:migrate` and check `Settings`.
 
-## Project layout
+---
 
-```
-src/
-  api/        Hono routes (jobs, settings, loras, comfyui)
-  client/     SolidJS SPA + DaisyUI (Compose, CreateImage, Settings, Jobs)
-  comfyui/    ComfyUI client + workflow JSON
-  db/         Kysely + SQLite migrations
-  llm/        LM Studio + MCP (SearXNG)
-  queue/      single-slot DB queue (prio 300 audio > 200 image > 100 video)
-  tts/        Voicebox client
-  styles/     style presets (from mflux-forge)
-```
-
-## License
+## 📄 License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).
+
+<p align="center">
+  <sub>Built with 🌱 silicon + seeds + a lot of local compute.</sub><br/>
+  <sub>Hero + screenshots generated on RTX 5090 · Z-Image-Turbo · Wan 2.2</sub>
+</p>
