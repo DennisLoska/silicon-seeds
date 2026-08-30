@@ -1,11 +1,8 @@
 import { Event, JobMode } from "../events/events";
 import { LLM } from "../llm/llm";
-import { comfyClient } from "../comfyui/comfyui-client";
 import { Presets, StylePresets } from "../styles/presets";
-import { Styles } from "../styles/styles";
 import { StylePrompt } from "../styles/system";
 import { ImageGenerator } from "../image/image-generator";
-import { VideoGenerator } from "../video/video-generator";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
 import { DB } from "../db/db";

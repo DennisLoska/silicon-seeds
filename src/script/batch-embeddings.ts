@@ -41,7 +41,7 @@ async function main() {
     process.exit(1);
   }
 
-  let allFiles: string[] = [];
+  const allFiles: string[] = [];
 
   for (const ft of FILETYPE_DIRS) {
     const ftDir = join(contentDir, ft);

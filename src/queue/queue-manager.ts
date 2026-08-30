@@ -8,6 +8,7 @@ import type { Lora, Presets } from "../styles/presets";
 import { VideoGenerator } from "../video/video-generator";
 
 export namespace QueueManager {
+  // eslint-disable-next-line prefer-const
   export let comfyQueue = 0;
   let pumping = false;
   let waitingForComfyIdle = false;

@@ -45,6 +45,7 @@ export namespace Logger {
       return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     logger[level]`${message}`;
   }
 
