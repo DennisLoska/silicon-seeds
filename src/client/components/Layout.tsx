@@ -10,6 +10,7 @@ function getPageTitle(path: string) {
   if (path.startsWith("/create/audio")) return "Audio";
   if (path.startsWith("/create/image")) return "Image";
   if (path.startsWith("/create/video")) return "Video";
+  if (path.startsWith("/settings")) return "Settings";
   return "🌀◝(ᵔᗜᵔ)◜";
 }
 
@@ -83,6 +84,12 @@ export default function Layout(props: ParentProps) {
               <A href="/create/audio" id="sidebar-audio" class="is-drawer-close:justify-center py-2">
                 <Icons.Audio />
                 <span class="is-drawer-close:hidden">Audio</span>
+              </A>
+            </li>
+            <li class="w-full">
+              <A href="/settings" id="sidebar-settings" class="is-drawer-close:justify-center py-2">
+                <Icons.CogSettingsIcon />
+                <span class="is-drawer-close:hidden">Settings</span>
               </A>
             </li>
           </ul>
