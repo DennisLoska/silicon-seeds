@@ -1,309 +1,157 @@
-# Silicon-Seeds
-
-> **License:** GPL-3.0-or-later — see [LICENSE](LICENSE).
-
-Whoever has ears, let them hear.
-
-Silicon-Seeds is a Bun-based generative media orchestration app that coordinates LM Studio, ComfyUI, SQLite, MCP tool calling, and a server-rendered HTMX UI to produce images, videos, speech, music, and AI-edited video.
-
-## What It Does
-
-The app supports four main interactive flows and several demo endpoints:
-
-- **Compose**: create a full video from a script or uploaded text file (TTS → scenes → images → videos → transitions → composition)
-- **Image**: create standalone images from a text prompt
-- **Video**: create standalone videos from a text prompt
-- **Audio/Song**: generate songs with configurable BPM, key/scale, instrumental, and lyrics
-- **Demo endpoints**: standalone TTS, image-to-video, video-transition, instrumental, text-to-text, script-to-scenes
-
-All job state and asset metadata are persisted in SQLite. Generated media files live on disk under configured ComfyUI directories. The UI updates via HTMX fragment fetches triggered by SSE notifications.
-
-## Architecture
-
-The runtime is centered around four systems:
-
-- **Hono**: HTTP server, JSON API, SSE, static SolidJS SPA
-- **SQLite + Kysely**: durable jobs, events, asset metadata
-- **LM Studio**: text generation, scene generation, video prompts, job naming, web search via MCP
-- **ComfyUI**: image, video, transition, TTS, instrumental, and song generation
-
-### MCP Integration
-
-MCP is embedded in the LLM client (`src/llm/llm.ts`). On startup it spawns a `bun run mcp-searxng` subprocess connected to a local SearXNG instance at `http://localhost:8888`. LM Studio can call the `searxng_web_search` tool to augment generation with web search results.
-
-### Core Concepts
-
-#### Jobs
-
-Jobs are top-level units of work stored in the `jobs` table.
-
-Each job has:
-- `id` (UUID)
-- `created_at`
-- lifecycle `status`: `active | complete | failed | cancelled`
-- `workflow`: `compose` | `image` | `video` | `audio`
-- render/model settings: `fps`, `clip_duration`, `transition_duration`, `resolution`, `image_model`, `video_model`, `style_preset`
-- generated `name`, optional `original_prompt`
-
-#### Events
-
-Events are the durable queue and execution log for all work in the `events` table.
-
-Each event has:
-- execution `status`: `pending | running | complete | failed`
-- `type`: text, image, video, transition, audio, composition
-- `mode`: text, image, video, speech, instrumental, song
-- optional `index` for ordered media in compose mode
-- `priority` for queue selection
-- `claimed_at`, `attempt_count`, `error`
-
-Compose ordering is driven by `index`, not by insertion order.
-
-#### Meta
-
-The `meta` table stores generated asset locations:
-- `filename`, `subfolder`
-- `type`: `input | output | temp`
-
-Maps events back to real images, videos, and audio files produced by ComfyUI.
-
-#### Gallery
-
-Assets are queryable via `DB.Gallery.listItems` with cursor pagination and type filtering.
-
-## Queue Model
-
-The queue is DB-backed, not in-memory.
-
-Properties:
-- only one media generation runs globally at a time
-- queue selection from SQLite
-- priority enforced at event level
-
-Priority ordering:
-- audio: `300`
-- image: `200`
-- video and transition: `100`
-
-Queue selection: pending active-job events ordered by `priority desc`, then `index asc`, then `created_at asc`. This keeps compose media deterministic while preserving global media priority.
-
-## Compose Pipeline
-
-Starts at `POST /api/jobs/videos/compose`.
-
-### Step 1: Job Creation
-`JobOrchestrator.create_job(...)` creates the job row and generates a persisted job name.
-
-### Step 2: Script Persistence
-Source text stored as a completed `new_text_prompt` event.
-
-### Step 3: Speech Generation
-Scheduled as `new_audio_prompt` in `speech` mode. On completion: audio duration extracted via `ffprobe`, instrumental audio scheduled, clip count calculated.
-
-### Step 4: Scene Generation
-`PromptGenerator.image_scene_prompts(...)` asks LM Studio for a chronological list of scene prompts. Each scheduled as indexed `new_image_prompt`.
-
-### Step 5: Video Generation
-When an indexed image completes: asset metadata persisted, LM Studio generates a video prompt from the image, indexed `new_video_prompt` scheduled (inherits source image index).
-
-### Step 6: Transition Generation
-When all indexed videos complete: completed clips sorted by index, adjacent pairs extract first/last frames, LM Studio generates transition prompts, indexed `new_transition_prompt` events scheduled. Transition `index` represents the gap between clip `n` and `n + 1`.
-
-### Step 7: Final Composition
-`VideoGenerator.combine_outputs(...)`: reads complete video/transition events, sorts by index, interleaves as `video0, transition0, video1, transition1, ...`, writes ffmpeg concat file, produces `new_video_composition` event + `meta` row.
-
-## Song Generation Pipeline
-
-Starts at `POST /api/jobs/audio`.
-
-The `AudioGenerator` creates a `NewAudioPrompt` event with `mode: "song"`. Configurable settings:
-- `bpm`, `cfg_scale`, `temperature`, `top_p`
-- `keyscale` (e.g. "C major"), `timesignature` (e.g. "4/4")
-- `lyrics` (text) and `instrumental_only` flag
-
-Dispatched to ComfyUI using ACE or Stable Audio workflows depending on generation type.
-
-## Job Lifecycle and Recovery
-
-On startup the app runs:
-- `DB.Jobs.failBrokenJobs()` — fail active jobs with pending/running work from a previous process state
-- `DB.Jobs.finalizeCompletedJobs()` — mark settled active jobs terminal
-- `QueueManager.resume()` — requeue running events back to pending
-- `QueueManager.pump()` — kick off initial queue processing
-
-Job finalization:
-- active job with no pending/running events → `failed` if any event failed, `complete` otherwise
-
-Cancellation via `POST /api/jobs/:job_id/cancel`:
-- interrupts running ComfyUI work
-- deletes queued ComfyUI prompts
-- marks pending/running events as failed with cancel context
-- preserves job lifecycle as `cancelled`
-
-Regeneration via `POST /api/jobs/:job_id/events/:event_id/regenerate`:
-- resets a failed event back to `pending`
-- allows retrying specific failed steps without restarting the entire job
-
-## Realtime UI
-
-Server-rendered HTMX-based UI.
-
-### Technologies
-- HTMX + HTMX SSE extension
-- DaisyUI v5
-- Tailwind CSS v4 via CLI build
-- typed-htmx for type-safe HTMX attributes
-- Hono JSX SSR
-- Zod for request validation
-
-### Update Model
-SSE as lightweight notification bus:
-1. server publishes `job-update` for a specific job
-2. browser receives SSE message
-3. HTMX re-fetches progress fragment over HTTP
-4. server returns fresh HTML fragment
-
-### Pages
-- `/` or `/dashboard` — dashboard overview
-- `/compose` — compose a video from script
-- `/create/image` — create standalone images
-- `/create/audio` — create songs with lyrics + instrumental
-- `/settings` — app settings
-- `/gallery` — browse generated media
-- `/jobs` — all jobs with filtering and detail view
-
-## Key Directories
-
-```text
-src/
-  api/          HTTP routes and SSR route groups
-  audio/        speech, instrumental, and song scheduling via ComfyUI
-  comfyui/      ComfyUI client and workflow templates
-  db/           schema, queries, migrations, gallery listing
-  events/       typed event definitions and emitter
-  image/        image scheduling and generation
-  jobs/         job orchestration and task creation
-  llm/          LM Studio wrapper + MCP client (SearXNG web search)
-  logger/       structured logging via Logtape with pretty console sink
-  meta/         metadata helpers such as audio duration
-  prompts/      scene, image, video, and job-name generation
-  queue/        DB-backed single-slot queue manager
-  socket/       ComfyUI WebSocket listener and completion handling
-  sse/          SSE job update publisher/stream
-  styles/       art style definitions, presets, prompt generation
-  text/         text/script event helpers
-  utils/        shared utilities
-  video/        video scheduling, transitions, and final composition
-```
-
-## Main Routes
-
-### Pages
-
-- `GET /` dashboard
-- `GET /dashboard` dashboard
-- `GET /compose` compose page
-- `GET /create/image` image creation
-- `GET /create/audio` audio/song creation
-- `GET /settings` settings
-- `GET /gallery` gallery
-- `GET /jobs` jobs list
-- `GET /jobs/details/:jobId` selected job detail view
-
-### Job APIs
-
-- `GET /api/health`
-- `POST /api/jobs/videos/compose` — full compose pipeline
-- `POST /api/jobs/videos/transition` — transition demo (hardcoded)
-- `POST /api/jobs/images` — standalone image generation
-- `POST /api/jobs/audio` — song generation (instrumental + optional lyrics)
-- `POST /api/jobs/tts` — TTS demo (hardcoded)
-- `POST /api/jobs/instrumental` — instrumental demo (hardcoded)
-- `POST /api/jobs/scenes` — script-to-scenes demo (hardcoded)
-- `POST /api/jobs/videos` — image-to-video demo (hardcoded)
-- `POST /api/jobs/:job_id/cancel` — cancel job
-- `DELETE /api/jobs/:job_id` — delete job
-- `POST /api/jobs/:job_id/events/:event_id/regenerate` — retry failed event
-
-### HTMX Fragment Routes
-
-- `GET /jobs/events`
-- `GET /jobs/generated-images`
-- `GET /jobs/generated-images-card`
-- `GET /jobs/compose-progress`
-- `GET /jobs/image-progress`
-- `GET /api/fragments/job-action-modal`
-
-### SSE
-
-- `GET /jobs/stream?job_id=...`
-
-## Data Ordering Rules
-
-Two valid event orderings depending on use case.
-
-### Chronological Ordering
-For UI timelines and status views. Reader: `DB.Events.findByJobIdChronological(jobId)`.
-
-### Sequencing Ordering
-Index-aware ordering for compose media sequencing. Reader: `DB.Events.findByJobId(jobId)`.
-
-Important: compose image prompts are created in parallel, so `created_at` alone does not preserve scene chronology.
-
-## Local Development
-
-### Prerequisites
-
-- Bun
-- ComfyUI (for image/video/audio generation)
-- LM Studio with configured model(s) loaded (for text/prompt generation)
-- ffmpeg and ffprobe
-- SearXNG at localhost:8888 (for MCP web search, optional)
-
-### Environment
+# Silicon Seeds
+
+> **License:** GPL-3.0-or-later — see [LICENSE](LICENSE). Any derivative or service that includes this code must remain open source under the same license.
+
+Local generative media studio. Orchestrates LM Studio (text), ComfyUI (image/video/audio), SQLite (jobs) and a SolidJS + DaisyUI frontend to produce images, videos and composed films from scripts.
+
+## Prerequisites
+
+- **Bun** ≥1.3 (`curl -fsSL https://bun.sh/install | bash`)
+- **ComfyUI** running locally (default `http://127.0.0.1:8188`)
+- **LM Studio** with API server enabled (default `http://127.0.0.1:1234`) and models loaded
+- **ffmpeg + ffprobe** (`sudo pacman -S ffmpeg` / `brew install ffmpeg`)
+- **Voicebox** (optional, for TTS in Compose) — default `http://127.0.0.1:17493`
+- **ChromaDB** (optional, for gallery search) — default `http://127.0.0.1:8000`
+- **SearXNG** (optional, for LLM web search via MCP) — default `http://localhost:8888`
+
+## Service dependencies
+
+| Service | Default URL | Required | What it does |
+|---------|-------------|----------|--------------|
+| ComfyUI | `http://127.0.0.1:8188` | yes | Image (Z-Image-Turbo), video (Wan 2.2 / LTX 2.3), audio generation |
+| LM Studio | `http://127.0.0.1:1234` | yes | LLM text, scene prompts, style expansion, job naming |
+| Voicebox | `http://127.0.0.1:17493` | for Compose | TTS for script → speech |
+| ChromaDB | `http://127.0.0.1:8000` | no | Vector search for gallery |
+| SearXNG | `http://localhost:8888` | no | `searxng_web_search` tool for LLM via `mcp-searxng` |
+
+If Voicebox/Chroma/SearXNG are not running, the app still starts — related features just fail at runtime with a clear error.
+
+## Environment variables
+
+Copy `.env.example` to `.env` and edit paths. All vars are read via `Bun.env`.
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `COMFYUI_BASE_URL` | yes | `http://127.0.0.1:8188` | ComfyUI HTTP API |
+| `COMFYUI_BASE_WS` | yes | `ws://127.0.0.1:8188` | ComfyUI WebSocket for queue events |
+| `OUTPUT_DIR` | yes | — | ComfyUI `output` dir (where Comfy writes images/videos) |
+| `INPUT_DIR` | yes | — | ComfyUI `input` dir (where app stages uploads) |
+| `CONTENT_LIBRARY_DIR` | yes | — | Persistent gallery dir (e.g. `~/content_library`) |
+| `LLM_MODEL` | yes | — | LM Studio model id, e.g. `qwen3.6-35b-a3b` |
+| `EMBEDDING_MODEL` | yes | — | LM Studio embedding model, e.g. `text-embedding-qwen3-embedding-8b` |
+| `VOICEBOX_URL` | no | `http://127.0.0.1:17493` | Voicebox TTS server |
+| `CHROMADB_HOST` | no | `127.0.0.1` | Chroma host |
+| `CHROMADB_PORT` | no | `8000` | Chroma port |
+| `LOG_LEVEL` | no | `info` | `debug`/`info`/`warn`/`error` |
+| `NODE_ENV` | no | `development` | `development` / `production` |
+
+Example `.env`:
 
 ```bash
-COMFYUI_BASE_URL=http://localhost:8188
-COMFYUI_BASE_WS=ws://localhost:8188
-OUTPUT_DIR=/path/to/comfy/output
-INPUT_DIR=/path/to/comfy/input
+COMFYUI_BASE_URL=http://127.0.0.1:8188
+COMFYUI_BASE_WS=ws://127.0.0.1:8188
+OUTPUT_DIR=/path/to/comfy-ui/output
+INPUT_DIR=/path/to/comfy-ui/input
+CONTENT_LIBRARY_DIR=/home/you/content_library
+LLM_MODEL=qwen3.6-35b-a3b
+EMBEDDING_MODEL=text-embedding-qwen3-embedding-8b
+VOICEBOX_URL=http://127.0.0.1:17493
+CHROMADB_HOST=127.0.0.1
+CHROMADB_PORT=8000
 LOG_LEVEL=info
 ```
 
-### Install and Run
+## Installation
 
 ```bash
+git clone https://github.com/DennisLoska/silicon-seeds.git
+cd silicon-seeds
 bun install
-bun db:migrate
-bun run build:css    # build Tailwind CSS v4 styles
-bun start:hot        # starts Bun with --hot reload
+cp .env.example .env   # edit paths above
+bun run db:migrate      # creates silicon-seeds.sqlite + style presets/loras tables
+bun run build:css       # builds static/style.css from src/client/index.css
 ```
 
-### Useful Checks
+Validate setup:
 
 ```bash
 bunx tsc --noEmit
-bun db:rollback
-bun run lint
-sqlite3 data.db ".tables"
+curl http://127.0.0.1:8188/system_stats  # ComfyUI
+curl http://127.0.0.1:1234/v1/models     # LM Studio API
+curl http://127.0.0.1:17493/profiles     # Voicebox (if used)
 ```
 
-### Style System
+## Running
 
-Styles are defined in `src/styles/`:
-- `styles.ts` — art style enums (WATERCOLOR, GENERAL, MIXED) and texture maps
-- `system.ts` — LLM prompt template that generates image generation instructions from StyleParams
-- `presets.ts` — preset configurations (SYSTEM, WATERCOLOR, PENCIL_WATERCOLOR) with optional LoRA references
+```bash
+# backend + frontend (hot reload)
+bun run start:hot
+# or without hot reload
+bun run start
+```
 
-## Notes on Current Implementation
+- Frontend (Vite dev, proxied): `http://127.0.0.1:5174` → API at `3000`
+- Backend (Hono): `http://127.0.0.1:3000`
+- Health: `curl http://localhost:3000/api/health` → `{"status":"up"}`
 
-- timestamps persist from the application with millisecond precision for new rows
-- job progress/event timelines use chronological event reads
-- compose sequencing uses indexed media reads
-- gallery infinite scroll uses grid layout so appended items appear left-to-right
-- several templates still build `/assets/...` paths inline instead of using a shared helper
-- script pipeline in `src/script/wip.ts` is experimental/WIP, not production-ready
+Production build (serves SPA from `dist/client`):
+
+```bash
+npx vite build          # → dist/client
+npx @tailwindcss/cli -i src/client/index.css -o static/style.css
+bun run start           # serves http://localhost:3000
+```
+
+Useful commands:
+
+```bash
+bunx tsc --noEmit
+bun run lint
+bun run db:rollback      # last migration
+bun run db:chroma        # start local Chroma at content_library/chroma-data
+```
+
+## First run
+
+1. Open `http://localhost:3000` → `Jobs`.
+2. Go to `Settings` → `Sync from ComfyUI` to import LoRAs, edit `Defaults` (fps, resolution, preset) and `Style Presets` (from `mflux-forge`).
+3. **Image:** `Create → Image` → prompt + style preset + optional LoRAs (drag to reorder, 0.1-2.0) → `Generate`.
+4. **Compose:** `Create → Compose` → script or `.txt` + style guide + voice → `Generate Video`. Pipeline: speech → scenes → images → videos → transitions → concat.
+5. **Gallery / Jobs:** track progress via SSE, view media, cancel or regenerate failed events.
+
+API quick test:
+
+```bash
+curl -X POST http://localhost:3000/api/jobs/images \
+  -F "prompt=a watercolor alpine lake" \
+  -F "image_model=z-image-turbo" \
+  -F "style_preset=watercolor" \
+  -F "resolution=720p"
+```
+
+## Troubleshooting
+
+- **ComfyUI not reachable** → check `COMFYUI_BASE_URL`/`WS`, `curl /system_stats`, ensure ComfyUI started with `--listen`.
+- **LLM_MODEL missing** → `LLM_MODEL variable missing` at startup — set in `.env` and load model in LM Studio with API server on.
+- **OUTPUT_DIR/INPUT_DIR wrong** → images not found, `Bun.file` errors — must be absolute paths to ComfyUI dirs.
+- **Voicebox 8000 vs 17493** → default is now `17493`; set `VOICEBOX_URL` if yours differs.
+- **Queue stuck at audio** → audio is single-threaded (`hasRunning` gate). Check `voicebox` logs, `GET /history` in ComfyUI, or `SELECT * FROM events WHERE status='running'`.
+- **Styles not appearing** → `POST /api/style-presets` requires DB; run `bun run db:migrate` and check `Settings`.
+
+## Project layout
+
+```
+src/
+  api/        Hono routes (jobs, settings, loras, comfyui)
+  client/     SolidJS SPA + DaisyUI (Compose, CreateImage, Settings, Jobs)
+  comfyui/    ComfyUI client + workflow JSON
+  db/         Kysely + SQLite migrations
+  llm/        LM Studio + MCP (SearXNG)
+  queue/      single-slot DB queue (prio 300 audio > 200 image > 100 video)
+  tts/        Voicebox client
+  styles/     style presets (from mflux-forge)
+```
 
 ## License
 
-UNLICENSED — Private project
+GPL-3.0-or-later. See [LICENSE](LICENSE).
