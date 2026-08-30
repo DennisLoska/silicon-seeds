@@ -217,16 +217,14 @@ export default function Compose() {
             </div>
           </div>
 
-          {/* double height preview - was min-h 220, now 440 + h 60vh */}
+          {/* double height preview */}
           <div class="card bg-base-100 shadow-xl border border-base-300 hidden xl:flex flex-col overflow-hidden xl:h-[60vh] min-h-[440px]">
             <div class="card-body p-4 flex flex-col flex-1 min-h-0">
               <h3 class="font-semibold text-sm flex items-center gap-2 mb-2"><Icons.Video /> Preview</h3>
               <div class="flex-1 flex flex-col items-center justify-center gap-3 py-6 bg-base-200 rounded-box border border-dashed border-base-300 min-h-0">
                 <div class="w-16 h-16 rounded-box bg-base-300 grid place-items-center opacity-40"><Icons.VideoCameraSmall /></div>
                 <p class="text-sm font-medium opacity-60">Video preview</p>
-                <p class="text-xs opacity-40">Submit to generate — preview doubled height</p>
               </div>
-              <p class="text-[11px] opacity-40 mt-2 text-center">Tip: use 480p / 8 FPS for fastest test</p>
             </div>
           </div>
 

@@ -170,7 +170,7 @@ export default function Settings() {
                     <label class="fieldset-label flex-col items-start gap-1">
                       <span class="label-text text-xs font-medium opacity-70">Default Style Preset</span>
                       <select name="default_style_preset" class="select select-bordered select-sm w-full">
-                        <option value="none" selected={settings()["default_style_preset"]==="none"}>none — no style</option>
+                        <option value="none" selected={settings()["default_style_preset"]==="none"}>none - no style</option>
                         <For each={presets()}>
                           {(p)=><option value={p.name} selected={settings()["default_style_preset"]===p.name}>{p.name}{p.primary_style!==p.name ? ` · ${p.primary_style}` : ""}</option>}
                         </For>
@@ -236,9 +236,9 @@ export default function Settings() {
                         <tr class="hover">
                           <td><span class="font-mono text-xs font-medium">{p.name}</span><Show when={p.description}><div class="text-[11px] opacity-50 truncate max-w-[220px]">{p.description}</div></Show></td>
                           <td><span class="badge badge-ghost badge-sm text-xs">{p.primary_style}</span></td>
-                          <td><Show when={p.secondary_trigger} fallback={<span class="opacity-30 text-xs">—</span>}><span class="badge badge-outline badge-sm max-w-[160px] truncate">{p.secondary_trigger}</span></Show></td>
+                          <td><Show when={p.secondary_trigger} fallback={<span class="opacity-30 text-xs">-</span>}><span class="badge badge-outline badge-sm max-w-[160px] truncate">{p.secondary_trigger}</span></Show></td>
                           <td><span class="badge badge-soft badge-sm">{p.styles.length} styles</span></td>
-                          <td><Show when={p.texture} fallback={<span class="opacity-30 text-xs">—</span>}><span class="tooltip" data-tip={p.texture}><span class="badge badge-ghost badge-sm max-w-[160px] truncate">{p.texture!.slice(0,28)}</span></span></Show></td>
+                          <td><Show when={p.texture} fallback={<span class="opacity-30 text-xs">-</span>}><span class="tooltip" data-tip={p.texture}><span class="badge badge-ghost badge-sm max-w-[160px] truncate">{p.texture!.slice(0,28)}</span></span></Show></td>
                           <td>
                             <div class="flex gap-1 justify-end">
                               <button class="btn btn-xs btn-ghost border border-base-300" onClick={() => openEdit(p)}>Edit</button>
@@ -268,7 +268,7 @@ export default function Settings() {
               </div>
               <Show when={discovered().length}>
                 <div class="mt-3 p-3 bg-base-200 rounded-box border border-base-300 border-dashed">
-                  <div class="text-xs font-medium opacity-70 mb-2">Discovered on ComfyUI ({discovered().length}) — click to save</div>
+                  <div class="text-xs font-medium opacity-70 mb-2">Discovered on ComfyUI ({discovered().length}) - click to save</div>
                   <div class="flex flex-wrap gap-1.5">
                     <For each={discovered()}>
                       {(name) => <button class="btn btn-xs btn-outline btn-primary gap-1" onClick={() => addDiscovered(name)}>＋ <span class="font-mono text-[11px]">{name}</span></button>}

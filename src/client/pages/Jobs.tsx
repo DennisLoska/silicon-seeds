@@ -457,7 +457,7 @@ export default function Jobs() {
           </div>
         </Show>
 
-        {/* Mobile FAB: view selected job details — fixed bottom, lg:hidden. Shadcn alternative would be Sheet/Drawer for detail, but spec asks for FAB navigating to detail page. */}
+        {/* Mobile FAB: view selected job details - fixed bottom, lg:hidden. Shadcn alternative would be Sheet/Drawer for detail, but spec asks for FAB navigating to detail page. */}
         <Show when={selectedId()}>
           <div class="lg:hidden fixed bottom-0 inset-x-0 z-30 p-4 bg-base-100/95 backdrop-blur border-t border-base-300">
             <A
@@ -474,7 +474,7 @@ export default function Jobs() {
               }}
               class="btn btn-primary w-full shadow-lg"
             >
-              View Job Details — {selectedId()?.slice(0, 8)}…
+              View Job Details - {selectedId()?.slice(0, 8)}…
               <Icons.StatusCompleteSmall />
             </A>
           </div>

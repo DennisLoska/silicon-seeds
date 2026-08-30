@@ -249,7 +249,6 @@ export default function CreateVideo() {
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 text-base-content/30"><path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
                 </div>
                 <h3 class="font-medium text-base-content/60">Generated video will appear here.</h3>
-                <p class="text-sm text-base-content/40 mt-2">Tip: use 1s / 480p / 8 FPS for fastest test.</p>
               </div>
             </div>
           </Show>

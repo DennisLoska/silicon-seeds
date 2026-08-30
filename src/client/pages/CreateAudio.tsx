@@ -37,7 +37,7 @@ export default function CreateAudio() {
     setError(null);
     setIsSubmitting(true);
     const fd = new FormData(e.currentTarget as HTMLFormElement);
-    // if lyric_prompt empty, schema requires min1 — send placeholder single space? But baseline allows empty for instrumental; we coerce empty to "instrumental"
+    // if lyric_prompt empty, schema requires min1 - send placeholder single space? But baseline allows empty for instrumental; we coerce empty to "instrumental"
     const lyric = (fd.get("lyric_prompt") as string | null)?.trim();
     if (!lyric) fd.set("lyric_prompt", "instrumental");
     try {
