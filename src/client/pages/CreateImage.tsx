@@ -4,6 +4,7 @@ import { useJobUpdates } from "../lib/sse";
 import { apiGet, getAssetPath } from "../lib/api-client";
 import { Icons } from "../components/Icons";
 import LoraSelector, { LoraSpec } from "../components/LoraSelector";
+import StylePresetSelect from "../components/StylePresetSelect";
 
 export default function CreateImage() {
   const [search, setSearch] = useSearchParams();
@@ -66,7 +67,6 @@ export default function CreateImage() {
           navigate(`/create/image?show_progress=true&job_id=${jid}`);
         }
       } else {
-        // fallback
         const txt = await res.clone().text();
         try {
           const j = JSON.parse(txt);
@@ -81,163 +81,143 @@ export default function CreateImage() {
   };
 
   return (
-    <div class="flex flex-col sm:px-6 py-6 xl:h-full bg-base-200">
+    <div class="flex flex-col sm:px-6 py-5 min-h-[calc(100vh-4rem)] bg-base-200">
       <Show when={error()}>
         <div class="alert alert-error mb-4 text-sm">{error()}</div>
       </Show>
-      <form class="flex flex-col xl:flex-row gap-4 xl:h-full" onSubmit={onSubmit} enctype="multipart/form-data">
-        <div class="flex flex-col w-full xl:w-[50%] gap-4">
-          <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col overflow-hidden">
-            <div class="card-body flex flex-col p-4">
-              <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.PromptIcon />Prompt</h2>
-              <textarea name="prompt" class="textarea textarea-ghost w-full flex-grow resize-none mb-4 min-h-[250px] focus:outline-none" placeholder="Describe the image you want to generate..."></textarea>
+      {/* xl 3-col: prompt | generation options | loras+action+preview - no scroll */}
+      <form class="grid grid-cols-1 xl:grid-cols-12 gap-4 xl:items-start" onSubmit={onSubmit} enctype="multipart/form-data">
+        {/* col1 prompt */}
+        <div class="xl:col-span-5 flex flex-col min-h-0">
+          <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col xl:h-[76vh] min-h-[320px] overflow-hidden">
+            <div class="card-body flex flex-col p-4 flex-1 min-h-0">
+              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PromptIcon />Prompt</h2>
+              <textarea name="prompt" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm" placeholder="Describe the image you want to generate..."></textarea>
+              <p class="text-xs opacity-50 mt-2">Tip: style preset + loras are applied automatically.</p>
             </div>
           </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col">
-              <div class="card-body flex flex-col p-4">
-                <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.SparkleIcon />AI Model</h2>
-                <div class="form-control">
-                  <label class="label cursor-pointer"><span class="label-text font-medium flex items-center gap-2"><Icons.PhotoCameraSmall />Image Generation Model</span></label>
-                  <select name="image_model" class="select select-bordered w-full flex-none">
-                    <option value="z-image-turbo">Z-Image-Turbo</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col">
-              <div class="card-body flex flex-col p-4">
-                <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.CogSettingsIcon />Generation Options</h2>
-                <div class="form-control">
-                  <label class="label cursor-pointer">
-                    <span class="label-text font-medium">Batch Size</span>
-                    <output class="label-text-alt text-primary font-bold text-lg px-2 py-1 min-w-[2.5rem] text-center">{batchSize()}</output>
-                  </label>
-                  <input type="range" name="batch_size" value={String(batchSize())} min="1" max="16" step="1" class="range range-primary w-full" onInput={(e) => setBatchSize(parseInt(e.currentTarget.value))} />
-                  <div class="flex justify-between text-xs text-base-content/50 mt-1"><span>1 image</span><span>16 images</span></div>
-                </div>
-                <div class="form-control mt-2">
-                  <label class="label cursor-pointer"><span class="label-text font-medium flex items-center gap-2"><Icons.SquaresGridIcon />Resolution</span></label>
-                  <select name="resolution" class="select select-bordered w-full flex-none">
-                    <option value="480p">480p</option>
-                    <option value="720p">720p</option>
-                    <option value="1080p">1080p</option>
-                    <option value="9_16_SD">9:16 (SD)</option>
-                    <option value="9_16_HD">9:16 (HD)</option>
-                  </select>
-                </div>
-                <div class="form-control mt-2 flex-none">
-                  <label class="label cursor-pointer"><span class="label-text font-medium flex items-center gap-2"><Icons.PaintBrushIcon />Style Preset</span></label>
-                  <select name="style_preset" class="select select-bordered w-full flex-none">
-                    <option value="system">Default</option>
-                    <option value="watercolor">Watercolor</option>
-                    <option value="pencil_watercolor">Pencil Watercolor</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col">
-              <div class="card-body flex flex-col p-4 h-full">
-                <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.LightningBoltIcon />Action</h2>
-                <div class="card-actions justify-between gap-2 mt-auto">
-                  <button type="reset" class="btn btn-ghost">Reset</button>
-                  <button type="submit" id="submit-btn" class="btn btn-primary" disabled={isSubmitting()}>
-                    Generate
-                    <Show when={isSubmitting()}><span class="loading loading-spinner loading-sm ml-2" /></Show>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col">
-              <div class="card-body flex flex-col p-4">
-                <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3">Loras</h2>
-                <LoraSelector value={loras()} onChange={setLoras} />
-              </div>
-            </div>
-          </div>
-
+          {/* progress inline on mobile */}
           <Show when={showProgress() && jobId()}>
-            <div class="card bg-base-100 shadow-xl w-full max-h-[calc(40vh-3rem)] overflow-y-auto flex-none flex flex-col">
-              <div class="card-body flex flex-col p-4">
-                <div class="flex items-start justify-between gap-4 mb-3">
-                  <h2 class="card-title text-lg font-semibold flex items-center gap-2"><Icons.PulseWavesIcon />Job Progress</h2>
-                  <span class="badge badge-warning">Active</span>
-                </div>
-                <p class="text-sm opacity-70 mb-2">Monitoring job: {jobId()}</p>
-                <Show when={(eventsData()?.events?.length ?? 0) === 0}>
-                  <div class="text-sm opacity-60">Waiting for events…</div>
-                </Show>
+            <div class="card bg-base-100 shadow-xl border border-base-300 mt-4 xl:hidden">
+              <div class="card-body p-4">
+                <div class="flex items-center justify-between mb-2"><h2 class="card-title text-base flex items-center gap-2"><Icons.PulseWavesIcon />Job Progress</h2><span class="badge badge-warning badge-sm">Active</span></div>
+                <p class="text-xs opacity-60 mb-2 truncate">Monitoring {jobId()}</p>
+                <Show when={(eventsData()?.events?.length ?? 0) === 0}><div class="text-sm opacity-60">Waiting for events…</div></Show>
                 <Show when={(eventsData()?.events?.length ?? 0) > 0}>
-                  <ul class="timeline timeline-compact timeline-vertical">
-                    <For each={(eventsData()?.events as unknown as { id: string; type: string; status: string; prompt?: string | null; created_at: string }[]) ?? []}>
-                      {(evt, idx) => {
-                        const isComplete = () => evt.status === "complete";
-                        const label = () => ({ new_image_prompt: "Image Prompt", new_video_prompt: "Video Prompt", new_text_prompt: "Text Prompt", new_audio_prompt: "Audio Prompt", new_transition_prompt: "Transition Prompt", new_video_composition: "Final Composition", NewImagePrompt: "Image Prompt", NewVideoPrompt: "Video Prompt", NewTextPrompt: "Text Prompt", NewAudioPrompt: "Audio Prompt", NewTransitionPrompt: "Transition Prompt", NewVideoComposition: "Final Composition" }[evt.type] ?? evt.type);
-                        const icon = () => ({ new_image_prompt: "🖼️", new_video_prompt: "🎬", new_text_prompt: "🖊️", new_audio_prompt: "🎵", new_transition_prompt: "🔄", new_video_composition: "🏁", NewImagePrompt: "🖼️", NewVideoPrompt: "🎬", NewTextPrompt: "🖊️", NewAudioPrompt: "🎵", NewTransitionPrompt: "🔄", NewVideoComposition: "🏁" }[evt.type] ?? "📌");
-                        return (
-                          <li style="content-visibility:auto; contain-intrinsic-size: 200px 300px;">
-                            {idx() !== 0 && <hr class={isComplete() ? "bg-success" : ""} />}
-                            <div class="timeline-end timeline-box w-[98%] border border-base-300 bg-base-100 min-w-64 max-w-full">
-                              <details class="w-full bg-base-100 open:bg-base-100">
-                                <summary class="cursor-pointer list-none p-3 hover:bg-base-200 rounded-lg transition-colors">
-                                  <div class="flex items-center justify-between gap-2">
-                                    <span class="text-sm font-bold text-base-content/60">{label()}</span>
-                                    <span class={isComplete() ? "badge badge-success text-xs" : "badge badge-warning text-xs"}>{isComplete() ? <Icons.StatusCompleteSmall /> : <Icons.StatusPendingSmall />}</span>
-                                  </div>
-                                </summary>
-                                <div class="p-3 pt-0 mt-2 space-y-2">
-                                  <Show when={evt.prompt}><div class="text-sm whitespace-pre-wrap break-words bg-base-200 p-2 rounded">{evt.prompt}</div></Show>
-                                  <div class="text-xs opacity-50">{new Date(evt.created_at).toLocaleString()}</div>
-                                </div>
-                              </details>
-                            </div>
-                            <div class="timeline-middle"><div class={`w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-sm ${isComplete() ? "bg-success text-success-content" : "bg-base-200"}`}>{icon()}</div></div>
-                            {idx() !== (eventsData()?.events?.length ?? 0) - 1 && <hr class={isComplete() ? "bg-success" : ""} />}
-                          </li>
-                        );
-                      }}
+                  <ul class="timeline timeline-compact timeline-vertical text-xs">
+                    <For each={(eventsData()?.events as unknown as { id: string; type: string; status: string }[]) ?? []}>
+                      {(evt) => <li><div class="timeline-end timeline-box py-1 px-2 text-xs">{evt.type} <span class="badge badge-xs ml-1">{evt.status}</span></div><div class="timeline-middle"><div class="w-4 h-4 rounded-full bg-base-200 grid place-items-center text-[10px]">·</div></div></li>}
                     </For>
                   </ul>
                 </Show>
-                <div class="card-actions justify-end mt-4 gap-2">
-                  <a href={`/jobs?job_id=${jobId()}&filter=all&tab=status`} class="btn btn-primary btn-sm">View Job</a>
-                </div>
               </div>
             </div>
           </Show>
         </div>
 
-        <Show when={!showProgress()}>
-          <div class="card bg-base-100 shadow-xl w-full xl:flex-1 flex-grow min-h-[calc(100vh-7rem)] flex items-center justify-center">
-            <div class="text-center py-16">
-              <div class="flex justify-center mb-4 opacity-60"><Icons.PhotoCameraLarge /></div>
-              <h3 class="font-medium text-base-content/60">The image(s) will show up here when they are generated.</h3>
+        {/* col2 generation options */}
+        <div class="xl:col-span-3 flex flex-col gap-4">
+          <div class="card bg-base-100 shadow-xl border border-base-300">
+            <div class="card-body p-4">
+              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.SparkleIcon />AI Model</h2>
+              <label class="fieldset-label text-xs font-medium opacity-70 flex items-center gap-2"><Icons.PhotoCameraSmall />Image Generation Model</label>
+              <select name="image_model" class="select select-bordered select-sm w-full">
+                <option value="z-image-turbo">Z-Image-Turbo</option>
+              </select>
             </div>
+          </div>
+
+          <div class="card bg-base-100 shadow-xl border border-base-300">
+            <div class="card-body p-4">
+              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.CogSettingsIcon />Generation</h2>
+              <label class="fieldset-label text-xs font-medium flex justify-between">Batch <span class="badge badge-primary badge-sm">{batchSize()}</span></label>
+              <input type="range" name="batch_size" value={String(batchSize())} min="1" max="16" step="1" class="range range-primary range-xs w-full" onInput={(e) => setBatchSize(parseInt(e.currentTarget.value))} />
+              <div class="flex justify-between text-[11px] opacity-50"><span>1</span><span>16</span></div>
+
+              <label class="fieldset-label text-xs font-medium opacity-70 mt-3 flex items-center gap-2"><Icons.SquaresGridIcon />Resolution</label>
+              <select name="resolution" class="select select-bordered select-sm w-full">
+                <option value="480p">480p</option><option value="720p">720p</option><option value="1080p">1080p</option><option value="9_16_SD">9:16 (SD)</option><option value="9_16_HD">9:16 (HD)</option>
+              </select>
+
+              <label class="fieldset-label text-xs font-medium opacity-70 mt-3 flex items-center gap-2"><Icons.PaintBrushIcon />Style Preset</label>
+              <StylePresetSelect name="style_preset" class="select select-bordered select-sm w-full" />
+            </div>
+          </div>
+        </div>
+
+        {/* col3 loras + action + preview */}
+        <div class="xl:col-span-4 flex flex-col gap-4 min-h-0">
+          <div class="card bg-base-100 shadow-xl border border-base-300">
+            <div class="card-body p-4">
+              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2">LoRAs <span class="badge badge-ghost badge-xs">0.1 — 2.0</span></h2>
+              <LoraSelector value={loras()} onChange={setLoras} />
+            </div>
+          </div>
+
+          <div class="card bg-base-100 shadow-xl border border-base-300">
+            <div class="card-body p-4">
+              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.LightningBoltIcon />Action</h2>
+              <div class="card-actions justify-between gap-2">
+                <button type="reset" class="btn btn-ghost btn-sm">Reset</button>
+                <button type="submit" id="submit-btn" class="btn btn-primary btn-sm flex-1" disabled={isSubmitting()}>
+                  Generate <Show when={isSubmitting()}><span class="loading loading-spinner loading-xs ml-1" /></Show>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* preview area - desktop inline */}
+          <Show when={!showProgress()}>
+            <div class="card bg-base-100 shadow-xl border border-base-300 hidden xl:flex flex-1 min-h-[220px] items-center justify-center">
+              <div class="text-center py-10 px-6">
+                <div class="flex justify-center mb-3 opacity-40"><Icons.PhotoCameraLarge /></div>
+                <h3 class="font-medium text-base-content/60 text-sm">Images appear here</h3>
+                <p class="text-xs opacity-40 mt-1">Submit a prompt to generate</p>
+              </div>
+            </div>
+          </Show>
+          <Show when={showProgress() && jobId()}>
+            <div class="card bg-base-100 shadow-xl border border-base-300 hidden xl:flex flex-col overflow-hidden flex-1 min-h-[260px]">
+              <div class="card-body p-4 flex flex-col min-h-0">
+                <div class="flex items-center justify-between mb-2"><h3 class="font-semibold text-sm flex items-center gap-2"><Icons.PulseWavesIcon />Generated Images</h3><span class="badge badge-warning badge-xs">Active</span></div>
+                <Show when={(mediaData()?.items?.length ?? 0) === 0}>
+                  <div class="flex flex-1 flex-col items-center justify-center gap-2 py-8">
+                    <p class="text-sm text-base-content/60">Generating…</p>
+                    <span class="loading loading-dots loading-md text-primary"></span>
+                  </div>
+                </Show>
+                <Show when={(mediaData()?.items?.length ?? 0) > 0}>
+                  <div class="grid grid-cols-2 gap-2 overflow-y-auto flex-1 min-h-0 pr-1">
+                    <For each={mediaData()?.items ?? []}>
+                      {(img) => (
+                        <div class="rounded-box overflow-hidden bg-base-200 border border-base-300">
+                          <img src={getAssetPath(img.subfolder, img.filename)} alt="Generated image" class="w-full h-auto" loading="lazy" />
+                        </div>
+                      )}
+                    </For>
+                  </div>
+                </Show>
+                <a href={`/jobs?job_id=${jobId()}&filter=all&tab=status`} class="btn btn-primary btn-sm mt-3 w-full">View Job</a>
+              </div>
+            </div>
+          </Show>
+        </div>
+
+        {/* mobile preview */}
+        <Show when={!showProgress()}>
+          <div class="card bg-base-100 shadow-xl border border-base-300 xl:hidden flex items-center justify-center min-h-[200px]">
+            <div class="text-center py-10"><div class="flex justify-center mb-3 opacity-40"><Icons.PhotoCameraLarge /></div><h3 class="font-medium text-base-content/60 text-sm">Images appear here when generated</h3></div>
           </div>
         </Show>
         <Show when={showProgress() && jobId()}>
-          <div class="card bg-base-100 shadow-xl w-full xl:flex-1 flex-grow min-h-[calc(100vh-7rem)] flex flex-col overflow-hidden">
-            <div class="card-body flex flex-col">
-              <h3 class="font-semibold mb-2">Generated Images</h3>
-              <Show when={(mediaData()?.items?.length ?? 0) === 0}>
-                <div class="flex flex-col items-center justify-center gap-2 py-16">
-                  <p class="text-lg font-large text-base-content/60">Generating images</p>
-                  <span class="loading loading-dots loading-lg text-primary"></span>
-                </div>
-              </Show>
+          <div class="card bg-base-100 shadow-xl border border-base-300 xl:hidden">
+            <div class="card-body p-4">
+              <h3 class="font-semibold text-sm mb-2">Generated Images</h3>
+              <Show when={(mediaData()?.items?.length ?? 0) === 0}><div class="flex flex-col items-center gap-2 py-8"><span class="loading loading-dots loading-lg text-primary"></span></div></Show>
               <Show when={(mediaData()?.items?.length ?? 0) > 0}>
-                <div class="columns-1 sm:columns-1 lg:columns-2 xl:columns-2 gap-3 space-y-3 max-w-full">
+                <div class="grid grid-cols-2 gap-2">
                   <For each={mediaData()?.items ?? []}>
-                    {(img) => (
-                      <div class="card bg-base-200 break-inside-avoid rounded-box mb-3">
-                        <figure class="bg-base-300 overflow-hidden rounded-box">
-                          <img src={getAssetPath(img.subfolder, img.filename)} alt="Generated image" class="w-full h-auto" loading="lazy" />
-                        </figure>
-                      </div>
-                    )}
+                    {(img) => <div class="rounded-box overflow-hidden bg-base-200"><img src={getAssetPath(img.subfolder, img.filename)} alt="Generated image" class="w-full h-auto" /></div>}
                   </For>
                 </div>
               </Show>

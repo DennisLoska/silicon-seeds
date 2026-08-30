@@ -4,6 +4,7 @@ import { useJobUpdates } from "../lib/sse";
 import { apiGet, getAssetPath } from "../lib/api-client";
 import { Icons } from "../components/Icons";
 import LoraSelector, { LoraSpec } from "../components/LoraSelector";
+import StylePresetSelect from "../components/StylePresetSelect";
 
 export default function CreateVideo() {
   const [search, setSearch] = useSearchParams();
@@ -207,17 +208,13 @@ export default function CreateVideo() {
             </div>
           </div>
 
-          {/* Style Preset */}
+          {/* Style Preset - dynamic from DB */}
           <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col">
             <div class="card-body flex flex-col">
               <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.PaintBrushLarge />Style Preset</h2>
               <div class="form-control">
                 <label class="label cursor-pointer"><span class="label-text font-medium flex items-center gap-2"><Icons.PaintBrushIcon />Style Preset</span></label>
-                <select name="style_preset" class="select select-bordered w-full flex-none">
-                  <option value="system">Default</option>
-                  <option value="watercolor">Watercolor</option>
-                  <option value="pencil_watercolor">Pencil Watercolor</option>
-                </select>
+                <StylePresetSelect name="style_preset" class="select select-bordered w-full" />
               </div>
             </div>
           </div>
@@ -274,7 +271,7 @@ export default function CreateVideo() {
                           <video src={getAssetPath(vid.subfolder, vid.filename)} controls autoplay muted loop playsinline class="w-full h-auto max-h-[60vh]" />
                           <div class="p-2 flex justify-between items-center bg-base-200 text-xs">
                             <span class="opacity-60">{vid.filename}</span>
-                            <a href={getAssetPath(vid.subfolder, vid.filename)} download class="btn btn-xs btn-ghost"><Icons.DownloadIconSmall /> Download</a>
+                            <a href={getAssetPath(vid.subfolder, vid.filename)} download="" class="btn btn-xs btn-ghost"><Icons.DownloadIconSmall /> Download</a>
                           </div>
                         </div>
                       )}
