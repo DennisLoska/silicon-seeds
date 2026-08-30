@@ -120,11 +120,14 @@ Make sure to only include the actual image prompt in your response and nothing m
     preset?: Presets,
     index?: number,
     id?: string,
+    loras?: { name: string; strength: number }[],
   ) {
     const styled = await styled_image_prompt(message, preset);
     if (!styled) {
       return null;
     }
+    // If user provided loras, override preset lora; otherwise use preset's single lora converted to array
+    const effectiveLoras = loras && loras.length ? loras : styled.lora ? [{ name: styled.lora as string, strength: 0.7 }] : undefined;
 
     return await ImageGenerator.schedule_image({
       id,
@@ -132,8 +135,9 @@ Make sure to only include the actual image prompt in your response and nothing m
       mode,
       prompt: styled.prompt,
       lora: styled.lora,
+      loras: effectiveLoras,
       index,
-    });
+    } as any);
   }
 
   export async function img_to_vid_prompt(promptId: string, image: FileHandle) {

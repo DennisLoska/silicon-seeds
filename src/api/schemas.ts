@@ -11,12 +11,30 @@ const AudioKeyscaleSchema = z.enum([
   "F# minor",
 ]);
 
+const LoraItemSchema = z.object({
+  name: z.string().min(1).max(200),
+  strength: z.number().min(0.1).max(2),
+});
+const LorasPreprocess = z.preprocess((v) => {
+  if (v === undefined || v === null || v === "") return undefined;
+  if (typeof v === "string") {
+    try {
+      const parsed = JSON.parse(v);
+      return parsed;
+    } catch {
+      return v;
+    }
+  }
+  return v;
+}, z.array(LoraItemSchema).optional());
+
 export const PostTextToImageSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
   resolution: z.string().max(7).optional(),
   image_model: z.string().max(50),
   style_preset: z.enum(Presets).optional(),
   batch_size: z.coerce.number().int().positive().optional(),
+  loras: LorasPreprocess,
 });
 
 export type PostTextToImage = z.infer<typeof PostTextToImageSchema>;
@@ -35,6 +53,7 @@ export const PostTextToVideoSchema = z.object({
     .max(2000)
     .optional()
     .transform((v) => (v && v.length > 0 ? v : undefined)),
+  loras: LorasPreprocess,
 });
 
 export type PostTextToVideo = z.infer<typeof PostTextToVideoSchema>;
@@ -54,6 +73,7 @@ export const PostComposeSchema = z
     transition_duration: z.coerce.number().min(1).max(10),
     style_preset: z.enum(Presets),
     voice_id: z.string().optional(),
+    loras: LorasPreprocess,
     style_guide: z
       .string()
       .trim()

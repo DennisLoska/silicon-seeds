@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "@solidjs/router";
 import { useJobUpdates } from "../lib/sse";
 import { apiGet, getAssetPath } from "../lib/api-client";
 import { Icons } from "../components/Icons";
+import LoraSelector, { LoraSpec } from "../components/LoraSelector";
 
 export default function CreateImage() {
   const [search, setSearch] = useSearchParams();
@@ -11,6 +12,7 @@ export default function CreateImage() {
   const jobId = () => search.job_id as string | undefined;
 
   const [batchSize, setBatchSize] = createSignal(1);
+  const [loras, setLoras] = createSignal<LoraSpec[]>([]);
   const [isSubmitting, setIsSubmitting] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
 
@@ -47,6 +49,7 @@ export default function CreateImage() {
     setError(null);
     setIsSubmitting(true);
     const fd = new FormData(e.currentTarget as HTMLFormElement);
+    if (loras().length) fd.set("loras", JSON.stringify(loras()));
     try {
       const res = await fetch("/api/jobs/images", { method: "POST", body: fd });
       if (!res.ok) {
@@ -146,6 +149,12 @@ export default function CreateImage() {
                     <Show when={isSubmitting()}><span class="loading loading-spinner loading-sm ml-2" /></Show>
                   </button>
                 </div>
+              </div>
+            </div>
+            <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col">
+              <div class="card-body flex flex-col p-4">
+                <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3">Loras</h2>
+                <LoraSelector value={loras()} onChange={setLoras} />
               </div>
             </div>
           </div>

@@ -26,6 +26,7 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .addColumn("audio_model", "text", (col) => col.defaultTo(null))
     .addColumn("style_preset", "text", (col) => col.defaultTo(null))
     .addColumn("style_guide", "text", (col) => col.defaultTo(null))
+    .addColumn("loras", "text", (col) => col.defaultTo(null))
     .execute();
 
   await db.schema

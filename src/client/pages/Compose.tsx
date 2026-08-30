@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "@solidjs/router";
 import { useJobUpdates } from "../lib/sse";
 import { apiGet } from "../lib/api-client";
 import { Icons } from "../components/Icons";
+import LoraSelector, { LoraSpec } from "../components/LoraSelector";
 
 export default function Compose() {
   const [search, setSearch] = useSearchParams();
@@ -13,6 +14,7 @@ export default function Compose() {
   const [fps, setFps] = createSignal(16);
   const [clipDuration, setClipDuration] = createSignal(5);
   const [transitionDuration, setTransitionDuration] = createSignal(3);
+  const [loras, setLoras] = createSignal<LoraSpec[]>([]);
   const [isSubmitting, setIsSubmitting] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
 
@@ -54,6 +56,7 @@ export default function Compose() {
     setIsSubmitting(true);
     const form = e.currentTarget as HTMLFormElement;
     const fd = new FormData(form);
+    if (loras().length) fd.set("loras", JSON.stringify(loras()));
     // Don't send empty file that would override script text
     const f = fd.get("script_file") as File | null;
     if (f && f.size === 0 && f.name === "") fd.delete("script_file");
@@ -189,6 +192,13 @@ export default function Compose() {
                   <option value="pencil_watercolor">Pencil Watercolor</option>
                 </select>
               </div>
+            </div>
+          </div>
+
+          <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col">
+            <div class="card-body flex flex-col">
+              <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3">Loras</h2>
+              <LoraSelector value={loras()} onChange={setLoras} />
             </div>
           </div>
 

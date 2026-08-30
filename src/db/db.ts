@@ -44,6 +44,7 @@ export interface DbSchema {
     status: JobLifecycleStatus;
     name: string;
     workflow?: string | null;
+    loras?: string | null;
     original_prompt?: string | null;
     fps?: number;
     clip_duration?: number;
@@ -418,17 +419,21 @@ export namespace DB {
             text: event.text,
           };
         case Event.NewImagePrompt:
-          return {
-            ...base,
-            filename: null,
-            lora: event.lora,
-            lyrics: null,
-            audio_settings: null,
-            start_img: null,
-            end_img: null,
-            duration: null,
-            index: event.index,
-          };
+          {
+            const loras = (event as any).loras as { name: string; strength: number }[] | undefined;
+            const loraVal = loras && loras.length ? JSON.stringify(loras) : event.lora ? JSON.stringify([{ name: event.lora, strength: 0.7 }]) : null;
+            return {
+              ...base,
+              filename: null,
+              lora: loraVal as any,
+              lyrics: null,
+              audio_settings: null,
+              start_img: null,
+              end_img: null,
+              duration: null,
+              index: event.index,
+            };
+          }
         case Event.NewVideoPrompt:
           return {
             ...base,
@@ -501,13 +506,28 @@ export namespace DB {
           };
         case Event.NewImagePrompt:
           Utils.assert(row.prompt, "'prompt' is null");
-          return {
-            ...base,
-            lora: row.lora ?? undefined,
-            index: row.index ?? undefined,
-            type: Event.NewImagePrompt,
-            prompt: row.prompt,
-          };
+          {
+            let loras: { name: string; strength: number }[] | undefined;
+            let loraLegacy: any = row.lora ?? undefined;
+            if (row.lora) {
+              try {
+                const parsed = JSON.parse(row.lora as any);
+                if (Array.isArray(parsed) && parsed.length && typeof parsed[0] === "object" && "name" in parsed[0]) loras = parsed;
+                else if (typeof parsed === "string") loraLegacy = parsed;
+              } catch {
+                // plain single lora string legacy
+                loraLegacy = row.lora;
+              }
+            }
+            return {
+              ...base,
+              lora: loraLegacy,
+              loras,
+              index: row.index ?? undefined,
+              type: Event.NewImagePrompt,
+              prompt: row.prompt,
+            } as any;
+          }
         case Event.NewVideoPrompt:
           Utils.assert(row.prompt, "'prompt' is null");
           return {
