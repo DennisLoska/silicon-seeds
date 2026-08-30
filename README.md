@@ -88,9 +88,7 @@ Prompt + style preset + LoRA stack (0.1–2.0) + resolution. Z-Image-Turbo, 9 st
 
 Persistent gallery backed by `CONTENT_LIBRARY_DIR` + ChromaDB vector search. Every generation archived, searchable, reusable.
 
-<img src="readme/gallery.png" alt="Gallery view - content library" width="90%" />
-<br/>
-<sub>Additional capture: <code>readme/library.png</code> - earlier gallery snapshot retained for history</sub>
+<img src="readme/library.png" alt="Gallery view - content library" width="90%" />
 
 </td>
 </tr>
