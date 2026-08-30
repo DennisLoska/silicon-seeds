@@ -38,7 +38,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["src/db/**", "src/comfyui/**", "src/api/**", "src/jobs/**", "src/video/**", "src/image/**", "src/queue/**"],
+    files: ["src/db/**", "src/comfyui/**", "src/api/**", "src/jobs/**", "src/video/**", "src/image/**", "src/queue/**", "src/client/**", "src/prompts/**"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
     },
