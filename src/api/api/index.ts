@@ -14,6 +14,10 @@ import { delete_job } from "./delete";
 import { cancel_job } from "./cancel";
 import { regenerate_event } from "./regenerate";
 import { tts_profiles, tts_profiles_options } from "./tts";
+import settingsRoutes from "../settings";
+import stylePresetsRoutes from "../style-presets";
+import lorasRoutes from "../loras";
+import comfyuiRoutes from "../comfyui";
 import { zValidator } from "@hono/zod-validator";
 import {
   PostComposeSchema,
@@ -194,6 +198,11 @@ app.get("/jobs/:jobId/media", async (c) => {
   const slice = items.slice(offsetVal, offsetVal + limitVal);
   return c.json({ items: slice, total: items.length });
 });
+
+app.route("/settings", settingsRoutes);
+app.route("/style-presets", stylePresetsRoutes);
+app.route("/loras", lorasRoutes);
+app.route("/comfyui", comfyuiRoutes);
 
 app.get("/gallery/items", async (c) => {
   const cursor = c.req.query("cursor") as string | undefined;
