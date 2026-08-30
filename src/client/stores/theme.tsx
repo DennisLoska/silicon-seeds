@@ -1,10 +1,10 @@
 import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
 
-const THEMES = ["bumblebee", "dracula"] as const;
+const THEMES = ["bumblebee", "tokyonight", "opencode", "dracula"] as const;
 type Theme = (typeof THEMES)[number];
 
 function isTheme(v: string | null): v is Theme {
-  return v === "bumblebee" || v === "dracula";
+  return (THEMES as readonly string[]).includes(v as string);
 }
 
 function getInitial(): Theme {
@@ -12,7 +12,7 @@ function getInitial(): Theme {
     const v = localStorage.getItem("theme");
     if (isTheme(v)) return v;
   } catch {}
-  if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches) return "dracula";
+  if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches) return "tokyonight";
   return "bumblebee";
 }
 
@@ -55,10 +55,16 @@ export function createTheme() {
   return {
     theme,
     setTheme,
-    toggle: () => setTheme((t) => (t === "bumblebee" ? "dracula" : "bumblebee")),
+    toggle: () => setTheme((t) => {
+      const idx = THEMES.indexOf(t);
+      return THEMES[(idx + 1) % THEMES.length];
+    }),
   };
 }
 
 // direct singleton exports for Layout etc
 export { theme, setTheme };
-export const toggleTheme = () => setTheme((t) => (t === "bumblebee" ? "dracula" : "bumblebee"));
+export const toggleTheme = () => setTheme((t) => {
+  const idx = THEMES.indexOf(t);
+  return THEMES[(idx + 1) % THEMES.length] as Theme;
+});

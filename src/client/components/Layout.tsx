@@ -16,7 +16,7 @@ function getPageTitle(path: string) {
 
 export default function Layout(props: ParentProps) {
   const location = useLocation();
-  const { theme, toggle } = createTheme();
+  const { theme, toggle, setTheme } = createTheme();
   const title = () => getPageTitle(location.pathname);
 
   return (
@@ -93,22 +93,18 @@ export default function Layout(props: ParentProps) {
               </A>
             </li>
           </ul>
-          <div class="w-full px-2 pb-4">
+          <div class="w-full px-2 pb-4 flex flex-col gap-2">
             <div class="flex items-center gap-2 justify-center is-drawer-open:justify-end">
               <label for="main-drawer" class="btn btn-ghost btn-circle btn-sm">
                 <Icons.Drawer />
               </label>
-              <label class="swap swap-rotate">
-                <input
-                  type="checkbox"
-                  class="theme-controller"
-                  value="dracula"
-                  checked={theme() === "dracula"}
-                  onChange={toggle}
-                />
-                <Icons.Sun />
-                <Icons.Moon />
-              </label>
+              <select class="select select-xs select-bordered is-drawer-close:hidden" value={theme()} onChange={(e) => setTheme(e.currentTarget.value as any)}>
+                <option value="bumblebee">bumblebee</option>
+                <option value="tokyonight">tokyonight</option>
+                <option value="opencode">opencode</option>
+                <option value="dracula">dracula</option>
+              </select>
+              <button class="btn btn-ghost btn-circle btn-sm is-drawer-close:inline-flex hidden" onClick={toggle} aria-label="Toggle theme"><Icons.Moon /></button>
             </div>
           </div>
         </div>
