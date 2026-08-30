@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/DennisLoska/silicon-seeds.git"
   },
-  "license": "UNLICENSED",
+  "license": "GPL-3.0-or-later",
   "author": "Dennis Loska",
   "type": "commonjs",
   "main": "src/main.ts",

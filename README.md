@@ -1,5 +1,7 @@
 # Silicon-Seeds
 
+> **License:** GPL-3.0-or-later — see [LICENSE](LICENSE).
+
 Whoever has ears, let them hear.
 
 Silicon-Seeds is a Bun-based generative media orchestration app that coordinates LM Studio, ComfyUI, SQLite, MCP tool calling, and a server-rendered HTMX UI to produce images, videos, speech, music, and AI-edited video.
