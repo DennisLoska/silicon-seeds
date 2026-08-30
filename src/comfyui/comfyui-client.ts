@@ -260,14 +260,26 @@ export class ComfyUIClient {
   }
 
   async listLoras(): Promise<string[]> {
-    const candidates = [`${this.baseUrl}/api/loras`, `${this.baseUrl}/loras`];
+    const candidates = [
+      `${this.baseUrl}/api/models/loras`,
+      `${this.baseUrl}/models/loras`,
+      `${this.baseUrl}/api/experiment/models/loras`,
+      `${this.baseUrl}/api/loras`,
+      `${this.baseUrl}/loras`,
+    ];
     for (const url of candidates) {
       try {
         const res = await fetch(url);
         if (!res.ok) continue;
         const data: any = await res.json();
         if (Array.isArray(data)) {
-          const names = data.map((d: any) => (typeof d === "string" ? d : d.name ?? d.filename ?? "")).filter(Boolean);
+          const names = data
+            .map((d: any) => {
+              if (typeof d === "string") return d;
+              return d.name ?? d.filename ?? d.path ?? "";
+            })
+            .filter(Boolean)
+            .map((n: string) => n.split("/").pop() ?? n);
           if (names.length) return names;
         }
         if (data && Array.isArray((data as any).loras)) return (data as any).loras;
