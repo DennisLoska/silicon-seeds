@@ -217,13 +217,12 @@ export default function Compose() {
             </div>
           </div>
 
-          {/* double height preview */}
-          <div class="card bg-base-100 shadow-xl border border-base-300 hidden xl:flex flex-col overflow-hidden xl:h-[60vh] min-h-[440px]">
-            <div class="card-body p-4 flex flex-col flex-1 min-h-0">
+          <div class="card bg-base-100 shadow-xl border border-base-300 hidden xl:flex flex-col overflow-hidden xl:h-[30vh] min-h-[220px]">
+            <div class="card-body p-4 flex flex-col flex-1 min-h-0 justify-center">
               <h3 class="font-semibold text-sm flex items-center gap-2 mb-2"><Icons.Video /> Preview</h3>
               <div class="flex-1 flex flex-col items-center justify-center gap-3 py-6 bg-base-200 rounded-box border border-dashed border-base-300 min-h-0">
-                <div class="w-16 h-16 rounded-box bg-base-300 grid place-items-center opacity-40"><Icons.VideoCameraSmall /></div>
-                <p class="text-sm font-medium opacity-60">Video preview</p>
+                <div class="w-16 h-16 rounded-box bg-base-300 grid place-items-center opacity-40 shrink-0"><Icons.VideoCameraSmall /></div>
+                <p class="text-sm font-medium opacity-60 text-center">Video preview</p>
               </div>
             </div>
           </div>
