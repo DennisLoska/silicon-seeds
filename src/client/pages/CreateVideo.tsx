@@ -3,6 +3,8 @@ import { useSearchParams, useNavigate } from "@solidjs/router";
 import { useJobUpdates } from "../lib/sse";
 import { apiGet, getAssetPath } from "../lib/api-client";
 import { Icons } from "../components/Icons";
+import LoraSelector, { LoraSpec } from "../components/LoraSelector";
+import StylePresetSelect from "../components/StylePresetSelect";
 
 export default function CreateVideo() {
   const [search, setSearch] = useSearchParams();
@@ -12,6 +14,7 @@ export default function CreateVideo() {
 
   const [fps, setFps] = createSignal(16);
   const [clipDuration, setClipDuration] = createSignal(3);
+  const [loras, setLoras] = createSignal<LoraSpec[]>([]);
   const [isSubmitting, setIsSubmitting] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
 
@@ -49,6 +52,7 @@ export default function CreateVideo() {
     setIsSubmitting(true);
     const form = e.currentTarget as HTMLFormElement;
     const fd = new FormData(form);
+    if (loras().length) fd.set("loras", JSON.stringify(loras()));
     try {
       const res = await fetch("/api/jobs/videos", { method: "POST", body: fd });
       if (!res.ok) {
@@ -204,18 +208,21 @@ export default function CreateVideo() {
             </div>
           </div>
 
-          {/* Style Preset */}
+          {/* Style Preset - dynamic from DB */}
           <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col">
             <div class="card-body flex flex-col">
               <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.PaintBrushLarge />Style Preset</h2>
               <div class="form-control">
                 <label class="label cursor-pointer"><span class="label-text font-medium flex items-center gap-2"><Icons.PaintBrushIcon />Style Preset</span></label>
-                <select name="style_preset" class="select select-bordered w-full flex-none">
-                  <option value="system">Default</option>
-                  <option value="watercolor">Watercolor</option>
-                  <option value="pencil_watercolor">Pencil Watercolor</option>
-                </select>
+                <StylePresetSelect name="style_preset" class="select select-bordered w-full" />
               </div>
+            </div>
+          </div>
+
+          <div class="card bg-base-100 shadow-xl w-full flex-none flex flex-col">
+            <div class="card-body flex flex-col">
+              <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3">Loras</h2>
+              <LoraSelector value={loras()} onChange={setLoras} />
             </div>
           </div>
 
@@ -242,7 +249,6 @@ export default function CreateVideo() {
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 text-base-content/30"><path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
                 </div>
                 <h3 class="font-medium text-base-content/60">Generated video will appear here.</h3>
-                <p class="text-sm text-base-content/40 mt-2">Tip: use 1s / 480p / 8 FPS for fastest test.</p>
               </div>
             </div>
           </Show>
@@ -264,7 +270,7 @@ export default function CreateVideo() {
                           <video src={getAssetPath(vid.subfolder, vid.filename)} controls autoplay muted loop playsinline class="w-full h-auto max-h-[60vh]" />
                           <div class="p-2 flex justify-between items-center bg-base-200 text-xs">
                             <span class="opacity-60">{vid.filename}</span>
-                            <a href={getAssetPath(vid.subfolder, vid.filename)} download class="btn btn-xs btn-ghost"><Icons.DownloadIconSmall /> Download</a>
+                            <a href={getAssetPath(vid.subfolder, vid.filename)} download="" class="btn btn-xs btn-ghost"><Icons.DownloadIconSmall /> Download</a>
                           </div>
                         </div>
                       )}

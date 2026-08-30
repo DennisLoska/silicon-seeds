@@ -8,15 +8,15 @@ function getPageTitle(path: string) {
   if (path.startsWith("/gallery")) return "Gallery";
   if (path.startsWith("/compose")) return "Compose";
   if (path.startsWith("/create/audio")) return "Audio";
-  if (path.startsWith("/create/autocut")) return "AutoCut";
   if (path.startsWith("/create/image")) return "Image";
   if (path.startsWith("/create/video")) return "Video";
+  if (path.startsWith("/settings")) return "Settings";
   return "🌀◝(ᵔᗜᵔ)◜";
 }
 
 export default function Layout(props: ParentProps) {
   const location = useLocation();
-  const { theme, toggle } = createTheme();
+  const { theme, toggle, setTheme } = createTheme();
   const title = () => getPageTitle(location.pathname);
 
   return (
@@ -69,12 +69,6 @@ export default function Layout(props: ParentProps) {
               </A>
             </li>
             <li class="w-full">
-              <A href="/create/autocut" id="sidebar-autocut" class="is-drawer-close:justify-center py-2">
-                <Icons.AutoCutSmall />
-                <span class="is-drawer-close:hidden">AutoCut</span>
-              </A>
-            </li>
-            <li class="w-full">
               <A href="/create/image" id="sidebar-image" class="is-drawer-close:justify-center py-2">
                 <Icons.Image />
                 <span class="is-drawer-close:hidden">Image</span>
@@ -92,23 +86,25 @@ export default function Layout(props: ParentProps) {
                 <span class="is-drawer-close:hidden">Audio</span>
               </A>
             </li>
+            <li class="w-full">
+              <A href="/settings" id="sidebar-settings" class="is-drawer-close:justify-center py-2">
+                <Icons.CogSettingsIcon />
+                <span class="is-drawer-close:hidden">Settings</span>
+              </A>
+            </li>
           </ul>
-          <div class="w-full px-2 pb-4">
+          <div class="w-full px-2 pb-4 flex flex-col gap-2">
             <div class="flex items-center gap-2 justify-center is-drawer-open:justify-end">
               <label for="main-drawer" class="btn btn-ghost btn-circle btn-sm">
                 <Icons.Drawer />
               </label>
-              <label class="swap swap-rotate">
-                <input
-                  type="checkbox"
-                  class="theme-controller"
-                  value="dracula"
-                  checked={theme() === "dracula"}
-                  onChange={toggle}
-                />
-                <Icons.Sun />
-                <Icons.Moon />
-              </label>
+              <select class="select select-xs select-bordered is-drawer-close:hidden" value={theme()} onChange={(e) => setTheme(e.currentTarget.value as any)}>
+                <option value="bumblebee">bumblebee</option>
+                <option value="tokyonight">tokyonight</option>
+                <option value="opencode">opencode</option>
+                <option value="dracula">dracula</option>
+              </select>
+              <button class="btn btn-ghost btn-circle btn-sm is-drawer-close:inline-flex hidden" onClick={toggle} aria-label="Toggle theme"><Icons.Moon /></button>
             </div>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { PostTextToVideo } from "../schemas";
 import { Metadata } from "../../meta/meta";
 
 export async function text_to_image_to_video(options: PostTextToVideo) {
-  const { prompt: rawPrompt, resolution, video_model, image_model, fps, clip_duration, style_preset, style_guide } = options;
+  const { prompt: rawPrompt, resolution, video_model, image_model, fps, clip_duration, style_preset, style_guide, loras } = options as any;
   const prompt = Utils.sanitizeInputText(rawPrompt);
 
   if (!prompt || prompt.length < 1) {
@@ -31,7 +31,8 @@ export async function text_to_image_to_video(options: PostTextToVideo) {
     style_preset,
     style_guide: sanitizedGuide ?? null,
     workflow: "video",
-  });
+    loras: (loras && loras.length) ? JSON.stringify(loras) : null,
+  } as any);
 
   const scheduled = await VideoGenerator.schedule_text_to_video({
     jobId,

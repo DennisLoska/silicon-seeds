@@ -174,13 +174,20 @@ export namespace QueueManager {
         const stylePrompt = styleItem?.prompt;
         if (!stylePrompt) throw new Error("Styled prompt is empty");
 
+        // Prefer job-level loras if present (user selection), otherwise preset lora
+        let jobLoras: { name: string; strength: number }[] | undefined;
+        if ((job as any).loras) {
+          try { const parsed = JSON.parse((job as any).loras); if (Array.isArray(parsed)) jobLoras = parsed; } catch {}
+        }
+        const effectiveLoras = jobLoras && jobLoras.length ? jobLoras : styleItem?.lora ? [{ name: styleItem.lora as string, strength: 0.7 }] : undefined;
         await ImageGenerator.schedule_image({
           jobId: event.jobId,
           mode: JobMode.Video,
           prompt: stylePrompt,
           lora: styleItem?.lora as (typeof Lora)[keyof typeof Lora] | undefined,
+          loras: effectiveLoras,
           index: idx,
-        });
+        } as any);
         idx++;
       }
     }

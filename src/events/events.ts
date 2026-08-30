@@ -78,6 +78,7 @@ export interface ImagePromptEvent extends JobBaseEvent {
   prompt: string;
   type: Event.NewImagePrompt;
   lora?: Lora;
+  loras?: { name: string; strength: number }[];
   index?: number;
 }
 

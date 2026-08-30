@@ -5,7 +5,6 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
   await db.schema.dropTable("jobs").ifExists().execute();
   await db.schema.dropTable("events").ifExists().execute();
   await db.schema.dropTable("meta").ifExists().execute();
-  await db.schema.dropTable("autocut_cut_clips").ifExists().execute();
 
   await db.schema
     .createTable("jobs")
@@ -27,6 +26,7 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .addColumn("audio_model", "text", (col) => col.defaultTo(null))
     .addColumn("style_preset", "text", (col) => col.defaultTo(null))
     .addColumn("style_guide", "text", (col) => col.defaultTo(null))
+    .addColumn("loras", "text", (col) => col.defaultTo(null))
     .execute();
 
   await db.schema
@@ -69,24 +69,6 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .execute();
 
   await db.schema
-    .createTable("autocut_cut_clips")
-    .ifNotExists()
-    .addColumn("id", "text", (col) => col.primaryKey().notNull())
-    .addColumn("created_at", "text", (col) =>
-      col.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
-    )
-    .addColumn("job_id", "text", (col) => col.notNull().references("jobs.id"))
-    .addColumn("clip_index", "integer", (col) => col.notNull())
-    .addColumn("start_seconds", "real", (col) => col.notNull())
-    .addColumn("end_seconds", "real", (col) => col.notNull())
-    .addColumn("duration_seconds", "real", (col) => col.notNull())
-    .addColumn("reasons", "text", (col) => col.notNull())
-    .addColumn("transcript_text", "text", (col) => col.notNull())
-    .addColumn("filename", "text", (col) => col.notNull())
-    .addColumn("subfolder", "text", (col) => col.notNull())
-    .execute();
-
-  await db.schema
     .createIndex("idx_events_job_id")
     .on("events")
     .column("job_id")
@@ -101,9 +83,38 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .execute();
 
   await db.schema
-    .createIndex("idx_autocut_cut_clips_job_id")
-    .on("autocut_cut_clips")
-    .columns(["job_id", "clip_index"])
+    .createTable("settings")
     .ifNotExists()
+    .addColumn("key", "text", (col) => col.primaryKey().notNull())
+    .addColumn("value", "text", (col) => col.notNull())
+    .execute();
+
+  await db.schema
+    .createTable("style_presets")
+    .ifNotExists()
+    .addColumn("id", "text", (col) => col.primaryKey().notNull())
+    .addColumn("name", "text", (col) => col.notNull().unique())
+    .addColumn("description", "text")
+    .addColumn("primary_style", "text", (col) => col.notNull())
+    .addColumn("secondary_trigger", "text")
+    .addColumn("styles_json", "text", (col) => col.notNull())
+    .addColumn("texture", "text")
+    .addColumn("created_at", "text", (col) =>
+      col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull(),
+    )
+    .execute();
+
+  await db.schema
+    .createTable("loras")
+    .ifNotExists()
+    .addColumn("id", "text", (col) => col.primaryKey().notNull())
+    .addColumn("comfyui_name", "text", (col) => col.notNull().unique())
+    .addColumn("display_name", "text", (col) => col.notNull())
+    .addColumn("trigger_word", "text")
+    .addColumn("is_active", "integer", (col) => col.notNull().defaultTo(1))
+    .addColumn("sort_order", "integer", (col) => col.notNull())
+    .addColumn("created_at", "text", (col) =>
+      col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull(),
+    )
     .execute();
 }

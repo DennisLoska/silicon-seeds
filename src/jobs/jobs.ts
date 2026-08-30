@@ -125,6 +125,7 @@ export namespace JobOrchestrator {
           type: Event.NewImagePrompt,
           prompt,
           lora: event.lora,
+          loras: (event as any).loras,
           index: event.index,
         };
 

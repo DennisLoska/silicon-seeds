@@ -26,9 +26,7 @@ import { SocketServer } from "./socket/socket-server";
 // - fish audio, voice clone, replace kokoro
 // - zimage in cpu, fish audio in cpu
 // - export assets as davinci project timeline
-// - preserve autocut assets
-// - preserve metadata about what has been cut and preserve removed snippets
-// - allow autocut clip regeneration with transitions
+// - preserve metadata about generated assets
 
 // Content
 // - consistent style and transitions

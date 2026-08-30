@@ -3,7 +3,7 @@ import type { TTSGenerateOptions, TTSGenerateResult, TTSVoice } from "./types";
 
 export type { TTSVoice, TTSGenerateOptions, TTSGenerateResult };
 
-const VOICEBOX_URL = Bun.env.VOICEBOX_URL ?? "http://127.0.0.1:8000";
+const VOICEBOX_URL = Bun.env.VOICEBOX_URL ?? "http://127.0.0.1:17493";
 
 function mapProfile(raw: Record<string, unknown>): TTSVoice {
   return {
@@ -87,16 +87,24 @@ export namespace TTS {
       ? voiceId.split(":")[1]
       : undefined;
 
-    const res = await fetch(`${VOICEBOX_URL}/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        profile_id: profileId,
-        text,
-        language: language ?? "en",
-        ...(engine ? { engine } : {}),
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    let res: Response;
+    try {
+      res = await fetch(`${VOICEBOX_URL}/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          profile_id: profileId,
+          text: text.slice(0, 4000),
+          language: language ?? "en",
+          ...(engine ? { engine } : {}),
+        }),
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     if (!res.ok) {
       throw new Error(`Voicebox generate failed: ${res.status}`);
     }
@@ -157,13 +165,18 @@ async function resolveProfileId(voiceId: string): Promise<string> {
 }
 
 async function waitForAudio(generationId: string): Promise<Blob> {
-  for (let i = 0; i < 300; i++) {
-    const res = await fetch(`${VOICEBOX_URL}/audio/${generationId}`);
-    if (res.ok) {
-      const blob = await res.blob();
-      if (blob.size > 100) return blob;
-    }
+  for (let i = 0; i < 60; i++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+      const res = await fetch(`${VOICEBOX_URL}/audio/${generationId}`, { signal: controller.signal });
+      if (res.ok) {
+        const blob = await res.blob();
+        if (blob.size > 100) return blob;
+      }
+    } catch {}
+    finally { clearTimeout(timeout); }
     await new Promise((r) => setTimeout(r, 1000));
   }
-  throw new Error("Voicebox audio not ready after 300s");
+  throw new Error("Voicebox audio not ready after 60s");
 }

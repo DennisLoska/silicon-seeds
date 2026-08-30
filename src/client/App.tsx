@@ -5,10 +5,10 @@ import Layout from "./components/Layout";
 const Jobs = lazy(() => import("./pages/Jobs"));
 const Gallery = lazy(() => import("./pages/Gallery"));
 const Compose = lazy(() => import("./pages/Compose"));
-const AutoCut = lazy(() => import("./pages/AutoCut"));
 const CreateImage = lazy(() => import("./pages/CreateImage"));
 const CreateAudio = lazy(() => import("./pages/CreateAudio"));
 const CreateVideo = lazy(() => import("./pages/CreateVideo"));
+const Settings = lazy(() => import("./pages/Settings"));
 
 export default function App() {
   return (
@@ -64,18 +64,18 @@ export default function App() {
         )}
       />
       <Route
-        path="/create/autocut"
-        component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
-            <AutoCut />
-          </Suspense>
-        )}
-      />
-      <Route
         path="/create/video"
         component={() => (
           <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
             <CreateVideo />
+          </Suspense>
+        )}
+      />
+      <Route
+        path="/settings"
+        component={() => (
+          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
+            <Settings />
           </Suspense>
         )}
       />

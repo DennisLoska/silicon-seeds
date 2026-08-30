@@ -22,11 +22,14 @@ import { Utils } from "../utils/utils";
 import { Lora } from "../styles/presets";
 import { JobsSchema } from "../db/db";
 
+export type LoraSpec = { name: string; strength: number };
+
 type Text2ImgInput = {
   id: string;
   kind: "text-to-image";
   prompt: string;
   lora?: Lora;
+  loras?: LoraSpec[];
 };
 
 type Img2VidInput = {
@@ -256,6 +259,59 @@ export class ComfyUIClient {
     }
   }
 
+  async listLoras(): Promise<string[]> {
+    const candidates = [
+      `${this.baseUrl}/api/models/loras`,
+      `${this.baseUrl}/models/loras`,
+      `${this.baseUrl}/api/experiment/models/loras`,
+      `${this.baseUrl}/api/loras`,
+      `${this.baseUrl}/loras`,
+    ];
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const data: any = await res.json();
+        if (Array.isArray(data)) {
+          const names = data
+            .map((d: any) => {
+              if (typeof d === "string") return d;
+              return d.name ?? d.filename ?? d.path ?? "";
+            })
+            .filter(Boolean)
+            .map((n: string) => n.split("/").pop() ?? n);
+          if (names.length) return names;
+        }
+        if (data && Array.isArray((data as any).loras)) return (data as any).loras;
+      } catch {}
+    }
+    return [];
+  }
+
+  private buildLoraChain(api: Record<string, any>, loras: LoraSpec[]): Record<string, any> {
+    if (!loras.length) return api;
+    // first lora is node 51
+    (api["51"] as any).inputs.lora_name = loras[0].name;
+    (api["51"] as any).inputs.strength_model = loras[0].strength;
+    let prev = "51";
+    for (let i = 1; i < loras.length; i++) {
+      const nodeId = `51_${i}`;
+      api[nodeId] = {
+        inputs: {
+          lora_name: loras[i].name,
+          strength_model: loras[i].strength,
+          model: [prev, 0],
+        },
+        class_type: "LoraLoaderModelOnly",
+        _meta: { title: "Load LoRA" },
+      };
+      prev = nodeId;
+    }
+    // rewire ModelSamplingAuraFlow to last lora output
+    if (api["47"]) (api["47"] as any).inputs.model = [prev, 0];
+    return api;
+  }
+
   private buildBody(
     input: ModelVariant,
     api: Record<string, unknown>,
@@ -347,24 +403,42 @@ export class ComfyUIClient {
     }
 
     if (input.kind === "text-to-image") {
-      // TODO replace or keep?
-      // api = zImageTurboApi;
-      // api["9"].inputs.filename_prefix = input.id;
-      // api["57:27"].inputs.text = input.prompt;
-      // baby seed: 189246353926834
-      // api["57:3"].inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
-
       if (job.image_model === "z-image-turbo") {
-        api = structuredClone(zImageTurboWithLoraApi as unknown as Record<string, any>);
-        (api["9"] as any).inputs.filename_prefix = input.id;
-        (api["41"] as any).inputs.width = resolution.width;
-        (api["41"] as any).inputs.height = resolution.height;
-        (api["45"] as any).inputs.text = input.prompt;
-        (api["44"] as any).inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
-        (api["51"] as any).inputs.strength_model = 0.7;
-
-        if (input.lora) {
-          (api["51"] as any).inputs.lora_name = `${input.lora}.safetensors`;
+        const loras: LoraSpec[] = (() => {
+          if (input.loras && input.loras.length) return input.loras.map((l) => ({ name: l.name.endsWith(".safetensors") ? l.name : `${l.name}.safetensors`, strength: Math.max(0.1, Math.min(2, l.strength)) }));
+          if ((input as any).lora) {
+            const n = String((input as any).lora);
+            return [{ name: n.endsWith(".safetensors") ? n : `${n}.safetensors`, strength: 0.7 }];
+          }
+          return [];
+        })();
+        if (loras.length === 0) {
+          api = structuredClone(zImageTurboApi as unknown as Record<string, any>);
+          (api["9"] as any).inputs.filename_prefix = input.id;
+          // zImageTurboApi uses 57:xx ids, but we map generic handling via resolution nodes? fallback to WithLora structure? Use WithLora base but bypass lora by wiring 46 directly to 47.
+          // Better use WithLora base and remove lora node when empty: we use non-lora api here.
+          // For non-lora api, set width/height via its own nodes.
+          // Try to detect which base we are using:
+          if ((api as any)["41"]) {
+            (api["41"] as any).inputs.width = resolution.width;
+            (api["41"] as any).inputs.height = resolution.height;
+            (api["45"] as any).inputs.text = input.prompt;
+            (api["44"] as any).inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
+          } else if ((api as any)["57:13"]) {
+            (api["57:13"] as any).inputs.width = resolution.width;
+            (api["57:13"] as any).inputs.height = resolution.height;
+            (api["57:27"] as any).inputs.text = input.prompt;
+            (api["57:3"] as any).inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
+            (api["9"] as any).inputs.filename_prefix = input.id;
+          }
+        } else {
+          api = structuredClone(zImageTurboWithLoraApi as unknown as Record<string, any>);
+          (api["9"] as any).inputs.filename_prefix = input.id;
+          (api["41"] as any).inputs.width = resolution.width;
+          (api["41"] as any).inputs.height = resolution.height;
+          (api["45"] as any).inputs.text = input.prompt;
+          (api["44"] as any).inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
+          api = this.buildLoraChain(api, loras);
         }
       }
     }
