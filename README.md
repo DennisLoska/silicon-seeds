@@ -11,8 +11,8 @@ Silicon-Seeds is a Bun-based generative media orchestration app that coordinates
 The app supports four main interactive flows and several demo endpoints:
 
 - **Compose**: create a full video from a script or uploaded text file (TTS → scenes → images → videos → transitions → composition)
-- **AutoCut**: upload a video, transcribe with WhisperX, AI-analyze to remove filler/restarts/pauses, optionally insert AI-generated clips into the timeline
 - **Image**: create standalone images from a text prompt
+- **Video**: create standalone videos from a text prompt
 - **Audio/Song**: generate songs with configurable BPM, key/scale, instrumental, and lyrics
 - **Demo endpoints**: standalone TTS, image-to-video, video-transition, instrumental, text-to-text, script-to-scenes
 
@@ -20,14 +20,12 @@ All job state and asset metadata are persisted in SQLite. Generated media files 
 
 ## Architecture
 
-The runtime is centered around six systems:
+The runtime is centered around four systems:
 
-- **Hono + JSX**: HTTP server, SSR templates, fragment endpoints
-- **SQLite + Kysely**: durable jobs, events, asset metadata, and cut-clip tracking
-- **LM Studio**: text generation, scene generation, video prompts, job naming, autocut planning, web search via MCP
+- **Hono**: HTTP server, JSON API, SSE, static SolidJS SPA
+- **SQLite + Kysely**: durable jobs, events, asset metadata
+- **LM Studio**: text generation, scene generation, video prompts, job naming, web search via MCP
 - **ComfyUI**: image, video, transition, TTS, instrumental, and song generation
-- **WhisperX**: external speech-to-text for transcription (AutoCut, scripting pipeline)
-- **yt-dlp**: YouTube download (audio, video, with cookie support for restricted content)
 
 ### MCP Integration
 
@@ -43,7 +41,7 @@ Each job has:
 - `id` (UUID)
 - `created_at`
 - lifecycle `status`: `active | complete | failed | cancelled`
-- `workflow`: `compose` | `autocut`
+- `workflow`: `compose` | `image` | `video` | `audio`
 - render/model settings: `fps`, `clip_duration`, `transition_duration`, `resolution`, `image_model`, `video_model`, `style_preset`
 - generated `name`, optional `original_prompt`
 
@@ -69,13 +67,9 @@ The `meta` table stores generated asset locations:
 
 Maps events back to real images, videos, and audio files produced by ComfyUI.
 
-#### AutoCut Clips
+#### Gallery
 
-The `autocut_cut_clips` table stores each removed segment:
-- `clip_index`, `start_seconds`, `end_seconds`, `duration_seconds`
-- `reasons` (JSON array of why this segment was cut)
-- `transcript_text` (the spoken words in the removed segment)
-- `filename`, `subfolder`
+Assets are queryable via `DB.Gallery.listItems` with cursor pagination and type filtering.
 
 ## Queue Model
 
@@ -117,30 +111,6 @@ When all indexed videos complete: completed clips sorted by index, adjacent pair
 
 ### Step 7: Final Composition
 `VideoGenerator.combine_outputs(...)`: reads complete video/transition events, sorts by index, interleaves as `video0, transition0, video1, transition1, ...`, writes ffmpeg concat file, produces `new_video_composition` event + `meta` row.
-
-## AutoCut Pipeline
-
-Starts at `POST /api/jobs/videos/autocut`.
-
-### Step 1: Upload & Enqueue
-Video uploaded via multipart form. Saved to `/tmp/silicon-seeds-autocut/<jobId>/`. Job created with `workflow="autocut"`. Manifest and status JSON written.
-
-### Step 2: Transcribe
-WhisperX runs on input video producing word-level timestamps (JSON segments with start, end, text, and per-word details).
-
-### Step 3: Analyze
-- `detectSilenceSpans()` identifies gaps >0.8s
-- `PromptGenerator.autocut_plan_from_whisperx_json()` uses LLM to identify filler words, restarts, mistakes
-- Results merged and de-duplicated
-
-### Step 4: Cut Clips
-`materializeCutClips()` trims each removed span with ffmpeg, saves to `OUTPUT_DIR/autocut/cut-clips/`, persists to `autocut_cut_clips` table.
-
-### Step 5a: Simple Cut (no inserts)
-`renderAutocutVideo()` concatenates all keep-spans via ffmpeg filter complex.
-
-### Step 5b: With AI Inserts
-`PromptGenerator.autocut_insertions_from_whisperx_json()` decides insertion points. For each: image generated → video from that image → `renderTimelineComposition()` builds complex timeline with xfade transitions between source segments and AI clips.
 
 ## Song Generation Pipeline
 
@@ -198,7 +168,6 @@ SSE as lightweight notification bus:
 - `/compose` — compose a video from script
 - `/create/image` — create standalone images
 - `/create/audio` — create songs with lyrics + instrumental
-- `/create/autocut` — upload video for AI editing
 - `/settings` — app settings
 - `/gallery` — browse generated media
 - `/jobs` — all jobs with filtering and detail view
@@ -209,7 +178,6 @@ SSE as lightweight notification bus:
 src/
   api/          HTTP routes and SSR route groups
   audio/        speech, instrumental, and song scheduling via ComfyUI
-  autocut/      AI video editing pipeline (transcribe → analyze → cut → optional inserts)
   comfyui/      ComfyUI client and workflow templates
   db/           schema, queries, migrations, gallery listing
   events/       typed event definitions and emitter
@@ -218,18 +186,14 @@ src/
   llm/          LM Studio wrapper + MCP client (SearXNG web search)
   logger/       structured logging via Logtape with pretty console sink
   meta/         metadata helpers such as audio duration
-  prompts/      scene, image, video, autocut, and job-name generation
+  prompts/      scene, image, video, and job-name generation
   queue/        DB-backed single-slot queue manager
-  script/       experimental WIP pipeline (YouTube → transcribe → LLM score → trim)
   socket/       ComfyUI WebSocket listener and completion handling
   sse/          SSE job update publisher/stream
   styles/       art style definitions, presets, prompt generation
-  templates/    JSX templates and HTMX fragments
   text/         text/script event helpers
   utils/        shared utilities
   video/        video scheduling, transitions, and final composition
-  whisperx/     external WhisperX CLI transcription wrapper
-  yt/           YouTube download via yt-dlp
 ```
 
 ## Main Routes
@@ -241,7 +205,6 @@ src/
 - `GET /compose` compose page
 - `GET /create/image` image creation
 - `GET /create/audio` audio/song creation
-- `GET /create/autocut` autocut upload
 - `GET /settings` settings
 - `GET /gallery` gallery
 - `GET /jobs` jobs list
@@ -251,7 +214,6 @@ src/
 
 - `GET /api/health`
 - `POST /api/jobs/videos/compose` — full compose pipeline
-- `POST /api/jobs/videos/autocut` — AutoCut pipeline
 - `POST /api/jobs/videos/transition` — transition demo (hardcoded)
 - `POST /api/jobs/images` — standalone image generation
 - `POST /api/jobs/audio` — song generation (instrumental + optional lyrics)
@@ -296,8 +258,6 @@ Important: compose image prompts are created in parallel, so `created_at` alone 
 - ComfyUI (for image/video/audio generation)
 - LM Studio with configured model(s) loaded (for text/prompt generation)
 - ffmpeg and ffprobe
-- WhisperX CLI (for autocut transcription)
-- yt-dlp (for YouTube downloads, optional)
 - SearXNG at localhost:8888 (for MCP web search, optional)
 
 ### Environment
@@ -307,7 +267,6 @@ COMFYUI_BASE_URL=http://localhost:8188
 COMFYUI_BASE_WS=ws://localhost:8188
 OUTPUT_DIR=/path/to/comfy/output
 INPUT_DIR=/path/to/comfy/input
-WHISPER_X=/path/to/whisperx
 LOG_LEVEL=info
 ```
 
@@ -343,7 +302,6 @@ Styles are defined in `src/styles/`:
 - compose sequencing uses indexed media reads
 - gallery infinite scroll uses grid layout so appended items appear left-to-right
 - several templates still build `/assets/...` paths inline instead of using a shared helper
-- autocut temp workspace lives in `/tmp/silicon-seeds-autocut/`
 - script pipeline in `src/script/wip.ts` is experimental/WIP, not production-ready
 
 ## License

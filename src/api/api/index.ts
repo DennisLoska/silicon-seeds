@@ -10,7 +10,6 @@ import { video_transition } from "./video-transition";
 
 import { text_to_instrumental } from "./text-to-instrumental";
 import { text_to_audio } from "./text-to-audio";
-import { autocut_video } from "./autocut-video";
 import { delete_job } from "./delete";
 import { cancel_job } from "./cancel";
 import { regenerate_event } from "./regenerate";
@@ -19,7 +18,6 @@ import { zValidator } from "@hono/zod-validator";
 import {
   PostComposeSchema,
   PostDistinctAudioSchema,
-  PostAutoCutSchema,
   PostTextToImageSchema,
   PostTextToVideoSchema,
 } from "../schemas";
@@ -62,15 +60,6 @@ app.post(
   async (c) => {
     const body = c.req.valid("form");
     return text_to_image_to_video(body);
-  },
-);
-
-app.post(
-  "/jobs/videos/autocut",
-  zValidator("form", PostAutoCutSchema),
-  async (c) => {
-    const body = c.req.valid("form");
-    return autocut_video(body);
   },
 );
 

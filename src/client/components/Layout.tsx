@@ -8,7 +8,6 @@ function getPageTitle(path: string) {
   if (path.startsWith("/gallery")) return "Gallery";
   if (path.startsWith("/compose")) return "Compose";
   if (path.startsWith("/create/audio")) return "Audio";
-  if (path.startsWith("/create/autocut")) return "AutoCut";
   if (path.startsWith("/create/image")) return "Image";
   if (path.startsWith("/create/video")) return "Video";
   return "🌀◝(ᵔᗜᵔ)◜";
@@ -66,12 +65,6 @@ export default function Layout(props: ParentProps) {
               <A href="/compose" id="sidebar-compose" class="is-drawer-close:justify-center py-2">
                 <Icons.Compose />
                 <span class="is-drawer-close:hidden">Compose</span>
-              </A>
-            </li>
-            <li class="w-full">
-              <A href="/create/autocut" id="sidebar-autocut" class="is-drawer-close:justify-center py-2">
-                <Icons.AutoCutSmall />
-                <span class="is-drawer-close:hidden">AutoCut</span>
               </A>
             </li>
             <li class="w-full">

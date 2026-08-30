@@ -9,8 +9,6 @@ import { JobOrchestrator } from "../jobs/jobs";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
 import { DB } from "../db/db";
-import { AutoCutWorkflow } from "../autocut/autocut-workflow";
-
 
 import { LLM } from "../llm/llm";
 
@@ -160,21 +158,12 @@ export namespace SocketServer {
         const vidRes = await PromptGenerator.img_to_vid_prompt(promptId, image);
         Utils.assert(vidRes, "Failed to generate img to vid prompt");
 
-        const scheduledVideo = await VideoGenerator.schedule_video({
+        await VideoGenerator.schedule_video({
           jobId: event.jobId,
           prompt: vidRes.prompt,
           filename: filename,
           index: event.index,
         });
-
-        const jobForImage = await DB.Jobs.findById(event.jobId);
-        if (scheduledVideo && jobForImage.workflow === "autocut") {
-          await AutoCutWorkflow.registerGeneratedVideoEvent(
-            event.jobId,
-            event.id,
-            scheduledVideo.id,
-          );
-        }
       }
 
       if (deferCompletion) {
@@ -184,7 +173,7 @@ export namespace SocketServer {
         });
       }
 
-      // [STATE: video_asset_saved] — download asset to /tmp, handle AutoCut special case
+      // [STATE: video_asset_saved] — download asset to /tmp
       if (
         event.type === Event.NewVideoPrompt ||
         event.type === Event.NewTransitionPrompt
@@ -203,13 +192,6 @@ export namespace SocketServer {
           await Bun.write(tmpFile, await videoBlob.arrayBuffer());
         } catch (error) {
           Logger.error("Failed to create video or transition", error);
-        }
-
-        if (await AutoCutWorkflow.shouldHandleVideoEvent(event)) {
-          await AutoCutWorkflow.handleVideoAssetSaved(event);
-          await DB.Jobs.finalizeCompletedJobs();
-          void QueueManager.pump();
-          return;
         }
       }
 
