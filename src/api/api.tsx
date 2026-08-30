@@ -220,6 +220,6 @@ app.use("/*", async (c, next) => {
   await next();
 });
 
-app.notFound((c) => {
+app.notFound((_c) => {
   return not_found();
 });

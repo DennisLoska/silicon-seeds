@@ -5,7 +5,6 @@ import wan2_2_img2vidApi from "./api/video_wan2_2_14B_i2v_720p_5s.json";
 import wan2_2_img2transitionApi from "./api/video_wan2_2_14B_transitions.json";
 import ltx2_3_img2vidApi from "./api/video_ltx2_3_i2v.json";
 import ltx2_3_img2transitionApi from "./api/video_ltx2_3_style_transition.json";
-import wan_t2v_api from "./api/video_wan2_2_t2v.json";
 import ltx_t2v_api from "./api/video_ltx2_3_t2v.json";
 // import ace_step_1_0_api from "./api/audio_ace_step_1_0_instrumental.json";
 import ace_step_1_5_api from "./api/audio_ace_step1_5_xl_base_instrumental.json";
@@ -15,7 +14,6 @@ import wan2_2_img2vidWorkflow from "./workflows/video_wan2_2_14B_i2v_720p_5s.jso
 import wan2_2_img2transWorkflow from "./workflows/video_wan2_2_14B_transitions.json";
 import ltx2_3_img2vidWorkflow from "./workflows/video_ltx2_3_i2v.json";
 import ltx2_3_img2transWorkflow from "./workflows/video_ltx2_3_style_transition.json";
-import wan_t2v_workflow from "./workflows/video_wan2_2_t2v.json";
 import ltx_t2v_workflow from "./workflows/video_ltx2_3_t2v.json";
 import { Logger } from "../logger/logger";
 import { Utils } from "../utils/utils";
@@ -253,7 +251,7 @@ export class ComfyUIClient {
       }
 
       return true;
-    } catch (error) {
+    } catch (_error) {
       Logger.error(`Freeing memory failed`);
       return false;
     }
@@ -381,25 +379,30 @@ export class ComfyUIClient {
     // Better to raw dog the exported json workflows
     let api;
 
-    let resolution = { width: 0, height: 0 };
+    const resolution = { width: 0, height: 0 };
     if (job.resolution === "480p") {
-      ((resolution.width = 640), (resolution.height = 480));
+      resolution.width = 640;
+      resolution.height = 480;
     }
 
     if (job.resolution === "720p") {
-      ((resolution.width = 1280), (resolution.height = 720));
+      resolution.width = 1280;
+      resolution.height = 720;
     }
 
     if (job.resolution === "1080p") {
-      ((resolution.width = 1920), (resolution.height = 1080));
+      resolution.width = 1920;
+      resolution.height = 1080;
     }
 
     if (job.resolution === "9_16_SD") {
-      ((resolution.width = 720), (resolution.height = 1280));
+      resolution.width = 720;
+      resolution.height = 1280;
     }
 
     if (job.resolution === "9_16_HD") {
-      ((resolution.width = 1080), (resolution.height = 1920));
+      resolution.width = 1080;
+      resolution.height = 1920;
     }
 
     if (input.kind === "text-to-image") {

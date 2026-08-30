@@ -37,7 +37,7 @@ export namespace LLM {
   }
 
   export async function image_prompt_list(msg: string, amount: number) {
-    let mapSchema: any = {};
+    const mapSchema: Record<string, z.ZodString> = {};
     for (let i = 0; i < amount; i++) {
       if (!mapSchema[i]) mapSchema[i] = z.string();
     }
