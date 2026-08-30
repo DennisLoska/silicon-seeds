@@ -81,4 +81,39 @@ export async function createTables(db: Kysely<DbSchema>): Promise<void> {
     .ifNotExists()
     .execute();
 
+  await db.schema
+    .createTable("settings")
+    .ifNotExists()
+    .addColumn("key", "text", (col) => col.primaryKey().notNull())
+    .addColumn("value", "text", (col) => col.notNull())
+    .execute();
+
+  await db.schema
+    .createTable("style_presets")
+    .ifNotExists()
+    .addColumn("id", "text", (col) => col.primaryKey().notNull())
+    .addColumn("name", "text", (col) => col.notNull().unique())
+    .addColumn("description", "text")
+    .addColumn("primary_style", "text", (col) => col.notNull())
+    .addColumn("secondary_trigger", "text")
+    .addColumn("styles_json", "text", (col) => col.notNull())
+    .addColumn("texture", "text")
+    .addColumn("created_at", "text", (col) =>
+      col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull(),
+    )
+    .execute();
+
+  await db.schema
+    .createTable("loras")
+    .ifNotExists()
+    .addColumn("id", "text", (col) => col.primaryKey().notNull())
+    .addColumn("comfyui_name", "text", (col) => col.notNull().unique())
+    .addColumn("display_name", "text", (col) => col.notNull())
+    .addColumn("trigger_word", "text")
+    .addColumn("is_active", "integer", (col) => col.notNull().defaultTo(1))
+    .addColumn("sort_order", "integer", (col) => col.notNull())
+    .addColumn("created_at", "text", (col) =>
+      col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull(),
+    )
+    .execute();
 }

@@ -15,6 +15,29 @@ import { Lora } from "../styles/presets";
 import { Utils } from "../utils/utils";
 
 export interface DbSchema {
+  settings: {
+    key: string;
+    value: string;
+  };
+  style_presets: {
+    id: string;
+    name: string;
+    description: string | null;
+    primary_style: string;
+    secondary_trigger: string | null;
+    styles_json: string;
+    texture: string | null;
+    created_at: Generated<string> | string;
+  };
+  loras: {
+    id: string;
+    comfyui_name: string;
+    display_name: string;
+    trigger_word: string | null;
+    is_active: number;
+    sort_order: number;
+    created_at: Generated<string> | string;
+  };
   jobs: {
     id: string;
     created_at: Generated<string> | string;
@@ -932,6 +955,88 @@ export namespace DB {
       }
 
       return items.slice(0, limit);
+    }
+  }
+
+  export namespace Settings {
+    export async function getAll() {
+      const rows = await db.selectFrom("settings").selectAll().execute();
+      const map: Record<string, string> = {};
+      for (const r of rows) map[r.key] = r.value;
+      return map;
+    }
+    export async function get(key: string) {
+      const row = await db.selectFrom("settings").selectAll().where("key", "=", key).executeTakeFirst();
+      return row?.value ?? null;
+    }
+    export async function set(key: string, value: string) {
+      await db.insertInto("settings").values({ key, value }).onConflict((oc) => oc.column("key").doUpdateSet({ value })).execute();
+    }
+    export async function setMany(entries: Record<string, string>) {
+      for (const [k, v] of Object.entries(entries)) await set(k, v);
+    }
+  }
+
+  export namespace StylePresets {
+    export async function list() {
+      return await db.selectFrom("style_presets").selectAll().orderBy("name", "asc").execute();
+    }
+    export async function findById(id: string) {
+      return await db.selectFrom("style_presets").selectAll().where("id", "=", id).executeTakeFirst();
+    }
+    export async function findByName(name: string) {
+      return await db.selectFrom("style_presets").selectAll().where("name", "=", name).executeTakeFirst();
+    }
+    export async function create(data: { name: string; description?: string | null; primary_style: string; secondary_trigger?: string | null; styles_json: string; texture?: string | null }) {
+      const id = Metadata.randomId();
+      await db.insertInto("style_presets").values({ id, ...data, description: data.description ?? null, secondary_trigger: data.secondary_trigger ?? null, texture: data.texture ?? null }).execute();
+      return await findById(id);
+    }
+    export async function update(id: string, data: Partial<{ name: string; description: string | null; primary_style: string; secondary_trigger: string | null; styles_json: string; texture: string | null }>) {
+      await db.updateTable("style_presets").set(data).where("id", "=", id).execute();
+      return await findById(id);
+    }
+    export async function remove(id: string) {
+      await db.deleteFrom("style_presets").where("id", "=", id).execute();
+    }
+  }
+
+  export namespace Loras {
+    export async function list() {
+      return await db.selectFrom("loras").selectAll().orderBy("sort_order", "asc").execute();
+    }
+    export async function findById(id: string) {
+      return await db.selectFrom("loras").selectAll().where("id", "=", id).executeTakeFirst();
+    }
+    export async function create(data: { comfyui_name: string; display_name: string; trigger_word?: string | null; is_active?: number; sort_order: number }) {
+      const id = Metadata.randomId();
+      await db.insertInto("loras").values({ id, comfyui_name: data.comfyui_name, display_name: data.display_name, trigger_word: data.trigger_word ?? null, is_active: data.is_active ?? 1, sort_order: data.sort_order }).execute();
+      return await findById(id);
+    }
+    export async function update(id: string, data: Partial<{ comfyui_name: string; display_name: string; trigger_word: string | null; is_active: number; sort_order: number }>) {
+      await db.updateTable("loras").set(data).where("id", "=", id).execute();
+      return await findById(id);
+    }
+    export async function remove(id: string) {
+      await db.deleteFrom("loras").where("id", "=", id).execute();
+    }
+    export async function reorder(ids: string[]) {
+      await db.transaction().execute(async (trx) => {
+        for (let i = 0; i < ids.length; i++) {
+          await trx.updateTable("loras").set({ sort_order: i }).where("id", "=", ids[i]).execute();
+        }
+      });
+    }
+    export async function upsertMany(names: string[]) {
+      const existing = await list();
+      const existingNames = new Set(existing.map((e) => e.comfyui_name));
+      let maxOrder = existing.reduce((m, e) => Math.max(m, e.sort_order), -1);
+      for (const name of names) {
+        if (existingNames.has(name)) continue;
+        const display = name.replace(/\.safetensors$/i, "").replace(/[_-]/g, " ");
+        maxOrder += 1;
+        await create({ comfyui_name: name, display_name: display, sort_order: maxOrder });
+      }
     }
   }
 }
