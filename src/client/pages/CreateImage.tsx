@@ -85,25 +85,21 @@ export default function CreateImage() {
       <Show when={error()}>
         <div class="alert alert-error mb-4 text-sm">{error()}</div>
       </Show>
-      {/* xl 3-col: prompt | generation options | loras+action+preview - no scroll */}
       <form class="grid grid-cols-1 xl:grid-cols-12 gap-4 xl:items-start" onSubmit={onSubmit} enctype="multipart/form-data">
-        {/* col1 prompt + style guide */}
+        {/* col1 prompt + style guide - unified with compose, prompt full height, styleguide higher */}
         <div class="xl:col-span-5 flex flex-col gap-4 min-h-0">
-          <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col xl:h-[48vh] min-h-[280px] overflow-hidden">
-            <div class="card-body flex flex-col p-4 flex-1 min-h-0">
+          <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col overflow-hidden xl:h-[52vh] min-h-[340px]">
+            <div class="card-body flex flex-col flex-1 p-4 min-h-0">
               <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PromptIcon />Prompt</h2>
-              <textarea name="prompt" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm" placeholder="Describe the image you want to generate..."></textarea>
-              <p class="text-xs opacity-50 mt-2">Tip: style preset + loras are applied automatically.</p>
+              <textarea name="prompt" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder="Describe the image you want to generate..."></textarea>
             </div>
           </div>
-          <div class="card bg-base-100 shadow-xl border border-base-300 flex-none">
-            <div class="card-body p-4">
+          <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col overflow-hidden xl:h-[28vh] min-h-[220px]">
+            <div class="card-body flex flex-col flex-1 p-4 min-h-0">
               <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PaintBrushIcon />Style Guide</h2>
-              <textarea name="style_guide" maxLength={2000} rows={4} class="textarea textarea-ghost w-full resize-none focus:outline-none border-0 text-sm min-h-[100px]" placeholder={"Optional: define consistent style...\n• warm ochre palette\n• watercolor texture\n• no modern items"}></textarea>
-              <p class="text-xs opacity-50 mt-1">Added to preset. Freeform style instructions.</p>
+              <textarea name="style_guide" maxLength={2000} class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder={"Optional: define consistent style...\n• warm ochre palette\n• watercolor texture\n• no modern items"}></textarea>
             </div>
           </div>
-          {/* progress inline on mobile */}
           <Show when={showProgress() && jobId()}>
             <div class="card bg-base-100 shadow-xl border border-base-300 mt-4 xl:hidden">
               <div class="card-body p-4">
@@ -122,7 +118,7 @@ export default function CreateImage() {
           </Show>
         </div>
 
-        {/* col2 generation options */}
+        {/* col2 middle - AI Models + Generation + Style Preset + Loras + Action */}
         <div class="xl:col-span-3 flex flex-col gap-4">
           <div class="card bg-base-100 shadow-xl border border-base-300">
             <div class="card-body p-4">
@@ -140,23 +136,18 @@ export default function CreateImage() {
               <label class="fieldset-label text-xs font-medium flex justify-between">Batch <span class="badge badge-primary badge-sm">{batchSize()}</span></label>
               <input type="range" name="batch_size" value={String(batchSize())} min="1" max="16" step="1" class="range range-primary range-xs w-full" onInput={(e) => setBatchSize(parseInt(e.currentTarget.value))} />
               <div class="flex justify-between text-[11px] opacity-50"><span>1</span><span>16</span></div>
-
               <label class="fieldset-label text-xs font-medium opacity-70 mt-3 flex items-center gap-2"><Icons.SquaresGridIcon />Resolution</label>
               <select name="resolution" class="select select-bordered select-sm w-full">
                 <option value="480p">480p</option><option value="720p">720p</option><option value="1080p">1080p</option><option value="9_16_SD">9:16 (SD)</option><option value="9_16_HD">9:16 (HD)</option>
               </select>
-
               <label class="fieldset-label text-xs font-medium opacity-70 mt-3 flex items-center gap-2"><Icons.PaintBrushIcon />Style Preset</label>
               <StylePresetSelect name="style_preset" class="select select-bordered select-sm w-full" />
             </div>
           </div>
-        </div>
 
-        {/* col3 loras + action + preview */}
-        <div class="xl:col-span-4 flex flex-col gap-4 min-h-0">
           <div class="card bg-base-100 shadow-xl border border-base-300">
             <div class="card-body p-4">
-              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2">LoRAs <span class="badge badge-ghost badge-xs">0.1 — 2.0</span></h2>
+              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2">LoRAs <span class="badge badge-ghost badge-xs">drag · 0.1-2.0</span></h2>
               <LoraSelector value={loras()} onChange={setLoras} />
             </div>
           </div>
@@ -172,10 +163,12 @@ export default function CreateImage() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* preview area - desktop inline */}
+        {/* col3 preview double height */}
+        <div class="xl:col-span-4 flex flex-col gap-4 min-h-0">
           <Show when={!showProgress()}>
-            <div class="card bg-base-100 shadow-xl border border-base-300 hidden xl:flex flex-1 min-h-[220px] items-center justify-center">
+            <div class="card bg-base-100 shadow-xl border border-base-300 hidden xl:flex flex-col overflow-hidden xl:h-[60vh] min-h-[440px] items-center justify-center">
               <div class="text-center py-10 px-6">
                 <div class="flex justify-center mb-3 opacity-40"><Icons.PhotoCameraLarge /></div>
                 <h3 class="font-medium text-base-content/60 text-sm">Images appear here</h3>
@@ -184,7 +177,7 @@ export default function CreateImage() {
             </div>
           </Show>
           <Show when={showProgress() && jobId()}>
-            <div class="card bg-base-100 shadow-xl border border-base-300 hidden xl:flex flex-col overflow-hidden flex-1 min-h-[260px]">
+            <div class="card bg-base-100 shadow-xl border border-base-300 hidden xl:flex flex-col overflow-hidden xl:h-[60vh] min-h-[440px]">
               <div class="card-body p-4 flex flex-col min-h-0">
                 <div class="flex items-center justify-between mb-2"><h3 class="font-semibold text-sm flex items-center gap-2"><Icons.PulseWavesIcon />Generated Images</h3><span class="badge badge-warning badge-xs">Active</span></div>
                 <Show when={(mediaData()?.items?.length ?? 0) === 0}>

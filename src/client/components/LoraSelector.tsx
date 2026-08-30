@@ -63,7 +63,7 @@ export default function LoraSelector(props: { value: LoraSpec[]; onChange: (v: L
             <div onDragOver={(e) => e.preventDefault()} onDrop={(e) => onDrop(e, idx())} class="flex items-center gap-2 p-2 bg-base-200 rounded border border-base-300 hover:border-primary/20">
               <span draggable onDragStart={(e) => onDragStart(e, idx())} class="cursor-grab active:cursor-grabbing opacity-50 hover:opacity-80 select-none px-1">≡</span>
               <span class="flex-1 text-sm font-mono truncate">{spec.name}</span>
-              <input type="range" min="0.1" max="2" step="0.1" value={String(spec.strength)} onInput={(e) => updateStrength(idx(), parseFloat(e.currentTarget.value))} onPointerDown={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} class="range range-primary range-xs w-24" />
+              <input type="range" min="0.1" max="2" step="0.1" value={String(spec.strength)} onInput={(e) => updateStrength(idx(), parseFloat(e.currentTarget.value))} onPointerDown={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()} class="range range-primary range-sm w-32 cursor-pointer" style="touch-action: pan-x;" />
               <span class="text-xs w-8 text-center tabular-nums">{spec.strength.toFixed(1)}</span>
               <button type="button" class="btn btn-xs" onClick={() => move(idx(), -1)}>↑</button>
               <button type="button" class="btn btn-xs" onClick={() => move(idx(), 1)}>↓</button>
