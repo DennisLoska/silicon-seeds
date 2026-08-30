@@ -117,39 +117,8 @@ export default function Settings() {
 
   return (
     <div class="flex flex-col gap-5 p-4 sm:p-6 bg-base-200 min-h-[calc(100vh-4rem)] w-full max-w-none">
-      <div class="flex flex-col gap-1">
-        <div class="breadcrumbs text-sm opacity-70 p-0"><ul><li><a href="/jobs" class="link link-hover">Home</a></li><li class="font-medium">Settings</li></ul></div>
-        <div class="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 class="text-2xl font-bold tracking-tight flex items-center gap-2"><span class="w-8 h-8 rounded-lg bg-primary text-primary-content grid place-items-center text-sm">⚙</span> Settings</h1>
-            <p class="text-sm opacity-60 mt-1 max-w-xl">Manage generation defaults, curated style presets and ComfyUI LoRAs. Changes apply to new jobs immediately.</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="badge badge-ghost badge-sm gap-1"><span class="w-2 h-2 rounded-full bg-success inline-block" /> ComfyUI {discovered().length ? `· ${discovered().length} discovered` : ""}</span>
-          </div>
-        </div>
-      </div>
-
       <Show when={msg()}><div class="alert alert-success text-sm py-2 shadow-sm"><Icons.StatusCompleteSmall /> <span>{msg()}</span><button class="btn btn-xs btn-ghost ml-auto" onClick={()=>setMsg(null)}>✕</button></div></Show>
       <Show when={err()}><div class="alert alert-error text-sm py-2 shadow-sm"><span>{err()}</span><button class="btn btn-xs btn-ghost ml-auto" onClick={()=>setErr(null)}>✕</button></div></Show>
-
-      <div class="stats stats-vertical lg:stats-horizontal shadow bg-base-100 border border-base-300">
-        <div class="stat py-3">
-          <div class="stat-title text-xs">Defaults</div>
-          <div class="stat-value text-lg">{Object.keys(settings()).length || 7}</div>
-          <div class="stat-desc text-xs">keys · fps / resolution / models</div>
-        </div>
-        <div class="stat py-3">
-          <div class="stat-title text-xs">Style Presets</div>
-          <div class="stat-value text-lg">{presets().length}</div>
-          <div class="stat-desc text-xs">{presets().filter(p=>p.styles.length>0).length} with styles</div>
-        </div>
-        <div class="stat py-3">
-          <div class="stat-title text-xs">LoRAs</div>
-          <div class="stat-value text-lg">{loras().length}</div>
-          <div class="stat-desc text-xs">{loras().filter(l=>l.is_active).length} active · drag to reorder</div>
-        </div>
-      </div>
 
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
         <div class="flex flex-col gap-6">

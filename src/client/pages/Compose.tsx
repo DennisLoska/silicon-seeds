@@ -194,9 +194,9 @@ export default function Compose() {
           <div class="card bg-base-100 shadow-xl border border-base-300">
             <div class="card-body p-4">
               <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.LightningBoltIcon />Action</h2>
-              <div class="card-actions justify-between flex gap-2">
+              <div class="card-actions justify-end flex gap-2">
                 <button type="reset" class="btn btn-ghost btn-sm">Reset</button>
-                <button type="submit" id="submit-btn" class="btn btn-primary btn-sm flex-1" disabled={isSubmitting()}>
+                <button type="submit" id="submit-btn" class="btn btn-primary btn-sm w-auto px-6" disabled={isSubmitting()}>
                   Generate Video <Show when={isSubmitting()}><span class="loading loading-spinner loading-xs ml-1" /></Show>
                 </button>
               </div>
