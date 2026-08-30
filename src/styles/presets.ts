@@ -2,6 +2,7 @@ import { type StyleParams, StylePrompt } from "./system";
 import { Styles } from "./styles";
 
 export enum Presets {
+  NONE = "none",
   SYSTEM = "system",
   WATERCOLOR = "watercolor",
   PENCIL_WATERCOLOR = "pencil_watercolor",
@@ -13,10 +14,28 @@ export enum Lora {
 
 export namespace StylePresets {
   export const presets = {
+    [Presets.NONE]: none,
     [Presets.SYSTEM]: system,
     [Presets.WATERCOLOR]: watercolor,
     [Presets.PENCIL_WATERCOLOR]: pencil_watercolor,
   };
+
+  function none(opt: Omit<StyleParams, "style">) {
+    const style = {
+      primary: Styles.NONE.name,
+      styles: Styles.NONE.styles,
+      texture: Styles.TEXTURE.none,
+    };
+    return {
+      lora: undefined,
+      instructions: StylePrompt.system({
+        style,
+        title: opt.title,
+        description: opt.description,
+        scenes: opt.scenes,
+      }),
+    };
+  }
 
   function system(opt: Omit<StyleParams, "style">) {
     const style = {

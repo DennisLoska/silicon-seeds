@@ -17,6 +17,7 @@ export default function StylePresetSelect(props: { name?: string; value?: string
   return (
     <select name={props.name ?? "style_preset"} id={props.id} class={props.class ?? "select select-bordered w-full select-sm"}>
       <Show when={!presets.loading} fallback={<option>Loading...</option>}>
+        <option value="none">none — no style</option>
         <For each={presets() ?? []}>
           {(p) => <option value={p.name}>{p.name}</option>}
         </For>

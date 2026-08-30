@@ -87,13 +87,20 @@ export default function CreateImage() {
       </Show>
       {/* xl 3-col: prompt | generation options | loras+action+preview - no scroll */}
       <form class="grid grid-cols-1 xl:grid-cols-12 gap-4 xl:items-start" onSubmit={onSubmit} enctype="multipart/form-data">
-        {/* col1 prompt */}
-        <div class="xl:col-span-5 flex flex-col min-h-0">
-          <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col xl:h-[76vh] min-h-[320px] overflow-hidden">
+        {/* col1 prompt + style guide */}
+        <div class="xl:col-span-5 flex flex-col gap-4 min-h-0">
+          <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col xl:h-[48vh] min-h-[280px] overflow-hidden">
             <div class="card-body flex flex-col p-4 flex-1 min-h-0">
               <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PromptIcon />Prompt</h2>
               <textarea name="prompt" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm" placeholder="Describe the image you want to generate..."></textarea>
               <p class="text-xs opacity-50 mt-2">Tip: style preset + loras are applied automatically.</p>
+            </div>
+          </div>
+          <div class="card bg-base-100 shadow-xl border border-base-300 flex-none">
+            <div class="card-body p-4">
+              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PaintBrushIcon />Style Guide</h2>
+              <textarea name="style_guide" maxLength={2000} rows={4} class="textarea textarea-ghost w-full resize-none focus:outline-none border-0 text-sm min-h-[100px]" placeholder={"Optional: define consistent style...\n• warm ochre palette\n• watercolor texture\n• no modern items"}></textarea>
+              <p class="text-xs opacity-50 mt-1">Added to preset. Freeform style instructions.</p>
             </div>
           </div>
           {/* progress inline on mobile */}

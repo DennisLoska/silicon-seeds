@@ -171,6 +171,7 @@ export default function Settings() {
                 <label class="fieldset-label flex-col items-start gap-1">
                   <span class="label-text text-xs font-medium opacity-70">Default Style Preset</span>
                   <select name="default_style_preset" class="select select-bordered select-sm w-full">
+                    <option value="none" selected={settings()["default_style_preset"]==="none"}>none — no style</option>
                     <For each={presets()}>
                       {(p)=><option value={p.name} selected={settings()["default_style_preset"]===p.name}>{p.name}{p.primary_style!==p.name ? ` · ${p.primary_style}` : ""}</option>}
                     </For>
@@ -324,8 +325,8 @@ export default function Settings() {
           <div class="flex flex-col gap-1.5">
             <For each={loras()}>
               {(row, idx) => (
-                <div draggable onDragStart={(e) => dragStart(e, idx())} onDragOver={(e) => e.preventDefault()} onDrop={(e) => drop(e, idx())} class="group flex items-center gap-2 p-2.5 bg-base-200 rounded-box border border-base-300 hover:border-primary/30 hover:bg-base-200 transition-colors cursor-grab active:cursor-grabbing">
-                  <span class="drag-handle opacity-40 group-hover:opacity-70 cursor-grab text-base-content/60 select-none px-1">≡</span>
+                <div onDragOver={(e) => e.preventDefault()} onDrop={(e) => drop(e, idx())} class="group flex items-center gap-2 p-2.5 bg-base-200 rounded-box border border-base-300 hover:border-primary/30 hover:bg-base-200 transition-colors">
+                  <span draggable onDragStart={(e) => dragStart(e, idx())} class="drag-handle opacity-40 group-hover:opacity-70 cursor-grab active:cursor-grabbing text-base-content/60 select-none px-1">≡</span>
                   <div class="flex-1 min-w-0">
                     <div class="font-mono text-xs font-medium truncate">{row.comfyui_name}</div>
                     <div class="text-[11px] opacity-60 truncate">{row.display_name} <Show when={row.trigger_word}><span class="badge badge-ghost badge-xs ml-1">{row.trigger_word}</span></Show></div>

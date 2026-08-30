@@ -1,5 +1,4 @@
 import z from "zod";
-import { Presets } from "../styles/presets";
 
 const AudioKeyscaleSchema = z.enum([
   "C major",
@@ -32,7 +31,8 @@ export const PostTextToImageSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
   resolution: z.string().max(7).optional(),
   image_model: z.string().max(50),
-  style_preset: z.enum(Presets).optional(),
+  style_preset: z.string().min(1).max(50).optional(),
+  style_guide: z.string().trim().max(2000).optional().transform((v) => (v && v.length > 0 ? v : undefined)),
   batch_size: z.coerce.number().int().positive().optional(),
   loras: LorasPreprocess,
 });
@@ -46,7 +46,7 @@ export const PostTextToVideoSchema = z.object({
   image_model: z.string().max(50).optional(),
   fps: z.coerce.number().int().min(1).max(24),
   clip_duration: z.coerce.number().int().min(1).max(10),
-  style_preset: z.enum(Presets),
+  style_preset: z.string().min(1).max(50),
   style_guide: z
     .string()
     .trim()
@@ -71,7 +71,7 @@ export const PostComposeSchema = z
     fps: z.coerce.number().min(1).max(24),
     clip_duration: z.coerce.number().min(1).max(10),
     transition_duration: z.coerce.number().min(1).max(10),
-    style_preset: z.enum(Presets),
+    style_preset: z.string().min(1).max(50),
     voice_id: z.string().optional(),
     loras: LorasPreprocess,
     style_guide: z

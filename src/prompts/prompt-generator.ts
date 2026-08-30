@@ -2,6 +2,8 @@ import { Event, JobMode } from "../events/events";
 import { LLM } from "../llm/llm";
 import { comfyClient } from "../comfyui/comfyui-client";
 import { Presets, StylePresets } from "../styles/presets";
+import { Styles } from "../styles/styles";
+import { StylePrompt } from "../styles/system";
 import { ImageGenerator } from "../image/image-generator";
 import { VideoGenerator } from "../video/video-generator";
 import { Logger } from "../logger/logger";
@@ -68,37 +70,92 @@ Return structured data only.
     return `Job ${Date.now()}`;
   }
 
-  async function styled_image_prompt(message: string, preset?: Presets) {
-    const styleFn = preset
-      ? StylePresets.presets[preset]
-      : StylePresets.presets[Presets.SYSTEM];
-
-    const { instructions, lora } = styleFn({ title: message });
-
-    const res = await LLM.message(
-      `Create excellent image prompt(s) based on these instructions:
+  async function styled_image_prompt(message: string, preset?: string) {
+    // Handle "none" as explicit no-style
+    if (!preset || preset === Presets.NONE || preset === "none") {
+      const { instructions, lora } = StylePresets.presets[Presets.NONE]({ title: message });
+      const resNone = await LLM.message(
+        `Create excellent image prompt(s) based on these instructions:
 
 ${instructions}
 
 Make sure to only include the actual image prompt in your response and nothing more!
 `,
-    );
+      );
+      if (resNone === null || !resNone.content || resNone.content.trim() === "") {
+        Logger.warn("Failed to generate image prompt - skipping");
+        return null;
+      }
+      return { prompt: resNone.content.trim(), lora };
+    }
 
-    if (res === null || !res.content || res.content.trim() === "") {
+    // Try hardcoded presets first
+    if (preset && (preset as Presets) in StylePresets.presets) {
+      const styleFn = StylePresets.presets[preset as Presets];
+      const { instructions, lora } = styleFn({ title: message });
+      const res = await LLM.message(
+        `Create excellent image prompt(s) based on these instructions:
+
+${instructions}
+
+Make sure to only include the actual image prompt in your response and nothing more!
+`,
+      );
+      if (res === null || !res.content || res.content.trim() === "") {
+        Logger.warn("Failed to generate image prompt - skipping");
+        return null;
+      }
+      return { prompt: res.content.trim(), lora };
+    }
+
+    // Dynamic DB preset fallback
+    const row = preset ? await DB.StylePresets.findByName(preset) : null;
+    if (row) {
+      const styles: string[] = JSON.parse(row.styles_json) as string[];
+      const style = {
+        primary: row.primary_style,
+        secondary: row.secondary_trigger ?? undefined,
+        styles,
+        texture: row.texture ?? "",
+      };
+      const instructions = StylePrompt.system({ style, title: message });
+      const res = await LLM.message(
+        `Create excellent image prompt(s) based on these instructions:
+
+${instructions}
+
+Make sure to only include the actual image prompt in your response and nothing more!
+`,
+      );
+      if (res === null || !res.content || res.content.trim() === "") {
+        Logger.warn("Failed to generate image prompt - skipping");
+        return null;
+      }
+      // DB presets don't carry single lora; loras are handled via explicit selection
+      return { prompt: res.content.trim(), lora: undefined };
+    }
+
+    // Fallback to system
+    const { instructions: fallbackInstructions, lora: fallbackLora } = StylePresets.presets[Presets.SYSTEM]({ title: message });
+    const fallbackRes = await LLM.message(
+      `Create excellent image prompt(s) based on these instructions:
+
+${fallbackInstructions}
+
+Make sure to only include the actual image prompt in your response and nothing more!
+`,
+    );
+    if (fallbackRes === null || !fallbackRes.content || fallbackRes.content.trim() === "") {
       Logger.warn("Failed to generate image prompt - skipping");
       return null;
     }
-
-    return {
-      prompt: res.content.trim(),
-      lora,
-    };
+    return { prompt: fallbackRes.content.trim(), lora: fallbackLora };
   }
 
   export async function txt_to_img_prompt(
     message: string,
     batchSize = 1,
-    preset?: Presets,
+    preset?: string,
   ) {
     const prompts = [];
 
@@ -117,7 +174,7 @@ Make sure to only include the actual image prompt in your response and nothing m
     jobId: string,
     mode: JobMode,
     message: string,
-    preset?: Presets,
+    preset?: string,
     index?: number,
     id?: string,
     loras?: { name: string; strength: number }[],
