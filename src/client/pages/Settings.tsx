@@ -190,46 +190,6 @@ export default function Settings() {
             <div class="card-body p-5 sm:p-6">
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h2 class="card-title text-base">Style Presets <span class="badge badge-primary badge-sm font-normal">{presets().length}</span></h2>
-                  <p class="text-xs opacity-60 mt-1">Curated from mflux-forge · primary_style + trigger + styles + texture</p>
-                </div>
-                <button class="btn btn-primary btn-sm gap-1" onClick={openNew}>＋ New preset</button>
-              </div>
-              <div class="divider my-3" />
-              <div class="overflow-x-auto rounded-box border border-base-300">
-                <table class="table table-sm table-zebra table-pin-rows">
-                  <thead><tr class="bg-base-200/60"><th class="text-xs">Name</th><th class="text-xs">Primary</th><th class="text-xs">Trigger</th><th class="text-xs">Styles</th><th class="text-xs">Texture</th><th class="text-xs text-right">Actions</th></tr></thead>
-                  <tbody>
-                    <For each={presets()}>
-                      {(p) => (
-                        <tr class="hover">
-                          <td><span class="font-mono text-xs font-medium">{p.name}</span><Show when={p.description}><div class="text-[11px] opacity-50 truncate max-w-[220px]">{p.description}</div></Show></td>
-                          <td><span class="badge badge-ghost badge-sm text-xs">{p.primary_style}</span></td>
-                          <td><Show when={p.secondary_trigger} fallback={<span class="opacity-30 text-xs">-</span>}><span class="badge badge-outline badge-sm max-w-[160px] truncate">{p.secondary_trigger}</span></Show></td>
-                          <td><span class="badge badge-soft badge-sm">{p.styles.length} styles</span></td>
-                          <td><Show when={p.texture} fallback={<span class="opacity-30 text-xs">-</span>}><span class="tooltip" data-tip={p.texture}><span class="badge badge-ghost badge-sm max-w-[160px] truncate">{p.texture!.slice(0,28)}</span></span></Show></td>
-                          <td>
-                            <div class="flex gap-1 justify-end">
-                              <button class="btn btn-xs btn-ghost border border-base-300" onClick={() => openEdit(p)}>Edit</button>
-                              <button class="btn btn-xs btn-error btn-soft" onClick={() => deletePreset(p.id)}>Del</button>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </For>
-                  </tbody>
-                </table>
-                <Show when={presets().length===0}><div class="p-8 text-center text-sm opacity-60">No presets yet. Create one.</div></Show>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex flex-col gap-6">
-          <div class="card bg-base-100 shadow-xl border border-base-300">
-            <div class="card-body p-5 sm:p-6">
-              <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
                   <h2 class="card-title text-base">LoRAs <span class="badge badge-ghost badge-sm">{loras().length} saved</span> <span class="badge badge-success badge-sm badge-soft">{loras().filter(l=>l.is_active).length} active</span></h2>
                   <p class="text-xs opacity-60 mt-1">Saved from ComfyUI · drag to reorder · order matters for stacking · toggle active to hide from creation views</p>
                 </div>
@@ -267,6 +227,46 @@ export default function Settings() {
                   )}
                 </For>
                 <Show when={loras().length === 0}><div class="text-sm opacity-60 py-6 text-center border border-dashed border-base-300 rounded-box">No loras in DB. Sync from ComfyUI.</div></Show>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-6">
+          <div class="card bg-base-100 shadow-xl border border-base-300">
+            <div class="card-body p-5 sm:p-6">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 class="card-title text-base">Style Presets <span class="badge badge-primary badge-sm font-normal">{presets().length}</span></h2>
+                  <p class="text-xs opacity-60 mt-1">Curated from mflux-forge · primary_style + trigger + styles + texture</p>
+                </div>
+                <button class="btn btn-primary btn-sm gap-1" onClick={openNew}>＋ New preset</button>
+              </div>
+              <div class="divider my-3" />
+              <div class="overflow-x-auto rounded-box border border-base-300">
+                <table class="table table-sm table-zebra table-pin-rows">
+                  <thead><tr class="bg-base-200/60"><th class="text-xs">Name</th><th class="text-xs">Primary</th><th class="text-xs">Trigger</th><th class="text-xs">Styles</th><th class="text-xs">Texture</th><th class="text-xs text-right">Actions</th></tr></thead>
+                  <tbody>
+                    <For each={presets()}>
+                      {(p) => (
+                        <tr class="hover">
+                          <td><span class="font-mono text-xs font-medium">{p.name}</span><Show when={p.description}><div class="text-[11px] opacity-50 truncate max-w-[220px]">{p.description}</div></Show></td>
+                          <td><span class="badge badge-ghost badge-sm text-xs">{p.primary_style}</span></td>
+                          <td><Show when={p.secondary_trigger} fallback={<span class="opacity-30 text-xs">-</span>}><span class="badge badge-outline badge-sm max-w-[160px] truncate">{p.secondary_trigger}</span></Show></td>
+                          <td><span class="badge badge-soft badge-sm">{p.styles.length} styles</span></td>
+                          <td><Show when={p.texture} fallback={<span class="opacity-30 text-xs">-</span>}><span class="tooltip" data-tip={p.texture}><span class="badge badge-ghost badge-sm max-w-[160px] truncate">{p.texture!.slice(0,28)}</span></span></Show></td>
+                          <td>
+                            <div class="flex gap-1 justify-end">
+                              <button class="btn btn-xs btn-ghost border border-base-300" onClick={() => openEdit(p)}>Edit</button>
+                              <button class="btn btn-xs btn-error btn-soft" onClick={() => deletePreset(p.id)}>Del</button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </For>
+                  </tbody>
+                </table>
+                <Show when={presets().length===0}><div class="p-8 text-center text-sm opacity-60">No presets yet. Create one.</div></Show>
               </div>
             </div>
           </div>
