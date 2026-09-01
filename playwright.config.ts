@@ -13,7 +13,7 @@ export default defineConfig({
     headless: true,
   },
   webServer: {
-    command: "bunx vite build --emptyOutDir && bun src/main.ts",
+    command: "bun run build && bun src/main.ts",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

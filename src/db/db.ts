@@ -108,15 +108,20 @@ type InsertJob = CreateJob & {
 };
 
 export namespace DB {
-  const dbPath = Bun.env.DB_PATH ?? "data/silicon-seeds.sqlite";
+  const dbPath = (Bun.env.DB_PATH?.trim() || "data/silicon-seeds.sqlite").trim();
   try {
     mkdirSync(dirname(dbPath), { recursive: true });
-  } catch {}
+  } catch (e) {
+    // let Database throw with clearer context if parent dir uncreatable
+    console.error(`[DB] mkdir failed for ${dirname(dbPath)}:`, e);
+  }
   try {
     if (!existsSync(dbPath) && existsSync("silicon-seeds.sqlite")) {
       copyFileSync("silicon-seeds.sqlite", dbPath);
     }
-  } catch {}
+  } catch (e) {
+    console.error(`[DB] legacy migration failed:`, e);
+  }
 
   export const db = new Kysely<DbSchema>({
     dialect: new BunSqliteDialect({
