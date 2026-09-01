@@ -3,6 +3,8 @@ import { BunSqliteDialect } from "kysely-bun-sqlite";
 import { Database } from "bun:sqlite";
 import { Generated } from "kysely";
 import { Metadata } from "../meta/meta";
+import { mkdirSync, existsSync, copyFileSync } from "node:fs";
+import { dirname } from "node:path";
 import {
   Event,
   JobEvent,
@@ -106,9 +108,19 @@ type InsertJob = CreateJob & {
 };
 
 export namespace DB {
+  const dbPath = Bun.env.DB_PATH ?? "data/silicon-seeds.sqlite";
+  try {
+    mkdirSync(dirname(dbPath), { recursive: true });
+  } catch {}
+  try {
+    if (!existsSync(dbPath) && existsSync("silicon-seeds.sqlite")) {
+      copyFileSync("silicon-seeds.sqlite", dbPath);
+    }
+  } catch {}
+
   export const db = new Kysely<DbSchema>({
     dialect: new BunSqliteDialect({
-      database: new Database("silicon-seeds.sqlite"),
+      database: new Database(dbPath),
     }),
   });
 
