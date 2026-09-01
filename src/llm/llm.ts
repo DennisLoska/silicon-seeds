@@ -7,17 +7,31 @@ const llmClient = new LMStudioClient();
 const LLM_MODEL = Bun.env.LLM_MODEL;
 Utils.assert(LLM_MODEL, "LLM_MODEL variable missing");
 
-const llmModel = await llmClient.llm.model(LLM_MODEL);
+let llmModel: Awaited<ReturnType<typeof llmClient.llm.model>> | null = null;
+try {
+  if (LLM_MODEL) llmModel = await llmClient.llm.model(LLM_MODEL);
+} catch (e) {
+  Logger.warn("LMStudio LLM model not available (ok in test/CI)", e);
+}
 
 const EMBEDDING_MODEL = Bun.env.EMBEDDING_MODEL;
 Utils.assert(EMBEDDING_MODEL, "EMBEDDING_MODEL variable missing");
-const embeddingModel = await llmClient.embedding.model(EMBEDDING_MODEL);
+let embeddingModel: Awaited<ReturnType<typeof llmClient.embedding.model>> | null = null;
+try {
+  if (EMBEDDING_MODEL) embeddingModel = await llmClient.embedding.model(EMBEDDING_MODEL);
+} catch (e) {
+  Logger.warn("LMStudio embedding model not available (ok in test/CI)", e);
+}
 
 export namespace LLM {
   export const client = llmClient;
   const MAX_TOKENS = 10_000;
 
   export async function message(msg: string, images?: FileHandle[]) {
+    if (!llmModel) {
+      Logger.warn("LLM model not loaded, skipping message");
+      return null;
+    }
     try {
       if (images) {
         return await llmModel.respond(
@@ -37,6 +51,10 @@ export namespace LLM {
   }
 
   export async function image_prompt_list(msg: string, amount: number) {
+    if (!llmModel) {
+      Logger.warn("LLM model not loaded, skipping image_prompt_list");
+      return null;
+    }
     const mapSchema: Record<string, z.ZodString> = {};
     for (let i = 0; i < amount; i++) {
       if (!mapSchema[i]) mapSchema[i] = z.string();
@@ -60,6 +78,10 @@ export namespace LLM {
     msg: string,
     schema: T,
   ) {
+    if (!llmModel) {
+      Logger.warn("LLM model not loaded, skipping structured");
+      return null;
+    }
     try {
       return (await llmModel.respond(msg, {
         structured: schema,
@@ -72,6 +94,10 @@ export namespace LLM {
   }
 
   export async function generateEmbedding(text: string): Promise<number[]> {
+    if (!embeddingModel) {
+      Logger.warn("Embedding model not loaded, returning empty embedding");
+      return [];
+    }
     const result = await embeddingModel.embed(text);
     return result.embedding;
   }

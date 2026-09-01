@@ -36,6 +36,17 @@ jobs:
         run: bunx playwright test
         env:
           CI: true
+          COMFYUI_BASE_URL: http://127.0.0.1:8188
+          COMFYUI_BASE_WS: ws://127.0.0.1:8188
+          OUTPUT_DIR: /tmp/comfy_output
+          INPUT_DIR: /tmp/comfy_input
+          CONTENT_LIBRARY_DIR: /tmp/content_library
+          LLM_MODEL: qwen3.6-35b-a3b
+          EMBEDDING_MODEL: text-embedding-qwen3-embedding-8b
+          CHROMADB_HOST: 127.0.0.1
+          CHROMADB_PORT: 8000
+          VOICEBOX_URL: http://127.0.0.1:17493
+          LOG_LEVEL: info
 
       - name: Upload Playwright report on failure
         if: failure()
