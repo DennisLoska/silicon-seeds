@@ -3,6 +3,8 @@ import { BunSqliteDialect } from "kysely-bun-sqlite";
 import { Database } from "bun:sqlite";
 import { Generated } from "kysely";
 import { Metadata } from "../meta/meta";
+import { mkdirSync, existsSync, copyFileSync } from "node:fs";
+import { dirname } from "node:path";
 import {
   Event,
   JobEvent,
@@ -106,9 +108,24 @@ type InsertJob = CreateJob & {
 };
 
 export namespace DB {
+  const dbPath = (Bun.env.DB_PATH?.trim() || "data/silicon-seeds.sqlite").trim();
+  try {
+    mkdirSync(dirname(dbPath), { recursive: true });
+  } catch (e) {
+    // let Database throw with clearer context if parent dir uncreatable
+    console.error(`[DB] mkdir failed for ${dirname(dbPath)}:`, e);
+  }
+  try {
+    if (!existsSync(dbPath) && existsSync("silicon-seeds.sqlite")) {
+      copyFileSync("silicon-seeds.sqlite", dbPath);
+    }
+  } catch (e) {
+    console.error(`[DB] legacy migration failed:`, e);
+  }
+
   export const db = new Kysely<DbSchema>({
     dialect: new BunSqliteDialect({
-      database: new Database("silicon-seeds.sqlite"),
+      database: new Database(dbPath),
     }),
   });
 

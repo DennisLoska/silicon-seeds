@@ -25,11 +25,16 @@
     "db:rollback": "bun src/db/rollback.ts",
     "db:chroma": "bunx chroma run --path /home/dennis/content_library/chroma-data --host 127.0.0.1 --port 8000",
     "lint": "eslint .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "vite build",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui"
   },
   "private": true,
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/bun": "latest",
     "@typescript-eslint/eslint-plugin": "^8.57.1",

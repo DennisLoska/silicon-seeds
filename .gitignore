@@ -141,8 +141,11 @@ vite.config.ts.timestamp-*
 .openspec/
 .opencode/
 
-# SQLite database (optional - uncomment if you want to ignore it)
+# SQLite database
+data/
+!data/.gitkeep
 silicon-seeds.sqlite
+data.db
 
 # Opencode
 docs/
@@ -160,3 +163,4 @@ chroma-data/
 
 # AI stuff
 .oneshot-state
+test-results
