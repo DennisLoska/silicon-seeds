@@ -12,6 +12,7 @@ function StatusBadge(props: { status: string }) {
     failed: { cls: "badge-error", label: "Failed" },
     cancelled: { cls: "badge-neutral", label: "Cancelled" },
     active: { cls: "badge-warning", label: "Active" },
+    paused: { cls: "badge-info", label: "Paused" },
   };
   const v = () => map[props.status] ?? map.active;
   return <span class={`badge badge-sm ${v().cls}`}>{v().label}</span>;
@@ -69,6 +70,7 @@ export default function Jobs() {
     if (f === "complete") return list.filter((j) => j.status === "complete");
     if (f === "failed") return list.filter((j) => j.status === "failed");
     if (f === "cancelled") return list.filter((j) => j.status === "cancelled");
+    if (f === "paused") return list.filter((j) => j.status === "paused");
     if (f === "recent") return [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5);
     return [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   };
@@ -144,7 +146,7 @@ export default function Jobs() {
             <button class="btn btn-sm" onClick={(e) => { e.stopPropagation(); setFilterOpen(!filterOpen()); }} aria-haspopup="menu" aria-expanded={filterOpen() ? "true" : "false"}>{filter() === "all" ? "All" : filter().charAt(0).toUpperCase() + filter().slice(1)}</button>
             <Show when={filterOpen()}>
               <ul class="absolute left-0 top-full mt-1 z-20 menu p-2 shadow-lg bg-base-200 rounded-box w-52 border border-base-300">
-                <For each={["all", "recent", "active", "complete", "failed", "cancelled"]}>
+                <For each={["all", "recent", "active", "complete", "failed", "cancelled", "paused"]}>
                   {(f) => (
                     <li>
                       <a classList={{ "active": filter() === f }} onClick={() => { setSearch({ filter: f, job_id: selectedId(), tab: tab() }); setFilterOpen(false); }}>{f.charAt(0).toUpperCase() + f.slice(1)}</a>
@@ -208,8 +210,16 @@ export default function Jobs() {
                     <div class="space-y-8">
                       <header class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div>
-                          <h2 class="text-3xl font-extrabold tracking-tight">Status <span class={`badge badge-lg ${j().status === "complete" ? "badge-success" : j().status === "failed" ? "badge-error" : j().status === "cancelled" ? "badge-neutral" : "badge-warning"}`}>{j().status}</span></h2>
+                          <h2 class="text-3xl font-extrabold tracking-tight">Status <span class={`badge badge-lg ${j().status === "complete" ? "badge-success" : j().status === "failed" ? "badge-error" : j().status === "cancelled" ? "badge-neutral" : j().status === "paused" ? "badge-info" : "badge-warning"}`}>{j().status}</span></h2>
                           <p class="text-base-content/60 mt-1">Detailed overview of job execution and configuration.</p>
+                        </div>
+                        <div class="flex gap-2 shrink-0">
+                          <Show when={j().status === "active"}>
+                            <button class="btn btn-sm btn-warning" onClick={async () => { await fetch(`/api/jobs/${j().id}/pause`, { method: "POST" }); refetchJobs(); refetchJobDetail(); }}>Pause</button>
+                          </Show>
+                          <Show when={j().status === "paused"}>
+                            <button class="btn btn-sm btn-success" onClick={async () => { await fetch(`/api/jobs/${j().id}/resume`, { method: "POST" }); refetchJobs(); refetchJobDetail(); }}>Resume</button>
+                          </Show>
                         </div>
                       </header>
                       <div class="card bg-base-100 shadow-sm">

@@ -16,6 +16,7 @@ export enum JobLifecycleStatus {
   Complete = "complete",
   Failed = "failed",
   Cancelled = "cancelled",
+  Paused = "paused",
 }
 
 export enum JobStatus {

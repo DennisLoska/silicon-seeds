@@ -12,6 +12,8 @@ import { text_to_instrumental } from "./text-to-instrumental";
 import { text_to_audio } from "./text-to-audio";
 import { delete_job } from "./delete";
 import { cancel_job } from "./cancel";
+import { pause_job } from "./pause";
+import { resume_job } from "./resume";
 import { regenerate_event } from "./regenerate";
 import { tts_profiles, tts_profiles_options } from "./tts";
 import settingsRoutes from "../settings";
@@ -110,6 +112,16 @@ app.post("/jobs/:job_id/cancel", async (c) => {
     filter: c.req.query("filter") ?? undefined,
     tab: c.req.query("tab") ?? undefined,
   });
+});
+
+app.post("/jobs/:job_id/pause", async (c) => {
+  const jobId = c.req.param("job_id");
+  return pause_job(c, jobId);
+});
+
+app.post("/jobs/:job_id/resume", async (c) => {
+  const jobId = c.req.param("job_id");
+  return resume_job(c, jobId);
 });
 
 app.post("/jobs/:job_id/events/:event_id/regenerate", async (c) => {

@@ -305,6 +305,83 @@ export namespace DB {
       return result;
     }
 
+    export async function pauseJob(id: string): Promise<CancelJobResult> {
+      const result = await db.transaction().execute(async (trx) => {
+        const job = await trx
+          .selectFrom("jobs")
+          .selectAll()
+          .where("id", "=", id)
+          .executeTakeFirstOrThrow();
+
+        if (job.status !== JobLifecycleStatus.Active) {
+          const err: any = new Error(`cannot pause job in status ${job.status}`);
+          err.status = 409;
+          throw err;
+        }
+
+        const events = await trx
+          .selectFrom("events")
+          .select(["id", "status"])
+          .where("job_id", "=", id)
+          .execute();
+
+        const runningPromptId =
+          events.find((event) => event.status === JobStatus.Running)?.id ?? null;
+        const pendingPromptIds = events
+          .filter((event) => event.status === JobStatus.Pending)
+          .map((event) => event.id);
+
+        await trx
+          .updateTable("jobs")
+          .set({ status: JobLifecycleStatus.Paused })
+          .where("id", "=", id)
+          .execute();
+
+        await trx
+          .updateTable("events")
+          .set({
+            status: JobStatus.Pending,
+            claimed_at: null,
+          })
+          .where("job_id", "=", id)
+          .where("status", "=", JobStatus.Running)
+          .execute();
+
+        return {
+          job: { ...job, status: JobLifecycleStatus.Paused } as JobsSchema,
+          runningPromptId,
+          pendingPromptIds,
+        };
+      });
+
+      notifyJob(id);
+      return result;
+    }
+
+    export async function resumeJob(id: string): Promise<JobsSchema> {
+      const job = await db
+        .selectFrom("jobs")
+        .selectAll()
+        .where("id", "=", id)
+        .executeTakeFirstOrThrow();
+
+      if (job.status !== JobLifecycleStatus.Paused) {
+        const err: any = new Error(`cannot resume job in status ${job.status}`);
+        err.status = 409;
+        throw err;
+      }
+
+      const updated = await db
+        .updateTable("jobs")
+        .set({ status: JobLifecycleStatus.Active })
+        .where("id", "=", id)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+
+      notifyJob(id);
+      return updated;
+    }
+
     export async function failBrokenJobs() {
       const brokenJobs = await db
         .selectFrom("jobs")
