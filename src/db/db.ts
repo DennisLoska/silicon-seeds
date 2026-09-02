@@ -433,12 +433,7 @@ export namespace DB {
         .select("jobs.id")
         .distinct()
         .where("jobs.status", "=", JobLifecycleStatus.Active)
-        .where((eb) =>
-          eb.or([
-            eb("events.status", "=", JobStatus.Pending),
-            eb("events.status", "=", JobStatus.Running),
-          ]),
-        )
+        .where("events.status", "=", JobStatus.Running)
         .execute();
 
       for (const job of brokenJobs) {
