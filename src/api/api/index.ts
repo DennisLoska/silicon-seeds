@@ -14,6 +14,7 @@ import { delete_job } from "./delete";
 import { cancel_job } from "./cancel";
 import { pause_job } from "./pause";
 import { resume_job } from "./resume";
+import { retry_job } from "./retry";
 import { regenerate_event } from "./regenerate";
 import { tts_profiles, tts_profiles_options } from "./tts";
 import settingsRoutes from "../settings";
@@ -122,6 +123,11 @@ app.post("/jobs/:job_id/pause", async (c) => {
 app.post("/jobs/:job_id/resume", async (c) => {
   const jobId = c.req.param("job_id");
   return resume_job(c, jobId);
+});
+
+app.post("/jobs/:job_id/retry", async (c) => {
+  const jobId = c.req.param("job_id");
+  return retry_job(c, jobId);
 });
 
 app.post("/jobs/:job_id/events/:event_id/regenerate", async (c) => {

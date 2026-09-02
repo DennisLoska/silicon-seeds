@@ -220,6 +220,9 @@ export default function Jobs() {
                           <Show when={j().status === "paused"}>
                             <button class="btn btn-sm btn-success" onClick={async () => { await fetch(`/api/jobs/${j().id}/resume`, { method: "POST" }); refetchJobs(); refetchJobDetail(); }}>Resume</button>
                           </Show>
+                          <Show when={j().status === "failed"}>
+                            <button class="btn btn-sm btn-error" onClick={async () => { await fetch(`/api/jobs/${j().id}/retry`, { method: "POST" }); refetchJobs(); refetchJobDetail(); }}>Retry</button>
+                          </Show>
                         </div>
                       </header>
                       <div class="card bg-base-100 shadow-sm">

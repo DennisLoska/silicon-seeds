@@ -382,6 +382,50 @@ export namespace DB {
       return updated;
     }
 
+    export async function retryJob(id: string): Promise<JobsSchema> {
+      const result = await db.transaction().execute(async (trx) => {
+        const job = await trx
+          .selectFrom("jobs")
+          .selectAll()
+          .where("id", "=", id)
+          .executeTakeFirstOrThrow();
+
+        if (job.status !== JobLifecycleStatus.Failed) {
+          const err: any = new Error(`cannot retry job in status ${job.status}`);
+          err.status = 409;
+          throw err;
+        }
+
+        await trx
+          .updateTable("jobs")
+          .set({ status: JobLifecycleStatus.Active })
+          .where("id", "=", id)
+          .execute();
+
+        await trx
+          .updateTable("events")
+          .set({
+            status: JobStatus.Pending,
+            claimed_at: null,
+            error: null,
+          })
+          .where("job_id", "=", id)
+          .where("status", "=", JobStatus.Failed)
+          .execute();
+
+        const updated = await trx
+          .selectFrom("jobs")
+          .selectAll()
+          .where("id", "=", id)
+          .executeTakeFirstOrThrow();
+
+        return updated;
+      });
+
+      notifyJob(id);
+      return result;
+    }
+
     export async function failBrokenJobs() {
       const brokenJobs = await db
         .selectFrom("jobs")
