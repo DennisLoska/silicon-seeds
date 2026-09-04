@@ -305,6 +305,127 @@ export namespace DB {
       return result;
     }
 
+    export async function pauseJob(id: string): Promise<CancelJobResult> {
+      const result = await db.transaction().execute(async (trx) => {
+        const job = await trx
+          .selectFrom("jobs")
+          .selectAll()
+          .where("id", "=", id)
+          .executeTakeFirstOrThrow();
+
+        if (job.status !== JobLifecycleStatus.Active) {
+          const err: any = new Error(`cannot pause job in status ${job.status}`);
+          err.status = 409;
+          throw err;
+        }
+
+        const events = await trx
+          .selectFrom("events")
+          .select(["id", "status"])
+          .where("job_id", "=", id)
+          .execute();
+
+        const runningPromptId =
+          events.find((event) => event.status === JobStatus.Running)?.id ?? null;
+        const pendingPromptIds = events
+          .filter((event) => event.status === JobStatus.Pending)
+          .map((event) => event.id);
+
+        await trx
+          .updateTable("jobs")
+          .set({ status: JobLifecycleStatus.Paused })
+          .where("id", "=", id)
+          .execute();
+
+        await trx
+          .updateTable("events")
+          .set({
+            status: JobStatus.Pending,
+            claimed_at: null,
+          })
+          .where("job_id", "=", id)
+          .where("status", "=", JobStatus.Running)
+          .execute();
+
+        return {
+          job: { ...job, status: JobLifecycleStatus.Paused } as JobsSchema,
+          runningPromptId,
+          pendingPromptIds,
+        };
+      });
+
+      notifyJob(id);
+      return result;
+    }
+
+    export async function resumeJob(id: string): Promise<JobsSchema> {
+      const job = await db
+        .selectFrom("jobs")
+        .selectAll()
+        .where("id", "=", id)
+        .executeTakeFirstOrThrow();
+
+      if (job.status !== JobLifecycleStatus.Paused) {
+        const err: any = new Error(`cannot resume job in status ${job.status}`);
+        err.status = 409;
+        throw err;
+      }
+
+      const updated = await db
+        .updateTable("jobs")
+        .set({ status: JobLifecycleStatus.Active })
+        .where("id", "=", id)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+
+      notifyJob(id);
+      return updated;
+    }
+
+    export async function retryJob(id: string): Promise<JobsSchema> {
+      const result = await db.transaction().execute(async (trx) => {
+        const job = await trx
+          .selectFrom("jobs")
+          .selectAll()
+          .where("id", "=", id)
+          .executeTakeFirstOrThrow();
+
+        if (job.status !== JobLifecycleStatus.Failed) {
+          const err: any = new Error(`cannot retry job in status ${job.status}`);
+          err.status = 409;
+          throw err;
+        }
+
+        await trx
+          .updateTable("jobs")
+          .set({ status: JobLifecycleStatus.Active })
+          .where("id", "=", id)
+          .execute();
+
+        await trx
+          .updateTable("events")
+          .set({
+            status: JobStatus.Pending,
+            claimed_at: null,
+            error: null,
+          })
+          .where("job_id", "=", id)
+          .where("status", "=", JobStatus.Failed)
+          .execute();
+
+        const updated = await trx
+          .selectFrom("jobs")
+          .selectAll()
+          .where("id", "=", id)
+          .executeTakeFirstOrThrow();
+
+        return updated;
+      });
+
+      notifyJob(id);
+      return result;
+    }
+
     export async function failBrokenJobs() {
       const brokenJobs = await db
         .selectFrom("jobs")
@@ -312,12 +433,7 @@ export namespace DB {
         .select("jobs.id")
         .distinct()
         .where("jobs.status", "=", JobLifecycleStatus.Active)
-        .where((eb) =>
-          eb.or([
-            eb("events.status", "=", JobStatus.Pending),
-            eb("events.status", "=", JobStatus.Running),
-          ]),
-        )
+        .where("events.status", "=", JobStatus.Running)
         .execute();
 
       for (const job of brokenJobs) {
