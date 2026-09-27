@@ -5,6 +5,42 @@ export type { TTSVoice, TTSGenerateOptions, TTSGenerateResult };
 
 const VOICEBOX_URL = Bun.env.VOICEBOX_URL ?? "http://127.0.0.1:17493";
 
+// Every Voicebox fetch AND its body read share one AbortController, so a slow
+// or stalled body (res.json()/res.blob()) cannot hang dispatch forever. A
+// stuck speech dispatch holds the global single-slot queue (hasRunning gate),
+// wedging all pending events. Keep every call site bounded.
+async function fetchJsonWithTimeout<T>(
+  url: string,
+  init: RequestInit,
+  ms: number,
+): Promise<{ res: Response; data: T }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(url, { ...init, signal: controller.signal });
+    const data = (await res.json()) as T;
+    return { res, data };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchBlobWithTimeout(
+  url: string,
+  init: RequestInit,
+  ms: number,
+): Promise<{ res: Response; blob: Blob }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(url, { ...init, signal: controller.signal });
+    const blob = await res.blob();
+    return { res, blob };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function mapProfile(raw: Record<string, unknown>): TTSVoice {
   return {
     id: raw.id as string,
@@ -87,31 +123,27 @@ export namespace TTS {
       ? voiceId.split(":")[1]
       : undefined;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
-    let res: Response;
-    try {
-      res = await fetch(`${VOICEBOX_URL}/generate`, {
+    const { res, data: gen } = await fetchJsonWithTimeout<
+      Record<string, unknown>
+    >(
+      `${VOICEBOX_URL}/generate`,
+      {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
         body: JSON.stringify({
           profile_id: profileId,
           text: text.slice(0, 4000),
           language: language ?? "en",
           ...(engine ? { engine } : {}),
         }),
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
+      },
+      15000,
+    );
     if (!res.ok) {
       throw new Error(`Voicebox generate failed: ${res.status}`);
     }
-
-    const gen = (await res.json()) as Record<string, unknown>;
-    const generationId = gen.id as string;
     const duration = (gen.duration as number) ?? 0;
+    const generationId = gen.id as string;
 
     const audioBlob = await waitForAudio(generationId);
     const outputDir = Bun.env.OUTPUT_DIR;
@@ -133,49 +165,53 @@ async function resolveProfileId(voiceId: string): Promise<string> {
 
   const profileName = `_preset_${presetVoiceId}`;
 
-  const existingRes = await fetch(`${VOICEBOX_URL}/profiles`);
-  if (existingRes.ok) {
-    const profiles = (await existingRes.json()) as {
+  const { res: existingRes, data: profiles } = await fetchJsonWithTimeout<
+    {
       id: string;
       name: string;
-    }[];
+    }[]
+  >(`${VOICEBOX_URL}/profiles`, {}, 10000);
+  if (existingRes.ok) {
     const match = profiles.find((p) => p.name === profileName);
     if (match) return match.id;
   }
 
-  const res = await fetch(`${VOICEBOX_URL}/profiles`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: profileName,
-      description: `Auto-imported preset: ${presetVoiceId}`,
-      language: "en",
-      voice_type: "preset",
-      preset_engine: engine,
-      preset_voice_id: presetVoiceId,
-    }),
-  });
+  const { res, data: profile } = await fetchJsonWithTimeout<{ id: string }>(
+    `${VOICEBOX_URL}/profiles`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: profileName,
+        description: `Auto-imported preset: ${presetVoiceId}`,
+        language: "en",
+        voice_type: "preset",
+        preset_engine: engine,
+        preset_voice_id: presetVoiceId,
+      }),
+    },
+    10000,
+  );
 
   if (!res.ok) {
     throw new Error(`Failed to create preset profile: ${res.status}`);
   }
 
-  const profile = (await res.json()) as { id: string };
   return profile.id;
 }
 
 async function waitForAudio(generationId: string): Promise<Blob> {
   for (let i = 0; i < 60; i++) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
     try {
-      const res = await fetch(`${VOICEBOX_URL}/audio/${generationId}`, { signal: controller.signal });
+      const { res, blob } = await fetchBlobWithTimeout(
+        `${VOICEBOX_URL}/audio/${generationId}`,
+        {},
+        5000,
+      );
       if (res.ok) {
-        const blob = await res.blob();
         if (blob.size > 100) return blob;
       }
     } catch {}
-    finally { clearTimeout(timeout); }
     await new Promise((r) => setTimeout(r, 1000));
   }
   throw new Error("Voicebox audio not ready after 60s");
