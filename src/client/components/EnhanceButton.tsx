@@ -97,8 +97,8 @@ export default function EnhanceButton(props: EnhanceButtonProps) {
 
   return (
     <>
-      <button type="button" class="btn btn-xs btn-ghost gap-1" onClick={run} disabled={loading()}>
-        <Show when={loading()} fallback={<SparkleIcon />}>
+      <button type="button" class="btn btn-xs btn-ghost gap-1 group" onClick={run} disabled={loading()}>
+        <Show when={loading()} fallback={<SparkleIcon class="w-3.5 h-3.5 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-125" />}>
           <span class="loading loading-spinner loading-xs" />
         </Show>
         {label()}
