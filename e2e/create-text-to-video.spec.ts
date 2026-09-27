@@ -2,8 +2,11 @@ import { test, expect } from "@playwright/test";
 
 test("create text-to-video loads without lora/preset, interacts without generating", async ({ page }) => {
   await page.goto("/create/text-to-video");
+
   await expect(page).toHaveURL(/\/create\/text-to-video/);
+
   await expect(page.locator("body")).toBeVisible({ timeout: 10000 });
+
   await expect(page.getByRole("heading").first()).toBeVisible({ timeout: 10000 });
 
   const prompt = page.locator('textarea[name="prompt"], #video-prompt').first();

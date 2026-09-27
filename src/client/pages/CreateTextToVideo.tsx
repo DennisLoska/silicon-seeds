@@ -95,6 +95,7 @@ export default function CreateTextToVideo() {
       <Show when={error()}>
         <div class="alert alert-error mb-4 text-sm"><span>{error()}</span></div>
       </Show>
+
       <form class="flex flex-col xl:flex-row gap-4 xl:flex-1 xl:min-h-0 xl:items-stretch" onSubmit={onSubmit} onReset={() => { setFps(16); setClipDuration(3); setError(null); }} enctype="multipart/form-data">
         <div class="flex flex-col gap-4 w-full xl:w-1/2 2xl:w-1/3 2xl:min-w-[500px] xl:min-h-0 overflow-hidden xl:self-stretch">
           <div class="card bg-base-100 shadow-xl flex flex-col overflow-hidden flex-1 min-h-0 xl:min-h-0">
@@ -103,6 +104,7 @@ export default function CreateTextToVideo() {
               <textarea name="prompt" id="video-prompt" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none" placeholder="Describe the video you want to generate... e.g. A serene mountain lake at sunrise, gentle mist, slow camera push in"></textarea>
             </div>
           </div>
+
           <div class="card bg-base-100 shadow-xl flex-none">
             <div class="card-body flex flex-col p-4">
               <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.PaintBrushIcon />Style Guide</h2>
@@ -110,6 +112,7 @@ export default function CreateTextToVideo() {
               <p class="text-xs text-base-content/60 mt-2">Defines stylistic coherence across generated video. Applied to prompt.</p>
             </div>
           </div>
+
           <Show when={showProgress() && jobId()}>
             <div class="card bg-base-100 shadow-xl w-full max-h-[calc(40vh-3rem)] overflow-y-auto flex-none flex flex-col">
               <div class="card-body flex flex-col p-4">
@@ -125,9 +128,11 @@ export default function CreateTextToVideo() {
                   <ul class="timeline timeline-compact timeline-vertical">
                     <For each={(eventsData()?.events as unknown as { id: string; type: string; status: string; prompt?: string | null; created_at: string }[]) ?? []}>
                       {(evt, idx) => {
+
                         const isComplete = () => evt.status === "complete";
                         const label = () => ({ new_text_prompt: "Text Prompt", new_image_prompt: "Image Prompt", new_video_prompt: "Video Prompt", new_video_composition: "Final Composition", new_transition_prompt: "Transition Prompt", new_audio_prompt: "Audio Prompt", NewTextPrompt: "Text Prompt", NewImagePrompt: "Image Prompt", NewVideoPrompt: "Video Prompt", NewVideoComposition: "Final Composition", NewTransitionPrompt: "Transition Prompt", NewAudioPrompt: "Audio Prompt" }[evt.type] ?? evt.type);
                         const icon = () => ({ new_text_prompt: "🖊️", new_image_prompt: "🖼️", new_video_prompt: "🎬", new_video_composition: "🏁", new_transition_prompt: "🔄", new_audio_prompt: "🎵", NewImagePrompt: "🖼️", NewVideoPrompt: "🎬", NewTextPrompt: "🖊️", NewAudioPrompt: "🎵", NewTransitionPrompt: "🔄", NewVideoComposition: "🏁" }[evt.type] ?? "📌");
+
                         return (
                           <li style="content-visibility:auto; contain-intrinsic-size: 200px 300px;">
                             {idx() !== 0 && <hr class={isComplete() ? "bg-success" : ""} />}
@@ -235,6 +240,7 @@ export default function CreateTextToVideo() {
               </div>
             </div>
           </Show>
+
           <Show when={showProgress() && jobId()}>
             <div class="card bg-base-100 shadow-xl w-full flex-1 flex flex-col overflow-hidden">
               <div class="card-body flex flex-1 flex-col min-h-0">

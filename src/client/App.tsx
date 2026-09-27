@@ -24,6 +24,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/jobs/:jobId"
         component={() => (
@@ -32,6 +33,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/gallery"
         component={() => (
@@ -40,6 +42,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/compose"
         component={() => (
@@ -48,6 +51,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/create/image"
         component={() => (
@@ -56,6 +60,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/create/audio"
         component={() => (
@@ -64,6 +69,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/create/video"
         component={() => (
@@ -72,6 +78,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/create/text-to-video"
         component={() => (
@@ -80,6 +87,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/settings"
         component={() => (
