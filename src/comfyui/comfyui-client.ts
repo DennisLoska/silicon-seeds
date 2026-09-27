@@ -124,17 +124,6 @@ export class ComfyUIClient {
     return response.json();
   }
 
-  async getQueue(): Promise<{
-    queue_running: unknown[];
-    queue_pending: unknown[];
-  }> {
-    const response = await fetch(`${this.baseUrl}/queue`);
-    if (!response.ok) {
-      throw new Error(`Failed to get queue status: ${response.statusText}`);
-    }
-    return response.json();
-  }
-
   async deleteQueuedPrompts(promptIds: string[]): Promise<boolean> {
     if (promptIds.length === 0) return true;
 
@@ -255,35 +244,6 @@ export class ComfyUIClient {
       Logger.error(`Freeing memory failed`);
       return false;
     }
-  }
-
-  async listLoras(): Promise<string[]> {
-    const candidates = [
-      `${this.baseUrl}/api/models/loras`,
-      `${this.baseUrl}/models/loras`,
-      `${this.baseUrl}/api/experiment/models/loras`,
-      `${this.baseUrl}/api/loras`,
-      `${this.baseUrl}/loras`,
-    ];
-    for (const url of candidates) {
-      try {
-        const res = await fetch(url);
-        if (!res.ok) continue;
-        const data: any = await res.json();
-        if (Array.isArray(data)) {
-          const names = data
-            .map((d: any) => {
-              if (typeof d === "string") return d;
-              return d.name ?? d.filename ?? d.path ?? "";
-            })
-            .filter(Boolean)
-            .map((n: string) => n.split("/").pop() ?? n);
-          if (names.length) return names;
-        }
-        if (data && Array.isArray((data as any).loras)) return (data as any).loras;
-      } catch {}
-    }
-    return [];
   }
 
   private buildLoraChain(api: Record<string, any>, loras: LoraSpec[]): Record<string, any> {

@@ -64,7 +64,3 @@ export function createTheme() {
 
 // direct singleton exports for Layout etc
 export { theme, setTheme };
-export const toggleTheme = () => setTheme((t) => {
-  const idx = THEMES.indexOf(t);
-  return THEMES[(idx + 1) % THEMES.length] as Theme;
-});

@@ -343,18 +343,6 @@ export namespace VideoGenerator {
     return names;
   }
 
-  export async function video_frames_for_asset(
-    jobId: string,
-    id: string,
-    filePath: string,
-  ) {
-    const names = await video_frames(id, filePath);
-    return names.map((name) => `${Bun.env.INPUT_DIR}/${name}`) as [
-      string,
-      string,
-    ];
-  }
-
   async function transition_prompt(first: string, second: string) {
     const instructions = `Here are two different prompts for generating videos based on images.
 
