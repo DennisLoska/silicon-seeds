@@ -77,7 +77,7 @@ export default function CreateAudio() {
               <p class="text-sm text-base-content/70">Shape the arrangement and lyric intent separately for the ACE Step 1.5 song workflow.</p>
             </div>
             <fieldset class="fieldset">
-              <div class="flex items-center justify-between"><span class="fieldset-legend">Instrumental Prompt</span><EnhanceButton textareaId="ca-inst" kind="instrumental" /></div>
+              <legend class="fieldset-legend flex w-full items-center justify-between">Instrumental Prompt<EnhanceButton textareaId="ca-inst" kind="instrumental" /></legend>
               <textarea id="ca-inst" name="instrumental_prompt" class="textarea textarea-ghost w-full resize-none min-h-[180px] focus:outline-none" placeholder="slow burn ambient pop, intimate piano, glassy synths, soft sub bass, restrained percussion, dusk atmosphere"></textarea>
               <p class="label text-xs opacity-60">Describe arrangement, instrumentation, groove, texture, and mood.</p>
             </fieldset>
