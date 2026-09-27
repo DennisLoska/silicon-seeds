@@ -77,7 +77,9 @@ export default function CreateTextToVideo() {
           navigate(`/create/text-to-video?show_progress=true&job_id=${j.jobId}`);
           setSearch({ show_progress: "true", job_id: j.jobId });
         }
-      } catch {}
+      } catch {
+        setError("Unexpected server response");
+      }
     } catch (err) {
       setError(String(err));
     } finally {
@@ -93,7 +95,7 @@ export default function CreateTextToVideo() {
       <Show when={error()}>
         <div class="alert alert-error mb-4 text-sm"><span>{error()}</span></div>
       </Show>
-      <form class="flex flex-col xl:flex-row gap-4 xl:flex-1 xl:min-h-0 xl:items-stretch" onSubmit={onSubmit} enctype="multipart/form-data">
+      <form class="flex flex-col xl:flex-row gap-4 xl:flex-1 xl:min-h-0 xl:items-stretch" onSubmit={onSubmit} onReset={() => { setFps(16); setClipDuration(3); setError(null); }} enctype="multipart/form-data">
         <div class="flex flex-col gap-4 w-full xl:w-1/2 2xl:w-1/3 2xl:min-w-[500px] xl:min-h-0 overflow-hidden xl:self-stretch">
           <div class="card bg-base-100 shadow-xl flex flex-col overflow-hidden flex-1 min-h-0 xl:min-h-0">
             <div class="card-body flex flex-col flex-1 p-4 min-h-0 xl:min-h-0">
