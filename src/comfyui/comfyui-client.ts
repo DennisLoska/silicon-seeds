@@ -81,6 +81,13 @@ const OUTPUT_DIR = Bun.env.OUTPUT_DIR;
 const INPUT_DIR = Bun.env.INPUT_DIR;
 const COMFYUI_BASE_URL = Bun.env.COMFYUI_BASE_URL;
 
+// Model-native output FPS. ComfyUI length params are frame counts, and each
+// model encodes at a fixed FPS, so duration math must use these, not job.fps
+// (the UI playback fps). Wan default workflow ships length 121 = 5*24+1,
+// LTX ships 121 frames at fps 25.
+const WAN_NATIVE_FPS = 24;
+const LTX_NATIVE_FPS = 25;
+
 Utils.assert(
   OUTPUT_DIR && INPUT_DIR && COMFYUI_BASE_URL,
   "ComfyUI env. variables not configured!",
@@ -414,7 +421,7 @@ export class ComfyUIClient {
         api["98"].inputs.width = resolution.width;
         api["98"].inputs.height = resolution.height;
         api["98"].inputs.length =
-          (job.clip_duration || 5) * (job.fps || 8) + 1;
+          (job.clip_duration || Metadata.CLIP_DURATION) * WAN_NATIVE_FPS + 1;
         api["108"].inputs.filename_prefix = input.id;
         api["97"].inputs.image = "dummy_t2v.png";
       }
@@ -425,7 +432,7 @@ export class ComfyUIClient {
         api["267:257"].inputs.value = resolution.width;
         api["267:258"].inputs.value = resolution.height;
         api["267:225"].inputs.value =
-          (job.clip_duration || 5) * (job.fps || 25) + 1;
+          (job.clip_duration || Metadata.CLIP_DURATION) * LTX_NATIVE_FPS + 1;
         if (api["267:201"]) api["267:201"].inputs.value = true;
         if (api["269"]) api["269"].inputs.image = "dummy_t2v.png";
         api["75"].inputs.filename_prefix = input.id;
@@ -439,9 +446,7 @@ export class ComfyUIClient {
         (api["98"] as any).inputs.width = resolution.width;
         (api["98"] as any).inputs.height = resolution.height;
         (api["98"] as any).inputs.length =
-          (job.clip_duration || Metadata.CLIP_DURATION) *
-            (job.fps || Metadata.FPS) +
-          1;
+          (job.clip_duration || Metadata.CLIP_DURATION) * WAN_NATIVE_FPS + 1;
         (api["108"] as any).inputs.filename_prefix = input.id;
         (api["97"] as any).inputs.image = input.imagePath;
       }
@@ -452,9 +457,7 @@ export class ComfyUIClient {
         (api["267:257"] as any).inputs.value = resolution.width;
         (api["267:258"] as any).inputs.value = resolution.height;
         (api["267:225"] as any).inputs.value =
-          (job.clip_duration || Metadata.CLIP_DURATION) *
-            (job.fps || Metadata.FPS) +
-          1;
+          (job.clip_duration || Metadata.CLIP_DURATION) * LTX_NATIVE_FPS + 1;
         (api["75"] as any).inputs.filename_prefix = input.id;
         (api["269"] as any).inputs.image = input.imagePath;
       }
@@ -539,7 +542,7 @@ export class ComfyUIClient {
         api["67"].inputs.height = resolution.height;
         api["67"].inputs.length =
           (job.transition_duration || Metadata.TRANSITION_DURATION) *
-            (job.fps || Metadata.FPS) +
+          WAN_NATIVE_FPS +
           1;
         api["62"].inputs.image = input.endImage;
         api["61"].inputs.filename_prefix = input.id;
