@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="readme/hero.png" alt="Silicon Seeds - silicon wafer sprouting seedlings, techno-organic fusion" width="100%" />
+  <img src="readme/hero.webp" alt="Silicon Seeds - silicon wafer sprouting seedlings, techno-organic fusion" width="100%" />
 </p>
 
 <h1 align="center">Silicon Seeds</h1>
@@ -49,7 +49,7 @@ Local generative media studio. Orchestrates **LM Studio** (text), **ComfyUI** (i
 
 Script + style guide + voice + LoRAs → speech → scenes → images → videos → transitions → concat. End-to-end pipeline in one click.
 
-<img src="readme/compose.png" alt="Compose view - script, style guide, models, LoRAs, voice" width="100%" />
+<img src="readme/compose.webp" alt="Compose view - script, style guide, models, LoRAs, voice" width="100%" />
 
 </td>
 <td width="50%">
@@ -58,7 +58,7 @@ Script + style guide + voice + LoRAs → speech → scenes → images → videos
 
 Defaults prefill new jobs. LoRAs synced from ComfyUI (drag to reorder, toggle active). 14 style presets curated from mflux-forge.
 
-<img src="readme/settings.png" alt="Settings view - defaults, LoRAs, style presets" width="100%" />
+<img src="readme/settings.webp" alt="Settings view - defaults, LoRAs, style presets" width="100%" />
 
 </td>
 </tr>
@@ -69,7 +69,7 @@ Defaults prefill new jobs. LoRAs synced from ComfyUI (drag to reorder, toggle ac
 
 Real-time job tracker with event stream, status tabs, and cancel / regenerate controls.
 
-<img src="readme/jobs.png" alt="Jobs view - live job status and event stream" width="100%" />
+<img src="readme/jobs.webp" alt="Jobs view - live job status and event stream" width="100%" />
 
 </td>
 <td width="50%">
@@ -78,7 +78,7 @@ Real-time job tracker with event stream, status tabs, and cancel / regenerate co
 
 Prompt + style preset + LoRA stack (0.1–2.0) + resolution. Z-Image-Turbo, 9 steps, instant preview.
 
-<img src="readme/create-image.png" alt="Create Image view - prompt, style, LoRAs" width="100%" />
+<img src="readme/create-image.webp" alt="Create Image view - prompt, style, LoRAs" width="100%" />
 
 </td>
 </tr>
@@ -89,7 +89,7 @@ Prompt + style preset + LoRA stack (0.1–2.0) + resolution. Z-Image-Turbo, 9 st
 
 Persistent gallery backed by `CONTENT_LIBRARY_DIR` + ChromaDB vector search. Every generation archived, searchable, reusable.
 
-<img src="readme/library.png" alt="Gallery view - content library" width="90%" />
+<img src="readme/library.webp" alt="Gallery view - content library" width="90%" />
 
 </td>
 </tr>
