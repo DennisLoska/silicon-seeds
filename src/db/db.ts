@@ -108,7 +108,9 @@ type InsertJob = CreateJob & {
 };
 
 export namespace DB {
-  const dbPath = (Bun.env.DB_PATH?.trim() || "data/silicon-seeds.sqlite").trim();
+  const dbPath = (
+    Bun.env.DB_PATH?.trim() || "data/silicon-seeds.sqlite"
+  ).trim();
   try {
     mkdirSync(dirname(dbPath), { recursive: true });
   } catch (e) {
@@ -314,7 +316,9 @@ export namespace DB {
           .executeTakeFirstOrThrow();
 
         if (job.status !== JobLifecycleStatus.Active) {
-          const err: any = new Error(`cannot pause job in status ${job.status}`);
+          const err: any = new Error(
+            `cannot pause job in status ${job.status}`,
+          );
           err.status = 409;
           throw err;
         }
@@ -326,7 +330,8 @@ export namespace DB {
           .execute();
 
         const runningPromptId =
-          events.find((event) => event.status === JobStatus.Running)?.id ?? null;
+          events.find((event) => event.status === JobStatus.Running)?.id ??
+          null;
         const pendingPromptIds = events
           .filter((event) => event.status === JobStatus.Pending)
           .map((event) => event.id);
@@ -391,7 +396,9 @@ export namespace DB {
           .executeTakeFirstOrThrow();
 
         if (job.status !== JobLifecycleStatus.Failed) {
-          const err: any = new Error(`cannot retry job in status ${job.status}`);
+          const err: any = new Error(
+            `cannot retry job in status ${job.status}`,
+          );
           err.status = 409;
           throw err;
         }
@@ -551,22 +558,27 @@ export namespace DB {
             ...base,
             text: event.text,
           };
-        case Event.NewImagePrompt:
-          {
-            const loras = (event as any).loras as { name: string; strength: number }[] | undefined;
-            const loraVal = loras && loras.length ? JSON.stringify(loras) : event.lora ? JSON.stringify([{ name: event.lora, strength: 0.7 }]) : null;
-            return {
-              ...base,
-              filename: null,
-              lora: loraVal as any,
-              lyrics: null,
-              audio_settings: null,
-              start_img: null,
-              end_img: null,
-              duration: null,
-              index: event.index,
-            };
-          }
+        case Event.NewImagePrompt: {
+          const loras = (event as any).loras as
+            { name: string; strength: number }[] | undefined;
+          const loraVal =
+            loras && loras.length
+              ? JSON.stringify(loras)
+              : event.lora
+                ? JSON.stringify([{ name: event.lora, strength: 0.7 }])
+                : null;
+          return {
+            ...base,
+            filename: null,
+            lora: loraVal as any,
+            lyrics: null,
+            audio_settings: null,
+            start_img: null,
+            end_img: null,
+            duration: null,
+            index: event.index,
+          };
+        }
         case Event.NewVideoPrompt:
           return {
             ...base,
@@ -645,7 +657,13 @@ export namespace DB {
             if (row.lora) {
               try {
                 const parsed = JSON.parse(row.lora as any);
-                if (Array.isArray(parsed) && parsed.length && typeof parsed[0] === "object" && "name" in parsed[0]) loras = parsed;
+                if (
+                  Array.isArray(parsed) &&
+                  parsed.length &&
+                  typeof parsed[0] === "object" &&
+                  "name" in parsed[0]
+                )
+                  loras = parsed;
                 else if (typeof parsed === "string") loraLegacy = parsed;
               } catch {
                 // plain single lora string legacy
@@ -995,7 +1013,17 @@ export namespace DB {
 
       const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
       const videoExts = ["mp4", "mov", "avi", "mkv", "webm"];
-      const audioExts = ["mp3", "wav", "flac", "ogg", "m4a", "aac", "wma", "opus", "aiff"];
+      const audioExts = [
+        "mp3",
+        "wav",
+        "flac",
+        "ogg",
+        "m4a",
+        "aac",
+        "wma",
+        "opus",
+        "aiff",
+      ];
 
       if (imageExts.includes(ext)) return "image";
       if (videoExts.includes(ext)) return "video";
@@ -1054,9 +1082,24 @@ export namespace DB {
       if (type) {
         const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
         const videoExts = ["mp4", "mov", "avi", "mkv", "webm"];
-        const audioExts = ["mp3", "wav", "flac", "ogg", "m4a", "aac", "wma", "opus", "aiff"];
+        const audioExts = [
+          "mp3",
+          "wav",
+          "flac",
+          "ogg",
+          "m4a",
+          "aac",
+          "wma",
+          "opus",
+          "aiff",
+        ];
 
-        const extList = type === "image" ? imageExts : type === "video" ? videoExts : audioExts;
+        const extList =
+          type === "image"
+            ? imageExts
+            : type === "video"
+              ? videoExts
+              : audioExts;
         query = query.where((eb) =>
           eb.or(extList.map((ext) => eb("meta.filename", "like", `%.${ext}`))),
         );
@@ -1068,7 +1111,12 @@ export namespace DB {
         .execute();
 
       const concurrency = 10;
-      const items: Array<ListItemResult & { mediaType: "image" | "video" | "audio"; created_at: string }> = [];
+      const items: Array<
+        ListItemResult & {
+          mediaType: "image" | "video" | "audio";
+          created_at: string;
+        }
+      > = [];
       for (let i = 0; i < results.length; i += concurrency) {
         const chunk = results.slice(i, i + concurrency);
         const chunkItems = await Promise.all(
@@ -1119,11 +1167,19 @@ export namespace DB {
       return map;
     }
     export async function get(key: string) {
-      const row = await db.selectFrom("settings").selectAll().where("key", "=", key).executeTakeFirst();
+      const row = await db
+        .selectFrom("settings")
+        .selectAll()
+        .where("key", "=", key)
+        .executeTakeFirst();
       return row?.value ?? null;
     }
     export async function set(key: string, value: string) {
-      await db.insertInto("settings").values({ key, value }).onConflict((oc) => oc.column("key").doUpdateSet({ value })).execute();
+      await db
+        .insertInto("settings")
+        .values({ key, value })
+        .onConflict((oc) => oc.column("key").doUpdateSet({ value }))
+        .execute();
     }
     export async function setMany(entries: Record<string, string>) {
       for (const [k, v] of Object.entries(entries)) await set(k, v);
@@ -1132,21 +1188,63 @@ export namespace DB {
 
   export namespace StylePresets {
     export async function list() {
-      return await db.selectFrom("style_presets").selectAll().orderBy("name", "asc").execute();
+      return await db
+        .selectFrom("style_presets")
+        .selectAll()
+        .orderBy("name", "asc")
+        .execute();
     }
     export async function findById(id: string) {
-      return await db.selectFrom("style_presets").selectAll().where("id", "=", id).executeTakeFirst();
+      return await db
+        .selectFrom("style_presets")
+        .selectAll()
+        .where("id", "=", id)
+        .executeTakeFirst();
     }
     export async function findByName(name: string) {
-      return await db.selectFrom("style_presets").selectAll().where("name", "=", name).executeTakeFirst();
+      return await db
+        .selectFrom("style_presets")
+        .selectAll()
+        .where("name", "=", name)
+        .executeTakeFirst();
     }
-    export async function create(data: { name: string; description?: string | null; primary_style: string; secondary_trigger?: string | null; styles_json: string; texture?: string | null }) {
+    export async function create(data: {
+      name: string;
+      description?: string | null;
+      primary_style: string;
+      secondary_trigger?: string | null;
+      styles_json: string;
+      texture?: string | null;
+    }) {
       const id = Metadata.randomId();
-      await db.insertInto("style_presets").values({ id, ...data, description: data.description ?? null, secondary_trigger: data.secondary_trigger ?? null, texture: data.texture ?? null }).execute();
+      await db
+        .insertInto("style_presets")
+        .values({
+          id,
+          ...data,
+          description: data.description ?? null,
+          secondary_trigger: data.secondary_trigger ?? null,
+          texture: data.texture ?? null,
+        })
+        .execute();
       return await findById(id);
     }
-    export async function update(id: string, data: Partial<{ name: string; description: string | null; primary_style: string; secondary_trigger: string | null; styles_json: string; texture: string | null }>) {
-      await db.updateTable("style_presets").set(data).where("id", "=", id).execute();
+    export async function update(
+      id: string,
+      data: Partial<{
+        name: string;
+        description: string | null;
+        primary_style: string;
+        secondary_trigger: string | null;
+        styles_json: string;
+        texture: string | null;
+      }>,
+    ) {
+      await db
+        .updateTable("style_presets")
+        .set(data)
+        .where("id", "=", id)
+        .execute();
       return await findById(id);
     }
     export async function remove(id: string) {
@@ -1156,17 +1254,50 @@ export namespace DB {
 
   export namespace Loras {
     export async function list() {
-      return await db.selectFrom("loras").selectAll().orderBy("sort_order", "asc").execute();
+      return await db
+        .selectFrom("loras")
+        .selectAll()
+        .orderBy("sort_order", "asc")
+        .execute();
     }
     export async function findById(id: string) {
-      return await db.selectFrom("loras").selectAll().where("id", "=", id).executeTakeFirst();
+      return await db
+        .selectFrom("loras")
+        .selectAll()
+        .where("id", "=", id)
+        .executeTakeFirst();
     }
-    export async function create(data: { comfyui_name: string; display_name: string; trigger_word?: string | null; is_active?: number; sort_order: number }) {
+    export async function create(data: {
+      comfyui_name: string;
+      display_name: string;
+      trigger_word?: string | null;
+      is_active?: number;
+      sort_order: number;
+    }) {
       const id = Metadata.randomId();
-      await db.insertInto("loras").values({ id, comfyui_name: data.comfyui_name, display_name: data.display_name, trigger_word: data.trigger_word ?? null, is_active: data.is_active ?? 1, sort_order: data.sort_order }).execute();
+      await db
+        .insertInto("loras")
+        .values({
+          id,
+          comfyui_name: data.comfyui_name,
+          display_name: data.display_name,
+          trigger_word: data.trigger_word ?? null,
+          is_active: data.is_active ?? 1,
+          sort_order: data.sort_order,
+        })
+        .execute();
       return await findById(id);
     }
-    export async function update(id: string, data: Partial<{ comfyui_name: string; display_name: string; trigger_word: string | null; is_active: number; sort_order: number }>) {
+    export async function update(
+      id: string,
+      data: Partial<{
+        comfyui_name: string;
+        display_name: string;
+        trigger_word: string | null;
+        is_active: number;
+        sort_order: number;
+      }>,
+    ) {
       await db.updateTable("loras").set(data).where("id", "=", id).execute();
       return await findById(id);
     }
@@ -1176,7 +1307,11 @@ export namespace DB {
     export async function reorder(ids: string[]) {
       await db.transaction().execute(async (trx) => {
         for (let i = 0; i < ids.length; i++) {
-          await trx.updateTable("loras").set({ sort_order: i }).where("id", "=", ids[i]).execute();
+          await trx
+            .updateTable("loras")
+            .set({ sort_order: i })
+            .where("id", "=", ids[i])
+            .execute();
         }
       });
     }
@@ -1186,9 +1321,15 @@ export namespace DB {
       let maxOrder = existing.reduce((m, e) => Math.max(m, e.sort_order), -1);
       for (const name of names) {
         if (existingNames.has(name)) continue;
-        const display = name.replace(/\.safetensors$/i, "").replace(/[_-]/g, " ");
+        const display = name
+          .replace(/\.safetensors$/i, "")
+          .replace(/[_-]/g, " ");
         maxOrder += 1;
-        await create({ comfyui_name: name, display_name: display, sort_order: maxOrder });
+        await create({
+          comfyui_name: name,
+          display_name: display,
+          sort_order: maxOrder,
+        });
       }
     }
   }

@@ -20,7 +20,12 @@ export default function EnhanceModal(props: EnhanceModalProps) {
           <label class="label">
             <span class="label-text">Original</span>
           </label>
-          <textarea class="textarea textarea-bordered w-full" rows={3} readonly value={props.original} />
+          <textarea
+            class="textarea textarea-bordered w-full"
+            rows={3}
+            readonly
+            value={props.original}
+          />
           <label class="label">
             <span class="label-text">Enhanced</span>
           </label>

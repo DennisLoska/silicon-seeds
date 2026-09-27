@@ -13,13 +13,18 @@ export async function up(db: Kysely<any>): Promise<void> {
   }
 
   if (!existingColumns.includes("claimed_at")) {
-    await db.schema.alterTable("events").addColumn("claimed_at", "text").execute();
+    await db.schema
+      .alterTable("events")
+      .addColumn("claimed_at", "text")
+      .execute();
   }
 
   if (!existingColumns.includes("attempt_count")) {
     await db.schema
       .alterTable("events")
-      .addColumn("attempt_count", "integer", (col) => col.notNull().defaultTo(0))
+      .addColumn("attempt_count", "integer", (col) =>
+        col.notNull().defaultTo(0),
+      )
       .execute();
   }
 

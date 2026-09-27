@@ -12,7 +12,11 @@ function getInitial(): Theme {
     const v = localStorage.getItem("theme");
     if (isTheme(v)) return v;
   } catch {}
-  if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches) return "tokyonight";
+  if (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  )
+    return "tokyonight";
   return "bumblebee";
 }
 
@@ -55,10 +59,11 @@ export function createTheme() {
   return {
     theme,
     setTheme,
-    toggle: () => setTheme((t) => {
-      const idx = THEMES.indexOf(t);
-      return THEMES[(idx + 1) % THEMES.length];
-    }),
+    toggle: () =>
+      setTheme((t) => {
+        const idx = THEMES.indexOf(t);
+        return THEMES[(idx + 1) % THEMES.length];
+      }),
   };
 }
 

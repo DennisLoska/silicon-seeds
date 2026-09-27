@@ -213,12 +213,10 @@ export namespace SocketServer {
       }
 
       // [STATE: check_completion] — non-media events: finalize and pump queue
-      if (
-        !(
-          event.type === Event.NewVideoPrompt ||
-          event.type === Event.NewTransitionPrompt
-        )
-      ) {
+      if (!(
+        event.type === Event.NewVideoPrompt ||
+        event.type === Event.NewTransitionPrompt
+      )) {
         await DB.Jobs.finalizeCompletedJobs();
         void QueueManager.pump();
         return;

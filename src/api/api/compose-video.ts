@@ -55,7 +55,7 @@ export async function compose_video(options: PostCompose) {
     audio_model: Metadata.INSTRUMENTAL_MODEL,
     style_preset,
     style_guide: sanitizedStyleGuide,
-    loras: (loras && loras.length) ? JSON.stringify(loras) : null,
+    loras: loras && loras.length ? JSON.stringify(loras) : null,
   } as any);
 
   await TextGenerator.create_text_event(jobId, finalScript);

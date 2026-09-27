@@ -116,7 +116,9 @@ export class ComfyUIClient {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "Unknown error");
-      throw new Error(`ComfyUI /prompt failed (${response.status}): ${errorText}`);
+      throw new Error(
+        `ComfyUI /prompt failed (${response.status}): ${errorText}`,
+      );
     }
 
     const json = await response.json();
@@ -253,7 +255,10 @@ export class ComfyUIClient {
     }
   }
 
-  private buildLoraChain(api: Record<string, any>, loras: LoraSpec[]): Record<string, any> {
+  private buildLoraChain(
+    api: Record<string, any>,
+    loras: LoraSpec[],
+  ): Record<string, any> {
     if (!loras.length) return api;
     // first lora is node 51
     (api["51"] as any).inputs.lora_name = loras[0].name;
@@ -375,15 +380,28 @@ export class ComfyUIClient {
     if (input.kind === "text-to-image") {
       if (job.image_model === "z-image-turbo") {
         const loras: LoraSpec[] = (() => {
-          if (input.loras && input.loras.length) return input.loras.map((l) => ({ name: l.name.endsWith(".safetensors") ? l.name : `${l.name}.safetensors`, strength: Math.max(0.1, Math.min(2, l.strength)) }));
+          if (input.loras && input.loras.length)
+            return input.loras.map((l) => ({
+              name: l.name.endsWith(".safetensors")
+                ? l.name
+                : `${l.name}.safetensors`,
+              strength: Math.max(0.1, Math.min(2, l.strength)),
+            }));
           if ((input as any).lora) {
             const n = String((input as any).lora);
-            return [{ name: n.endsWith(".safetensors") ? n : `${n}.safetensors`, strength: 0.7 }];
+            return [
+              {
+                name: n.endsWith(".safetensors") ? n : `${n}.safetensors`,
+                strength: 0.7,
+              },
+            ];
           }
           return [];
         })();
         if (loras.length === 0) {
-          api = structuredClone(zImageTurboApi as unknown as Record<string, any>);
+          api = structuredClone(
+            zImageTurboApi as unknown as Record<string, any>,
+          );
           (api["9"] as any).inputs.filename_prefix = input.id;
           // zImageTurboApi uses 57:xx ids, but we map generic handling via resolution nodes? fallback to WithLora structure? Use WithLora base but bypass lora by wiring 46 directly to 47.
           // Better use WithLora base and remove lora node when empty: we use non-lora api here.
@@ -393,21 +411,29 @@ export class ComfyUIClient {
             (api["41"] as any).inputs.width = resolution.width;
             (api["41"] as any).inputs.height = resolution.height;
             (api["45"] as any).inputs.text = input.prompt;
-            (api["44"] as any).inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
+            (api["44"] as any).inputs.seed = Math.floor(
+              Math.random() * 100_000_000_000_000,
+            );
           } else if ((api as any)["57:13"]) {
             (api["57:13"] as any).inputs.width = resolution.width;
             (api["57:13"] as any).inputs.height = resolution.height;
             (api["57:27"] as any).inputs.text = input.prompt;
-            (api["57:3"] as any).inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
+            (api["57:3"] as any).inputs.seed = Math.floor(
+              Math.random() * 100_000_000_000_000,
+            );
             (api["9"] as any).inputs.filename_prefix = input.id;
           }
         } else {
-          api = structuredClone(zImageTurboWithLoraApi as unknown as Record<string, any>);
+          api = structuredClone(
+            zImageTurboWithLoraApi as unknown as Record<string, any>,
+          );
           (api["9"] as any).inputs.filename_prefix = input.id;
           (api["41"] as any).inputs.width = resolution.width;
           (api["41"] as any).inputs.height = resolution.height;
           (api["45"] as any).inputs.text = input.prompt;
-          (api["44"] as any).inputs.seed = Math.floor(Math.random() * 100_000_000_000_000);
+          (api["44"] as any).inputs.seed = Math.floor(
+            Math.random() * 100_000_000_000_000,
+          );
           api = this.buildLoraChain(api, loras);
         }
       }
@@ -441,7 +467,9 @@ export class ComfyUIClient {
 
     if (input.kind === "image-to-video") {
       if (job.video_model === "wan2.2") {
-        api = structuredClone(wan2_2_img2vidApi as unknown as Record<string, any>);
+        api = structuredClone(
+          wan2_2_img2vidApi as unknown as Record<string, any>,
+        );
         (api["93"] as any).inputs.text = input.prompt;
         (api["98"] as any).inputs.width = resolution.width;
         (api["98"] as any).inputs.height = resolution.height;
@@ -452,7 +480,9 @@ export class ComfyUIClient {
       }
 
       if (job.video_model === "ltx2.3") {
-        api = structuredClone(ltx2_3_img2vidApi as unknown as Record<string, any>);
+        api = structuredClone(
+          ltx2_3_img2vidApi as unknown as Record<string, any>,
+        );
         (api["267:266"] as any).inputs.value = input.prompt;
         (api["267:257"] as any).inputs.value = resolution.width;
         (api["267:258"] as any).inputs.value = resolution.height;
@@ -542,7 +572,7 @@ export class ComfyUIClient {
         api["67"].inputs.height = resolution.height;
         api["67"].inputs.length =
           (job.transition_duration || Metadata.TRANSITION_DURATION) *
-          WAN_NATIVE_FPS +
+            WAN_NATIVE_FPS +
           1;
         api["62"].inputs.image = input.endImage;
         api["61"].inputs.filename_prefix = input.id;

@@ -1,8 +1,21 @@
 import { createResource, For, Show } from "solid-js";
 
-type Preset = { id: string; name: string; description: string | null; primary_style: string; secondary_trigger: string | null; styles: string[]; texture: string | null };
+type Preset = {
+  id: string;
+  name: string;
+  description: string | null;
+  primary_style: string;
+  secondary_trigger: string | null;
+  styles: string[];
+  texture: string | null;
+};
 
-export default function StylePresetSelect(props: { name?: string; value?: string; id?: string; class?: string }) {
+export default function StylePresetSelect(props: {
+  name?: string;
+  value?: string;
+  id?: string;
+  class?: string;
+}) {
   const [presets] = createResource(async () => {
     try {
       const r = await fetch("/api/style-presets");
@@ -15,7 +28,11 @@ export default function StylePresetSelect(props: { name?: string; value?: string
   });
 
   return (
-    <select name={props.name ?? "style_preset"} id={props.id} class={props.class ?? "select select-bordered w-full select-sm"}>
+    <select
+      name={props.name ?? "style_preset"}
+      id={props.id}
+      class={props.class ?? "select select-bordered w-full select-sm"}
+    >
       <Show when={!presets.loading} fallback={<option>Loading...</option>}>
         <option value="none">none - no style</option>
         <For each={presets() ?? []}>

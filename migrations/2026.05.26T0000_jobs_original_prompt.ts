@@ -7,7 +7,10 @@ export async function up(db: Kysely<DbSchema>): Promise<void> {
   const existingColumns = jobsTable?.columns.map((c) => c.name) ?? [];
 
   if (!existingColumns.includes("original_prompt")) {
-    await db.schema.alterTable("jobs").addColumn("original_prompt", "text").execute();
+    await db.schema
+      .alterTable("jobs")
+      .addColumn("original_prompt", "text")
+      .execute();
   }
 }
 

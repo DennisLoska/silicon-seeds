@@ -32,7 +32,11 @@ app.get("/", async (c) => {
 
 app.post("/", zValidator("json", createSchema), async (c) => {
   const body = c.req.valid("json");
-  const existing = await DB.db.selectFrom("loras").selectAll().where("comfyui_name", "=", body.comfyui_name).executeTakeFirst();
+  const existing = await DB.db
+    .selectFrom("loras")
+    .selectAll()
+    .where("comfyui_name", "=", body.comfyui_name)
+    .executeTakeFirst();
   if (existing) return c.json({ error: "lora already exists" }, 409);
   const count = (await DB.Loras.list()).length;
   const created = await DB.Loras.create({
@@ -66,9 +70,14 @@ app.delete("/:id", async (c) => {
 });
 
 app.post("/sync", async (c) => {
-  const body = await c.req.json().catch(() => ({} as any));
-  const names: string[] = Array.isArray(body.names) ? body.names : Array.isArray(body.loras) ? body.loras : [];
-  if (!Array.isArray(names) || names.length === 0) return c.json({ error: "names array required" }, 400);
+  const body = await c.req.json().catch(() => ({}) as any);
+  const names: string[] = Array.isArray(body.names)
+    ? body.names
+    : Array.isArray(body.loras)
+      ? body.loras
+      : [];
+  if (!Array.isArray(names) || names.length === 0)
+    return c.json({ error: "names array required" }, 400);
   await DB.Loras.upsertMany(names);
   const list = await DB.Loras.list();
   return c.json({ loras: list, added: names.length });

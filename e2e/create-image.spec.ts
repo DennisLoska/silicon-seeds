@@ -1,11 +1,17 @@
 import { test, expect } from "@playwright/test";
 
-test("create image loads and interacts with controls without generating", async ({ page }) => {
+test("create image loads and interacts with controls without generating", async ({
+  page,
+}) => {
   await page.goto("/create/image");
   await expect(page).toHaveURL(/\/create\/image/);
   await expect(page.locator("body")).toBeVisible({ timeout: 10000 });
-  await expect(page.getByRole("heading").first()).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText(/Prompt/i).first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole("heading").first()).toBeVisible({
+    timeout: 10000,
+  });
+  await expect(page.getByText(/Prompt/i).first()).toBeVisible({
+    timeout: 10000,
+  });
 
   const promptArea = page.locator('textarea[name="prompt"]').first();
   await expect(promptArea).toBeVisible();
@@ -28,10 +34,15 @@ test("create image loads and interacts with controls without generating", async 
   await expect(resolution).toHaveValue("720p");
 
   // batch size slider
-  const batchSlider = page.locator('input[name="batch_size"][type="range"]').first();
+  const batchSlider = page
+    .locator('input[name="batch_size"][type="range"]')
+    .first();
   if ((await batchSlider.count()) > 0) {
     await expect(batchSlider).toBeVisible();
-    await batchSlider.evaluate((el: HTMLInputElement, val) => { el.value = val; el.dispatchEvent(new Event("input", { bubbles: true })); }, "4");
+    await batchSlider.evaluate((el: HTMLInputElement, val) => {
+      el.value = val;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    }, "4");
   }
 
   // style preset select
@@ -51,7 +62,7 @@ test("create image loads and interacts with controls without generating", async 
   await expect(page.getByText(/LoRAs/i).first()).toBeVisible();
   await expect(page.getByText(/Action/i).first()).toBeVisible();
 
-  const generateBtn = page.locator('#submit-btn').first();
+  const generateBtn = page.locator("#submit-btn").first();
   await expect(generateBtn).toBeVisible();
   await expect(page).toHaveURL(/\/create\/image/);
 });

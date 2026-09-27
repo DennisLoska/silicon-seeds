@@ -23,7 +23,9 @@ export default function CreateImage() {
     async (id) => {
       if (!id) return { events: [] as unknown[] };
       try {
-        const data = await apiGet<{ events: unknown[] }>(`/api/jobs/${id}/events?limit=30`);
+        const data = await apiGet<{ events: unknown[] }>(
+          `/api/jobs/${id}/events?limit=30`,
+        );
         return data;
       } catch {
         return { events: [] };
@@ -34,9 +36,16 @@ export default function CreateImage() {
   const [mediaData, { refetch: refetchMedia }] = createResource(
     () => (showProgress() ? jobId() : undefined),
     async (id) => {
-      if (!id) return { items: [] as { filename: string; subfolder: string }[] };
+      if (!id)
+        return { items: [] as { filename: string; subfolder: string }[] };
       try {
-        const data = await apiGet<{ items: { filename: string; subfolder: string; mediaType: string | null }[] }>(`/api/jobs/${id}/media?limit=100`);
+        const data = await apiGet<{
+          items: {
+            filename: string;
+            subfolder: string;
+            mediaType: string | null;
+          }[];
+        }>(`/api/jobs/${id}/media?limit=100`);
         return data;
       } catch {
         return { items: [] };
@@ -44,7 +53,10 @@ export default function CreateImage() {
     },
   );
 
-  useJobUpdates(jobId, () => { refetch(); refetchMedia(); });
+  useJobUpdates(jobId, () => {
+    refetch();
+    refetchMedia();
+  });
 
   const onSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
@@ -71,7 +83,8 @@ export default function CreateImage() {
         const txt = await res.clone().text();
         try {
           const j = JSON.parse(txt);
-          if (j.jobId) navigate(`/create/image?show_progress=true&job_id=${j.jobId}`);
+          if (j.jobId)
+            navigate(`/create/image?show_progress=true&job_id=${j.jobId}`);
         } catch {}
       }
     } catch (err) {
@@ -86,31 +99,112 @@ export default function CreateImage() {
       <Show when={error()}>
         <div class="alert alert-error mb-4 text-sm">{error()}</div>
       </Show>
-      <form class="grid grid-cols-1 xl:grid-cols-12 gap-4 xl:items-start" onSubmit={onSubmit} enctype="multipart/form-data">
+      <form
+        class="grid grid-cols-1 xl:grid-cols-12 gap-4 xl:items-start"
+        onSubmit={onSubmit}
+        enctype="multipart/form-data"
+      >
         {/* col1 prompt + style guide - unified with compose, prompt full height, styleguide higher */}
         <div class="xl:col-span-5 flex flex-col gap-4 min-h-0">
           <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col overflow-hidden xl:h-[52vh] min-h-[340px]">
             <div class="card-body flex flex-col flex-1 p-4 min-h-0">
-              <div class="flex items-center justify-between"><h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PromptIcon />Prompt</h2><EnhanceButton textareaId="ci-prompt" kind="image_prompt" getPreset={() => (document.querySelector('select[name="style_preset"]') as HTMLSelectElement | null)?.value} /></div>
-              <textarea id="ci-prompt" name="prompt" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder="Describe the image you want to generate..."></textarea>
+              <div class="flex items-center justify-between">
+                <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2">
+                  <Icons.PromptIcon />
+                  Prompt
+                </h2>
+                <EnhanceButton
+                  textareaId="ci-prompt"
+                  kind="image_prompt"
+                  getPreset={() =>
+                    (
+                      document.querySelector(
+                        'select[name="style_preset"]',
+                      ) as HTMLSelectElement | null
+                    )?.value
+                  }
+                />
+              </div>
+              <textarea
+                id="ci-prompt"
+                name="prompt"
+                class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed"
+                placeholder="Describe the image you want to generate..."
+              ></textarea>
             </div>
           </div>
           <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col overflow-hidden xl:h-[28vh] min-h-[220px]">
             <div class="card-body flex flex-col flex-1 p-4 min-h-0">
-              <div class="flex items-center justify-between"><h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PaintBrushIcon />Style Guide</h2><EnhanceButton textareaId="ci-style" kind="style_guide" getPreset={() => (document.querySelector('select[name="style_preset"]') as HTMLSelectElement | null)?.value} /></div>
-              <textarea id="ci-style" name="style_guide" maxLength={2000} class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder={"Optional: define consistent style...\n• warm ochre palette\n• watercolor texture\n• no modern items"}></textarea>
+              <div class="flex items-center justify-between">
+                <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2">
+                  <Icons.PaintBrushIcon />
+                  Style Guide
+                </h2>
+                <EnhanceButton
+                  textareaId="ci-style"
+                  kind="style_guide"
+                  getPreset={() =>
+                    (
+                      document.querySelector(
+                        'select[name="style_preset"]',
+                      ) as HTMLSelectElement | null
+                    )?.value
+                  }
+                />
+              </div>
+              <textarea
+                id="ci-style"
+                name="style_guide"
+                maxLength={2000}
+                class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed"
+                placeholder={
+                  "Optional: define consistent style...\n• warm ochre palette\n• watercolor texture\n• no modern items"
+                }
+              ></textarea>
             </div>
           </div>
           <Show when={showProgress() && jobId()}>
             <div class="card bg-base-100 shadow-xl border border-base-300 mt-4 xl:hidden">
               <div class="card-body p-4">
-                <div class="flex items-center justify-between mb-2"><h2 class="card-title text-base flex items-center gap-2"><Icons.PulseWavesIcon />Job Progress</h2><span class="badge badge-warning badge-sm">Active</span></div>
-                <p class="text-xs opacity-60 mb-2 truncate">Monitoring {jobId()}</p>
-                <Show when={(eventsData()?.events?.length ?? 0) === 0}><div class="text-sm opacity-60">Waiting for events…</div></Show>
+                <div class="flex items-center justify-between mb-2">
+                  <h2 class="card-title text-base flex items-center gap-2">
+                    <Icons.PulseWavesIcon />
+                    Job Progress
+                  </h2>
+                  <span class="badge badge-warning badge-sm">Active</span>
+                </div>
+                <p class="text-xs opacity-60 mb-2 truncate">
+                  Monitoring {jobId()}
+                </p>
+                <Show when={(eventsData()?.events?.length ?? 0) === 0}>
+                  <div class="text-sm opacity-60">Waiting for events…</div>
+                </Show>
                 <Show when={(eventsData()?.events?.length ?? 0) > 0}>
                   <ul class="timeline timeline-compact timeline-vertical text-xs">
-                    <For each={(eventsData()?.events as unknown as { id: string; type: string; status: string }[]) ?? []}>
-                      {(evt) => <li><div class="timeline-end timeline-box py-1 px-2 text-xs">{evt.type} <span class="badge badge-xs ml-1">{evt.status}</span></div><div class="timeline-middle"><div class="w-4 h-4 rounded-full bg-base-200 grid place-items-center text-[10px]">·</div></div></li>}
+                    <For
+                      each={
+                        (eventsData()?.events as unknown as {
+                          id: string;
+                          type: string;
+                          status: string;
+                        }[]) ?? []
+                      }
+                    >
+                      {(evt) => (
+                        <li>
+                          <div class="timeline-end timeline-box py-1 px-2 text-xs">
+                            {evt.type}{" "}
+                            <span class="badge badge-xs ml-1">
+                              {evt.status}
+                            </span>
+                          </div>
+                          <div class="timeline-middle">
+                            <div class="w-4 h-4 rounded-full bg-base-200 grid place-items-center text-[10px]">
+                              ·
+                            </div>
+                          </div>
+                        </li>
+                      )}
                     </For>
                   </ul>
                 </Show>
@@ -123,9 +217,18 @@ export default function CreateImage() {
         <div class="xl:col-span-3 flex flex-col gap-4">
           <div class="card bg-base-100 shadow-xl border border-base-300">
             <div class="card-body p-4">
-              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.SparkleIcon />AI Model</h2>
-              <label class="fieldset-label text-xs font-medium opacity-70 flex items-center gap-2"><Icons.PhotoCameraSmall />Image Generation Model</label>
-              <select name="image_model" class="select select-bordered select-sm w-full">
+              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2">
+                <Icons.SparkleIcon />
+                AI Model
+              </h2>
+              <label class="fieldset-label text-xs font-medium opacity-70 flex items-center gap-2">
+                <Icons.PhotoCameraSmall />
+                Image Generation Model
+              </label>
+              <select
+                name="image_model"
+                class="select select-bordered select-sm w-full"
+              >
                 <option value="z-image-turbo">Z-Image-Turbo</option>
               </select>
             </div>
@@ -133,33 +236,83 @@ export default function CreateImage() {
 
           <div class="card bg-base-100 shadow-xl border border-base-300">
             <div class="card-body p-4">
-              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.CogSettingsIcon />Generation</h2>
-              <label class="fieldset-label text-xs font-medium flex justify-between">Batch <span class="badge badge-primary badge-sm">{batchSize()}</span></label>
-              <input type="range" name="batch_size" value={String(batchSize())} min="1" max="16" step="1" class="range range-primary range-xs w-full" onInput={(e) => setBatchSize(parseInt(e.currentTarget.value))} />
-              <div class="flex justify-between text-[11px] opacity-50"><span>1</span><span>16</span></div>
-              <label class="fieldset-label text-xs font-medium opacity-70 mt-3 flex items-center gap-2"><Icons.SquaresGridIcon />Resolution</label>
-              <select name="resolution" class="select select-bordered select-sm w-full">
-                <option value="480p">480p</option><option value="720p">720p</option><option value="1080p">1080p</option><option value="9_16_SD">9:16 (SD)</option><option value="9_16_HD">9:16 (HD)</option>
+              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2">
+                <Icons.CogSettingsIcon />
+                Generation
+              </h2>
+              <label class="fieldset-label text-xs font-medium flex justify-between">
+                Batch{" "}
+                <span class="badge badge-primary badge-sm">{batchSize()}</span>
+              </label>
+              <input
+                type="range"
+                name="batch_size"
+                value={String(batchSize())}
+                min="1"
+                max="16"
+                step="1"
+                class="range range-primary range-xs w-full"
+                onInput={(e) => setBatchSize(parseInt(e.currentTarget.value))}
+              />
+              <div class="flex justify-between text-[11px] opacity-50">
+                <span>1</span>
+                <span>16</span>
+              </div>
+              <label class="fieldset-label text-xs font-medium opacity-70 mt-3 flex items-center gap-2">
+                <Icons.SquaresGridIcon />
+                Resolution
+              </label>
+              <select
+                name="resolution"
+                class="select select-bordered select-sm w-full"
+              >
+                <option value="480p">480p</option>
+                <option value="720p">720p</option>
+                <option value="1080p">1080p</option>
+                <option value="9_16_SD">9:16 (SD)</option>
+                <option value="9_16_HD">9:16 (HD)</option>
               </select>
-              <label class="fieldset-label text-xs font-medium opacity-70 mt-3 flex items-center gap-2"><Icons.PaintBrushIcon />Style Preset</label>
-              <StylePresetSelect name="style_preset" class="select select-bordered select-sm w-full" />
+              <label class="fieldset-label text-xs font-medium opacity-70 mt-3 flex items-center gap-2">
+                <Icons.PaintBrushIcon />
+                Style Preset
+              </label>
+              <StylePresetSelect
+                name="style_preset"
+                class="select select-bordered select-sm w-full"
+              />
             </div>
           </div>
 
           <div class="card bg-base-100 shadow-xl border border-base-300">
             <div class="card-body p-4">
-              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2">LoRAs <span class="badge badge-ghost badge-xs">drag · 0.1-2.0</span></h2>
+              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2">
+                LoRAs{" "}
+                <span class="badge badge-ghost badge-xs">drag · 0.1-2.0</span>
+              </h2>
               <LoraSelector value={loras()} onChange={setLoras} />
             </div>
           </div>
 
           <div class="card bg-base-100 shadow-xl border border-base-300">
             <div class="card-body p-4">
-              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.LightningBoltIcon />Action</h2>
+              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2">
+                <Icons.LightningBoltIcon />
+                Action
+              </h2>
               <div class="card-actions justify-end flex gap-2">
-                <button type="reset" class="btn btn-ghost btn-sm">Reset</button>
-                <button type="submit" id="submit-btn" class="btn btn-primary btn-sm w-auto px-6" disabled={isSubmitting()}>
-                  Generate <Show when={isSubmitting()}><span class="loading loading-spinner loading-xs ml-1" /></Show>
+                <button type="reset" class="btn btn-ghost btn-sm">
+                  Reset
+                </button>
+                <button
+                  type="submit"
+                  id="submit-btn"
+                  class="btn btn-primary btn-sm w-auto px-6"
+                  disabled={isSubmitting()}
+                >
+                  Generate{" "}
+                  <Show when={isSubmitting()}>
+                    <span class="loading loading-spinner loading-xs ml-1" />
+                  </Show>
                 </button>
               </div>
             </div>
@@ -171,16 +324,28 @@ export default function CreateImage() {
           <Show when={!showProgress()}>
             <div class="card bg-base-100 shadow-xl border border-base-300 hidden xl:flex flex-col overflow-hidden xl:h-[60vh] min-h-[440px] items-center justify-center">
               <div class="text-center py-10 px-6">
-                <div class="flex justify-center mb-3 opacity-40"><Icons.PhotoCameraLarge /></div>
-                <h3 class="font-medium text-base-content/60 text-sm">Images appear here</h3>
-                <p class="text-xs opacity-40 mt-1">Submit a prompt to generate</p>
+                <div class="flex justify-center mb-3 opacity-40">
+                  <Icons.PhotoCameraLarge />
+                </div>
+                <h3 class="font-medium text-base-content/60 text-sm">
+                  Images appear here
+                </h3>
+                <p class="text-xs opacity-40 mt-1">
+                  Submit a prompt to generate
+                </p>
               </div>
             </div>
           </Show>
           <Show when={showProgress() && jobId()}>
             <div class="card bg-base-100 shadow-xl border border-base-300 hidden xl:flex flex-col overflow-hidden xl:h-[60vh] min-h-[440px]">
               <div class="card-body p-4 flex flex-col min-h-0">
-                <div class="flex items-center justify-between mb-2"><h3 class="font-semibold text-sm flex items-center gap-2"><Icons.PulseWavesIcon />Generated Images</h3><span class="badge badge-warning badge-xs">Active</span></div>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="font-semibold text-sm flex items-center gap-2">
+                    <Icons.PulseWavesIcon />
+                    Generated Images
+                  </h3>
+                  <span class="badge badge-warning badge-xs">Active</span>
+                </div>
                 <Show when={(mediaData()?.items?.length ?? 0) === 0}>
                   <div class="flex flex-1 flex-col items-center justify-center gap-2 py-8">
                     <p class="text-sm text-base-content/60">Generating…</p>
@@ -188,17 +353,29 @@ export default function CreateImage() {
                   </div>
                 </Show>
                 <Show when={(mediaData()?.items?.length ?? 0) > 0}>
-                  <div class={`grid gap-2 overflow-y-auto flex-1 min-h-0 pr-1 content-start ${(mediaData()?.items?.length ?? 0) === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                  <div
+                    class={`grid gap-2 overflow-y-auto flex-1 min-h-0 pr-1 content-start ${(mediaData()?.items?.length ?? 0) === 1 ? "grid-cols-1" : "grid-cols-2"}`}
+                  >
                     <For each={mediaData()?.items ?? []}>
                       {(img) => (
                         <div class="rounded-box overflow-hidden bg-base-200 border border-base-300">
-                          <img src={getAssetPath(img.subfolder, img.filename)} alt="Generated image" class="w-full h-auto" loading="lazy" />
+                          <img
+                            src={getAssetPath(img.subfolder, img.filename)}
+                            alt="Generated image"
+                            class="w-full h-auto"
+                            loading="lazy"
+                          />
                         </div>
                       )}
                     </For>
                   </div>
                 </Show>
-                <a href={`/jobs?job_id=${jobId()}&filter=all&tab=status`} class="btn btn-primary btn-sm mt-3 w-auto self-end px-6">View Job</a>
+                <a
+                  href={`/jobs?job_id=${jobId()}&filter=all&tab=status`}
+                  class="btn btn-primary btn-sm mt-3 w-auto self-end px-6"
+                >
+                  View Job
+                </a>
               </div>
             </div>
           </Show>
@@ -207,18 +384,39 @@ export default function CreateImage() {
         {/* mobile preview */}
         <Show when={!showProgress()}>
           <div class="card bg-base-100 shadow-xl border border-base-300 xl:hidden flex items-center justify-center min-h-[200px]">
-            <div class="text-center py-10"><div class="flex justify-center mb-3 opacity-40"><Icons.PhotoCameraLarge /></div><h3 class="font-medium text-base-content/60 text-sm">Images appear here when generated</h3></div>
+            <div class="text-center py-10">
+              <div class="flex justify-center mb-3 opacity-40">
+                <Icons.PhotoCameraLarge />
+              </div>
+              <h3 class="font-medium text-base-content/60 text-sm">
+                Images appear here when generated
+              </h3>
+            </div>
           </div>
         </Show>
         <Show when={showProgress() && jobId()}>
           <div class="card bg-base-100 shadow-xl border border-base-300 xl:hidden">
             <div class="card-body p-4">
               <h3 class="font-semibold text-sm mb-2">Generated Images</h3>
-              <Show when={(mediaData()?.items?.length ?? 0) === 0}><div class="flex flex-col items-center gap-2 py-8"><span class="loading loading-dots loading-lg text-primary"></span></div></Show>
+              <Show when={(mediaData()?.items?.length ?? 0) === 0}>
+                <div class="flex flex-col items-center gap-2 py-8">
+                  <span class="loading loading-dots loading-lg text-primary"></span>
+                </div>
+              </Show>
               <Show when={(mediaData()?.items?.length ?? 0) > 0}>
-                <div class={`grid gap-2 content-start ${(mediaData()?.items?.length ?? 0) === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                <div
+                  class={`grid gap-2 content-start ${(mediaData()?.items?.length ?? 0) === 1 ? "grid-cols-1" : "grid-cols-2"}`}
+                >
                   <For each={mediaData()?.items ?? []}>
-                    {(img) => <div class="rounded-box overflow-hidden bg-base-200"><img src={getAssetPath(img.subfolder, img.filename)} alt="Generated image" class="w-full h-auto" /></div>}
+                    {(img) => (
+                      <div class="rounded-box overflow-hidden bg-base-200">
+                        <img
+                          src={getAssetPath(img.subfolder, img.filename)}
+                          alt="Generated image"
+                          class="w-full h-auto"
+                        />
+                      </div>
+                    )}
                   </For>
                 </div>
               </Show>

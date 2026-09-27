@@ -17,7 +17,8 @@ app.get("/:key", async (c) => {
 
 app.put("/", async (c) => {
   const body = await c.req.json().catch(() => null);
-  if (!body || typeof body !== "object") return c.json({ error: "invalid json" }, 400);
+  if (!body || typeof body !== "object")
+    return c.json({ error: "invalid json" }, 400);
   const entries = body as Record<string, unknown>;
   // Support either {key,value} or {settings:{k:v}}
   if ("key" in entries && "value" in entries) {
@@ -35,7 +36,8 @@ app.put("/", async (c) => {
 
 app.post("/", async (c) => {
   const body = await c.req.json().catch(() => null);
-  if (!body || typeof body !== "object") return c.json({ error: "invalid json" }, 400);
+  if (!body || typeof body !== "object")
+    return c.json({ error: "invalid json" }, 400);
   const entries = body as Record<string, unknown>;
   if ("key" in entries && "value" in entries) {
     const k = String((entries as any).key);

@@ -16,7 +16,9 @@ export namespace ApiServer {
     const hostname = Bun.env.HOST || "127.0.0.1";
     const parsedPort = parseInt(Bun.env.PORT || "3000", 10);
     const port =
-      Number.isInteger(parsedPort) && parsedPort >= 1 && parsedPort <= 65535 ? parsedPort : 3000;
+      Number.isInteger(parsedPort) && parsedPort >= 1 && parsedPort <= 65535
+        ? parsedPort
+        : 3000;
     server = Bun.serve({
       hostname,
       port,
@@ -46,23 +48,29 @@ app.use("/static/*", async (c) => {
   const filePath = `.${c.req.path}`;
   const file = Bun.file(filePath);
   if (await file.exists()) {
-    const contentType =
-      filePath.endsWith(".css")
-        ? "text/css; charset=utf-8"
-        : filePath.endsWith(".js")
-          ? "application/javascript; charset=utf-8"
-          : Utils.getContentType(filePath);
+    const contentType = filePath.endsWith(".css")
+      ? "text/css; charset=utf-8"
+      : filePath.endsWith(".js")
+        ? "application/javascript; charset=utf-8"
+        : Utils.getContentType(filePath);
     const stats = await file.stat();
     const etag = `"${stats.size}-${stats.mtime.getTime()}"`;
     const ifNoneMatch = c.req.header("If-None-Match");
     if (ifNoneMatch === etag) {
       return new Response(null, {
         status: 304,
-        headers: { ETag: etag, "Cache-Control": "public, max-age=3600, must-revalidate", Vary: "Accept-Encoding" },
+        headers: {
+          ETag: etag,
+          "Cache-Control": "public, max-age=3600, must-revalidate",
+          Vary: "Accept-Encoding",
+        },
       });
     }
     const acceptEnc = c.req.header("Accept-Encoding") || "";
-    const shouldCompress = acceptEnc.includes("gzip") && isCompressibleContentType(contentType) && stats.size > 1024;
+    const shouldCompress =
+      acceptEnc.includes("gzip") &&
+      isCompressibleContentType(contentType) &&
+      stats.size > 1024;
     if (shouldCompress) {
       const buf = await file.arrayBuffer();
       const compressed = Bun.gzipSync(Buffer.from(buf));
@@ -108,7 +116,13 @@ app.use("/assets/*", async (c, next) => {
     const etag = `"${stats.size}-${stats.mtime.getTime()}"`;
     const ifNoneMatch = c.req.header("If-None-Match");
     if (ifNoneMatch === etag) {
-      return new Response(null, { status: 304, headers: { ETag: etag, "Cache-Control": "public, max-age=31536000, immutable" } });
+      return new Response(null, {
+        status: 304,
+        headers: {
+          ETag: etag,
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
     }
     return new Response(viteFile as unknown as BodyInit, {
       status: 200,
@@ -213,12 +227,18 @@ app.route("/jobs", jobsRoutes);
 app.use("/*", async (c, next) => {
   const accept = c.req.header("Accept") || "";
   const path = c.req.path;
-  const isApi = path.startsWith("/api/") || path.startsWith("/assets/") || path.startsWith("/static/");
+  const isApi =
+    path.startsWith("/api/") ||
+    path.startsWith("/assets/") ||
+    path.startsWith("/static/");
   // Allow SSE path to pass through
   if (path.startsWith("/jobs/stream")) return next();
   if (!isApi) {
     const viteIndex = Bun.file("dist/client/index.html");
-    if (await viteIndex.exists() && (accept.includes("text/html") || path === "/" || !path.includes("."))) {
+    if (
+      (await viteIndex.exists()) &&
+      (accept.includes("text/html") || path === "/" || !path.includes("."))
+    ) {
       const html = await viteIndex.text();
       return c.html(html);
     }

@@ -19,10 +19,7 @@
       "filename_prefix": "video_wan_t2v",
       "format": "auto",
       "codec": "auto",
-      "video": [
-        "10",
-        0
-      ]
+      "video": ["10", 0]
     },
     "class_type": "SaveVideo",
     "_meta": {

@@ -1,12 +1,18 @@
 import { test, expect } from "@playwright/test";
 
-test("compose loads and interacts with controls without generating", async ({ page }) => {
+test("compose loads and interacts with controls without generating", async ({
+  page,
+}) => {
   await page.goto("/compose");
   await expect(page).toHaveURL(/\/compose/);
   await expect(page.locator("body")).toBeVisible({ timeout: 10000 });
-  await expect(page.getByRole("heading").first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole("heading").first()).toBeVisible({
+    timeout: 10000,
+  });
 
-  await expect(page.getByText(/Video Script/i).first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/Video Script/i).first()).toBeVisible({
+    timeout: 10000,
+  });
   await expect(page.getByText(/Style Guide/i).first()).toBeVisible();
 
   // interact with script textarea
@@ -23,14 +29,24 @@ test("compose loads and interacts with controls without generating", async ({ pa
   // interact with FPS slider
   const fpsSlider = page.locator('input[name="fps"][type="range"]').first();
   await expect(fpsSlider).toBeVisible();
-  await fpsSlider.evaluate((el: HTMLInputElement, val) => { el.value = val; el.dispatchEvent(new Event("input", { bubbles: true })); }, "12");
+  await fpsSlider.evaluate((el: HTMLInputElement, val) => {
+    el.value = val;
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  }, "12");
   // check badge updated
-  await expect(page.locator("text=12s").first()).toBeVisible().catch(() => {});
+  await expect(page.locator("text=12s").first())
+    .toBeVisible()
+    .catch(() => {});
 
   // interact with clip duration slider
-  const clipSlider = page.locator('input[name="clip_duration"][type="range"]').first();
+  const clipSlider = page
+    .locator('input[name="clip_duration"][type="range"]')
+    .first();
   if ((await clipSlider.count()) > 0) {
-    await clipSlider.evaluate((el: HTMLInputElement, val) => { el.value = val; el.dispatchEvent(new Event("input", { bubbles: true })); }, "7");
+    await clipSlider.evaluate((el: HTMLInputElement, val) => {
+      el.value = val;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    }, "7");
   }
 
   // select resolution
@@ -64,7 +80,9 @@ test("compose loads and interacts with controls without generating", async ({ pa
 
   // verify we didn't submit: still on compose
   await expect(page).toHaveURL(/\/compose/);
-  const generateBtn = page.getByRole("button", { name: /Generate Video/i }).first();
+  const generateBtn = page
+    .getByRole("button", { name: /Generate Video/i })
+    .first();
   await expect(generateBtn).toBeVisible();
   // do not click generate
 });

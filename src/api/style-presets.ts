@@ -82,9 +82,12 @@ app.put("/:id", zValidator("json", updateSchema), async (c) => {
   const update: Record<string, unknown> = {};
   if (body.name !== undefined) update.name = body.name;
   if (body.description !== undefined) update.description = body.description;
-  if (body.primary_style !== undefined) update.primary_style = body.primary_style;
-  if (body.secondary_trigger !== undefined) update.secondary_trigger = body.secondary_trigger;
-  if (body.styles !== undefined) update.styles_json = JSON.stringify(body.styles);
+  if (body.primary_style !== undefined)
+    update.primary_style = body.primary_style;
+  if (body.secondary_trigger !== undefined)
+    update.secondary_trigger = body.secondary_trigger;
+  if (body.styles !== undefined)
+    update.styles_json = JSON.stringify(body.styles);
   if (body.texture !== undefined) update.texture = body.texture;
   const updated = await DB.StylePresets.update(id, update as any);
   return c.json(updated);

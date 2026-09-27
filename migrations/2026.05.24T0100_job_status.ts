@@ -48,10 +48,7 @@ export async function up(db: Kysely<any>): Promise<void> {
       ),
     )
     .where((eb) =>
-      eb.or([
-        eb("status", "=", "pending"),
-        eb("status", "=", "running"),
-      ]),
+      eb.or([eb("status", "=", "pending"), eb("status", "=", "running")]),
     )
     .execute();
 }

@@ -6,12 +6,19 @@ import { QueueManager } from "../../queue/queue-manager";
 import { Utils } from "../../utils/utils";
 import { PostTextToImage } from "../schemas";
 
-export async function text_to_image(options: PostTextToImage): Promise<Response> {
+export async function text_to_image(
+  options: PostTextToImage,
+): Promise<Response> {
   const { image_model, style_preset, batch_size } = options;
-  const loras = (options as any).loras as { name: string; strength: number }[] | undefined;
+  const loras = (options as any).loras as
+    { name: string; strength: number }[] | undefined;
   const resolution = options.resolution ?? "720p";
   let prompt = Utils.sanitizeInputText(options.prompt);
-  const styleGuide = (options as any).style_guide ? Utils.sanitizeInputText(String((options as any).style_guide)).slice(0, 2000).trim() : undefined;
+  const styleGuide = (options as any).style_guide
+    ? Utils.sanitizeInputText(String((options as any).style_guide))
+        .slice(0, 2000)
+        .trim()
+    : undefined;
   if (styleGuide) prompt = `${prompt}\n\nStyle Guide: ${styleGuide}`;
 
   if (!prompt) {
@@ -28,7 +35,9 @@ export async function text_to_image(options: PostTextToImage): Promise<Response>
   } as any);
 
   const batchSize = batch_size ?? 1;
-  const scheduled: Awaited<ReturnType<typeof PromptGenerator.styled_img_to_event>>[] = [];
+  const scheduled: Awaited<
+    ReturnType<typeof PromptGenerator.styled_img_to_event>
+  >[] = [];
 
   QueueManager.hold();
   try {

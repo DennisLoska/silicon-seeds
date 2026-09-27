@@ -32,7 +32,12 @@ export const PostTextToImageSchema = z.object({
   resolution: z.string().max(7).optional(),
   image_model: z.string().max(50),
   style_preset: z.string().min(1).max(50).optional(),
-  style_guide: z.string().trim().max(2000).optional().transform((v) => (v && v.length > 0 ? v : undefined)),
+  style_guide: z
+    .string()
+    .trim()
+    .max(2000)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : undefined)),
   batch_size: z.coerce.number().int().positive().optional(),
   loras: LorasPreprocess,
 });
