@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { TextGenerator } from "../../text/text-generator";
 
 export async function text_to_script(prompt: string) {
@@ -13,10 +14,10 @@ export async function text_to_script(prompt: string) {
     });
   }
 
-  await Bun.write(
-    `/home/dennis/work/silicon-seeds/content/scripts/${Bun.randomUUIDv7()}.md`,
-    res,
-  );
+  const scriptsDir = Bun.env.SCRIPTS_DIR
+    ?? join(Bun.env.CONTENT_LIBRARY_DIR ?? join(process.cwd(), "content"), "scripts");
+
+  await Bun.write(join(scriptsDir, `${Bun.randomUUIDv7()}.md`), res);
 
   return new Response(JSON.stringify({ message: res }));
 }
