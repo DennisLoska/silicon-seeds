@@ -35,6 +35,7 @@ test("create text-to-video loads without lora/preset, interacts without generati
   await expect(resolution).toHaveValue("720p");
 
   await expect(page.locator('select[name="style_preset"]')).toHaveCount(0);
+  await expect(page.getByText(/^Loras$/i)).toHaveCount(0);
   await expect(page.getByText(/Intermediate image \(used for I2V\)/i)).toHaveCount(0);
 
   const resetBtn = page.getByRole("button", { name: "Reset" }).first();
