@@ -46,7 +46,7 @@ export const PostTextToVideoSchema = z.object({
   image_model: z.string().max(50).optional(),
   fps: z.coerce.number().int().min(1).max(24),
   clip_duration: z.coerce.number().int().min(1).max(10),
-  style_preset: z.string().min(1).max(50),
+  style_preset: z.string().min(1).max(50).optional(),
   style_guide: z
     .string()
     .trim()
