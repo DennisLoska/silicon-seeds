@@ -14,24 +14,6 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   return (await r.json()) as T;
 }
 
-export type Job = {
-  id: string;
-  created_at: string;
-  status: string;
-  name: string;
-  workflow?: string | null;
-  original_prompt?: string | null;
-  fps?: number;
-  clip_duration?: number;
-  transition_duration?: number;
-  resolution?: string;
-  image_model?: string;
-  video_model?: string;
-  audio_model?: string;
-  style_preset?: string;
-  style_guide?: string | null;
-};
-
 export type GalleryItem = {
   meta_id: string;
   event_id: string;

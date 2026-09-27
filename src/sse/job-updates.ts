@@ -26,18 +26,6 @@ export namespace JobUpdates {
     debounceTimers.set(jobId, timer);
   }
 
-  export function flush(jobId: string) {
-    const t = debounceTimers.get(jobId);
-    if (t) clearTimeout(t);
-    debounceTimers.delete(jobId);
-    pendingJobs.delete(jobId);
-    const listeners = subscribers.get(jobId);
-    if (!listeners) return;
-    for (const send of listeners) {
-      send("job-update", JSON.stringify({ jobId }));
-    }
-  }
-
   export function stream(jobId: string) {
     let cleanup: (() => void) | undefined;
 
