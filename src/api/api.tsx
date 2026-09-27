@@ -13,13 +13,18 @@ export namespace ApiServer {
   const MAX_REQUEST_BODY_SIZE = 1024 * 1024 * 1024;
 
   export function start() {
+    const hostname = Bun.env.HOST || "127.0.0.1";
+    const parsedPort = parseInt(Bun.env.PORT || "3000", 10);
+    const port =
+      Number.isInteger(parsedPort) && parsedPort >= 1 && parsedPort <= 65535 ? parsedPort : 3000;
     server = Bun.serve({
-      hostname: Bun.env.HOST ?? "127.0.0.1",
-      port: Number(Bun.env.PORT ?? 3000),
+      hostname,
+      port,
       idleTimeout: Metadata.TIMEOUT,
       maxRequestBodySize: MAX_REQUEST_BODY_SIZE,
       fetch: app.fetch,
     });
+    Logger.info(`Listening on ${hostname}:${port}`);
   }
   export function stop() {
     server.stop();
