@@ -13,7 +13,7 @@ const app = new Hono();
 
 app.post("/", zValidator("json", EnhanceSchema), async (c) => {
   const { text, kind, style_preset } = c.req.valid("json");
-  const out = await enhancePrompt(text ?? "", kind, style_preset);
+  const out = await enhancePrompt(text, kind, style_preset);
   if (!out) return c.json({ error: "LLM unavailable, try again" }, 502);
   return c.json({ enhanced: out });
 });
