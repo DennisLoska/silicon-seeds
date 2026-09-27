@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, onCleanup, onMount, Show } from "solid-js";
 import SparkleIcon from "./SparkleIcon";
 import EnhanceModal from "./EnhanceModal";
 import type { EnhanceKind } from "../../prompts/prompt-enhancer";
@@ -15,14 +15,27 @@ export default function EnhanceButton(props: EnhanceButtonProps) {
   const [original, setOriginal] = createSignal("");
   const [enhanced, setEnhanced] = createSignal("");
   const [error, setError] = createSignal("");
+  const [label, setLabel] = createSignal("Enhance");
 
   function readTextarea(): string {
     const el = document.getElementById(props.textareaId) as HTMLTextAreaElement | null;
     return el?.value ?? "";
   }
 
+  function updateLabel() {
+    setLabel(readTextarea().trim().length === 0 ? "Inspire" : "Enhance");
+  }
+
+  onMount(() => {
+    updateLabel();
+    const el = document.getElementById(props.textareaId) as HTMLTextAreaElement | null;
+    el?.addEventListener("input", updateLabel);
+    onCleanup(() => el?.removeEventListener("input", updateLabel));
+  });
+
   async function run() {
     const text = readTextarea();
+    setLabel(text.trim().length === 0 ? "Inspire" : "Enhance");
     setOriginal(text);
     setEnhanced("");
     setError("");
@@ -52,10 +65,6 @@ export default function EnhanceButton(props: EnhanceButtonProps) {
       el.dispatchEvent(new Event("input", { bubbles: true }));
     }
     setOpen(false);
-  }
-
-  function label(): string {
-    return readTextarea().trim() ? "Enhance" : "Inspire";
   }
 
   return (
