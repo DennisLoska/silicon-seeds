@@ -9,6 +9,9 @@ function getPageTitle(path: string) {
   if (path.startsWith("/compose")) return "Compose";
   if (path.startsWith("/create/audio")) return "Audio";
   if (path.startsWith("/create/image")) return "Image";
+
+  if (path.startsWith("/create/text-to-video")) return "Text to Video";
+
   if (path.startsWith("/create/video")) return "Video";
   if (path.startsWith("/settings")) return "Settings";
   return "🌀◝(ᵔᗜᵔ)◜";
@@ -80,6 +83,14 @@ export default function Layout(props: ParentProps) {
                 <span class="is-drawer-close:hidden">Video</span>
               </A>
             </li>
+
+            <li class="w-full">
+              <A href="/create/text-to-video" id="sidebar-text-to-video" class="is-drawer-close:justify-center py-2">
+                <Icons.Video />
+                <span class="is-drawer-close:hidden">Text to Video</span>
+              </A>
+            </li>
+
             <li class="w-full">
               <A href="/create/audio" id="sidebar-audio" class="is-drawer-close:justify-center py-2">
                 <Icons.Audio />

@@ -8,6 +8,7 @@ const Compose = lazy(() => import("./pages/Compose"));
 const CreateImage = lazy(() => import("./pages/CreateImage"));
 const CreateAudio = lazy(() => import("./pages/CreateAudio"));
 const CreateVideo = lazy(() => import("./pages/CreateVideo"));
+const CreateTextToVideo = lazy(() => import("./pages/CreateTextToVideo"));
 const Settings = lazy(() => import("./pages/Settings"));
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/jobs/:jobId"
         component={() => (
@@ -31,6 +33,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/gallery"
         component={() => (
@@ -39,6 +42,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/compose"
         component={() => (
@@ -47,6 +51,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/create/image"
         component={() => (
@@ -55,6 +60,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/create/audio"
         component={() => (
@@ -63,6 +69,7 @@ export default function App() {
           </Suspense>
         )}
       />
+
       <Route
         path="/create/video"
         component={() => (
@@ -71,6 +78,16 @@ export default function App() {
           </Suspense>
         )}
       />
+
+      <Route
+        path="/create/text-to-video"
+        component={() => (
+          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
+            <CreateTextToVideo />
+          </Suspense>
+        )}
+      />
+
       <Route
         path="/settings"
         component={() => (
