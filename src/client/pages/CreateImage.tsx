@@ -5,6 +5,7 @@ import { apiGet, getAssetPath } from "../lib/api-client";
 import { Icons } from "../components/Icons";
 import LoraSelector, { LoraSpec } from "../components/LoraSelector";
 import StylePresetSelect from "../components/StylePresetSelect";
+import EnhanceButton from "../components/EnhanceButton";
 
 export default function CreateImage() {
   const [search, setSearch] = useSearchParams();
@@ -90,14 +91,14 @@ export default function CreateImage() {
         <div class="xl:col-span-5 flex flex-col gap-4 min-h-0">
           <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col overflow-hidden xl:h-[52vh] min-h-[340px]">
             <div class="card-body flex flex-col flex-1 p-4 min-h-0">
-              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PromptIcon />Prompt</h2>
-              <textarea name="prompt" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder="Describe the image you want to generate..."></textarea>
+              <div class="flex items-center justify-between"><h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PromptIcon />Prompt</h2><EnhanceButton textareaId="ci-prompt" kind="image_prompt" getPreset={() => (document.querySelector('select[name="style_preset"]') as HTMLSelectElement | null)?.value} /></div>
+              <textarea id="ci-prompt" name="prompt" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder="Describe the image you want to generate..."></textarea>
             </div>
           </div>
           <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col overflow-hidden xl:h-[28vh] min-h-[220px]">
             <div class="card-body flex flex-col flex-1 p-4 min-h-0">
-              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PaintBrushIcon />Style Guide</h2>
-              <textarea name="style_guide" maxLength={2000} class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder={"Optional: define consistent style...\n• warm ochre palette\n• watercolor texture\n• no modern items"}></textarea>
+              <div class="flex items-center justify-between"><h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PaintBrushIcon />Style Guide</h2><EnhanceButton textareaId="ci-style" kind="style_guide" getPreset={() => (document.querySelector('select[name="style_preset"]') as HTMLSelectElement | null)?.value} /></div>
+              <textarea id="ci-style" name="style_guide" maxLength={2000} class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder={"Optional: define consistent style...\n• warm ochre palette\n• watercolor texture\n• no modern items"}></textarea>
             </div>
           </div>
           <Show when={showProgress() && jobId()}>
@@ -187,7 +188,7 @@ export default function CreateImage() {
                   </div>
                 </Show>
                 <Show when={(mediaData()?.items?.length ?? 0) > 0}>
-                  <div class="grid grid-cols-2 gap-2 overflow-y-auto flex-1 min-h-0 pr-1">
+                  <div class={`grid gap-2 overflow-y-auto flex-1 min-h-0 pr-1 content-start ${(mediaData()?.items?.length ?? 0) === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                     <For each={mediaData()?.items ?? []}>
                       {(img) => (
                         <div class="rounded-box overflow-hidden bg-base-200 border border-base-300">
@@ -197,7 +198,7 @@ export default function CreateImage() {
                     </For>
                   </div>
                 </Show>
-                <a href={`/jobs?job_id=${jobId()}&filter=all&tab=status`} class="btn btn-primary btn-sm mt-3 w-full">View Job</a>
+                <a href={`/jobs?job_id=${jobId()}&filter=all&tab=status`} class="btn btn-primary btn-sm mt-3 w-auto self-end px-6">View Job</a>
               </div>
             </div>
           </Show>
@@ -215,7 +216,7 @@ export default function CreateImage() {
               <h3 class="font-semibold text-sm mb-2">Generated Images</h3>
               <Show when={(mediaData()?.items?.length ?? 0) === 0}><div class="flex flex-col items-center gap-2 py-8"><span class="loading loading-dots loading-lg text-primary"></span></div></Show>
               <Show when={(mediaData()?.items?.length ?? 0) > 0}>
-                <div class="grid grid-cols-2 gap-2">
+                <div class={`grid gap-2 content-start ${(mediaData()?.items?.length ?? 0) === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                   <For each={mediaData()?.items ?? []}>
                     {(img) => <div class="rounded-box overflow-hidden bg-base-200"><img src={getAssetPath(img.subfolder, img.filename)} alt="Generated image" class="w-full h-auto" /></div>}
                   </For>
