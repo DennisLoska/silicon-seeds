@@ -14,7 +14,8 @@ export namespace ApiServer {
 
   export function start() {
     server = Bun.serve({
-      port: 3000,
+      hostname: Bun.env.HOST ?? "127.0.0.1",
+      port: Number(Bun.env.PORT ?? 3000),
       idleTimeout: Metadata.TIMEOUT,
       maxRequestBodySize: MAX_REQUEST_BODY_SIZE,
       fetch: app.fetch,
