@@ -5,6 +5,7 @@ import { apiGet, getAssetPath } from "../lib/api-client";
 import { Icons } from "../components/Icons";
 import LoraSelector, { LoraSpec } from "../components/LoraSelector";
 import StylePresetSelect from "../components/StylePresetSelect";
+import EnhanceButton from "../components/EnhanceButton";
 
 export default function CreateImage() {
   const [search, setSearch] = useSearchParams();
@@ -90,14 +91,14 @@ export default function CreateImage() {
         <div class="xl:col-span-5 flex flex-col gap-4 min-h-0">
           <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col overflow-hidden xl:h-[52vh] min-h-[340px]">
             <div class="card-body flex flex-col flex-1 p-4 min-h-0">
-              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PromptIcon />Prompt</h2>
-              <textarea name="prompt" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder="Describe the image you want to generate..."></textarea>
+              <div class="flex items-center justify-between"><h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PromptIcon />Prompt</h2><EnhanceButton textareaId="ci-prompt" kind="image_prompt" getPreset={() => (document.querySelector('select[name="style_preset"]') as HTMLSelectElement | null)?.value} /></div>
+              <textarea id="ci-prompt" name="prompt" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder="Describe the image you want to generate..."></textarea>
             </div>
           </div>
           <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col overflow-hidden xl:h-[28vh] min-h-[220px]">
             <div class="card-body flex flex-col flex-1 p-4 min-h-0">
-              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PaintBrushIcon />Style Guide</h2>
-              <textarea name="style_guide" maxLength={2000} class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder={"Optional: define consistent style...\n• warm ochre palette\n• watercolor texture\n• no modern items"}></textarea>
+              <div class="flex items-center justify-between"><h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PaintBrushIcon />Style Guide</h2><EnhanceButton textareaId="ci-style" kind="style_guide" getPreset={() => (document.querySelector('select[name="style_preset"]') as HTMLSelectElement | null)?.value} /></div>
+              <textarea id="ci-style" name="style_guide" maxLength={2000} class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder={"Optional: define consistent style...\n• warm ochre palette\n• watercolor texture\n• no modern items"}></textarea>
             </div>
           </div>
           <Show when={showProgress() && jobId()}>

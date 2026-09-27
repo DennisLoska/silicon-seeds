@@ -5,6 +5,7 @@ import { apiGet } from "../lib/api-client";
 import { Icons } from "../components/Icons";
 import LoraSelector, { LoraSpec } from "../components/LoraSelector";
 import StylePresetSelect from "../components/StylePresetSelect";
+import EnhanceButton from "../components/EnhanceButton";
 
 export default function Compose() {
   const [search, setSearch] = useSearchParams();
@@ -102,16 +103,16 @@ export default function Compose() {
         <div class="flex flex-col gap-4 xl:col-span-5 min-h-0">
           <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col overflow-hidden xl:h-[52vh] min-h-[340px]">
             <div class="card-body flex flex-col flex-1 p-4 min-h-0">
-              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.DocumentIcon />Video Script</h2>
-              <textarea name="script" id="type-script-tab" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder="Write your video script here..."></textarea>
+              <div class="flex items-center justify-between"><h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.DocumentIcon />Video Script</h2><EnhanceButton textareaId="co-script" kind="script" getPreset={() => (document.querySelector('select[name="style_preset"]') as HTMLSelectElement | null)?.value} /></div>
+              <textarea name="script" id="co-script" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder="Write your video script here..."></textarea>
               <div class="divider my-2">OR</div>
               <input type="file" name="script_file" accept=".txt,.md" class="file-input file-input-bordered file-input-sm w-full" />
             </div>
           </div>
           <div class="card bg-base-100 shadow-xl border border-base-300 flex flex-col overflow-hidden xl:h-[28vh] min-h-[220px]">
             <div class="card-body flex flex-col flex-1 p-4 min-h-0">
-              <h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PaintBrushIcon />Style Guide</h2>
-              <textarea name="style_guide" id="style-guide" maxLength={2000} class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder={"Define consistent style across all images...\n• warm ochre palette\n• watercolor texture\n• ancient Egypt only - no modern items\n• consistent character appearance"}></textarea>
+              <div class="flex items-center justify-between"><h2 class="card-title text-base font-semibold flex items-center gap-2 mb-2"><Icons.PaintBrushIcon />Style Guide</h2><EnhanceButton textareaId="co-style" kind="style_guide" getPreset={() => (document.querySelector('select[name="style_preset"]') as HTMLSelectElement | null)?.value} /></div>
+              <textarea name="style_guide" id="co-style" maxLength={2000} class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none text-sm leading-relaxed" placeholder={"Define consistent style across all images...\n• warm ochre palette\n• watercolor texture\n• ancient Egypt only - no modern items\n• consistent character appearance"}></textarea>
             </div>
           </div>
           <Show when={showProgress() && jobId()}>

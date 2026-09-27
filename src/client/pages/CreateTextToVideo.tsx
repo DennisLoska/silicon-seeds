@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "@solidjs/router";
 import { useJobUpdates } from "../lib/sse";
 import { apiGet, getAssetPath } from "../lib/api-client";
 import { Icons } from "../components/Icons";
+import EnhanceButton from "../components/EnhanceButton";
 
 
 export default function CreateTextToVideo() {
@@ -100,15 +101,15 @@ export default function CreateTextToVideo() {
         <div class="flex flex-col gap-4 w-full xl:w-1/2 2xl:w-1/3 2xl:min-w-[500px] xl:min-h-0 overflow-hidden xl:self-stretch">
           <div class="card bg-base-100 shadow-xl flex flex-col overflow-hidden flex-1 min-h-0 xl:min-h-0">
             <div class="card-body flex flex-col flex-1 p-4 min-h-0 xl:min-h-0">
-              <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.PromptIcon />Prompt</h2>
-              <textarea name="prompt" id="video-prompt" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none" placeholder="Describe the video you want to generate... e.g. A serene mountain lake at sunrise, gentle mist, slow camera push in"></textarea>
+              <div class="flex items-center justify-between"><h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.PromptIcon />Prompt</h2><EnhanceButton textareaId="ctv-prompt" kind="video_prompt" getPreset={() => (document.querySelector('select[name="style_preset"]') as HTMLSelectElement | null)?.value} /></div>
+              <textarea name="prompt" id="ctv-prompt" class="textarea textarea-ghost w-full flex-1 resize-none min-h-0 focus:outline-none" placeholder="Describe the video you want to generate... e.g. A serene mountain lake at sunrise, gentle mist, slow camera push in"></textarea>
             </div>
           </div>
 
           <div class="card bg-base-100 shadow-xl flex-none">
             <div class="card-body flex flex-col p-4">
-              <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.PaintBrushIcon />Style Guide</h2>
-              <textarea name="style_guide" id="style-guide" maxLength={2000} rows={7} style="height:180px;min-height:180px;max-height:180px" class="textarea textarea-ghost w-full resize-none focus:outline-none border-0 focus:border-0 focus:ring-0" placeholder={"Define consistent style across all clips...\n• warm ochre palette\n• watercolor texture\n• consistent character appearance"}></textarea>
+              <div class="flex items-center justify-between"><h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.PaintBrushIcon />Style Guide</h2><EnhanceButton textareaId="ctv-style" kind="style_guide" getPreset={() => (document.querySelector('select[name="style_preset"]') as HTMLSelectElement | null)?.value} /></div>
+              <textarea name="style_guide" id="ctv-style" maxLength={2000} rows={7} style="height:180px;min-height:180px;max-height:180px" class="textarea textarea-ghost w-full resize-none focus:outline-none border-0 focus:border-0 focus:ring-0" placeholder={"Define consistent style across all clips...\n• warm ochre palette\n• watercolor texture\n• consistent character appearance"}></textarea>
               <p class="text-xs text-base-content/60 mt-2">Defines stylistic coherence across generated video. Applied to prompt.</p>
             </div>
           </div>

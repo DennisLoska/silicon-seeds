@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "@solidjs/router";
 import { useJobUpdates } from "../lib/sse";
 import { apiGet } from "../lib/api-client";
 import { Icons } from "../components/Icons";
+import EnhanceButton from "../components/EnhanceButton";
 
 export default function CreateAudio() {
   const [search, setSearch] = useSearchParams();
@@ -76,13 +77,13 @@ export default function CreateAudio() {
               <p class="text-sm text-base-content/70">Shape the arrangement and lyric intent separately for the ACE Step 1.5 song workflow.</p>
             </div>
             <fieldset class="fieldset">
-              <legend class="fieldset-legend">Instrumental Prompt</legend>
-              <textarea name="instrumental_prompt" class="textarea textarea-ghost w-full resize-none min-h-[180px] focus:outline-none" placeholder="slow burn ambient pop, intimate piano, glassy synths, soft sub bass, restrained percussion, dusk atmosphere"></textarea>
+              <div class="flex items-center justify-between"><span class="fieldset-legend">Instrumental Prompt</span><EnhanceButton textareaId="ca-inst" kind="instrumental" /></div>
+              <textarea id="ca-inst" name="instrumental_prompt" class="textarea textarea-ghost w-full resize-none min-h-[180px] focus:outline-none" placeholder="slow burn ambient pop, intimate piano, glassy synths, soft sub bass, restrained percussion, dusk atmosphere"></textarea>
               <p class="label text-xs opacity-60">Describe arrangement, instrumentation, groove, texture, and mood.</p>
             </fieldset>
             <div class="flex flex-col flex-grow min-h-0 h-full gap-2">
-              <label for="lyric_prompt" class="fieldset-legend">Lyric Prompt</label>
-              <textarea id="lyric_prompt" name="lyric_prompt" class="textarea textarea-ghost w-full flex-grow h-full resize-none min-h-[220px] focus:outline-none" placeholder="Optional. A short hook, imagery, or lyrical concept. Leave blank for purely instrumental output."></textarea>
+              <div class="flex items-center justify-between"><label for="ca-lyrics" class="fieldset-legend">Lyric Prompt</label><EnhanceButton textareaId="ca-lyrics" kind="lyrics" /></div>
+              <textarea id="ca-lyrics" name="lyric_prompt" class="textarea textarea-ghost w-full flex-grow h-full resize-none min-h-[220px] focus:outline-none" placeholder="Optional. A short hook, imagery, or lyrical concept. Leave blank for purely instrumental output."></textarea>
               <p class="label text-xs opacity-60">Short ideas work better than fully written verses.</p>
             </div>
           </div>
