@@ -105,7 +105,7 @@ export default function CreateTextToVideo() {
             <div class="card-body flex flex-col p-4">
               <h2 class="card-title text-lg font-semibold flex items-center gap-2 mb-3"><Icons.PaintBrushIcon />Style Guide</h2>
               <textarea name="style_guide" id="style-guide" maxLength={2000} rows={7} style="height:180px;min-height:180px;max-height:180px" class="textarea textarea-ghost w-full resize-none focus:outline-none border-0 focus:border-0 focus:ring-0" placeholder={"Define consistent style across all clips...\n• warm ochre palette\n• watercolor texture\n• consistent character appearance"}></textarea>
-              <p class="text-xs text-base-content/60 mt-2">Defines stylistic coherence across all generated images. Applied in addition to Style Preset.</p>
+              <p class="text-xs text-base-content/60 mt-2">Defines stylistic coherence across generated video. Applied to prompt.</p>
             </div>
           </div>
           <Show when={showProgress() && jobId()}>
