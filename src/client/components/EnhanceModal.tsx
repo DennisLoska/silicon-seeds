@@ -29,7 +29,7 @@ export default function EnhanceModal(props: EnhanceModalProps) {
               <span class="loading loading-spinner loading-md" />
             </div>
           </Show>
-          <Show when={!props.loading}>
+          <Show when={!props.loading && !props.error}>
             <textarea
               class="textarea textarea-bordered textarea-primary w-full"
               rows={8}

@@ -16,6 +16,7 @@ export default function EnhanceButton(props: EnhanceButtonProps) {
   const [enhanced, setEnhanced] = createSignal("");
   const [error, setError] = createSignal("");
   const [label, setLabel] = createSignal("Enhance");
+  let abort: AbortController | null = null;
 
   function readTextarea(): string {
     const el = document.getElementById(props.textareaId) as HTMLTextAreaElement | null;
@@ -30,7 +31,10 @@ export default function EnhanceButton(props: EnhanceButtonProps) {
     updateLabel();
     const el = document.getElementById(props.textareaId) as HTMLTextAreaElement | null;
     el?.addEventListener("input", updateLabel);
-    onCleanup(() => el?.removeEventListener("input", updateLabel));
+    onCleanup(() => {
+      el?.removeEventListener("input", updateLabel);
+      abort?.abort();
+    });
   });
 
   async function run() {
@@ -41,21 +45,45 @@ export default function EnhanceButton(props: EnhanceButtonProps) {
     setError("");
     setLoading(true);
     setOpen(true);
+    abort?.abort();
+    const ctrl = new AbortController();
+    abort = ctrl;
+    const timeoutSignal = AbortSignal.timeout(60000);
+    const signal =
+      typeof AbortSignal.any === "function"
+        ? AbortSignal.any([ctrl.signal, timeoutSignal])
+        : timeoutSignal;
+    const form = document.getElementById(props.textareaId)?.closest("form");
+    const preset =
+      props.getPreset?.() ??
+      (form?.querySelector('select[name="style_preset"]') as HTMLSelectElement | null)?.value ??
+      undefined;
     try {
       const res = await fetch("/api/enhance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, kind: props.kind, style_preset: props.getPreset?.() }),
+        body: JSON.stringify({ text, kind: props.kind, style_preset: preset }),
+        signal,
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? `Enhance failed (${res.status})`);
       if (!data.enhanced) throw new Error("Empty response, try again");
       setEnhanced(data.enhanced);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Enhance failed, try again");
+      if (e instanceof DOMException && (e.name === "AbortError" || e.name === "TimeoutError")) {
+        setError("Timed out after 60s, Retry?");
+      } else {
+        setError(e instanceof Error ? e.message : "Enhance failed, try again");
+      }
     } finally {
+      if (abort === ctrl) abort = null;
       setLoading(false);
     }
+  }
+
+  function close() {
+    abort?.abort();
+    setOpen(false);
   }
 
   function accept() {
@@ -83,7 +111,7 @@ export default function EnhanceButton(props: EnhanceButtonProps) {
         error={error()}
         onAccept={accept}
         onRetry={run}
-        onClose={() => setOpen(false)}
+        onClose={close}
       />
     </>
   );
