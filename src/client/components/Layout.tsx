@@ -4,7 +4,8 @@ import { Icons } from "./Icons";
 import { createTheme } from "../stores/theme";
 
 function getPageTitle(path: string) {
-  if (path.startsWith("/jobs") || path === "/" || path.startsWith("/dashboard")) return "Jobs";
+  if (path.startsWith("/jobs") || path === "/" || path.startsWith("/dashboard"))
+    return "Jobs";
   if (path.startsWith("/gallery")) return "Gallery";
   if (path.startsWith("/compose")) return "Compose";
   if (path.startsWith("/create/audio")) return "Audio";
@@ -47,58 +48,95 @@ export default function Layout(props: ParentProps) {
       <aside class="drawer-side z-20 is-drawer-close:overflow-visible">
         <label for="main-drawer" class="drawer-overlay" />
         <div class="is-drawer-close:w-20 is-drawer-open:w-64 bg-base-200 border-r border-base-300 flex flex-col items-start min-h-full">
-          <A href="/jobs" class="flex items-center is-drawer-close:justify-center gap-3 p-4 w-full hover:bg-base-300 transition-colors">
+          <A
+            href="/jobs"
+            class="flex items-center is-drawer-close:justify-center gap-3 p-4 w-full hover:bg-base-300 transition-colors"
+          >
             <Icons.Logo />
-            <span class="text-xl font-bold text-primary is-drawer-close:hidden whitespace-nowrap">Silicon Seeds</span>
+            <span class="text-xl font-bold text-primary is-drawer-close:hidden whitespace-nowrap">
+              Silicon Seeds
+            </span>
           </A>
           <ul class="menu menu-md w-full grow px-2 py-4">
             <li class="w-full">
-              <A href="/jobs" id="sidebar-jobs-summary" class="is-drawer-close:justify-center py-2">
+              <A
+                href="/jobs"
+                id="sidebar-jobs-summary"
+                class="is-drawer-close:justify-center py-2"
+              >
                 <Icons.Jobs />
                 <span class="is-drawer-close:hidden">Jobs</span>
               </A>
             </li>
             <li class="w-full">
-              <A href="/gallery" id="sidebar-gallery" class="is-drawer-close:justify-center py-2">
+              <A
+                href="/gallery"
+                id="sidebar-gallery"
+                class="is-drawer-close:justify-center py-2"
+              >
                 <Icons.Gallery />
                 <span class="is-drawer-close:hidden">Gallery</span>
               </A>
             </li>
             <li class="menu-title">Create</li>
             <li class="w-full">
-              <A href="/compose" id="sidebar-compose" class="is-drawer-close:justify-center py-2">
+              <A
+                href="/compose"
+                id="sidebar-compose"
+                class="is-drawer-close:justify-center py-2"
+              >
                 <Icons.Compose />
                 <span class="is-drawer-close:hidden">Compose</span>
               </A>
             </li>
             <li class="w-full">
-              <A href="/create/image" id="sidebar-image" class="is-drawer-close:justify-center py-2">
+              <A
+                href="/create/image"
+                id="sidebar-image"
+                class="is-drawer-close:justify-center py-2"
+              >
                 <Icons.Image />
                 <span class="is-drawer-close:hidden">Image</span>
               </A>
             </li>
             <li class="w-full">
-              <A href="/create/video" id="sidebar-video" class="is-drawer-close:justify-center py-2">
+              <A
+                href="/create/video"
+                id="sidebar-video"
+                class="is-drawer-close:justify-center py-2"
+              >
                 <Icons.Video />
                 <span class="is-drawer-close:hidden">Video</span>
               </A>
             </li>
 
             <li class="w-full">
-              <A href="/create/text-to-video" id="sidebar-text-to-video" class="is-drawer-close:justify-center py-2">
+              <A
+                href="/create/text-to-video"
+                id="sidebar-text-to-video"
+                class="is-drawer-close:justify-center py-2"
+              >
                 <Icons.Video />
                 <span class="is-drawer-close:hidden">Text to Video</span>
               </A>
             </li>
 
             <li class="w-full">
-              <A href="/create/audio" id="sidebar-audio" class="is-drawer-close:justify-center py-2">
+              <A
+                href="/create/audio"
+                id="sidebar-audio"
+                class="is-drawer-close:justify-center py-2"
+              >
                 <Icons.Audio />
                 <span class="is-drawer-close:hidden">Audio</span>
               </A>
             </li>
             <li class="w-full">
-              <A href="/settings" id="sidebar-settings" class="is-drawer-close:justify-center py-2">
+              <A
+                href="/settings"
+                id="sidebar-settings"
+                class="is-drawer-close:justify-center py-2"
+              >
                 <Icons.CogSettingsIcon />
                 <span class="is-drawer-close:hidden">Settings</span>
               </A>
@@ -109,13 +147,23 @@ export default function Layout(props: ParentProps) {
               <label for="main-drawer" class="btn btn-ghost btn-circle btn-sm">
                 <Icons.Drawer />
               </label>
-              <select class="select select-xs select-bordered is-drawer-close:hidden" value={theme()} onChange={(e) => setTheme(e.currentTarget.value as any)}>
+              <select
+                class="select select-xs select-bordered is-drawer-close:hidden"
+                value={theme()}
+                onChange={(e) => setTheme(e.currentTarget.value as any)}
+              >
                 <option value="bumblebee">bumblebee</option>
                 <option value="tokyonight">tokyonight</option>
                 <option value="opencode">opencode</option>
                 <option value="dracula">dracula</option>
               </select>
-              <button class="btn btn-ghost btn-circle btn-sm is-drawer-close:inline-flex hidden" onClick={toggle} aria-label="Toggle theme"><Icons.Moon /></button>
+              <button
+                class="btn btn-ghost btn-circle btn-sm is-drawer-close:inline-flex hidden"
+                onClick={toggle}
+                aria-label="Toggle theme"
+              >
+                <Icons.Moon />
+              </button>
             </div>
           </div>
         </div>

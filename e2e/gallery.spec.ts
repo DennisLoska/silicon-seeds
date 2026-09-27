@@ -1,10 +1,14 @@
 import { test, expect } from "@playwright/test";
 
-test("gallery loads and interacts with filter radios and grid", async ({ page }) => {
+test("gallery loads and interacts with filter radios and grid", async ({
+  page,
+}) => {
   await page.goto("/gallery");
   await expect(page).toHaveURL(/\/gallery/);
   await expect(page.locator("body")).toBeVisible({ timeout: 10000 });
-  await expect(page.getByRole("heading", { name: "Gallery" }).first()).toBeVisible({ timeout: 10000 });
+  await expect(
+    page.getByRole("heading", { name: "Gallery" }).first(),
+  ).toBeVisible({ timeout: 10000 });
   await expect(page.locator('a[href="/gallery"]').first()).toBeVisible();
 
   // interact with filter radios: All, Images, Videos, Audio

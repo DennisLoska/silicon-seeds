@@ -6,7 +6,17 @@ import { PostTextToVideo } from "../schemas";
 import { Metadata } from "../../meta/meta";
 
 export async function text_to_image_to_video(options: PostTextToVideo) {
-  const { prompt: rawPrompt, resolution, video_model, image_model, fps, clip_duration, style_preset, style_guide, loras } = options as any;
+  const {
+    prompt: rawPrompt,
+    resolution,
+    video_model,
+    image_model,
+    fps,
+    clip_duration,
+    style_preset,
+    style_guide,
+    loras,
+  } = options as any;
   const prompt = Utils.sanitizeInputText(rawPrompt);
 
   if (!prompt || prompt.length < 1) {
@@ -17,8 +27,12 @@ export async function text_to_image_to_video(options: PostTextToVideo) {
   }
 
   // Sanitize style_guide same as prompt before concat
-  const sanitizedGuide = style_guide ? Utils.sanitizeInputText(style_guide) : undefined;
-  const finalPrompt = sanitizedGuide ? `${prompt}\n\nStyle guide: ${sanitizedGuide}` : prompt;
+  const sanitizedGuide = style_guide
+    ? Utils.sanitizeInputText(style_guide)
+    : undefined;
+  const finalPrompt = sanitizedGuide
+    ? `${prompt}\n\nStyle guide: ${sanitizedGuide}`
+    : prompt;
 
   const { id: jobId } = await JobOrchestrator.create_job({
     original_prompt: prompt,
@@ -31,7 +45,7 @@ export async function text_to_image_to_video(options: PostTextToVideo) {
     style_preset,
     style_guide: sanitizedGuide ?? null,
     workflow: "video",
-    loras: (loras && loras.length) ? JSON.stringify(loras) : null,
+    loras: loras && loras.length ? JSON.stringify(loras) : null,
   } as any);
 
   const scheduled = await VideoGenerator.schedule_text_to_video({
@@ -42,10 +56,13 @@ export async function text_to_image_to_video(options: PostTextToVideo) {
 
   if (!scheduled) {
     await DB.Jobs.failJob(jobId);
-    return new Response(JSON.stringify({ error: "Failed to schedule video event" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Failed to schedule video event" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 
   return new Response(JSON.stringify({ message: "job queued", jobId }), {
@@ -56,5 +73,3 @@ export async function text_to_image_to_video(options: PostTextToVideo) {
     },
   });
 }
-
-

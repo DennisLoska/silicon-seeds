@@ -19,7 +19,13 @@ export default function App() {
       <Route
         path="/jobs"
         component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
+          <Suspense
+            fallback={
+              <div class="flex justify-center py-16">
+                <span class="loading loading-spinner" />
+              </div>
+            }
+          >
             <Jobs />
           </Suspense>
         )}
@@ -28,7 +34,13 @@ export default function App() {
       <Route
         path="/jobs/:jobId"
         component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
+          <Suspense
+            fallback={
+              <div class="flex justify-center py-16">
+                <span class="loading loading-spinner" />
+              </div>
+            }
+          >
             <Jobs />
           </Suspense>
         )}
@@ -37,7 +49,13 @@ export default function App() {
       <Route
         path="/gallery"
         component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
+          <Suspense
+            fallback={
+              <div class="flex justify-center py-16">
+                <span class="loading loading-spinner" />
+              </div>
+            }
+          >
             <Gallery />
           </Suspense>
         )}
@@ -46,7 +64,13 @@ export default function App() {
       <Route
         path="/compose"
         component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
+          <Suspense
+            fallback={
+              <div class="flex justify-center py-16">
+                <span class="loading loading-spinner" />
+              </div>
+            }
+          >
             <Compose />
           </Suspense>
         )}
@@ -55,7 +79,13 @@ export default function App() {
       <Route
         path="/create/image"
         component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
+          <Suspense
+            fallback={
+              <div class="flex justify-center py-16">
+                <span class="loading loading-spinner" />
+              </div>
+            }
+          >
             <CreateImage />
           </Suspense>
         )}
@@ -64,7 +94,13 @@ export default function App() {
       <Route
         path="/create/audio"
         component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
+          <Suspense
+            fallback={
+              <div class="flex justify-center py-16">
+                <span class="loading loading-spinner" />
+              </div>
+            }
+          >
             <CreateAudio />
           </Suspense>
         )}
@@ -73,7 +109,13 @@ export default function App() {
       <Route
         path="/create/video"
         component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
+          <Suspense
+            fallback={
+              <div class="flex justify-center py-16">
+                <span class="loading loading-spinner" />
+              </div>
+            }
+          >
             <CreateVideo />
           </Suspense>
         )}
@@ -82,7 +124,13 @@ export default function App() {
       <Route
         path="/create/text-to-video"
         component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
+          <Suspense
+            fallback={
+              <div class="flex justify-center py-16">
+                <span class="loading loading-spinner" />
+              </div>
+            }
+          >
             <CreateTextToVideo />
           </Suspense>
         )}
@@ -91,7 +139,13 @@ export default function App() {
       <Route
         path="/settings"
         component={() => (
-          <Suspense fallback={<div class="flex justify-center py-16"><span class="loading loading-spinner" /></div>}>
+          <Suspense
+            fallback={
+              <div class="flex justify-center py-16">
+                <span class="loading loading-spinner" />
+              </div>
+            }
+          >
             <Settings />
           </Suspense>
         )}

@@ -1,11 +1,15 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Jobs", () => {
-  test("lists jobs and interacts with filter and navigation", async ({ page }) => {
+  test("lists jobs and interacts with filter and navigation", async ({
+    page,
+  }) => {
     await page.goto("/jobs");
     await expect(page).toHaveURL(/\/jobs/);
     await expect(page.locator("body")).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole("heading").first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading").first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // interact with filter dropdown button
     const filterBtn = page.locator("#job-filter-dropdown button").first();
@@ -13,15 +17,21 @@ test.describe("Jobs", () => {
     await filterBtn.click();
     // dropdown should appear with options
     const dropdown = page.locator("#job-filter-dropdown ul");
-    await expect(dropdown).toBeVisible({ timeout: 5000 }).catch(() => {});
+    await expect(dropdown)
+      .toBeVisible({ timeout: 5000 })
+      .catch(() => {});
     // click filter option "Active" then back to "All" - interacts without generating
-    const activeOption = page.locator('#job-filter-dropdown a', { hasText: "Active" }).first();
+    const activeOption = page
+      .locator("#job-filter-dropdown a", { hasText: "Active" })
+      .first();
     if ((await activeOption.count()) > 0) {
       await activeOption.click();
       await expect(page).toHaveURL(/filter=active/);
       // click again to open and select All
       await filterBtn.click();
-      const allOption = page.locator('#job-filter-dropdown a', { hasText: "All" }).first();
+      const allOption = page
+        .locator("#job-filter-dropdown a", { hasText: "All" })
+        .first();
       await allOption.click();
       await expect(page).toHaveURL(/filter=all/);
     } else {
@@ -46,7 +56,9 @@ test.describe("Jobs", () => {
     if ((await firstJobLink.count()) > 0) {
       await firstJobLink.click();
       await expect(page).toHaveURL(/\/jobs\/.+/);
-      await expect(page.getByRole("heading").first()).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole("heading").first()).toBeVisible({
+        timeout: 10000,
+      });
 
       // click tabs: Status, Media, Events
       const statusTab = page.getByRole("link", { name: "Status" });
@@ -70,7 +82,9 @@ test.describe("Jobs", () => {
         }
       }
     } else {
-      await expect(page.locator("body")).toContainText(/jobs|no jobs|create|empty/i);
+      await expect(page.locator("body")).toContainText(
+        /jobs|no jobs|create|empty/i,
+      );
       await expect(page.getByRole("link", { name: /new job/i })).toBeVisible();
     }
   });

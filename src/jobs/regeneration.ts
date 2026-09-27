@@ -94,14 +94,16 @@ export namespace RegenerationService {
     imageEventId: string,
   ) {
     const imageEvent = events.find((evt) => evt.id === imageEventId);
-    const index = imageEvent?.type === Event.NewImagePrompt ? imageEvent.index : undefined;
+    const index =
+      imageEvent?.type === Event.NewImagePrompt ? imageEvent.index : undefined;
 
     const dependentIds = unique(
       events
         .filter((evt) => {
           if (evt.type === Event.NewVideoComposition) return true;
           if (evt.type === Event.NewTransitionPrompt) return true;
-          if (evt.type === Event.NewVideoPrompt && evt.index === index) return true;
+          if (evt.type === Event.NewVideoPrompt && evt.index === index)
+            return true;
           return false;
         })
         .map((evt) => evt.id),
@@ -119,7 +121,8 @@ export namespace RegenerationService {
     videoEventId: string,
   ) {
     const videoEvent = events.find((evt) => evt.id === videoEventId);
-    const index = videoEvent?.type === Event.NewVideoPrompt ? videoEvent.index ?? -1 : -1;
+    const index =
+      videoEvent?.type === Event.NewVideoPrompt ? (videoEvent.index ?? -1) : -1;
 
     const dependentIds = unique(
       events

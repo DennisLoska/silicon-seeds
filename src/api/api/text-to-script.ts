@@ -14,8 +14,12 @@ export async function text_to_script(prompt: string) {
     });
   }
 
-  const scriptsDir = Bun.env.SCRIPTS_DIR
-    || join(Bun.env.CONTENT_LIBRARY_DIR || join(process.cwd(), "content"), "scripts");
+  const scriptsDir =
+    Bun.env.SCRIPTS_DIR ||
+    join(
+      Bun.env.CONTENT_LIBRARY_DIR || join(process.cwd(), "content"),
+      "scripts",
+    );
 
   await Bun.write(join(scriptsDir, `${Bun.randomUUIDv7()}.md`), res);
 

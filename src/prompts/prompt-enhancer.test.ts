@@ -1,5 +1,9 @@
 import { describe, test, expect } from "bun:test";
-import { buildEnhancePrompt, buildInspirePrompt, resolveMessage } from "./prompt-enhancer";
+import {
+  buildEnhancePrompt,
+  buildInspirePrompt,
+  resolveMessage,
+} from "./prompt-enhancer";
 describe("prompt-enhancer builders", () => {
   test("enhance includes original + kind hint", () => {
     const out = buildEnhancePrompt("a cat", "image_prompt", undefined);
@@ -12,7 +16,11 @@ describe("prompt-enhancer builders", () => {
     expect(out.toLowerCase()).toContain("lyrics");
   });
   test("preset text injected", () => {
-    const out = buildEnhancePrompt("a house", "style_guide", "watercolor, soft edges");
+    const out = buildEnhancePrompt(
+      "a house",
+      "style_guide",
+      "watercolor, soft edges",
+    );
     expect(out).toContain("watercolor");
   });
   test("resolveMessage empty selects inspire", () => {

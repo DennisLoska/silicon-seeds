@@ -44,9 +44,12 @@ export async function script_to_scenes() {
 
       if (!scenes) {
         await DB.Jobs.failJob(jobId);
-        return new Response(JSON.stringify({ message: "Failed to generate scenes" }), {
-          status: 500,
-        });
+        return new Response(
+          JSON.stringify({ message: "Failed to generate scenes" }),
+          {
+            status: 500,
+          },
+        );
       }
 
       for (const scene of scenes) {
@@ -59,9 +62,12 @@ export async function script_to_scenes() {
 
         if (!scheduled) {
           await DB.Jobs.failJob(jobId);
-          return new Response(JSON.stringify({ message: "Failed to schedule scene event" }), {
-            status: 500,
-          });
+          return new Response(
+            JSON.stringify({ message: "Failed to schedule scene event" }),
+            {
+              status: 500,
+            },
+          );
         }
       }
     }

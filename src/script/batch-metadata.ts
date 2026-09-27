@@ -72,7 +72,10 @@ async function genMetadata(fp: string): Promise<void> {
 
   const [t, tg] = await Promise.all([
     LLM.message(`Short title (5–10 words) for: ${msg.content}`),
-    LLM.structured(`Tags (3–5) for: ${msg.content}`, z.array(z.string()).min(1).max(5)),
+    LLM.structured(
+      `Tags (3–5) for: ${msg.content}`,
+      z.array(z.string()).min(1).max(5),
+    ),
   ]);
 
   const meta = {
@@ -102,7 +105,9 @@ async function main() {
   const dir = Bun.env.OUTPUT_DIR ?? FALLBACK_OUTPUT;
   const contentDir = Bun.env.CONTENT_LIBRARY_DIR;
   if (!contentDir) {
-    Logger.error("CONTENT_LIBRARY_DIR not set — run from silicon-seeds/ or set env");
+    Logger.error(
+      "CONTENT_LIBRARY_DIR not set — run from silicon-seeds/ or set env",
+    );
     process.exit(1);
   }
 

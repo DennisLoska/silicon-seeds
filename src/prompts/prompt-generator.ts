@@ -70,7 +70,9 @@ Return structured data only.
   async function styled_image_prompt(message: string, preset?: string) {
     // Handle "none" as explicit no-style
     if (!preset || preset === Presets.NONE || preset === "none") {
-      const { instructions, lora } = StylePresets.presets[Presets.NONE]({ title: message });
+      const { instructions, lora } = StylePresets.presets[Presets.NONE]({
+        title: message,
+      });
       const resNone = await LLM.message(
         `Create excellent image prompt(s) based on these instructions:
 
@@ -79,7 +81,11 @@ ${instructions}
 Make sure to only include the actual image prompt in your response and nothing more!
 `,
       );
-      if (resNone === null || !resNone.content || resNone.content.trim() === "") {
+      if (
+        resNone === null ||
+        !resNone.content ||
+        resNone.content.trim() === ""
+      ) {
         Logger.warn("Failed to generate image prompt - skipping");
         return null;
       }
@@ -133,7 +139,8 @@ Make sure to only include the actual image prompt in your response and nothing m
     }
 
     // Fallback to system
-    const { instructions: fallbackInstructions, lora: fallbackLora } = StylePresets.presets[Presets.SYSTEM]({ title: message });
+    const { instructions: fallbackInstructions, lora: fallbackLora } =
+      StylePresets.presets[Presets.SYSTEM]({ title: message });
     const fallbackRes = await LLM.message(
       `Create excellent image prompt(s) based on these instructions:
 
@@ -142,7 +149,11 @@ ${fallbackInstructions}
 Make sure to only include the actual image prompt in your response and nothing more!
 `,
     );
-    if (fallbackRes === null || !fallbackRes.content || fallbackRes.content.trim() === "") {
+    if (
+      fallbackRes === null ||
+      !fallbackRes.content ||
+      fallbackRes.content.trim() === ""
+    ) {
       Logger.warn("Failed to generate image prompt - skipping");
       return null;
     }
@@ -181,7 +192,12 @@ Make sure to only include the actual image prompt in your response and nothing m
       return null;
     }
     // If user provided loras, override preset lora; otherwise use preset's single lora converted to array
-    const effectiveLoras = loras && loras.length ? loras : styled.lora ? [{ name: styled.lora as string, strength: 0.7 }] : undefined;
+    const effectiveLoras =
+      loras && loras.length
+        ? loras
+        : styled.lora
+          ? [{ name: styled.lora as string, strength: 0.7 }]
+          : undefined;
 
     return await ImageGenerator.schedule_image({
       id,

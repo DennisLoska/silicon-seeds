@@ -19,8 +19,7 @@ export namespace JobOrchestrator {
       const data = keys
         .map((key) => output[key])
         .find((value) => Array.isArray(value)) as
-        | { filename: string; subfolder: string; type: string }[]
-        | undefined;
+        { filename: string; subfolder: string; type: string }[] | undefined;
 
       if (!data || data.length === 0) {
         Logger.error("Unknown event data encountered", { data: event.data });

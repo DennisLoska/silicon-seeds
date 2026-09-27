@@ -50,19 +50,33 @@ export namespace Chroma {
         client = new ChromaClient({ host, port });
         try {
           await client.heartbeat();
-          collection = await client.getOrCreateCollection({ name: COLLECTION_NAME });
-          Logger.info("ChromaDB ready", { collection: COLLECTION_NAME, host, port });
+          collection = await client.getOrCreateCollection({
+            name: COLLECTION_NAME,
+          });
+          Logger.info("ChromaDB ready", {
+            collection: COLLECTION_NAME,
+            host,
+            port,
+          });
           return;
         } catch (e) {
           lastError = e;
-          Logger.warn(`Chroma heartbeat failed on ${host}:${port}, trying next`, {
-            error: e instanceof Error ? e.message : String(e),
-          });
+          Logger.warn(
+            `Chroma heartbeat failed on ${host}:${port}, trying next`,
+            {
+              error: e instanceof Error ? e.message : String(e),
+            },
+          );
         }
       }
       Logger.error(
         "ChromaDB healthcheck failed — is the server running on i.e. port 8000?",
-        { hosts, port, error: lastError instanceof Error ? lastError.message : String(lastError) },
+        {
+          hosts,
+          port,
+          error:
+            lastError instanceof Error ? lastError.message : String(lastError),
+        },
       );
       throw lastError;
     })();

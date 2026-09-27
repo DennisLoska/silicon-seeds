@@ -19,7 +19,9 @@ export default function EnhanceButton(props: EnhanceButtonProps) {
   let abort: AbortController | null = null;
 
   function readTextarea(): string {
-    const el = document.getElementById(props.textareaId) as HTMLTextAreaElement | null;
+    const el = document.getElementById(
+      props.textareaId,
+    ) as HTMLTextAreaElement | null;
     return el?.value ?? "";
   }
 
@@ -29,7 +31,9 @@ export default function EnhanceButton(props: EnhanceButtonProps) {
 
   onMount(() => {
     updateLabel();
-    const el = document.getElementById(props.textareaId) as HTMLTextAreaElement | null;
+    const el = document.getElementById(
+      props.textareaId,
+    ) as HTMLTextAreaElement | null;
     el?.addEventListener("input", updateLabel);
     onCleanup(() => {
       el?.removeEventListener("input", updateLabel);
@@ -56,7 +60,11 @@ export default function EnhanceButton(props: EnhanceButtonProps) {
     const form = document.getElementById(props.textareaId)?.closest("form");
     const preset =
       props.getPreset?.() ??
-      (form?.querySelector('select[name="style_preset"]') as HTMLSelectElement | null)?.value ??
+      (
+        form?.querySelector(
+          'select[name="style_preset"]',
+        ) as HTMLSelectElement | null
+      )?.value ??
       undefined;
     try {
       const res = await fetch("/api/enhance", {
@@ -66,11 +74,15 @@ export default function EnhanceButton(props: EnhanceButtonProps) {
         signal,
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? `Enhance failed (${res.status})`);
+      if (!res.ok)
+        throw new Error(data.error ?? `Enhance failed (${res.status})`);
       if (!data.enhanced) throw new Error("Empty response, try again");
       setEnhanced(data.enhanced);
     } catch (e) {
-      if (e instanceof DOMException && (e.name === "AbortError" || e.name === "TimeoutError")) {
+      if (
+        e instanceof DOMException &&
+        (e.name === "AbortError" || e.name === "TimeoutError")
+      ) {
         setError("Timed out after 60s, Retry?");
       } else {
         setError(e instanceof Error ? e.message : "Enhance failed, try again");
@@ -87,7 +99,9 @@ export default function EnhanceButton(props: EnhanceButtonProps) {
   }
 
   function accept() {
-    const el = document.getElementById(props.textareaId) as HTMLTextAreaElement | null;
+    const el = document.getElementById(
+      props.textareaId,
+    ) as HTMLTextAreaElement | null;
     if (el && enhanced()) {
       el.value = enhanced();
       el.dispatchEvent(new Event("input", { bubbles: true }));
@@ -97,8 +111,18 @@ export default function EnhanceButton(props: EnhanceButtonProps) {
 
   return (
     <>
-      <button type="button" class="btn btn-xs btn-ghost gap-1 group" onClick={run} disabled={loading()}>
-        <Show when={loading()} fallback={<SparkleIcon class="w-3.5 h-3.5 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-125" />}>
+      <button
+        type="button"
+        class="btn btn-xs btn-ghost gap-1 group"
+        onClick={run}
+        disabled={loading()}
+      >
+        <Show
+          when={loading()}
+          fallback={
+            <SparkleIcon class="w-3.5 h-3.5 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-125" />
+          }
+        >
           <span class="loading loading-spinner loading-xs" />
         </Show>
         {label()}

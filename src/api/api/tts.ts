@@ -18,7 +18,10 @@ export async function tts_profiles_options() {
     )
     .join("");
 
-  return new Response(options || "<option value='' disabled>Voicebox unavailable</option>", {
-    headers: { "Content-Type": "text/html" },
-  });
+  return new Response(
+    options || "<option value='' disabled>Voicebox unavailable</option>",
+    {
+      headers: { "Content-Type": "text/html" },
+    },
+  );
 }

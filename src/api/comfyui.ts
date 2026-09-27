@@ -28,7 +28,12 @@ async function listLorasFromComfy(): Promise<string[]> {
           .map((n: string) => n.split("/").pop() ?? n);
         if (names.length) return names;
       }
-      if (data && typeof data === "object" && Array.isArray((data as any).loras)) return (data as any).loras;
+      if (
+        data &&
+        typeof data === "object" &&
+        Array.isArray((data as any).loras)
+      )
+        return (data as any).loras;
     } catch {}
   }
   return [];

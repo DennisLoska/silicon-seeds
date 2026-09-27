@@ -456,5 +456,4 @@ export namespace Icons {
       />
     </svg>
   );
-
 }

@@ -167,8 +167,7 @@ export namespace QueueManager {
           scene,
           1,
           job.style_preset as
-            | (typeof Presets)[keyof typeof Presets]
-            | undefined,
+            (typeof Presets)[keyof typeof Presets] | undefined,
         );
         if (!res) throw new Error("No styled prompt generated");
         const [styleItem] = res;
@@ -178,9 +177,17 @@ export namespace QueueManager {
         // Prefer job-level loras if present (user selection), otherwise preset lora
         let jobLoras: { name: string; strength: number }[] | undefined;
         if ((job as any).loras) {
-          try { const parsed = JSON.parse((job as any).loras); if (Array.isArray(parsed)) jobLoras = parsed; } catch {}
+          try {
+            const parsed = JSON.parse((job as any).loras);
+            if (Array.isArray(parsed)) jobLoras = parsed;
+          } catch {}
         }
-        const effectiveLoras = jobLoras && jobLoras.length ? jobLoras : styleItem?.lora ? [{ name: styleItem.lora as string, strength: 0.7 }] : undefined;
+        const effectiveLoras =
+          jobLoras && jobLoras.length
+            ? jobLoras
+            : styleItem?.lora
+              ? [{ name: styleItem.lora as string, strength: 0.7 }]
+              : undefined;
         await ImageGenerator.schedule_image({
           jobId: event.jobId,
           mode: JobMode.Video,
