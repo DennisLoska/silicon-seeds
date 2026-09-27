@@ -318,8 +318,3 @@ curl -X POST http://localhost:3000/api/jobs/images \
 ## 📄 License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).
-
-<p align="center">
-  <sub>Built with 🌱 silicon + seeds + a lot of local compute.</sub><br/>
-  <sub>Hero + screenshots generated on RTX 5090 · Z-Image-Turbo · Wan 2.2</sub>
-</p>
