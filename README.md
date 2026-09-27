@@ -27,6 +27,7 @@
   <a href="#-features">Features</a> •
   <a href="#-architecture">Architecture</a> •
   <a href="#-service-dependencies">Services</a> •
+  <a href="#-testing">Testing</a> •
   <a href="#-troubleshooting">Troubleshooting</a>
 </p>
 
@@ -134,19 +135,34 @@ bun run start
 Production build (serves SPA from `dist/client`):
 
 ```bash
-npx vite build          # → dist/client
-npx @tailwindcss/cli -i src/client/index.css -o static/style.css
+bun run build           # → dist/client (vite, outDir ../../dist/client from src/client)
+bun run build:css       # → static/style.css
 bun run start           # serves http://localhost:3000
 ```
 
 Useful commands:
 
 ```bash
-bunx tsc --noEmit
+bun run test           # tsc --noEmit + eslint (no services needed)
 bun run lint
 bun run db:rollback      # last migration
-bun run db:chroma        # start local Chroma at content_library/chroma-data
+bun run db:chroma        # start local Chroma (path from CONTENT_LIBRARY_DIR, port from CHROMADB_PORT)
 ```
+
+---
+
+## 🧪 Testing
+
+```bash
+bun run test      # typecheck (tsc --noEmit) + lint (eslint .) — no services needed
+bun run test:e2e  # Playwright specs in e2e/ (jobs, settings, gallery, create-image/video/audio, text-to-video, compose)
+```
+
+`test:e2e` prereqs: app + **ComfyUI** (`http://127.0.0.1:8188`) + **LM Studio**
+(`http://127.0.0.1:1234`, API server on with `LLM_MODEL` loaded) running.
+Playwright boots the app itself (`bun run build && bun src/main.ts`,
+baseURL `http://localhost:3000`, override via `PLAYWRIGHT_BASE_URL`).
+Variants: `bun run test:e2e:headed`, `bun run test:e2e:ui`.
 
 ---
 
@@ -221,6 +237,10 @@ Copy `.env.example` to `.env` and edit paths. All vars are read via `Bun.env`.
 | `OUTPUT_DIR` | yes | - | ComfyUI `output` dir (where Comfy writes images/videos) |
 | `INPUT_DIR` | yes | - | ComfyUI `input` dir (where app stages uploads) |
 | `CONTENT_LIBRARY_DIR` | yes | - | Persistent gallery dir (e.g. `~/content_library`) |
+| `SCRIPTS_DIR` | no | `<CONTENT_LIBRARY_DIR>/scripts` | Where text-to-script saves generated `.md` files |
+| `HOST` | no | `127.0.0.1` | Server bind host (set `0.0.0.0` only on trusted networks, app has no auth) |
+| `PORT` | no | `3000` | Server bind port |
+| `DB_PATH` | no | `data/silicon-seeds.sqlite` | SQLite file override |
 | `LLM_MODEL` | yes | - | LM Studio model id, e.g. `qwen3.6-35b-a3b` |
 | `EMBEDDING_MODEL` | yes | - | LM Studio embedding model, e.g. `text-embedding-qwen3-embedding-8b` |
 | `VOICEBOX_URL` | no | `http://127.0.0.1:17493` | Voicebox TTS server |
@@ -237,6 +257,9 @@ COMFYUI_BASE_WS=ws://127.0.0.1:8188
 OUTPUT_DIR=/path/to/comfy-ui/output
 INPUT_DIR=/path/to/comfy-ui/input
 CONTENT_LIBRARY_DIR=/home/you/content_library
+SCRIPTS_DIR=/home/you/content_library/scripts
+HOST=127.0.0.1
+PORT=3000
 LLM_MODEL=qwen3.6-35b-a3b
 EMBEDDING_MODEL=text-embedding-qwen3-embedding-8b
 VOICEBOX_URL=http://127.0.0.1:17493

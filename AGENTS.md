@@ -4,50 +4,56 @@
 
 This project uses the following technologies:
 
-- Bun
-- Websockets
-- SQLite with Kysely
-- Daisy UI for frontend components and styles
-- HTMX using SSE (server-sent-events) for API integration
+- Bun (runtime, `Bun.env` + `Bun.file`)
+- Hono on `Bun.serve` (API, entry `src/main.ts`)
+- SolidJS + DaisyUI + Tailwind (frontend SPA in `src/client`, built with Vite)
+- SSE + WebSockets (SSE for job progress, WS for ComfyUI queue events)
+- SQLite with Kysely (DB-backed job queue, migrations in `migrations/`)
+
+Local services: ComfyUI (image/video/audio), LM Studio (LLM + embeddings),
+optional Voicebox (TTS) and ChromaDB (gallery vector search).
 
 # Development
 
+Setup:
+
+```bash
+cp .env.example .env   # edit paths, model ids, HOST/PORT
+bun install
+bun run db:migrate      # creates data/silicon-seeds.sqlite (override via DB_PATH)
+bun run build:css       # builds static/style.css from src/client/index.css
+```
+
 Start the server in hot reload mode:
 
-`bun start:hot`
+```bash
+bun run start:hot
+```
 
-Verify the server's response using `curl`. Here is an example url:
+Verify the server's response using `curl`:
+
+```bash
+curl http://localhost:3000/api/health   # -> {"status":"up"}
+```
+
+Example job URL:
 
 http://localhost:3000/?job_id=019d4556-bbe7-7000-88da-b48bf06182dc&tab=status
 
+Server binds `HOST`/`PORT` from env (defaults `127.0.0.1`/`3000`).
+Set `HOST=0.0.0.0` only on trusted networks, app has no auth.
+
+# Checks
+
+```bash
+bun run test      # tsc --noEmit + eslint (no services needed)
+bun run lint      # eslint only
+bun run test:e2e  # Playwright, needs app + ComfyUI + LM Studio running
+```
+
 # Documentation
 
-**CRITICAL:**
+Architecture source of truth: `README.md` (repo root).
 
-Make sure that you read all the documents in `/docs` before starting working on any changes!
-
-Always read the project's readme to understand the architecture:
-
-~/work/silicon-seeds/README.md
-
-Bun:
-
-~/work/silicon-seeds/docs/bun.md
-
-Daisy UI:
-
-~/work/silicon-seeds/docs/daisyui.md
-
-Kysely: 
-
-~/work/silicon-seeds/docs/kysely.md
-
-LM Studio:
-
-~/work/silicon-seeds/docs/lm-studio.md
-
-HTMX: 
-
-For HTMX you have to refer to the documentation online:
-
-https://htmx.org/docs/
+Note: `docs/` is gitignored (local reference notes only, not in repo).
+`docs/superpowers/` pipeline specs/plans stay tracked as work record.
