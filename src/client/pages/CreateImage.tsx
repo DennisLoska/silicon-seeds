@@ -188,7 +188,7 @@ export default function CreateImage() {
                   </div>
                 </Show>
                 <Show when={(mediaData()?.items?.length ?? 0) > 0}>
-                  <div class="grid grid-cols-2 gap-2 overflow-y-auto flex-1 min-h-0 pr-1">
+                  <div class={`grid gap-2 overflow-y-auto flex-1 min-h-0 pr-1 content-start ${(mediaData()?.items?.length ?? 0) === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                     <For each={mediaData()?.items ?? []}>
                       {(img) => (
                         <div class="rounded-box overflow-hidden bg-base-200 border border-base-300">
@@ -198,7 +198,7 @@ export default function CreateImage() {
                     </For>
                   </div>
                 </Show>
-                <a href={`/jobs?job_id=${jobId()}&filter=all&tab=status`} class="btn btn-primary btn-sm mt-3 w-full">View Job</a>
+                <a href={`/jobs?job_id=${jobId()}&filter=all&tab=status`} class="btn btn-primary btn-sm mt-3 w-auto self-end px-6">View Job</a>
               </div>
             </div>
           </Show>
@@ -216,7 +216,7 @@ export default function CreateImage() {
               <h3 class="font-semibold text-sm mb-2">Generated Images</h3>
               <Show when={(mediaData()?.items?.length ?? 0) === 0}><div class="flex flex-col items-center gap-2 py-8"><span class="loading loading-dots loading-lg text-primary"></span></div></Show>
               <Show when={(mediaData()?.items?.length ?? 0) > 0}>
-                <div class="grid grid-cols-2 gap-2">
+                <div class={`grid gap-2 content-start ${(mediaData()?.items?.length ?? 0) === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                   <For each={mediaData()?.items ?? []}>
                     {(img) => <div class="rounded-box overflow-hidden bg-base-200"><img src={getAssetPath(img.subfolder, img.filename)} alt="Generated image" class="w-full h-auto" /></div>}
                   </For>
